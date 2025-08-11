@@ -57,7 +57,7 @@ class VectorStoreConfig:
 
 @dataclass
 class AppConfig:
-    pre_defined_config: str = field(default="default_config")
+    pre_defined_config: str = field(default="mock_config")
     config_path: str = field(default="")
     mcp_transport: str = field(default="sse")
     http_service: HttpServiceConfig = field(default_factory=HttpServiceConfig)
