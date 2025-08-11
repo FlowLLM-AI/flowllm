@@ -68,19 +68,19 @@ class CustomOp(BaseOp):
 ```python
 class BaseOp:
     # Configuration
-    self.context: PipelineContext      # Pipeline execution context
-    self.op_config: OpConfig          # Operation configuration
-    self.op_params: dict              # Operation parameters
-    
+    self.context: PipelineContext  # Pipeline execution context
+    self.op_config: OpConfig  # Operation configuration
+    self.op_params: dict  # Operation parameters
+
     # Resources (lazy-loaded)
-    self.llm: BaseLLM                 # LLM instance
+    self.llm: BaseLLM  # LLM instance
     self.embedding_model: BaseEmbeddingModel  # Embedding model
-    self.vector_store: BaseVectorStore # Vector store instance
-    
+    self.vector_store: BaseVectorStore  # Vector store instance
+
     # Utilities
-    self.timer: Timer                 # Performance timer
-    self.task_list: List[Future]      # Parallel task list
-    self.simple_name: str             # Operation class name in snake_case
+    self.timer: Timer  # Performance timer
+    self.task_list: List[Future]  # Parallel task list
+    self.name: str  # Operation class name in snake_case
 ```
 
 #### Core Methods
@@ -123,16 +123,16 @@ When an operation is created during pipeline execution:
 def __init__(self, context: PipelineContext, op_config: OpConfig):
     self.context = context
     self.op_config = op_config
-    self.timer = Timer(name=self.simple_name)
-    
+    self.timer = Timer(name=self.name)
+
     # Load prompts from file or config
     self._prepare_prompt()
-    
+
     # Initialize resource references (lazy-loaded)
     self._llm = None
     self._embedding_model = None
     self._vector_store = None
-    
+
     # Initialize task list for parallel execution
     self.task_list = []
 ```
@@ -147,7 +147,7 @@ def execute_wrap(self):
         try:
             self.execute()  # Your custom logic
         except Exception as e:
-            logger.exception(f"Operation {self.simple_name} failed")
+            logger.exception(f"Operation {self.name} failed")
             raise
         finally:
             # Wait for any parallel tasks to complete
