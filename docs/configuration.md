@@ -1,6 +1,6 @@
 # Configuration Guide
 
-This guide provides comprehensive information about configuring LLMFlow applications, including pipeline definitions, component settings, and environment variables.
+This guide provides comprehensive information about configuring flowllm applications, including pipeline definitions, component settings, and environment variables.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ This guide provides comprehensive information about configuring LLMFlow applicat
 
 ## Configuration Overview
 
-LLMFlow uses a hierarchical configuration system that supports:
+flowllm uses a hierarchical configuration system that supports:
 
 - **YAML Configuration Files**: Primary configuration method
 - **Command Line Arguments**: Override configuration values
@@ -89,7 +89,7 @@ vector_store:
 
 ### Pipeline Syntax
 
-LLMFlow uses an intuitive string-based syntax for defining operation pipelines:
+flowllm uses an intuitive string-based syntax for defining operation pipelines:
 
 #### Serial Execution
 Operations execute sequentially, one after another:
@@ -356,7 +356,7 @@ OPENAI_BASE_URL=https://api.openai.com/v1
 
 ### Environment Variable Loading
 
-LLMFlow automatically loads environment variables from:
+flowllm automatically loads environment variables from:
 1. System environment
 2. `.env` file in the current directory
 3. `.env` file in the project root
@@ -387,7 +387,7 @@ response = requests.post('http://localhost:8001/agent', json={
 Override any configuration value from the command line:
 
 ```bash
-llmflow \
+flowllm \
   http_service.port=8002 \
   llm.default.model_name=gpt-4 \
   llm.default.params.temperature=0.5 \
@@ -682,10 +682,10 @@ Use the built-in validation to check your configuration:
 
 ```bash
 # Validate configuration
-llmflow --validate-config
+flowllm --validate-config
 
 # Test specific configuration
-llmflow --config-file=config/test.yaml --validate-config
+flowllm --config-file=config/test.yaml --validate-config
 ```
 
 ### Debugging Configuration
@@ -694,7 +694,7 @@ Enable debug logging to see configuration resolution:
 
 ```bash
 export LOG_LEVEL=DEBUG
-llmflow http_service.port=8001
+flowllm http_service.port=8001
 ```
 
 This will show how configuration values are resolved and merged.

@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers how to deploy LLMFlow applications in various environments, from development to production, including containerization, scaling, and monitoring.
+This guide covers how to deploy flowllm applications in various environments, from development to production, including containerization, scaling, and monitoring.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ This guide covers how to deploy LLMFlow applications in various environments, fr
 
 ## Deployment Overview
 
-LLMFlow supports multiple deployment scenarios:
+flowllm supports multiple deployment scenarios:
 
 - **Local Development**: Quick setup for development and testing
 - **Single Server**: Simple production deployment on a single machine
@@ -34,7 +34,7 @@ LLMFlow supports multiple deployment scenarios:
                 ┌───────────────┼───────────────┐
                 │               │               │
 ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
-│   LLMFlow Instance  │ │   LLMFlow Instance  │ │   LLMFlow Instance  │
+│   flowllm Instance  │ │   flowllm Instance  │ │   flowllm Instance  │
 │   (HTTP + MCP)      │ │   (HTTP + MCP)      │ │   (HTTP + MCP)      │
 └─────────────────────┘ └─────────────────────┘ └─────────────────────┘
                 │               │               │
@@ -55,8 +55,8 @@ LLMFlow supports multiple deployment scenarios:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/llmflow.git
-cd llmflow
+git clone https://github.com/your-org/flowllm.git
+cd flowllm
 
 # Install dependencies
 pip install -e .
@@ -66,7 +66,7 @@ cp example.env .env
 # Edit .env with your API keys
 
 # Start development server
-llmflow \
+flowllm \
   http_service.port=8001 \
   llm.default.model_name=gpt-4 \
   vector_store.default.backend=local_file
@@ -112,7 +112,7 @@ logging:
 pip install watchdog
 
 # Start with auto-reload
-uvicorn llmflow.app:app --reload --host 127.0.0.1 --port 8001
+uvicorn flowllm.app:app --reload --host 127.0.0.1 --port 8001
 ```
 
 ## Production Deployment
@@ -143,25 +143,25 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install python3.12 python3.12-pip python3.12-venv
 
 # Create application user
-sudo useradd -m -s /bin/bash llmflow
-sudo usermod -aG sudo llmflow
+sudo useradd -m -s /bin/bash flowllm
+sudo usermod -aG sudo flowllm
 
 # Create application directory
-sudo mkdir -p /opt/llmflow
-sudo chown llmflow:llmflow /opt/llmflow
+sudo mkdir -p /opt/flowllm
+sudo chown flowllm:flowllm /opt/flowllm
 ```
 
 #### 3. Application Installation
 
 ```bash
 # Switch to application user
-sudo -u llmflow -i
+sudo -u flowllm -i
 
 # Navigate to application directory
-cd /opt/llmflow
+cd /opt/flowllm
 
 # Clone and install application
-git clone https://github.com/your-org/llmflow.git .
+git clone https://github.com/your-org/flowllm.git .
 python3.12 -m venv venv
 source venv/bin/activate
 pip install -e .
@@ -211,25 +211,25 @@ vector_store:
 # Production logging
 logging:
   level: INFO
-  file: "/var/log/llmflow/app.log"
+  file: "/var/log/flowllm/app.log"
 ```
 
 #### 5. Process Management with systemd
 
-Create `/etc/systemd/system/llmflow.service`:
+Create `/etc/systemd/system/flowllm.service`:
 
 ```ini
 [Unit]
-Description=LLMFlow HTTP Service
+Description=flowllm HTTP Service
 After=network.target
 
 [Service]
 Type=simple
-User=llmflow
-Group=llmflow
-WorkingDirectory=/opt/llmflow
-Environment=PATH=/opt/llmflow/venv/bin
-ExecStart=/opt/llmflow/venv/bin/llmflow --config-file=config/prod.yaml
+User=flowllm
+Group=flowllm
+WorkingDirectory=/opt/flowllm
+Environment=PATH=/opt/flowllm/venv/bin
+ExecStart=/opt/flowllm/venv/bin/flowllm --config-file=config/prod.yaml
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -239,26 +239,26 @@ StandardError=journal
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/llmflow /var/log/llmflow
+ReadWritePaths=/opt/flowllm /var/log/flowllm
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-Create MCP service `/etc/systemd/system/llmflow-mcp.service`:
+Create MCP service `/etc/systemd/system/flowllm-mcp.service`:
 
 ```ini
 [Unit]
-Description=LLMFlow MCP Service
+Description=flowllm MCP Service
 After=network.target
 
 [Service]
 Type=simple
-User=llmflow
-Group=llmflow
-WorkingDirectory=/opt/llmflow
-Environment=PATH=/opt/llmflow/venv/bin
-ExecStart=/opt/llmflow/venv/bin/llmflow_mcp --config-file=config/prod.yaml mcp_transport=stdio
+User=flowllm
+Group=flowllm
+WorkingDirectory=/opt/flowllm
+Environment=PATH=/opt/flowllm/venv/bin
+ExecStart=/opt/flowllm/venv/bin/flowllm_mcp --config-file=config/prod.yaml mcp_transport=stdio
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -272,8 +272,8 @@ Enable and start services:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable llmflow llmflow-mcp
-sudo systemctl start llmflow llmflow-mcp
+sudo systemctl enable flowllm flowllm-mcp
+sudo systemctl start flowllm flowllm-mcp
 ```
 
 #### 6. Reverse Proxy with Nginx
@@ -284,7 +284,7 @@ Install and configure Nginx:
 sudo apt install nginx
 
 # Create configuration
-sudo tee /etc/nginx/sites-available/llmflow << EOF
+sudo tee /etc/nginx/sites-available/flowllm << EOF
 server {
     listen 80;
     server_name your-domain.com;
@@ -310,7 +310,7 @@ server {
 EOF
 
 # Enable site
-sudo ln -s /etc/nginx/sites-available/llmflow /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/flowllm /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
 ```
@@ -355,8 +355,8 @@ RUN pip install --no-cache-dir -e .
 COPY . .
 
 # Create non-root user
-RUN useradd -m -u 1000 llmflow && chown -R llmflow:llmflow /app
-USER llmflow
+RUN useradd -m -u 1000 flowllm && chown -R flowllm:flowllm /app
+USER flowllm
 
 # Expose port
 EXPOSE 8080
@@ -366,7 +366,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
 # Default command
-CMD ["llmflow", "http_service.host=0.0.0.0", "http_service.port=8080"]
+CMD ["flowllm", "http_service.host=0.0.0.0", "http_service.port=8080"]
 ```
 
 #### 2. Create docker-compose.yml
@@ -375,7 +375,7 @@ CMD ["llmflow", "http_service.host=0.0.0.0", "http_service.port=8080"]
 version: '3.8'
 
 services:
-  llmflow:
+  flowllm:
     build: .
     ports:
       - "8080:8080"
@@ -393,11 +393,11 @@ services:
       - vector_data:/app/vector_store
     restart: unless-stopped
     networks:
-      - llmflow-net
+      - flowllm-net
 
-  llmflow-mcp:
+  flowllm-mcp:
     build: .
-    command: ["llmflow_mcp", "mcp_transport=stdio"]
+    command: ["flowllm_mcp", "mcp_transport=stdio"]
     environment:
       - LLM_API_KEY=${LLM_API_KEY}
       - LLM_BASE_URL=${LLM_BASE_URL}
@@ -411,7 +411,7 @@ services:
       - vector_data:/app/vector_store
     restart: unless-stopped
     networks:
-      - llmflow-net
+      - flowllm-net
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
@@ -425,7 +425,7 @@ services:
       - es_data:/usr/share/elasticsearch/data
     restart: unless-stopped
     networks:
-      - llmflow-net
+      - flowllm-net
 
   nginx:
     image: nginx:alpine
@@ -436,17 +436,17 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./ssl:/etc/nginx/ssl
     depends_on:
-      - llmflow
+      - flowllm
     restart: unless-stopped
     networks:
-      - llmflow-net
+      - flowllm-net
 
 volumes:
   es_data:
   vector_data:
 
 networks:
-  llmflow-net:
+  flowllm-net:
     driver: bridge
 ```
 
@@ -460,10 +460,10 @@ docker-compose build
 docker-compose up -d
 
 # View logs
-docker-compose logs -f llmflow
+docker-compose logs -f flowllm
 
 # Scale services
-docker-compose up -d --scale llmflow=3
+docker-compose up -d --scale flowllm=3
 ```
 
 ### Multi-Stage Build for Production
@@ -491,17 +491,17 @@ COPY --from=builder /app/dist/*.whl ./
 RUN pip install --no-cache-dir *.whl && rm *.whl
 
 # Create non-root user
-RUN useradd -m -u 1000 llmflow
-USER llmflow
+RUN useradd -m -u 1000 flowllm
+USER flowllm
 
 # Copy configuration
-COPY --chown=llmflow:llmflow config/ ./config/
+COPY --chown=flowllm:flowllm config/ ./config/
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-CMD ["llmflow", "--config-file=config/prod.yaml"]
+CMD ["flowllm", "--config-file=config/prod.yaml"]
 ```
 
 ## Cloud Deployment
@@ -514,7 +514,7 @@ Create `ecs-task-definition.json`:
 
 ```json
 {
-  "family": "llmflow",
+  "family": "flowllm",
   "networkMode": "awsvpc",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
@@ -523,8 +523,8 @@ Create `ecs-task-definition.json`:
   "taskRoleArn": "arn:aws:iam::account:role/ecsTaskRole",
   "containerDefinitions": [
     {
-      "name": "llmflow",
-      "image": "your-account.dkr.ecr.region.amazonaws.com/llmflow:latest",
+      "name": "flowllm",
+      "image": "your-account.dkr.ecr.region.amazonaws.com/flowllm:latest",
       "portMappings": [
         {
           "containerPort": 8080,
@@ -540,13 +540,13 @@ Create `ecs-task-definition.json`:
       "secrets": [
         {
           "name": "LLM_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:region:account:secret:llmflow/api-keys"
+          "valueFrom": "arn:aws:secretsmanager:region:account:secret:flowllm/api-keys"
         }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/llmflow",
+          "awslogs-group": "/ecs/flowllm",
           "awslogs-region": "us-west-2",
           "awslogs-stream-prefix": "ecs"
         }
@@ -565,26 +565,26 @@ Create `ecs-task-definition.json`:
 Deploy with Terraform:
 
 ```hcl
-resource "aws_ecs_cluster" "llmflow" {
-  name = "llmflow"
+resource "aws_ecs_cluster" "flowllm" {
+  name = "flowllm"
 }
 
-resource "aws_ecs_service" "llmflow" {
-  name            = "llmflow"
-  cluster         = aws_ecs_cluster.llmflow.id
-  task_definition = aws_ecs_task_definition.llmflow.arn
+resource "aws_ecs_service" "flowllm" {
+  name            = "flowllm"
+  cluster         = aws_ecs_cluster.flowllm.id
+  task_definition = aws_ecs_task_definition.flowllm.arn
   desired_count   = 3
   launch_type     = "FARGATE"
 
   network_configuration {
     subnets          = var.private_subnets
-    security_groups  = [aws_security_group.llmflow.id]
+    security_groups  = [aws_security_group.flowllm.id]
     assign_public_ip = false
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.llmflow.arn
-    container_name   = "llmflow"
+    target_group_arn = aws_lb_target_group.flowllm.arn
+    container_name   = "flowllm"
     container_port   = 8080
   }
 }
@@ -597,10 +597,11 @@ Create `lambda_handler.py`:
 ```python
 import json
 from mangum import Mangum
-from llmflow.app import app
+from flowllm.app import app
 
 # Create Lambda handler
 handler = Mangum(app, lifespan="off")
+
 
 def lambda_handler(event, context):
     """AWS Lambda handler"""
@@ -610,7 +611,7 @@ def lambda_handler(event, context):
 Create `serverless.yml`:
 
 ```yaml
-service: llmflow
+service: flowllm
 
 provider:
   name: aws
@@ -619,8 +620,8 @@ provider:
   timeout: 300
   memorySize: 1024
   environment:
-    LLM_API_KEY: ${ssm:/llmflow/llm-api-key}
-    EMBEDDING_API_KEY: ${ssm:/llmflow/embedding-api-key}
+    LLM_API_KEY: ${ssm:/flowllm/llm-api-key}
+    EMBEDDING_API_KEY: ${ssm:/flowllm/embedding-api-key}
 
 functions:
   api:
@@ -650,7 +651,7 @@ custom:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: llmflow
+  name: flowllm
 ```
 
 **configmap.yaml:**
@@ -658,8 +659,8 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: llmflow-config
-  namespace: llmflow
+  name: flowllm-config
+  namespace: flowllm
 data:
   config.yaml: |
     http_service:
@@ -681,8 +682,8 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: llmflow-secrets
-  namespace: llmflow
+  name: flowllm-secrets
+  namespace: flowllm
 type: Opaque
 data:
   llm-api-key: <base64-encoded-key>
@@ -694,33 +695,33 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: llmflow
-  namespace: llmflow
+  name: flowllm
+  namespace: flowllm
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: llmflow
+      app: flowllm
   template:
     metadata:
       labels:
-        app: llmflow
+        app: flowllm
     spec:
       containers:
-      - name: llmflow
-        image: your-registry/llmflow:latest
+      - name: flowllm
+        image: your-registry/flowllm:latest
         ports:
         - containerPort: 8080
         env:
         - name: LLM_API_KEY
           valueFrom:
             secretKeyRef:
-              name: llmflow-secrets
+              name: flowllm-secrets
               key: llm-api-key
         - name: EMBEDDING_API_KEY
           valueFrom:
             secretKeyRef:
-              name: llmflow-secrets
+              name: flowllm-secrets
               key: embedding-api-key
         volumeMounts:
         - name: config
@@ -747,7 +748,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: llmflow-config
+          name: flowllm-config
 ```
 
 **service.yaml:**
@@ -755,11 +756,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: llmflow-service
-  namespace: llmflow
+  name: flowllm-service
+  namespace: flowllm
 spec:
   selector:
-    app: llmflow
+    app: flowllm
   ports:
   - port: 80
     targetPort: 8080
@@ -771,25 +772,25 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: llmflow-ingress
-  namespace: llmflow
+  name: flowllm-ingress
+  namespace: flowllm
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   tls:
   - hosts:
-    - llmflow.yourdomain.com
-    secretName: llmflow-tls
+    - flowllm.yourdomain.com
+    secretName: flowllm-tls
   rules:
-  - host: llmflow.yourdomain.com
+  - host: flowllm.yourdomain.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: llmflow-service
+            name: flowllm-service
             port:
               number: 80
 ```
@@ -806,8 +807,8 @@ kubectl apply -f service.yaml
 kubectl apply -f ingress.yaml
 
 # Check status
-kubectl get pods -n llmflow
-kubectl logs -f deployment/llmflow -n llmflow
+kubectl get pods -n flowllm
+kubectl logs -f deployment/flowllm -n flowllm
 ```
 
 ## Scaling and Load Balancing
@@ -818,16 +819,16 @@ kubectl logs -f deployment/llmflow -n llmflow
 
 ```bash
 # Scale HTTP service
-docker-compose up -d --scale llmflow=5
+docker-compose up -d --scale flowllm=5
 
 # Update load balancer configuration
 # nginx.conf upstream block:
-upstream llmflow_backend {
-    server llmflow_1:8080;
-    server llmflow_2:8080;
-    server llmflow_3:8080;
-    server llmflow_4:8080;
-    server llmflow_5:8080;
+upstream flowllm_backend {
+    server flowllm_1:8080;
+    server flowllm_2:8080;
+    server flowllm_3:8080;
+    server flowllm_4:8080;
+    server flowllm_5:8080;
 }
 ```
 
@@ -837,13 +838,13 @@ upstream llmflow_backend {
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: llmflow-hpa
-  namespace: llmflow
+  name: flowllm-hpa
+  namespace: flowllm
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: llmflow
+    name: flowllm
   minReplicas: 3
   maxReplicas: 10
   metrics:
@@ -866,7 +867,7 @@ spec:
 #### Nginx Load Balancing
 
 ```nginx
-upstream llmflow_backend {
+upstream flowllm_backend {
     least_conn;
     server 10.0.1.10:8080 weight=1 max_fails=3 fail_timeout=30s;
     server 10.0.1.11:8080 weight=1 max_fails=3 fail_timeout=30s;
@@ -875,10 +876,10 @@ upstream llmflow_backend {
 
 server {
     listen 80;
-    server_name llmflow.yourdomain.com;
+    server_name flowllm.yourdomain.com;
 
     location / {
-        proxy_pass http://llmflow_backend;
+        proxy_pass http://flowllm_backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -892,7 +893,7 @@ server {
     
     location /health {
         access_log off;
-        proxy_pass http://llmflow_backend;
+        proxy_pass http://flowllm_backend;
     }
 }
 ```
@@ -911,16 +912,16 @@ defaults
     timeout server 50000ms
     option httplog
 
-frontend llmflow_frontend
+frontend flowllm_frontend
     bind *:80
-    default_backend llmflow_backend
+    default_backend flowllm_backend
 
-backend llmflow_backend
+backend flowllm_backend
     balance roundrobin
     option httpchk GET /health
-    server llmflow1 10.0.1.10:8080 check
-    server llmflow2 10.0.1.11:8080 check
-    server llmflow3 10.0.1.12:8080 check
+    server flowllm1 10.0.1.10:8080 check
+    server flowllm2 10.0.1.11:8080 check
+    server flowllm3 10.0.1.12:8080 check
 ```
 
 ## Monitoring and Logging
@@ -967,9 +968,9 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'llmflow'
+  - job_name: 'flowllm'
     static_configs:
-      - targets: ['llmflow:8080']
+      - targets: ['flowllm:8080']
     metrics_path: '/metrics'
     scrape_interval: 30s
 ```
@@ -1098,8 +1099,8 @@ def agent_endpoint(request: Request, agent_request: AgentRequest):
 FROM python:3.12-alpine
 
 # Don't run as root
-RUN adduser -D -s /bin/sh llmflow
-USER llmflow
+RUN adduser -D -s /bin/sh flowllm
+USER flowllm
 
 # Remove unnecessary packages
 RUN apk del build-dependencies
@@ -1116,7 +1117,7 @@ ENV PYTHONUNBUFFERED=1
 version: '3.8'
 
 services:
-  llmflow:
+  flowllm:
     networks:
       - frontend
       - backend
@@ -1140,7 +1141,7 @@ networks:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: llmflow-secrets
+  name: flowllm-secrets
 type: Opaque
 data:
   llm-api-key: <base64-encoded>
@@ -1159,7 +1160,7 @@ spec:
       auth:
         kubernetes:
           mountPath: "kubernetes"
-          role: "llmflow"
+          role: "flowllm"
 ```
 
 ## Troubleshooting
@@ -1173,13 +1174,13 @@ spec:
 **Diagnosis:**
 ```bash
 # Check service status
-systemctl status llmflow
+systemctl status flowllm
 
 # Check logs
-journalctl -u llmflow -f
+journalctl -u flowllm -f
 
 # Check configuration
-llmflow --validate-config
+flowllm --validate-config
 ```
 
 **Solutions:**
@@ -1196,10 +1197,10 @@ llmflow --validate-config
 ```bash
 # Monitor memory usage
 htop
-ps aux | grep llmflow
+ps aux | grep flowllm
 
 # Check for memory leaks
-valgrind --tool=memcheck python -m llmflow.app
+valgrind --tool=memcheck python -m flowllm.app
 ```
 
 **Solutions:**
@@ -1278,8 +1279,8 @@ vector_store:
 
 ```bash
 # Increase file descriptor limits
-echo "llmflow soft nofile 65536" >> /etc/security/limits.conf
-echo "llmflow hard nofile 65536" >> /etc/security/limits.conf
+echo "flowllm soft nofile 65536" >> /etc/security/limits.conf
+echo "flowllm hard nofile 65536" >> /etc/security/limits.conf
 
 # Optimize TCP settings
 echo 'net.core.somaxconn = 1024' >> /etc/sysctl.conf
@@ -1312,13 +1313,13 @@ def your_function():
 
 ```bash
 # Debug running container
-docker exec -it llmflow_container /bin/bash
+docker exec -it flowllm_container /bin/bash
 
 # Check container logs
-docker logs -f llmflow_container
+docker logs -f flowllm_container
 
 # Monitor container resources
-docker stats llmflow_container
+docker stats flowllm_container
 ```
 
 For more detailed troubleshooting, see the [Configuration Guide](configuration.md) and [Operations Development](operations.md) documentation.

@@ -1,9 +1,9 @@
-# LLMFlow
+# flowllm
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](https://opensource.org/licenses/Apache-2.0)
 
-LLMFlow is a flexible large language model workflow framework that provides a modular pipeline architecture for building complex AI applications. The framework supports multiple LLM providers, vector storage backends, and tool integrations, enabling you to easily build Retrieval-Augmented Generation (RAG), intelligent agents, and other AI-powered applications.
+flowllm is a flexible large language model workflow framework that provides a modular pipeline architecture for building complex AI applications. The framework supports multiple LLM providers, vector storage backends, and tool integrations, enabling you to easily build Retrieval-Augmented Generation (RAG), intelligent agents, and other AI-powered applications.
 
 ## 🚀 Key Features
 
@@ -47,8 +47,8 @@ LLMFlow is a flexible large language model workflow framework that provides a mo
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/llmflow.git
-cd llmflow
+git clone https://github.com/your-username/flowllm.git
+cd flowllm
 
 # Install dependencies
 pip install -e .
@@ -87,7 +87,7 @@ DASHSCOPE_API_KEY=sk-your-dashscope-key
 ### 1. Start HTTP Service
 
 ```bash
-llmflow \
+flowllm \
   http_service.port=8001 \
   llm.default.model_name=qwen3-32b \
   embedding_model.default.model_name=text-embedding-v4 \
@@ -97,7 +97,7 @@ llmflow \
 ### 2. Start MCP Server
 
 ```bash
-llmflow_mcp \
+flowllm_mcp \
   mcp_transport=stdio \
   http_service.port=8001 \
   llm.default.model_name=qwen3-32b \
@@ -134,7 +134,7 @@ print(response.json())
 
 ### Pipeline Configuration Syntax
 
-LLMFlow uses an intuitive string syntax to define operation pipelines:
+flowllm uses an intuitive string syntax to define operation pipelines:
 
 ```yaml
 api:
@@ -217,7 +217,7 @@ vector_store:
          └───────────────────────┼───────────────────────┘
                                  │
                     ┌─────────────────┐
-                    │  LLMFlow Service │
+                    │  flowllm Service │
                     └─────────────────┘
                              │
                     ┌─────────────────┐
@@ -248,8 +248,9 @@ Request → Configuration → Pipeline → Operations → Tools/VectorStore → 
 ### Custom Operations
 
 ```python
-from llmflow.op import OP_REGISTRY
-from llmflow.op.base_op import BaseOp
+from flowllm.op import OP_REGISTRY
+from flowllm.op.base_op import BaseOp
+
 
 @OP_REGISTRY.register()
 class CustomOp(BaseOp):
@@ -257,10 +258,10 @@ class CustomOp(BaseOp):
         # Implement your custom logic
         request = self.context.request
         response = self.context.response
-        
+
         # Process request
         result = self.process_data(request.query)
-        
+
         # Update response
         response.metadata["custom_result"] = result
 ```
@@ -268,8 +269,9 @@ class CustomOp(BaseOp):
 ### Custom Tools
 
 ```python
-from llmflow.tool import TOOL_REGISTRY
-from llmflow.tool.base_tool import BaseTool
+from flowllm.tool import TOOL_REGISTRY
+from flowllm.tool.base_tool import BaseTool
+
 
 @TOOL_REGISTRY.register()
 class CustomTool(BaseTool):
@@ -282,7 +284,7 @@ class CustomTool(BaseTool):
         },
         "required": ["input"]
     }
-    
+
     def _execute(self, input: str, **kwargs):
         # Implement tool logic
         return f"Processing result: {input}"
@@ -291,15 +293,16 @@ class CustomTool(BaseTool):
 ### Custom Vector Stores
 
 ```python
-from llmflow.vector_store import VECTOR_STORE_REGISTRY
-from llmflow.vector_store.base_vector_store import BaseVectorStore
+from flowllm.vector_store import VECTOR_STORE_REGISTRY
+from flowllm.vector_store.base_vector_store import BaseVectorStore
+
 
 @VECTOR_STORE_REGISTRY.register("custom_store")
 class CustomVectorStore(BaseVectorStore):
     def search(self, query: str, top_k: int = 10, **kwargs):
         # Implement search logic
         pass
-    
+
     def insert(self, nodes: List[VectorNode], **kwargs):
         # Implement insertion logic
         pass
@@ -315,7 +318,7 @@ pytest
 pytest tests/test_pipeline.py
 
 # Generate coverage report
-pytest --cov=llmflow tests/
+pytest --cov=flowllm tests/
 ```
 
 ## 🤝 Contributing
@@ -338,11 +341,11 @@ pip install -e ".[dev]"
 pre-commit install
 
 # Run code formatting
-black llmflow/
-isort llmflow/
+black flowllm/
+isort flowllm/
 
 # Run type checking
-mypy llmflow/
+mypy flowllm/
 ```
 
 ## 📚 Documentation
@@ -355,7 +358,7 @@ mypy llmflow/
 
 ## 🐛 Bug Reports
 
-If you find bugs or have feature requests, please create an issue on [GitHub Issues](https://github.com/your-username/llmflow/issues).
+If you find bugs or have feature requests, please create an issue on [GitHub Issues](https://github.com/your-username/flowllm/issues).
 
 ## 📄 License
 
@@ -363,8 +366,8 @@ This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE
 
 ## 🙏 Acknowledgments
 
-Thanks to all developers and community members who have contributed to the LLMFlow project.
+Thanks to all developers and community members who have contributed to the flowllm project.
 
 ---
 
-**LLMFlow** - Making AI workflow development simple and powerful 🚀
+**flowllm** - Making AI workflow development simple and powerful 🚀

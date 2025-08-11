@@ -1,6 +1,6 @@
 # API Documentation
 
-This document provides comprehensive information about LLMFlow's REST API endpoints and MCP server functionality.
+This document provides comprehensive information about flowllm's REST API endpoints and MCP server functionality.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@ This document provides comprehensive information about LLMFlow's REST API endpoi
 
 ## HTTP API Endpoints
 
-LLMFlow provides a FastAPI-based HTTP service with multiple endpoints for different functionalities.
+flowllm provides a FastAPI-based HTTP service with multiple endpoints for different functionalities.
 
 ### Base URL
 
@@ -225,12 +225,12 @@ Execute ReAct-style agent workflows with tool calling capabilities.
 
 ## MCP Server
 
-LLMFlow also provides a Model Context Protocol (MCP) server for integration with MCP-compatible clients.
+flowllm also provides a Model Context Protocol (MCP) server for integration with MCP-compatible clients.
 
 ### Starting the MCP Server
 
 ```bash
-llmflow_mcp \
+flowllm_mcp \
   mcp_transport=stdio \
   llm.default.model_name=qwen3-32b \
   embedding_model.default.model_name=text-embedding-v4
@@ -366,7 +366,7 @@ Experiences returned from operations:
 
 ## Authentication
 
-Currently, LLMFlow uses API key-based authentication configured through environment variables:
+Currently, flowllm uses API key-based authentication configured through environment variables:
 
 ```bash
 # LLM Provider Authentication
@@ -396,7 +396,7 @@ The HTTP service includes built-in rate limiting:
 ```python
 import requests
 
-class LLMFlowClient:
+class flowllmClient:
     def __init__(self, base_url="http://localhost:8001"):
         self.base_url = base_url
     
@@ -423,7 +423,7 @@ class LLMFlowClient:
         return response.json()
 
 # Usage
-client = LLMFlowClient()
+client = flowllmClient()
 result = client.retrieve("What is machine learning?")
 print(result)
 ```

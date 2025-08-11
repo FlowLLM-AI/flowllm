@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "llmflow"
+name = "flowllm"
 version = "0.1.0"
 description = "build llm flow"
 license = { file = "LICENSE" }
@@ -34,16 +34,16 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["llmflow*"]
+include = ["flowllm*"]
 exclude = ["cookbook*"]
 
 [tool.setuptools.package-data]
-llmflow = [
+flowllm = [
     "config/*.yaml", 
     "op/**/*.yaml",
 ]
 
 [project.scripts]
-llmflow = "llmflow.app:main"
-llmflow_mcp = "llmflow.mcp_server:main"
+flowllm = "flowllm.app:main"
+flowllm_mcp = "flowllm.mcp_server:main"
 

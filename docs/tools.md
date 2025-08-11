@@ -1,6 +1,6 @@
 # Tools Development Guide
 
-This guide covers how to develop custom tools in LLMFlow, including understanding the tool system, implementing tool functionality, and integrating with LLM operations.
+This guide covers how to develop custom tools in flowllm, including understanding the tool system, implementing tool functionality, and integrating with LLM operations.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ This guide covers how to develop custom tools in LLMFlow, including understandin
 
 ## Tool Overview
 
-Tools in LLMFlow are callable functions that LLMs can use to interact with external systems, execute code, search the web, or perform other tasks. They provide a standardized interface for extending LLM capabilities.
+Tools in flowllm are callable functions that LLMs can use to interact with external systems, execute code, search the web, or perform other tasks. They provide a standardized interface for extending LLM capabilities.
 
 ### Tool Architecture
 
@@ -56,8 +56,9 @@ Tools in LLMFlow are callable functions that LLMs can use to interact with exter
 All tools inherit from `BaseTool`, which provides core functionality:
 
 ```python
-from llmflow.tool.base_tool import BaseTool
-from llmflow.tool import TOOL_REGISTRY
+from flowllm.tool.base_tool import BaseTool
+from flowllm.tool import TOOL_REGISTRY
+
 
 @TOOL_REGISTRY.register()
 class CustomTool(BaseTool):
@@ -70,7 +71,7 @@ class CustomTool(BaseTool):
         },
         "required": ["param"]
     }
-    
+
     def _execute(self, param: str, **kwargs):
         # Your tool logic here
         return f"Result: {param}"
@@ -262,8 +263,9 @@ class MCPTool(BaseTool):
 ### Step 1: Define Tool Class
 
 ```python
-from llmflow.tool import TOOL_REGISTRY
-from llmflow.tool.base_tool import BaseTool
+from flowllm.tool import TOOL_REGISTRY
+from flowllm.tool.base_tool import BaseTool
+
 
 @TOOL_REGISTRY.register()
 class DatabaseTool(BaseTool):
@@ -277,19 +279,19 @@ class DatabaseTool(BaseTool):
                 "description": "SQL query to execute"
             },
             "database": {
-                "type": "string", 
+                "type": "string",
                 "description": "Database name",
                 "default": "main"
             }
         },
         "required": ["query"]
     }
-    
+
     def _execute(self, query: str, database: str = "main", **kwargs):
         # Validate query for safety
         if not self._is_safe_query(query):
             raise ValueError("Unsafe query detected")
-        
+
         # Execute query
         connection = self._get_connection(database)
         try:
@@ -299,12 +301,12 @@ class DatabaseTool(BaseTool):
         except Exception as e:
             self.success = False
             return {"error": str(e)}
-    
+
     def _is_safe_query(self, query: str) -> bool:
         # Implement safety checks
         dangerous_keywords = ["DROP", "DELETE", "UPDATE", "INSERT", "ALTER"]
         return not any(keyword in query.upper() for keyword in dangerous_keywords)
-    
+
     def _get_connection(self, database: str):
         # Return database connection
         import sqlite3
@@ -610,31 +612,32 @@ class TestDatabaseTool:
 
 ```python
 import pytest
-from llmflow.tool import TOOL_REGISTRY
+from flowllm.tool import TOOL_REGISTRY
+
 
 class TestToolIntegration:
     def test_tool_registration(self):
         assert "database_query" in TOOL_REGISTRY
         tool_class = TOOL_REGISTRY["database_query"]
         assert issubclass(tool_class, BaseTool)
-    
+
     def test_tool_schema_validation(self):
         tool = DatabaseTool()
         schema = tool.parameters
-        
+
         assert "type" in schema
         assert "properties" in schema
         assert "query" in schema["properties"]
         assert "required" in schema
-    
+
     def test_tool_execution_flow(self):
         tool = DatabaseTool()
-        
+
         # Test successful execution
         result = tool.execute(query="SELECT 1")
         assert tool.success
         assert "results" in result
-        
+
         # Test error handling
         tool.reset()
         result = tool.execute(query="INVALID SQL")

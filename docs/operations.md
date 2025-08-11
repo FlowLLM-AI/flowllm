@@ -1,6 +1,6 @@
 # Operations Development Guide
 
-This guide covers how to develop custom operations in LLMFlow, including understanding the operation lifecycle, implementing custom logic, and integrating with the pipeline system.
+This guide covers how to develop custom operations in flowllm, including understanding the operation lifecycle, implementing custom logic, and integrating with the pipeline system.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ This guide covers how to develop custom operations in LLMFlow, including underst
 
 ## Operation Overview
 
-Operations are the core building blocks of LLMFlow pipelines. They encapsulate specific functionality and can be chained together to create complex workflows. Each operation:
+Operations are the core building blocks of flowllm pipelines. They encapsulate specific functionality and can be chained together to create complex workflows. Each operation:
 
 - Inherits from `BaseOp`
 - Has access to the pipeline context
@@ -50,8 +50,9 @@ Operations are the core building blocks of LLMFlow pipelines. They encapsulate s
 All operations inherit from `BaseOp`, which provides core functionality:
 
 ```python
-from llmflow.op.base_op import BaseOp
-from llmflow.op import OP_REGISTRY
+from flowllm.op.base_op import BaseOp
+from flowllm.op import OP_REGISTRY
+
 
 @OP_REGISTRY.register()
 class CustomOp(BaseOp):
@@ -286,28 +287,29 @@ class UpdateVectorStoreOp(BaseOp):
 ### Step 1: Define Operation Class
 
 ```python
-from llmflow.op import OP_REGISTRY
-from llmflow.op.base_op import BaseOp
+from flowllm.op import OP_REGISTRY
+from flowllm.op.base_op import BaseOp
+
 
 @OP_REGISTRY.register("my_custom_op")  # Optional: specify registry name
 class MyCustomOp(BaseOp):
     current_path: str = __file__  # For prompt file resolution
-    
+
     def execute(self):
         # Access request and response
         request = self.context.request
         response = self.context.response
-        
+
         # Access configuration parameters
         param1 = self.op_params.get("param1", "default_value")
         param2 = self.op_params.get("param2", 42)
-        
+
         # Your custom logic here
         result = self.process_data(request.query, param1, param2)
-        
+
         # Update response
         response.metadata["custom_result"] = result
-    
+
     def process_data(self, query: str, param1: str, param2: int):
         # Custom processing logic
         return f"Processed {query} with {param1} and {param2}"
@@ -524,9 +526,10 @@ class MultiVectorStoreOp(BaseOp):
 ```python
 import pytest
 from unittest.mock import Mock, MagicMock
-from llmflow.pipeline.pipeline_context import PipelineContext
-from llmflow.schema.app_config import OpConfig
+from flowllm.pipeline.pipeline_context import PipelineContext
+from flowllm.schema.app_config import OpConfig
 from your_module import MyCustomOp
+
 
 class TestMyCustomOp:
     def setup_method(self):
@@ -535,30 +538,30 @@ class TestMyCustomOp:
         self.context.request = Mock()
         self.context.response = Mock()
         self.context.app_config = Mock()
-        
+
         # Mock operation config
         self.op_config = Mock(spec=OpConfig)
         self.op_config.params = {"param1": "test_value", "param2": 123}
         self.op_config.llm = "default"
         self.op_config.vector_store = "default"
-        
+
         # Create operation instance
         self.op = MyCustomOp(context=self.context, op_config=self.op_config)
-    
+
     def test_execute_basic(self):
         # Setup request
         self.context.request.query = "test query"
-        
+
         # Execute operation
         self.op.execute()
-        
+
         # Verify response was updated
         assert "custom_result" in self.op.context.response.metadata
-    
+
     def test_process_data(self):
         result = self.op.process_data("test", "param1", 42)
         assert "Processed test with param1 and 42" == result
-    
+
     @pytest.mark.asyncio
     async def test_parallel_execution(self):
         # Test parallel task execution
@@ -566,10 +569,10 @@ class TestMyCustomOp:
         future_mock = Mock()
         future_mock.result.return_value = "task_result"
         self.context.thread_pool.submit.return_value = future_mock
-        
+
         # Submit task
         future = self.op.submit_task(lambda x: x, "test")
-        
+
         # Verify task was submitted
         self.context.thread_pool.submit.assert_called_once()
         assert future == future_mock
@@ -579,23 +582,24 @@ class TestMyCustomOp:
 
 ```python
 import pytest
-from llmflow.service.llmflow_service import LLMFlowService
-from llmflow.schema.request import AgentRequest
+from flowllm.service.flowllm_service import flowllmService
+from flowllm.schema.request import AgentRequest
+
 
 class TestOperationIntegration:
     def setup_method(self):
         # Use test configuration
-        self.service = LLMFlowService(["--config-file=test_config.yaml"])
-    
+        self.service = flowllmService(["--config-file=test_config.yaml"])
+
     def test_custom_operation_in_pipeline(self):
         request = AgentRequest(
             query="test query",
             workspace_id="test",
             config={}
         )
-        
+
         response = self.service(api="custom_pipeline", request=request)
-        
+
         assert response.success
         assert "custom_result" in response.metadata
 ```
