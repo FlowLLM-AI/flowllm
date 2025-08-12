@@ -56,8 +56,8 @@ Tools in flowllm are callable functions that LLMs can use to interact with exter
 All tools inherit from `BaseTool`, which provides core functionality:
 
 ```python
-from flowllm.tool.base_tool import BaseTool
-from flowllm.tool import TOOL_REGISTRY
+from old.tool.base_tool import BaseTool
+from old.tool import TOOL_REGISTRY
 
 
 @TOOL_REGISTRY.register()
@@ -263,8 +263,8 @@ class MCPTool(BaseTool):
 ### Step 1: Define Tool Class
 
 ```python
-from flowllm.tool import TOOL_REGISTRY
-from flowllm.tool.base_tool import BaseTool
+from old.tool import TOOL_REGISTRY
+from old.tool.base_tool import BaseTool
 
 
 @TOOL_REGISTRY.register()
@@ -612,7 +612,7 @@ class TestDatabaseTool:
 
 ```python
 import pytest
-from flowllm.tool import TOOL_REGISTRY
+from old.tool import TOOL_REGISTRY
 
 
 class TestToolIntegration:

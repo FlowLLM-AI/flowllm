@@ -50,8 +50,8 @@ Operations are the core building blocks of flowllm pipelines. They encapsulate s
 All operations inherit from `BaseOp`, which provides core functionality:
 
 ```python
-from flowllm.op.base_op import BaseOp
-from flowllm.op import OP_REGISTRY
+from old.op.base_op import BaseOp
+from old.op import OP_REGISTRY
 
 
 @OP_REGISTRY.register()
@@ -287,8 +287,8 @@ class UpdateVectorStoreOp(BaseOp):
 ### Step 1: Define Operation Class
 
 ```python
-from flowllm.op import OP_REGISTRY
-from flowllm.op.base_op import BaseOp
+from old.op import OP_REGISTRY
+from old.op.base_op import BaseOp
 
 
 @OP_REGISTRY.register("my_custom_op")  # Optional: specify registry name
@@ -526,8 +526,8 @@ class MultiVectorStoreOp(BaseOp):
 ```python
 import pytest
 from unittest.mock import Mock, MagicMock
-from flowllm.pipeline.pipeline_context import PipelineContext
-from flowllm.schema.app_config import OpConfig
+from old.pipeline.pipeline_context import PipelineContext
+from old.schema.app_config import OpConfig
 from your_module import MyCustomOp
 
 
@@ -582,8 +582,8 @@ class TestMyCustomOp:
 
 ```python
 import pytest
-from flowllm.service.flowllm_service import flowllmService
-from flowllm.schema.request import AgentRequest
+from old.service.flowllm_service import flowllmService
+from old.schema.request import AgentRequest
 
 
 class TestOperationIntegration:

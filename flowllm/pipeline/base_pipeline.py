@@ -11,7 +11,7 @@ from old.utils.timer import Timer, timer
 
 
 class Pipeline:
-    seq_symbol: str = ">>"
+    seq_symbol: str = "->"
     parallel_symbol: str = "|"
 
     def __init__(self, pipeline: str, context: PipelineContext):

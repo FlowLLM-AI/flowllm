@@ -6,7 +6,7 @@ from loguru import logger
 from pydantic import Field, BaseModel
 
 from flowllm.schema.message import Message
-from flowllm.tool.base_tool import BaseTool
+from flowllm.schema.tool_call import ToolCall
 
 
 class BaseLLM(BaseModel, ABC):
@@ -40,7 +40,7 @@ class BaseLLM(BaseModel, ABC):
     max_retries: int = Field(default=5, description="Maximum number of retry attempts on failure")
     raise_exception: bool = Field(default=False, description="Whether to raise exceptions or return default values")
 
-    def stream_chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
+    def stream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
         Stream chat completions from the LLM.
         
@@ -57,7 +57,7 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def stream_print(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
+    def stream_print(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
         Stream chat completions and print them to console in real-time.
         
@@ -71,7 +71,7 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def _chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs) -> Message:
+    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs) -> Message:
         """
         Internal method to perform a single chat completion.
         
@@ -89,7 +89,7 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def chat(self, messages: List[Message], tools: List[BaseTool] = None, callback_fn: Callable = None,
+    def chat(self, messages: List[Message], tools: List[ToolCall] = None, callback_fn: Callable = None,
              default_value=None, **kwargs):
         """
         Perform a chat completion with retry logic and error handling.

@@ -1,21 +1,21 @@
 import os
-from typing import List
+from typing import List, Dict
 
-from dotenv import load_dotenv
 from loguru import logger
 from openai import OpenAI
 from openai.types import CompletionUsage
 from pydantic import Field, PrivateAttr, model_validator
 
+from flowllm.context.registry_context import register_llm
 from flowllm.enumeration.chunk_enum import ChunkEnum
 from flowllm.enumeration.role import Role
-from flowllm.llm import LLM_REGISTRY
 from flowllm.llm.base_llm import BaseLLM
-from flowllm.schema.message import Message, ToolCall
-from flowllm.tool.base_tool import BaseTool
+from flowllm.schema.message import Message
+from flowllm.schema.tool_call import ToolCall
+from flowllm.utils.common_utils import load_env
 
 
-@LLM_REGISTRY.register("openai_compatible")
+@register_llm("openai_compatible")
 class OpenAICompatibleBaseLLM(BaseLLM):
     """
     OpenAI-compatible LLM implementation supporting streaming and tool calls.
@@ -48,7 +48,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
         self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         return self
 
-    def stream_chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
+    def stream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
         Stream chat completions from OpenAI-compatible API.
         
@@ -69,7 +69,11 @@ class OpenAICompatibleBaseLLM(BaseLLM):
         """
         for i in range(self.max_retries):
             try:
-                # Create streaming completion request
+                extra_body = {}
+                if self.enable_thinking:
+                    # qwen3 params
+                    extra_body["enable_thinking"] = True
+
                 completion = self._client.chat.completions.create(
                     model=self.model_name,
                     messages=[x.simple_dump() for x in messages],
@@ -78,14 +82,14 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                     stream=True,
                     stream_options=self.stream_options,
                     temperature=self.temperature,
-                    extra_body={"enable_thinking": self.enable_thinking},  # Enable reasoning mode
-                    tools=[x.simple_dump() for x in tools] if tools else None,
+                    extra_body=extra_body,
+                    tools=[x.simple_input_dump() for x in tools] if tools else None,
                     tool_choice=self.tool_choice,
                     parallel_tool_calls=self.parallel_tool_calls)
 
                 # Initialize tool call tracking
-                ret_tools = []  # Accumulate tool calls across chunks
-                is_answering = False  # Track when model starts answering
+                ret_tools: List[ToolCall] = []  # Accumulate tool calls across chunks
+                is_answering: bool = False  # Track when model starts answering
 
                 # Process each chunk in the streaming response
                 for chunk in completion:
@@ -130,7 +134,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
 
                 # Yield completed tool calls after streaming finishes
                 if ret_tools:
-                    tool_dict = {x.name: x for x in tools} if tools else {}
+                    tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
                     for tool in ret_tools:
                         # Only yield tool calls that correspond to available tools
                         if tool.name not in tool_dict:
@@ -138,7 +142,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
 
                         yield tool, ChunkEnum.TOOL
 
-                return  # Success - exit retry loop
+                return
 
             except Exception as e:
                 logger.exception(f"stream chat with model={self.model_name} encounter error with e={e.args}")
@@ -149,7 +153,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                 else:
                     yield e.args, ChunkEnum.ERROR
 
-    def _chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs) -> Message:
+    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs) -> Message:
         """
         Perform a complete chat completion by aggregating streaming chunks.
         
@@ -189,7 +193,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                        content=answer_content,
                        tool_calls=tool_calls)
 
-    def stream_print(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
+    def stream_print(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
         Stream chat completions with formatted console output.
         
@@ -245,39 +249,12 @@ class OpenAICompatibleBaseLLM(BaseLLM):
 
 
 def main():
-    """
-    Demo function to test the OpenAI-compatible LLM implementation.
-    
-    This function demonstrates:
-    1. Basic chat without tools
-    2. Chat with tool usage (search and code tools)
-    3. Real-time streaming output formatting
-    """
-    from flowllm.tool.dashscope_search_tool import DashscopeSearchTool
-    from flowllm.tool.code_tool import CodeTool
-    from flowllm.enumeration.role import Role
+    load_env()
 
-    # Load environment variables for API credentials
-    load_dotenv()
-
-    # Initialize the LLM with a specific model
     model_name = "qwen-max-2025-01-25"
     llm = OpenAICompatibleBaseLLM(model_name=model_name)
-
-    # Set up available tools
-    tools: List[BaseTool] = [DashscopeSearchTool(), CodeTool()]
-
-    # Test 1: Simple greeting without tools
-    print("=== Test 1: Simple Chat ===")
     llm.stream_print([Message(role=Role.USER, content="hello")], [])
-
-    print("\n" + "=" * 20)
-
-    # Test 2: Complex query that might use tools
-    print("\n=== Test 2: Chat with Tools ===")
-    llm.stream_print([Message(role=Role.USER, content="What's the weather like in Beijing today?")], tools)
 
 
 if __name__ == "__main__":
     main()
-    # Launch with: python -m flowllm.llm.openai_compatible_llm

@@ -1,81 +1,79 @@
+"""
+BaseOp operator overloading implementation
+
+Supported operators:
+- op1 >> op2: Sequential execution, output of op1 becomes input of op2
+- op1 | op2: Parallel execution, both operations use the same input, returns list of results
+- Mixed calls: op1 >> (op2 | op3) >> op4
+
+Usage examples:
+    # Sequential execution
+    result = op1 >> op2 >> op3
+    
+    # Parallel execution
+    results = op1 | op2 | op3
+    
+    # Mixed calls
+    result = op1 >> (op2 | op3) >> op4
+    result = op1 >> (op1 | (op2 >> op3)) >> op4
+"""
+
 from abc import abstractmethod, ABC
 from concurrent.futures import Future
-from pathlib import Path
 from typing import List
 
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.embedding_model import EMBEDDING_MODEL_REGISTRY
-from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
-from flowllm.llm import LLM_REGISTRY
-from flowllm.llm.base_llm import BaseLLM
-from flowllm.op.prompt_mixin import PromptMixin
-from flowllm.pipeline.pipeline_context import PipelineContext
-from flowllm.schema.app_config import OpConfig, LLMConfig, EmbeddingModelConfig
+from flowllm.context.pipeline_context import PipelineContext
+from flowllm.context.service_context import ServiceContext
 from flowllm.utils.common_utils import camel_to_snake
 from flowllm.utils.timer import Timer
-from flowllm.vector_store.base_vector_store import BaseVectorStore
 
 
-class BaseOp(PromptMixin, ABC):
-    current_path: str = __file__
+class BaseOp(ABC):
 
-    def __init__(self, context: PipelineContext, op_config: OpConfig):
+    def __init__(self,
+                 name: str = "",
+                 pipeline_context: PipelineContext | None = None,
+                 service_context: ServiceContext | None = None,
+                 raise_exception: bool = True,
+                 **kwargs):
         super().__init__()
-        self.context: PipelineContext = context
-        self.op_config: OpConfig = op_config
-        self.timer = Timer(name=self.simple_name)
 
-        self._prepare_prompt()
-
-        self._llm: BaseLLM | None = None
-        self._embedding_model: BaseEmbeddingModel | None = None
-        self._vector_store: BaseVectorStore | None = None
+        self.name: str = name or camel_to_snake(self.__class__.__name__)
+        self.pipeline_context: PipelineContext | None = pipeline_context
+        self.service_context: ServiceContext | None = service_context
+        self.raise_exception: bool = raise_exception
+        self.op_params: dict = kwargs
 
         self.task_list: List[Future] = []
-
-    def _prepare_prompt(self):
-        if self.op_config.prompt_file_path:
-            prompt_file_path = self.op_config.prompt_file_path
-        else:
-            prompt_name = self.simple_name.replace("_op", "_prompt.yaml")
-            prompt_file_path = Path(self.current_path).parent / prompt_name
-
-        # Load custom prompts from prompt file
-        self.load_prompt_by_file(prompt_file_path=prompt_file_path)
-
-        # Load custom prompts from config
-        self.load_prompt_dict(prompt_dict=self.op_config.prompt_dict)
-
-    @property
-    def simple_name(self) -> str:
-        return camel_to_snake(self.__class__.__name__)
-
-    @property
-    def op_params(self) -> dict:
-        return self.op_config.params
+        self.timer = Timer(name=self.name)
 
     @abstractmethod
     def execute(self):
         ...
 
-    def execute_wrap(self):
-        try:
-            with self.timer:
+    def __call__(self, *args, **kwargs):
+        with self.timer:
+            if self.raise_exception:
                 return self.execute()
 
-        except Exception as e:
-            logger.exception(f"op={self.simple_name} execute failed, error={e.args}")
+            else:
+                try:
+                    return self.execute()
+
+                except Exception as e:
+                    logger.exception(f"op={self.name} execute failed, error={e.args}")
 
     def submit_task(self, fn, *args, **kwargs):
-        task = self.context.thread_pool.submit(fn, *args, **kwargs)
+        task = self.service_context.thread_pool.submit(fn, *args, **kwargs)
         self.task_list.append(task)
         return self
 
     def join_task(self, task_desc: str = None) -> list:
         result = []
-        for task in tqdm(self.task_list, desc=task_desc or (self.simple_name + ".join_task")):
+        for task in tqdm(self.task_list, desc=task_desc or self.name):
             t_result = task.result()
             if t_result:
                 if isinstance(t_result, list):
@@ -85,41 +83,90 @@ class BaseOp(PromptMixin, ABC):
         self.task_list.clear()
         return result
 
-    @property
-    def llm(self) -> BaseLLM:
-        if self._llm is None:
-            llm_name: str = self.op_config.llm
-            assert llm_name in self.context.app_config.llm, f"llm={llm_name} not found in app_config.llm!"
-            llm_config: LLMConfig = self.context.app_config.llm[llm_name]
+    def __rshift__(self, op: "BaseOp"):
+        from flowllm.op.sequential_op import SequentialOp
 
-            assert llm_config.backend in LLM_REGISTRY, f"llm.backend={llm_config.backend} not found in LLM_REGISTRY!"
-            llm_cls = LLM_REGISTRY[llm_config.backend]
-            self._llm = llm_cls(model_name=llm_config.model_name, **llm_config.params)
+        sequential_op = SequentialOp(ops=[self],
+                                     pipeline_context=self.pipeline_context,
+                                     service_context=self.service_context)
 
-        return self._llm
+        if isinstance(op, SequentialOp):
+            sequential_op.ops.extend(op.ops)
+        else:
+            sequential_op.ops.append(op)
+        return sequential_op
 
-    @property
-    def embedding_model(self):
-        if self._embedding_model is None:
-            embedding_model_name: str = self.op_config.embedding_model
-            assert embedding_model_name in self.context.app_config.embedding_model, \
-                f"embedding_model={embedding_model_name} not found in app_config.embedding_model!"
-            embedding_model_config: EmbeddingModelConfig = self.context.app_config.embedding_model[embedding_model_name]
+    def __or__(self, op: "BaseOp"):
+        from flowllm.op.parallel_op import ParallelOp
 
-            assert embedding_model_config.backend in EMBEDDING_MODEL_REGISTRY, \
-                f"embedding_model.backend={embedding_model_config.backend} not found in EMBEDDING_MODEL_REGISTRY!"
-            embedding_model_cls = EMBEDDING_MODEL_REGISTRY[embedding_model_config.backend]
-            self._embedding_model = embedding_model_cls(model_name=embedding_model_config.model_name,
-                                                        **embedding_model_config.params)
+        parallel_op = ParallelOp(ops=[self],
+                                 pipeline_context=self.pipeline_context,
+                                 service_context=self.service_context)
 
-        return self._embedding_model
+        if isinstance(op, ParallelOp):
+            parallel_op.ops.extend(op.ops)
+        else:
+            parallel_op.ops.append(op)
 
-    @property
-    def vector_store(self):
-        if self._vector_store is None:
-            vector_store_name: str = self.op_config.vector_store
-            assert vector_store_name in self.context.vector_store_dict, \
-                f"vector_store={vector_store_name} not found in vector_store_dict!"
-            self._vector_store = self.context.vector_store_dict[vector_store_name]
+        return parallel_op
 
-        return self._vector_store
+
+def run1():
+    """Basic test"""
+
+    class MockOp(BaseOp):
+        def execute(self):
+            logger.info(f"op={self.name} execute")
+
+    mock_op = MockOp()
+    mock_op()
+
+
+def run2():
+    """Test operator overloading functionality"""
+    from concurrent.futures import ThreadPoolExecutor
+    from flowllm.context.service_context import ServiceContext
+    import time
+
+    class TestOp(BaseOp):
+
+        def execute(self, data=None):
+            time.sleep(0.1)  # Simulate execution time
+            op_result = f"{self.name}({data})" if data else self.name
+            logger.info(f"Executing {op_result}")
+            return op_result
+
+    # Create service_context for parallel execution
+    service_context = ServiceContext(thread_pool=ThreadPoolExecutor(max_workers=4))
+
+    # Create test operations
+    op1 = TestOp("op1", service_context=service_context)
+    op2 = TestOp("op2", service_context=service_context)
+    op3 = TestOp("op3", service_context=service_context)
+    op4 = TestOp("op4", service_context=service_context)
+
+    logger.info("=== Testing sequential execution op1 >> op2 ===")
+    sequential = op1 >> op2
+    result = sequential()
+    logger.info(f"Sequential result: {result}")
+
+    logger.info("=== Testing parallel execution op1 | op2 ===")
+    parallel = op1 | op2
+    result = parallel()
+    logger.info(f"Parallel result: {result}")
+
+    logger.info("=== Testing mixed calls op1 >> (op2 | op3) >> op4 ===")
+    mixed = op1 >> (op2 | op3) >> op4
+    result = mixed()
+    logger.info(f"Mixed result: {result}")
+
+    logger.info("=== Testing complex mixed calls op1 >> (op1 | (op2 >> op3)) >> op4 ===")
+    complex_mixed = op1 >> (op1 | (op2 >> op3)) >> op4
+    result = complex_mixed()
+    logger.info(f"Complex mixed result: {result}")
+
+
+if __name__ == "__main__":
+    run1()
+    print("\n" + "=" * 50 + "\n")
+    run2()

@@ -1,10 +1,9 @@
 import time
-from typing import Optional
 
 from loguru import logger
 
 
-class Timer:
+class Timer(object):
     def __init__(self, name: str, use_ms: bool = False, stack_level: int = 2):
         self.name: str = name
         self.use_ms: bool = use_ms
@@ -16,7 +15,7 @@ class Timer:
 
     def __enter__(self, *args, **kwargs):
         self.time_start = time.time()
-        logger.info(f"========== timer.{self.name} start ==========", stacklevel=self.stack_level)
+        logger.info(f"---------- enter {self.name} ----------", stacklevel=self.stack_level)
         return self
 
     def __exit__(self, *args):
@@ -27,10 +26,10 @@ class Timer:
         else:
             time_str = f"{self.time_cost:.3f}s"
 
-        logger.info(f"========== timer.{self.name} end, time_cost={time_str} ==========", stacklevel=self.stack_level)
+        logger.info(f"---------- leave {self.name} [{time_str}] ----------", stacklevel=self.stack_level)
 
 
-def timer(name: Optional[str] = None, use_ms: bool = False, stack_level: int = 2):
+def timer(name: str = None, use_ms: bool = False, stack_level: int = 2):
     def decorator(func):
         def wrapper(*args, **kwargs):
             with Timer(name=name or func.__name__, use_ms=use_ms, stack_level=stack_level + 1):

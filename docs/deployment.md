@@ -597,7 +597,7 @@ Create `lambda_handler.py`:
 ```python
 import json
 from mangum import Mangum
-from flowllm.app import app
+from old.app import app
 
 # Create Lambda handler
 handler = Mangum(app, lifespan="off")
