@@ -25,8 +25,8 @@ from typing import List
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.context.pipeline_context import PipelineContext
-from flowllm.context.service_context import ServiceContext
+from flowllm.context.flow_context import FlowContext
+from flowllm.context.service_context import C
 from flowllm.utils.common_utils import camel_to_snake
 from flowllm.utils.timer import Timer
 
@@ -35,15 +35,14 @@ class BaseOp(ABC):
 
     def __init__(self,
                  name: str = "",
-                 pipeline_context: PipelineContext | None = None,
-                 service_context: ServiceContext | None = None,
+                 flow_context: FlowContext | None = None,
                  raise_exception: bool = True,
                  **kwargs):
+
         super().__init__()
 
         self.name: str = name or camel_to_snake(self.__class__.__name__)
-        self.pipeline_context: PipelineContext | None = pipeline_context
-        self.service_context: ServiceContext | None = service_context
+        self.flow_context: FlowContext | None = flow_context
         self.raise_exception: bool = raise_exception
         self.op_params: dict = kwargs
 
@@ -67,7 +66,7 @@ class BaseOp(ABC):
                     logger.exception(f"op={self.name} execute failed, error={e.args}")
 
     def submit_task(self, fn, *args, **kwargs):
-        task = self.service_context.thread_pool.submit(fn, *args, **kwargs)
+        task = C.thread_pool.submit(fn, *args, **kwargs)
         self.task_list.append(task)
         return self
 
@@ -86,9 +85,7 @@ class BaseOp(ABC):
     def __rshift__(self, op: "BaseOp"):
         from flowllm.op.sequential_op import SequentialOp
 
-        sequential_op = SequentialOp(ops=[self],
-                                     pipeline_context=self.pipeline_context,
-                                     service_context=self.service_context)
+        sequential_op = SequentialOp(ops=[self], flow_context=self.flow_context)
 
         if isinstance(op, SequentialOp):
             sequential_op.ops.extend(op.ops)
@@ -99,9 +96,7 @@ class BaseOp(ABC):
     def __or__(self, op: "BaseOp"):
         from flowllm.op.parallel_op import ParallelOp
 
-        parallel_op = ParallelOp(ops=[self],
-                                 pipeline_context=self.pipeline_context,
-                                 service_context=self.service_context)
+        parallel_op = ParallelOp(ops=[self], flow_context=self.flow_context)
 
         if isinstance(op, ParallelOp):
             parallel_op.ops.extend(op.ops)
@@ -125,7 +120,6 @@ def run1():
 def run2():
     """Test operator overloading functionality"""
     from concurrent.futures import ThreadPoolExecutor
-    from flowllm.context.service_context import ServiceContext
     import time
 
     class TestOp(BaseOp):
@@ -137,13 +131,13 @@ def run2():
             return op_result
 
     # Create service_context for parallel execution
-    service_context = ServiceContext(thread_pool=ThreadPoolExecutor(max_workers=4))
+    C["thread_pool"] = ThreadPoolExecutor(max_workers=4)
 
     # Create test operations
-    op1 = TestOp("op1", service_context=service_context)
-    op2 = TestOp("op2", service_context=service_context)
-    op3 = TestOp("op3", service_context=service_context)
-    op4 = TestOp("op4", service_context=service_context)
+    op1 = TestOp("op1")
+    op2 = TestOp("op2")
+    op3 = TestOp("op3")
+    op4 = TestOp("op4")
 
     logger.info("=== Testing sequential execution op1 >> op2 ===")
     sequential = op1 >> op2

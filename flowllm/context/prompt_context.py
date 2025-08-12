@@ -3,11 +3,11 @@ from pathlib import Path
 import yaml
 from loguru import logger
 
+from flowllm.context.base_context import BaseContext
+from flowllm.context.service_context import C
 
-class PromptMixin:
 
-    def __init__(self):
-        self._prompt_dict: dict = {}
+class PromptContext(BaseContext):
 
     def load_prompt_by_file(self, prompt_file_path: Path | str = None):
         if prompt_file_path is None:
@@ -29,16 +29,24 @@ class PromptMixin:
 
         for key, value in prompt_dict.items():
             if isinstance(value, str):
-                if key in self._prompt_dict:
-                    self._prompt_dict[key] = value
+                if key in self._data:
+                    self._data[key] = value
                     logger.warning(f"prompt_dict key={key} overwrite!")
 
                 else:
-                    self._prompt_dict[key] = value
+                    self._data[key] = value
                     logger.info(f"add prompt_dict key={key}")
 
-    def prompt_format(self, prompt_name: str, **kwargs):
-        prompt = self._prompt_dict[prompt_name]
+    def get_prompt(self, prompt_name: str):
+        language: str = C.language
+        if language:
+            return self._data.get(prompt_name + "_" + language.strip())
+        else:
+            return self._data.get(prompt_name)
+
+    def prompt_format(self, prompt_name: str, **kwargs) -> str:
+        assert prompt_name in self._data, f"prompt_name={prompt_name} not found."
+        prompt = self._data[prompt_name]
 
         flag_kwargs = {k: v for k, v in kwargs.items() if isinstance(v, bool)}
         other_kwargs = {k: v for k, v in kwargs.items() if not isinstance(v, bool)}
@@ -69,6 +77,3 @@ class PromptMixin:
             prompt = prompt.format(**other_kwargs)
 
         return prompt
-
-    def get_prompt(self, key: str):
-        return self._prompt_dict[key]

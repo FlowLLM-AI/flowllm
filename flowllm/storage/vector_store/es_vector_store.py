@@ -6,14 +6,13 @@ from elasticsearch.helpers import bulk
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
-from old.embedding_model.openai_compatible_embedding_model import OpenAICompatibleEmbeddingModel
-from old.schema.vector_node import VectorNode
-from old.vector_store import VECTOR_STORE_REGISTRY
-from old.vector_store.base_vector_store import BaseVectorStore
+from flowllm.context.registry_context import register_vector_store
+from flowllm.schema.vector_node import VectorNode
+from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 
 
-@VECTOR_STORE_REGISTRY.register("elasticsearch")
-class EsVectorStore(BaseVectorStore):
+@register_vector_store("elasticsearch")
+class EsVectorStore(LocalVectorStore):
     hosts: str | List[str] = Field(default_factory=lambda: os.getenv("ES_HOSTS", "http://localhost:9200"))
     basic_auth: str | Tuple[str, str] | None = Field(default=None)
     retrieve_filters: List[dict] = []
@@ -162,8 +161,10 @@ class EsVectorStore(BaseVectorStore):
 
 
 def main():
-    from dotenv import load_dotenv
-    load_dotenv()
+    from flowllm.utils.common_utils import load_env
+    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
+
+    load_env()
 
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "rag_nodes_index"
@@ -224,4 +225,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # launch with: python -m flowllm.storage.es_vector_store

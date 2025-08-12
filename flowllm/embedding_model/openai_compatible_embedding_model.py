@@ -4,12 +4,11 @@ from typing import Literal, List
 from openai import OpenAI
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.registry_context import register_embedding_model
+from flowllm.context.service_context import C
 from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
-from flowllm.utils.common_utils import load_env
 
 
-@register_embedding_model("openai_compatible")
+@C.register_embedding_model("openai_compatible")
 class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
     """
     OpenAI-compatible embedding model implementation.
@@ -81,6 +80,8 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
 
 
 def main():
+    from flowllm.utils.common_utils import load_env
+
     load_env()
     model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     res1 = model.get_embeddings(

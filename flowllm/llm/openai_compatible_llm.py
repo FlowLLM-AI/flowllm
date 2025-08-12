@@ -12,7 +12,6 @@ from flowllm.enumeration.role import Role
 from flowllm.llm.base_llm import BaseLLM
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
-from flowllm.utils.common_utils import load_env
 
 
 @register_llm("openai_compatible")
@@ -249,6 +248,8 @@ class OpenAICompatibleBaseLLM(BaseLLM):
 
 
 def main():
+    from flowllm.utils.common_utils import load_env
+
     load_env()
 
     model_name = "qwen-max-2025-01-25"

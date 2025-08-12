@@ -31,7 +31,7 @@ class BaseContext:
     def __repr__(self):
         return f"{self.__class__.__name__}({self._data!r})"
 
-    def dump(self):
+    def dump(self) -> dict:
         return self._data
 
     @property

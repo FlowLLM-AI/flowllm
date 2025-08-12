@@ -6,17 +6,16 @@ from chromadb.config import Settings
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
-from old.embedding_model.openai_compatible_embedding_model import OpenAICompatibleEmbeddingModel
-from old.schema.vector_node import VectorNode
-from old.vector_store import VECTOR_STORE_REGISTRY
-from old.vector_store.base_vector_store import BaseVectorStore
+from flowllm.context.registry_context import register_vector_store
+from flowllm.schema.vector_node import VectorNode
+from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 
 
-@VECTOR_STORE_REGISTRY.register("chroma")
-class ChromaVectorStore(BaseVectorStore):
+@register_vector_store("chroma")
+class ChromaVectorStore(LocalVectorStore):
     store_dir: str = Field(default="./chroma_vector_store")
     collections: dict = Field(default_factory=dict)
-    _client: chromadb.Client = PrivateAttr()
+    _client: chromadb.ClientAPI = PrivateAttr()
 
     @model_validator(mode="after")
     def init_client(self):
@@ -97,8 +96,10 @@ class ChromaVectorStore(BaseVectorStore):
 
 
 def main():
-    from dotenv import load_dotenv
-    load_dotenv()
+    from flowllm.utils.common_utils import load_env
+    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
+
+    load_env()
 
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "chroma_test_index"

@@ -22,30 +22,3 @@ class RegistryContext(BaseContext):
             return cls
 
         return decorator
-
-
-EMBEDDING_MODEL_REGISTRY = RegistryContext()
-LLM_REGISTRY = RegistryContext()
-VECTOR_STORE_REGISTRY = RegistryContext()
-OP_REGISTRY = RegistryContext()
-PIPELINE_REGISTRY = RegistryContext()
-
-
-def register_embedding_model(name: str = ""):
-    return EMBEDDING_MODEL_REGISTRY.register(name=name)
-
-
-def register_llm(name: str = ""):
-    return LLM_REGISTRY.register(name=name)
-
-
-def register_vector_store(name: str = ""):
-    return VECTOR_STORE_REGISTRY.register(name=name)
-
-
-def register_op(name: str = ""):
-    return OP_REGISTRY.register(name=name)
-
-
-def register_pipeline(name: str = ""):
-    return PIPELINE_REGISTRY.register(name=name)

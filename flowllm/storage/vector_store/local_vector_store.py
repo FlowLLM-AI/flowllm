@@ -1,18 +1,20 @@
+import fcntl
+import json
 import math
 from pathlib import Path
 from typing import List, Iterable
 
 from loguru import logger
 from pydantic import Field, model_validator
+from tqdm import tqdm
 
-from old.embedding_model.openai_compatible_embedding_model import OpenAICompatibleEmbeddingModel
-from old.schema.vector_node import VectorNode
-from old.vector_store import VECTOR_STORE_REGISTRY
-from old.vector_store.base_vector_store import BaseVectorStore
+from flowllm.context.registry_context import register_vector_store
+from flowllm.schema.vector_node import VectorNode
+from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
 
 
-@VECTOR_STORE_REGISTRY.register("local_file")
-class FileVectorStore(BaseVectorStore):
+@register_vector_store("local")
+class LocalVectorStore(BaseVectorStore):
     store_dir: str = Field(default="./file_vector_store")
 
     @model_validator(mode="after")
@@ -20,6 +22,55 @@ class FileVectorStore(BaseVectorStore):
         store_path = Path(self.store_dir)
         store_path.mkdir(parents=True, exist_ok=True)
         return self
+
+    @staticmethod
+    def _load_from_path(workspace_id: str, path: str | Path, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
+        workspace_path = Path(path) / f"{workspace_id}.jsonl"
+        if not workspace_path.exists():
+            logger.warning(f"workspace_path={workspace_path} is not exists!")
+            return
+
+        with workspace_path.open() as f:
+            fcntl.flock(f, fcntl.LOCK_SH)
+            try:
+                for line in tqdm(f, desc="load from path"):
+                    if line.strip():
+                        node_dict = json.loads(line.strip())
+                        if callback_fn:
+                            node = callback_fn(node_dict)
+                        else:
+                            node = VectorNode(**node_dict, **kwargs)
+                        node.workspace_id = workspace_id
+                        yield node
+
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
+
+    @staticmethod
+    def _dump_to_path(nodes: Iterable[VectorNode], workspace_id: str, path: str | Path = "", callback_fn=None,
+                      ensure_ascii: bool = False, **kwargs):
+        dump_path: Path = Path(path)
+        dump_path.mkdir(parents=True, exist_ok=True)
+        dump_file = dump_path / f"{workspace_id}.jsonl"
+
+        count = 0
+        with dump_file.open("w") as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                for node in tqdm(nodes, desc="dump to path"):
+                    node.workspace_id = workspace_id
+                    if callback_fn:
+                        node_dict = callback_fn(node)
+                    else:
+                        node_dict = node.model_dump()
+                    assert isinstance(node_dict, dict)
+                    f.write(json.dumps(node_dict, ensure_ascii=ensure_ascii, **kwargs))
+                    f.write("\n")
+                    count += 1
+
+                return {"size": count}
+            finally:
+                fcntl.flock(f, fcntl.LOCK_UN)
 
     @property
     def store_path(self) -> Path:
@@ -40,6 +91,54 @@ class FileVectorStore(BaseVectorStore):
     def _iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
         for i, node in enumerate(self._load_from_path(path=self.store_path, workspace_id=workspace_id, **kwargs)):
             yield node
+
+    def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
+        if not self.exist_workspace(workspace_id=workspace_id, **kwargs):
+            logger.warning(f"workspace_id={workspace_id} is not exist!")
+            return {}
+
+        return self._dump_to_path(nodes=self._iter_workspace_nodes(workspace_id=workspace_id, **kwargs),
+                                  workspace_id=workspace_id,
+                                  path=path,
+                                  callback_fn=callback_fn,
+                                  **kwargs)
+
+    def load_workspace(self, workspace_id: str, path: str | Path = "", nodes: List[VectorNode] = None, callback_fn=None,
+                       **kwargs):
+        if self.exist_workspace(workspace_id, **kwargs):
+            self.delete_workspace(workspace_id=workspace_id, **kwargs)
+            logger.info(f"delete workspace_id={workspace_id}")
+
+        self.create_workspace(workspace_id=workspace_id, **kwargs)
+
+        all_nodes: List[VectorNode] = []
+        if nodes:
+            all_nodes.extend(nodes)
+        for node in self._load_from_path(path=path, workspace_id=workspace_id, callback_fn=callback_fn, **kwargs):
+            all_nodes.append(node)
+        self.insert(nodes=all_nodes, workspace_id=workspace_id, **kwargs)
+        return {"size": len(all_nodes)}
+
+    def copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):
+        if not self.exist_workspace(workspace_id=src_workspace_id, **kwargs):
+            logger.warning(f"src_workspace_id={src_workspace_id} is not exist!")
+            return {}
+
+        if not self.exist_workspace(dest_workspace_id, **kwargs):
+            self.create_workspace(workspace_id=dest_workspace_id, **kwargs)
+
+        nodes = []
+        node_size = 0
+        for node in self._iter_workspace_nodes(workspace_id=src_workspace_id, **kwargs):
+            nodes.append(node)
+            node_size += 1
+            if len(nodes) >= self.batch_size:
+                self.insert(nodes=nodes, workspace_id=dest_workspace_id, **kwargs)
+                nodes.clear()
+
+        if nodes:
+            self.insert(nodes=nodes, workspace_id=dest_workspace_id, **kwargs)
+        return {"size": node_size}
 
     @staticmethod
     def calculate_similarity(query_vector: List[float], node_vector: List[float]):
@@ -106,12 +205,14 @@ class FileVectorStore(BaseVectorStore):
 
 
 def main():
-    from dotenv import load_dotenv
-    load_dotenv()
+    from flowllm.utils.common_utils import load_env
+    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
+
+    load_env()
 
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "rag_nodes_index"
-    client = FileVectorStore(embedding_model=embedding_model)
+    client = LocalVectorStore(embedding_model=embedding_model)
     client.delete_workspace(workspace_id)
     client.create_workspace(workspace_id)
 
@@ -160,4 +261,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # launch with: python -m flowllm.storage.file_vector_store
