@@ -15,6 +15,6 @@ class AgentResponse(BaseResponse):
     messages: List[Message] = Field(default_factory=list)
 
 
-class FinSupplyResponse(BaseResponse):
+class FinResponse(BaseResponse):
     answer: str = Field(default="")
     path: str = Field(default="")

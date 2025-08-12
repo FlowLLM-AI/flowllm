@@ -6,9 +6,9 @@ from flowllm.schema.message import Message
 
 
 class BaseRequest(BaseModel):
+    flow_name: str = Field(default="default")
     workspace_id: str = Field(default="default")
     config: dict = Field(default_factory=dict)
-    flow_name: str = Field(default="default")
 
 
 class AgentRequest(BaseRequest):
@@ -16,6 +16,7 @@ class AgentRequest(BaseRequest):
     messages: List[Message] = Field(default_factory=list)
 
 
-class FinSupplyRequest(BaseRequest):
+class FinRequest(BaseRequest):
     query: str = Field(default="")
-    codes: List[str] = Field(default_factory=list)
+    messages: List[Message] = Field(default_factory=list)
+    code_infos: dict = Field(default_factory=dict)

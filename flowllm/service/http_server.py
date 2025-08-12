@@ -1,42 +1,36 @@
 import sys
 
 import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI
 
-from experiencemaker.schema.request import RetrieverRequest, SummarizerRequest, VectorStoreRequest, AgentRequest
-from experiencemaker.schema.response import RetrieverResponse, SummarizerResponse, VectorStoreResponse, AgentResponse
-from experiencemaker.service.experience_maker_service import ExperienceMakerService
+from flowllm.schema.request import AgentRequest, FinRequest
+from flowllm.schema.response import AgentResponse, FinResponse
+from flowllm.service.flowllm_service import FlowLLMService
+from flowllm.utils.common_utils import load_env
 
-load_dotenv()
+load_env()
 
 app = FastAPI()
-service = ExperienceMakerService(sys.argv[1:])
+service = FlowLLMService(sys.argv[1:])
 
 
 @app.post('/agent', response_model=AgentResponse)
 def call_agent(request: AgentRequest):
     return service(api="agent", request=request)
 
-@app.post('/agent', response_model=AgentResponse)
-def call_fin_supply(request: AgentRequest):
-    return service(api="agent", request=request)
+
+@app.post('/fin', response_model=FinResponse)
+def call_fin(request: FinRequest):
+    return service(api="fin", request=request)
 
 
 def main():
     uvicorn.run(app=app,
-                host=service.http_service_config.host,
-                port=service.http_service_config.port,
-                timeout_keep_alive=service.http_service_config.timeout_keep_alive,
-                limit_concurrency=service.http_service_config.limit_concurrency)
+                host=service.http_config.host,
+                port=service.http_config.port,
+                timeout_keep_alive=service.http_config.timeout_keep_alive,
+                limit_concurrency=service.http_config.limit_concurrency)
 
 
 if __name__ == "__main__":
     main()
-
-# start with:
-# experiencemaker \
-#   http_service.port=8001 \
-#   llm.default.model_name=qwen3-32b \
-#   embedding_model.default.model_name=text-embedding-v4 \
-#   vector_store.default.backend=local_file

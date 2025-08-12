@@ -6,12 +6,12 @@ from elasticsearch.helpers import bulk
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.registry_context import register_vector_store
+from flowllm.context.service_context import C
 from flowllm.schema.vector_node import VectorNode
 from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 
 
-@register_vector_store("elasticsearch")
+@C.register_vector_store("elasticsearch")
 class EsVectorStore(LocalVectorStore):
     hosts: str | List[str] = Field(default_factory=lambda: os.getenv("ES_HOSTS", "http://localhost:9200"))
     basic_auth: str | Tuple[str, str] | None = Field(default=None)

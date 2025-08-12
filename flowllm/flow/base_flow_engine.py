@@ -22,5 +22,5 @@ class BaseFlowEngine(ABC):
     def _execute_flow(self):
         raise NotImplementedError
 
-    def execute(self):
+    def __call__(self):
         ...

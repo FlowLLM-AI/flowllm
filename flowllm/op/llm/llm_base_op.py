@@ -2,7 +2,7 @@ from abc import ABC
 from pathlib import Path
 
 from flowllm.context.prompt_context import PromptContext
-from flowllm.context.registry_context import get_llm, get_embedding_model
+from flowllm.context.service_context import C
 from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
 from flowllm.llm.base_llm import BaseLLM
 from flowllm.op.base_op import BaseOp
@@ -37,7 +37,7 @@ class BaseLLMOp(BaseOp, ABC):
     def llm(self) -> BaseLLM:
         if isinstance(self._llm, str):
             llm_config: LLMConfig = self.flow_context.service_config.llm[self._llm]
-            llm_cls = get_llm(llm_config.backend)
+            llm_cls = C.resolve_llm(llm_config.backend)
             self._llm = llm_cls(model_name=llm_config.model_name, **llm_config.params)
 
         return self._llm
@@ -47,7 +47,7 @@ class BaseLLMOp(BaseOp, ABC):
         if isinstance(self._embedding_model, str):
             embedding_model_config: EmbeddingModelConfig = \
                 self.flow_context.service_config.embedding_model[self._embedding_model]
-            embedding_model_cls = get_embedding_model(embedding_model_config.backend)
+            embedding_model_cls = C.resolve_embedding_model(embedding_model_config.backend)
             self._embedding_model = embedding_model_cls(model_name=embedding_model_config.model_name,
                                                         **embedding_model_config.params)
 
@@ -56,7 +56,7 @@ class BaseLLMOp(BaseOp, ABC):
     @property
     def vector_store(self) -> BaseVectorStore:
         if isinstance(self._vector_store, str):
-            self._vector_store = self.service_context.get_vector_store(self._vector_store)
+            self._vector_store = C.get_vector_store(self._vector_store)
         return self._vector_store
 
     def prompt_format(self, prompt_name: str, **kwargs) -> str:

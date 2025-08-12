@@ -20,6 +20,9 @@ class ServiceContext(BaseContext):
         self.op_registry = RegistryContext()
         self.flow_registry = RegistryContext()
 
+    def update(self, **kwargs):
+        self._data.update(kwargs)
+
     @property
     def language(self) -> str:
         return self._data.get("language")
@@ -41,6 +44,13 @@ class ServiceContext(BaseContext):
         if name in vector_store_dict:
             return vector_store_dict[name]
         raise KeyError(f"vector store {name} not found")
+
+    def set_vector_store(self, name: str, vector_store: BaseVectorStore):
+        if "vector_store_dict" not in self._data:
+            self.set_vector_stores({})
+
+        vector_store_dict: dict = self._data.get("vector_store_dict")
+        vector_store_dict[name] = vector_store
 
     def set_vector_stores(self, vector_store_dict: dict):
         self._data["vector_store_dict"] = vector_store_dict

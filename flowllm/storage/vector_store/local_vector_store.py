@@ -8,12 +8,12 @@ from loguru import logger
 from pydantic import Field, model_validator
 from tqdm import tqdm
 
-from flowllm.context.registry_context import register_vector_store
+from flowllm.context.service_context import C
 from flowllm.schema.vector_node import VectorNode
 from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
 
 
-@register_vector_store("local")
+@C.register_vector_store("local")
 class LocalVectorStore(BaseVectorStore):
     store_dir: str = Field(default="./file_vector_store")
 

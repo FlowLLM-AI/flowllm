@@ -6,12 +6,12 @@ from chromadb.config import Settings
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.registry_context import register_vector_store
+from flowllm.context.service_context import C
 from flowllm.schema.vector_node import VectorNode
 from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 
 
-@register_vector_store("chroma")
+@C.register_vector_store("chroma")
 class ChromaVectorStore(LocalVectorStore):
     store_dir: str = Field(default="./chroma_vector_store")
     collections: dict = Field(default_factory=dict)
