@@ -8,8 +8,8 @@ from loguru import logger
 from pydantic import BaseModel, Field
 from tqdm import tqdm
 
-from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
-from flowllm.schema.vector_node import VectorNode
+from old.embedding_model.base_embedding_model import BaseEmbeddingModel
+from old.schema.vector_node import VectorNode
 
 
 class BaseVectorStore(BaseModel, ABC):
