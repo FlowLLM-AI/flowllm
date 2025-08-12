@@ -4,24 +4,25 @@ Test script for SimpleFlow implementation
 Demonstrates parsing and execution of flow expressions
 """
 
-import sys
 import os
-from concurrent.futures import ThreadPoolExecutor
+import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('.'))
 
-from flowllm.flow.simple_flow import SimpleFlow
-from flowllm.context.pipeline_context import FlowContext
-from flowllm.context.service_context import ServiceContext
+from flowllm.flow.simple_flow_engine import SimpleFlowEngine
+from flowllm.context.flow_context import FlowContext
+from flowllm.context.service_context import C
 from flowllm.op.base_op import BaseOp
+from flowllm.schema.service_config import ServiceConfig, OpConfig
 
 
 class TestOp(BaseOp):
     """Test operation for demonstration purposes"""
-    
-    def execute(self, data=None):
+
+    def execute(self):
         # Simulate some processing time
         time.sleep(0.1)
         result = f"{self.name}_result"
@@ -31,27 +32,27 @@ class TestOp(BaseOp):
 
 def create_test_context():
     """Create test contexts with sample operations"""
-    
-    # Create service context with thread pool for parallel execution
-    service_context = ServiceContext(thread_pool=ThreadPoolExecutor(max_workers=4))
-    
-    # Create test operations
-    op1 = TestOp("op1", service_context=service_context)
-    op2 = TestOp("op2", service_context=service_context)
-    op3 = TestOp("op3", service_context=service_context)
-    op4 = TestOp("op4", service_context=service_context)
-    
-    # Create pipeline context with operation dictionary
-    pipeline_context = FlowContext(
-        op_dict={
-            "op1": op1,
-            "op2": op2,
-            "op3": op3,
-            "op4": op4
+
+    # Setup thread pool for parallel execution
+    C["thread_pool"] = ThreadPoolExecutor(max_workers=4)
+
+    # Register TestOp in the service context
+    C.op_registry.register("test_op")(TestOp)
+
+    # Create service config with op configurations
+    service_config = ServiceConfig(
+        op={
+            "op1": OpConfig(backend="test_op"),
+            "op2": OpConfig(backend="test_op"),
+            "op3": OpConfig(backend="test_op"),
+            "op4": OpConfig(backend="test_op")
         }
     )
-    
-    return pipeline_context, service_context
+
+    # Create flow context
+    flow_context = FlowContext(service_config=service_config)
+
+    return flow_context
 
 
 def test_simple_expression():
@@ -59,18 +60,15 @@ def test_simple_expression():
     print("\n" + "="*60)
     print("TEST 1: Simple sequential expression 'op1 >> op2'")
     print("="*60)
-    
-    pipeline_context, service_context = create_test_context()
-    
-    flow = SimpleFlow(
+
+    flow_context = create_test_context()
+
+    flow = SimpleFlowEngine(
         flow_name="simple_sequential",
         flow_content="op1 >> op2",
-        pipeline_context=pipeline_context,
-        service_context=service_context
-    )
-    
-    flow.print_flow()
-    result = flow.execute_flow()
+        flow_context=flow_context)
+
+    result = flow()
     print(f"Final result: {result}")
 
 
@@ -79,18 +77,15 @@ def test_parallel_expression():
     print("\n" + "="*60)
     print("TEST 2: Parallel expression 'op1 | op2'")
     print("="*60)
-    
-    pipeline_context, service_context = create_test_context()
-    
-    flow = SimpleFlow(
+
+    flow_context = create_test_context()
+
+    flow = SimpleFlowEngine(
         flow_name="simple_parallel",
         flow_content="op1 | op2",
-        pipeline_context=pipeline_context,
-        service_context=service_context
-    )
-    
-    flow.print_flow()
-    result = flow.execute_flow()
+        flow_context=flow_context)
+
+    result = flow()
     print(f"Final result: {result}")
 
 
@@ -99,18 +94,15 @@ def test_mixed_expression():
     print("\n" + "="*60)
     print("TEST 3: Mixed expression 'op1 >> (op2 | op3) >> op4'")
     print("="*60)
-    
-    pipeline_context, service_context = create_test_context()
-    
-    flow = SimpleFlow(
+
+    flow_context = create_test_context()
+
+    flow = SimpleFlowEngine(
         flow_name="mixed_flow",
         flow_content="op1 >> (op2 | op3) >> op4",
-        pipeline_context=pipeline_context,
-        service_context=service_context
-    )
-    
-    flow.print_flow()
-    result = flow.execute_flow()
+        flow_context=flow_context)
+
+    result = flow()
     print(f"Final result: {result}")
 
 
@@ -119,18 +111,15 @@ def test_complex_expression():
     print("\n" + "="*60)
     print("TEST 4: Complex expression 'op1 >> (op1 | (op2 >> op3)) >> op4'")
     print("="*60)
-    
-    pipeline_context, service_context = create_test_context()
-    
-    flow = SimpleFlow(
+
+    flow_context = create_test_context()
+
+    flow = SimpleFlowEngine(
         flow_name="complex_flow",
         flow_content="op1 >> (op1 | (op2 >> op3)) >> op4",
-        pipeline_context=pipeline_context,
-        service_context=service_context
-    )
-    
-    flow.print_flow()
-    result = flow.execute_flow()
+        flow_context=flow_context)
+
+    result = flow()
     print(f"Final result: {result}")
 
 
