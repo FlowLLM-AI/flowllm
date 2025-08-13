@@ -135,15 +135,17 @@ class AkshareDataOp(BaseOp):
     def get_code_flow(self, code: str):
         stock_individual_fund_flow_df = ak.stock_individual_fund_flow(stock=code, market="sh")
         # print(stock_individual_fund_flow_df)
+        line = {}
         for line in stock_individual_fund_flow_df.to_dict(orient="records"):
-            return line
-        return {}
+            ...
+        return line
 
     def get_code_basic_financial(self, code: str):
         stock_financial_abstract_ths_df = ak.stock_financial_abstract_ths(symbol=code, indicator="按报告期")
+        line = {}
         for line in stock_financial_abstract_ths_df.to_dict(orient="records"):
-            return line
-        return {}
+            ...
+        return line
 
     def get_code_news(self, code: str):
         stock_news_em_df = ak.stock_news_em(symbol=code)

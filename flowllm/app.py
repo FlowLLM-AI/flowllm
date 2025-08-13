@@ -4,6 +4,7 @@ import json
 from fastmcp import FastMCP
 from fastmcp.client import Client
 from fastmcp.tools import FunctionTool
+from mcp import Tool
 
 from flowllm.op.akshare.akshare_op import AkshareDataOp
 from flowllm.utils.common_utils import load_env
@@ -22,9 +23,6 @@ tools = [
                                name="get_code_infos",
                                description="可以根据A股的股票代码获取公司的对应信息"),
 
-    FunctionTool.from_function(fn=op.get_code_infos,
-                               name="get_code_infos",
-                               description="可以根据A股的股票代码获取公司的对应信息"),
 
     FunctionTool.from_function(fn=op.get_code_current_info,
                                name="get_code_current_info",
@@ -52,51 +50,51 @@ tools = [
 """),
     FunctionTool.from_function(fn=op.get_code_flow,
                                name="get_code_flow",
-                               description="可以根据A股的股票代码获取资金的流入流出情况"),
+                               description="可以根据A股的股票代码获取资金的流入流出情况T+1"),
     FunctionTool.from_function(fn=op.get_code_basic_financial,
                                name="get_code_basic_financial",
                                description="可以根据A股的股票代码获取公司最新的财务情况"),
     FunctionTool.from_function(fn=op.get_code_news,
                                name="get_code_news",
-                               description="可以根据A股的股票代码获取公司最新的新闻，注意新闻的生效时间"),
+                               description="可以根据A股的股票代码获取公司最新的最多3条新闻，注意新闻的生效时间"),
 ]
 
 for tool in tools:
     mcp.add_tool(tool)
 
 
-def main():
-    mcp.run()
-    # mcp.run(transport="sse", port=8001, host="0.0.0.0")
-
-
-if __name__ == "__main__":
-    main()
-
-
-# async def main():
-#     """Example usage of MCPClient"""
-#     async with Client(mcp) as client:
-#         # List available tools
-#         tools: list[Tool] = await client.list_tools()
-#         print("Available tools:")
-#         for t in tools:
-#             print(t.model_dump_json(indent=2))
-#
-#         result1 = await client.call_tool("get_stock_name_and_code_by_query", arguments={"query":"帮我分析一下阿里巴巴"})
-#         result2 = await client.call_tool("get_code_infos", arguments={"code":"000001"})
-#         result3 = await client.call_tool("get_code_current_info", arguments={"code": "000001"})
-#         result4 = await client.call_tool("get_code_flow", arguments={"code": "000001"})
-#         result5 = await client.call_tool("get_code_basic_financial", arguments={"code": "000001"})
-#         result6 = await client.call_tool("get_code_news", arguments={"code": "000001"})
-#
-#         print(json.dumps(json.loads(result1.content[0].text), indent=2, ensure_ascii=False))
-#         print(json.dumps(json.loads(result2.content[0].text), indent=2, ensure_ascii=False))
-#         print(json.dumps(json.loads(result3.content[0].text), indent=2, ensure_ascii=False))
-#         print(json.dumps(json.loads(result4.content[0].text), indent=2, ensure_ascii=False))
-#         print(json.dumps(json.loads(result5.content[0].text), indent=2, ensure_ascii=False))
-#         print(json.dumps(json.loads(result6.content[0].text), indent=2, ensure_ascii=False))
+# def main():
+#     mcp.run()
+#     # mcp.run(transport="sse", port=8001, host="0.0.0.0")
 #
 #
 # if __name__ == "__main__":
-#     asyncio.run(main())
+#     main()
+
+
+async def main():
+    """Example usage of MCPClient"""
+    async with Client(mcp) as client:
+        # List available tools
+        tools: list[Tool] = await client.list_tools()
+        print("Available tools:")
+        for t in tools:
+            print(t.model_dump_json(indent=2))
+
+        # result1 = await client.call_tool("get_stock_name_and_code_by_query", arguments={"query":"帮我分析一下茅台和五粮液"})
+        # result2 = await client.call_tool("get_code_infos", arguments={"code":"000001"})
+        result3 = await client.call_tool("get_code_current_info", arguments={"code": "000001"})
+        result4 = await client.call_tool("get_code_flow", arguments={"code": "000001"})
+        result5 = await client.call_tool("get_code_basic_financial", arguments={"code": "000001"})
+        # result6 = await client.call_tool("get_code_news", arguments={"code": "000001"})
+
+        # print(json.dumps(json.loads(result1.content[0].text), indent=2, ensure_ascii=False))
+        # print(json.dumps(json.loads(result2.content[0].text), indent=2, ensure_ascii=False))
+        print(json.dumps(json.loads(result3.content[0].text), indent=2, ensure_ascii=False))
+        print(json.dumps(json.loads(result4.content[0].text), indent=2, ensure_ascii=False))
+        print(json.dumps(json.loads(result5.content[0].text), indent=2, ensure_ascii=False))
+        # print(json.dumps(json.loads(result6.content[0].text), indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
