@@ -30,10 +30,10 @@ class BaseLLM(BaseModel, ABC):
     presence_penalty: float | None = Field(default=None, description="Presence penalty to reduce repetition")
     
     # Model-specific features
-    enable_thinking: bool = Field(default=True, description="Enable reasoning/thinking mode for supported models")
+    enable_thinking: bool = Field(default=False, description="Enable reasoning/thinking mode for supported models")
     
     # Tool usage configuration
-    tool_choice: Literal["none", "auto", "required"] = Field(default="auto", description="Strategy for tool selection")
+    tool_choice: str = Field(default=None, description="Strategy for tool selection")
     parallel_tool_calls: bool = Field(default=True, description="Allow multiple tool calls in parallel")
 
     # Error handling and reliability

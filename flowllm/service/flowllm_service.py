@@ -1,16 +1,17 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
+from dataclasses import asdict
+from typing import List, Dict
 
 from loguru import logger
+from fastmcp.tools import Tool, FunctionTool
 
 from flowllm.config.config_parser import ConfigParser
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.flow.base_flow_engine import BaseFlowEngine
-from flowllm.schema.request import BaseRequest, AgentRequest, FinRequest
-from flowllm.schema.response import BaseResponse, AgentResponse, FinResponse
+from flowllm.schema.flow_io import FlowRequest, FlowResponse
 from flowllm.schema.service_config import ServiceConfig, EmbeddingModelConfig, HttpConfig
-from dataclasses import asdict
+
 
 class FlowLLMService:
 
@@ -36,37 +37,36 @@ class FlowLLMService:
     def mcp_config_dict(self) -> dict:
         return asdict(self.init_config.mcp)
 
-    def __call__(self, api: str, request: dict | BaseRequest) -> BaseResponse:
+    def execute_flow(self):
+        service_config = self.config_parser.get_service_config()
+        flow_engine_config = service_config.flow_engine
+        flow_engine_cls = C.resolve_flow_engine(flow_engine_config.backend)
+        flow_engine_cls()
+
+    # @property
+    # def mcp_tool_dict(self) -> Dict[str, Tool]:
+    #
+    #
+    #     for name, flow_meta in service_config.flow_engine.flow_meta_dict.items():
+    #         tool = FunctionTool(fn=)
+
+    def __call__(self, api: str, request: dict | FlowRequest) -> FlowResponse:
         if isinstance(request, dict):
-            service_config = self.config_parser.get_service_config(**request["service_config"])
-        else:
-            service_config = self.config_parser.get_service_config(**request.config)
-
-        if api == "agent":
-            if isinstance(request, dict):
-                request = AgentRequest(**request)
-            response = AgentResponse()
-
-        elif api == "fin":
-            if isinstance(request, dict):
-                request = FinRequest(**request)
-            response = FinResponse()
-
-        else:
-            raise ValueError(f"api={api} not supported")
-
+            request = FlowRequest(**request)
         logger.info(f"request={request.model_dump_json()}")
+        response = FlowResponse()
+        service_config = self.config_parser.get_service_config(**request.service_config)
 
         try:
-            assert request.flow_name in service_config.flow.flow_dict, f"flow={request.flow_name} not found"
-            flow_content = service_config.flow.flow_dict[request.flow_name]
+            assert request.flow_name in service_config.flow_engine.flow_dict, f"flow={request.flow_name} not found"
+            flow_content = service_config.flow_engine.flow_dict[request.flow_name]
 
             flow_context = FlowContext()
             flow_context.service_config = service_config
             flow_context.request = request
             flow_context.response = response
 
-            flow_engine_cls = C.resolve_flow(service_config.flow.backend)
+            flow_engine_cls = C.resolve_flow_engine(service_config.flow_engine.backend)
             flow_engine: BaseFlowEngine = flow_engine_cls(flow_name=request.flow_name,
                                                           flow_content=flow_content,
                                                           flow_context=flow_context)

@@ -10,7 +10,7 @@ from flowllm.op.sequential_op import SequentialOp
 from flowllm.schema.service_config import OpConfig
 
 
-@C.register_flow()
+@C.register_flow_engine()
 class SimpleFlowEngine(BaseFlowEngine):
     SEQ_SYMBOL = ">>"
     PARALLEL_SYMBOL = "|"
@@ -163,7 +163,7 @@ class SimpleFlowEngine(BaseFlowEngine):
         """
         assert self._parsed_flow is not None, "flow_content is not parsed!"
 
-        logger.info(f"Expression: {self.flow_content}\nParsed Structure:")
+        logger.info(f"Expression: {self.flow_content}")
         self._print_operation_tree(self._parsed_flow, indent=0)
 
     def _print_operation_tree(self, op: BaseOp, indent: int = 0):

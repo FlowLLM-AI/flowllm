@@ -18,3 +18,4 @@ log/
 runs
 logs
 *.egg-info/*
+flowllm/op/akshare/akshare_cache/*

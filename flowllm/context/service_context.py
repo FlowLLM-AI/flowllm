@@ -3,7 +3,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 from flowllm.context.base_context import BaseContext
 from flowllm.context.registry_context import RegistryContext
-from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
 from flowllm.utils.singleton import singleton
 
 
@@ -18,7 +17,7 @@ class ServiceContext(BaseContext):
         self.llm_registry = RegistryContext()
         self.vector_store_registry = RegistryContext()
         self.op_registry = RegistryContext()
-        self.flow_registry = RegistryContext()
+        self.flow_engine_registry = RegistryContext()
 
     def update(self, **kwargs):
         self._data.update(kwargs)
@@ -39,13 +38,13 @@ class ServiceContext(BaseContext):
     def thread_pool(self, thread_pool: ThreadPoolExecutor):
         self._data["thread_pool"] = thread_pool
 
-    def get_vector_store(self, name: str = "default") -> BaseVectorStore:
+    def get_vector_store(self, name: str = "default"):
         vector_store_dict: dict = self._data.get("vector_store_dict")
         if name in vector_store_dict:
             return vector_store_dict[name]
         raise KeyError(f"vector store {name} not found")
 
-    def set_vector_store(self, name: str, vector_store: BaseVectorStore):
+    def set_vector_store(self, name: str, vector_store):
         if "vector_store_dict" not in self._data:
             self.set_vector_stores({})
 
@@ -71,8 +70,8 @@ class ServiceContext(BaseContext):
     def register_op(self, name: str = ""):
         return self.op_registry.register(name=name)
 
-    def register_flow(self, name: str = ""):
-        return self.flow_registry.register(name=name)
+    def register_flow_engine(self, name: str = ""):
+        return self.flow_engine_registry.register(name=name)
 
     """
     resolve models
@@ -94,9 +93,9 @@ class ServiceContext(BaseContext):
         assert name in self.op_registry, f"op={name} not found!"
         return self.op_registry[name]
 
-    def resolve_flow(self, name: str):
-        assert name in self.flow_registry, f"flow={name} not found!"
-        return self.flow_registry[name]
+    def resolve_flow_engine(self, name: str):
+        assert name in self.flow_engine_registry, f"flow={name} not found!"
+        return self.flow_engine_registry[name]
 
 
 C = ServiceContext()

@@ -18,9 +18,25 @@ class HttpConfig:
 
 
 @dataclass
-class FlowConfig:
+class FlowParams:
+    type: str = field(default="string")
+    description: str = field(default="")
+    required: bool = field(default=True)
+
+
+@dataclass
+class FlowMeta:
+    content: str = field(default="")
+    description: str = field(default="")
+    parameters: Dict[str, FlowParams] = field(default_factory=dict)
+
+
+@dataclass
+class FlowEngineConfig:
     backend: str = field(default="")
-    flow_dict: Dict[str, str] = field(default_factory=dict)
+    params: dict = field(default_factory=dict)
+    flow_meta_dict: Dict[str, FlowMeta] = field(default_factory=dict)
+
 
 
 @dataclass
@@ -63,7 +79,7 @@ class ServiceConfig:
 
     mcp: MCPConfig = field(default_factory=MCPConfig)
     http: HttpConfig = field(default_factory=HttpConfig)
-    flow: FlowConfig = field(default_factory=FlowConfig)
+    flow_engine: FlowEngineConfig = field(default_factory=FlowEngineConfig)
     op: Dict[str, OpConfig] = field(default_factory=dict)
     llm: Dict[str, LLMConfig] = field(default_factory=dict)
     embedding_model: Dict[str, EmbeddingModelConfig] = field(default_factory=dict)

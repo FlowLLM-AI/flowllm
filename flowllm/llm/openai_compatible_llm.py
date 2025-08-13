@@ -6,7 +6,7 @@ from openai import OpenAI
 from openai.types import CompletionUsage
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.registry_context import register_llm
+from flowllm.context.service_context import C
 from flowllm.enumeration.chunk_enum import ChunkEnum
 from flowllm.enumeration.role import Role
 from flowllm.llm.base_llm import BaseLLM
@@ -14,7 +14,7 @@ from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
 
 
-@register_llm("openai_compatible")
+@C.register_llm("openai_compatible")
 class OpenAICompatibleBaseLLM(BaseLLM):
     """
     OpenAI-compatible LLM implementation supporting streaming and tool calls.

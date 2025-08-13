@@ -21,7 +21,7 @@ class BaseFlowEngine(ABC):
         raise NotImplementedError
 
     def _create_op(self, op_name: str):
-        ...
+        raise NotImplementedError
 
     def _print_flow(self):
         raise NotImplementedError
@@ -38,7 +38,6 @@ class BaseFlowEngine(ABC):
 
             self._print_flow()
             result = self._execute_flow()
-
             logger.info(f"\n========== Flow: {self.flow_name} end ==========")
 
         except Exception as e:
