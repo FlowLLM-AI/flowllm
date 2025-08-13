@@ -65,38 +65,38 @@ for tool in tools:
     mcp.add_tool(tool)
 
 
-# def main():
-#     mcp.run()
-#     # mcp.run(transport="sse", port=8001, host="0.0.0.0")
-#
-#
-# if __name__ == "__main__":
-#     main()
-
-
-async def main():
-    """Example usage of MCPClient"""
-    async with Client(mcp) as client:
-        # List available tools
-        tools: list[Tool] = await client.list_tools()
-        print("Available tools:")
-        for t in tools:
-            print(t.model_dump_json(indent=2))
-
-        result1 = await client.call_tool("get_stock_name_and_code_by_query", arguments={"query":"帮我分析一下阿里巴巴"})
-        result2 = await client.call_tool("get_code_infos", arguments={"code":"000001"})
-        result3 = await client.call_tool("get_code_current_info", arguments={"code": "000001"})
-        result4 = await client.call_tool("get_code_flow", arguments={"code": "000001"})
-        result5 = await client.call_tool("get_code_basic_financial", arguments={"code": "000001"})
-        result6 = await client.call_tool("get_code_news", arguments={"code": "000001"})
-
-        print(json.dumps(json.loads(result1.content[0].text), indent=2, ensure_ascii=False))
-        print(json.dumps(json.loads(result2.content[0].text), indent=2, ensure_ascii=False))
-        print(json.dumps(json.loads(result3.content[0].text), indent=2, ensure_ascii=False))
-        print(json.dumps(json.loads(result4.content[0].text), indent=2, ensure_ascii=False))
-        print(json.dumps(json.loads(result5.content[0].text), indent=2, ensure_ascii=False))
-        print(json.dumps(json.loads(result6.content[0].text), indent=2, ensure_ascii=False))
+def main():
+    mcp.run()
+    # mcp.run(transport="sse", port=8001, host="0.0.0.0")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+
+
+# async def main():
+#     """Example usage of MCPClient"""
+#     async with Client(mcp) as client:
+#         # List available tools
+#         tools: list[Tool] = await client.list_tools()
+#         print("Available tools:")
+#         for t in tools:
+#             print(t.model_dump_json(indent=2))
+#
+#         result1 = await client.call_tool("get_stock_name_and_code_by_query", arguments={"query":"帮我分析一下阿里巴巴"})
+#         result2 = await client.call_tool("get_code_infos", arguments={"code":"000001"})
+#         result3 = await client.call_tool("get_code_current_info", arguments={"code": "000001"})
+#         result4 = await client.call_tool("get_code_flow", arguments={"code": "000001"})
+#         result5 = await client.call_tool("get_code_basic_financial", arguments={"code": "000001"})
+#         result6 = await client.call_tool("get_code_news", arguments={"code": "000001"})
+#
+#         print(json.dumps(json.loads(result1.content[0].text), indent=2, ensure_ascii=False))
+#         print(json.dumps(json.loads(result2.content[0].text), indent=2, ensure_ascii=False))
+#         print(json.dumps(json.loads(result3.content[0].text), indent=2, ensure_ascii=False))
+#         print(json.dumps(json.loads(result4.content[0].text), indent=2, ensure_ascii=False))
+#         print(json.dumps(json.loads(result5.content[0].text), indent=2, ensure_ascii=False))
+#         print(json.dumps(json.loads(result6.content[0].text), indent=2, ensure_ascii=False))
+#
+#
+# if __name__ == "__main__":
+#     asyncio.run(main())
