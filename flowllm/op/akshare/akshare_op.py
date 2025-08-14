@@ -93,23 +93,23 @@ class AkshareDataOp(BaseOp):
         return llm_result
 
     def get_code_infos(self, code: str):
-        if code.startswith("6"):
-            symbol = f"SH{code}"
-        elif code.startswith("0"):
-            symbol = f"SZ{code}"
-        elif code.startswith("3"):
-            symbol = f"SZ{code}"
-        elif code.startswith("8"):
-            symbol = f"BJ{code}"
-        else:
-            print("不支持的股票代码")
-            return {}
+        # if code.startswith("6"):
+        #     symbol = f"SH{code}"
+        # elif code.startswith("0"):
+        #     symbol = f"SZ{code}"
+        # elif code.startswith("3"):
+        #     symbol = f"SZ{code}"
+        # elif code.startswith("8"):
+        #     symbol = f"BJ{code}"
+        # else:
+        #     print("不支持的股票代码")
+        #     return {}
 
-        stock_individual_basic_info_xq_df = ak.stock_individual_basic_info_xq(symbol=symbol)
+        stock_individual_info_em_df = ak.stock_individual_info_em(symbol=code)
         result = {}
-        for line in stock_individual_basic_info_xq_df.to_dict(orient="records"):
+        for line in stock_individual_info_em_df.to_dict(orient="records"):
             result[line["item"]] = line["value"]
-        # print(json.dumps(result, indent=2, ensure_ascii=False))
+        print(json.dumps(result, indent=2, ensure_ascii=False))
         return result
 
     def get_code_current_info(self, code: str):
@@ -165,11 +165,11 @@ class AkshareDataOp(BaseOp):
         # print("=" * 10)
         # self.parse_query(query="有什么白酒的股票？")
 
-        # self.get_code_infos("SZ000001")
+        self.get_code_infos("601127")
         # self.get_code_current_info("000001")
         # self.get_code_flow("000001")
         # self.get_code_basic_financial("000001")
-        self.get_code_news("000001")
+        # self.get_code_news("000001")
 
 
 if __name__ == "__main__":

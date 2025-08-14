@@ -21,7 +21,7 @@ tools = [
 
     FunctionTool.from_function(fn=op.get_code_infos,
                                name="get_code_infos",
-                               description="可以根据A股的股票代码获取公司的对应信息"),
+                               description="可以根据A股的股票代码获取公司的基本信息"),
 
 
     FunctionTool.from_function(fn=op.get_code_current_info,
@@ -82,18 +82,18 @@ async def main():
             print(t.model_dump_json(indent=2))
 
         # result1 = await client.call_tool("get_stock_name_and_code_by_query", arguments={"query":"帮我分析一下茅台和五粮液"})
-        # result2 = await client.call_tool("get_code_infos", arguments={"code":"000001"})
+        result2 = await client.call_tool("get_code_infos", arguments={"code":"000001"})
         result3 = await client.call_tool("get_code_current_info", arguments={"code": "000001"})
         result4 = await client.call_tool("get_code_flow", arguments={"code": "000001"})
         result5 = await client.call_tool("get_code_basic_financial", arguments={"code": "000001"})
-        # result6 = await client.call_tool("get_code_news", arguments={"code": "000001"})
+        result6 = await client.call_tool("get_code_news", arguments={"code": "000001"})
 
         # print(json.dumps(json.loads(result1.content[0].text), indent=2, ensure_ascii=False))
-        # print(json.dumps(json.loads(result2.content[0].text), indent=2, ensure_ascii=False))
+        print(json.dumps(json.loads(result2.content[0].text), indent=2, ensure_ascii=False))
         print(json.dumps(json.loads(result3.content[0].text), indent=2, ensure_ascii=False))
         print(json.dumps(json.loads(result4.content[0].text), indent=2, ensure_ascii=False))
         print(json.dumps(json.loads(result5.content[0].text), indent=2, ensure_ascii=False))
-        # print(json.dumps(json.loads(result6.content[0].text), indent=2, ensure_ascii=False))
+        print(json.dumps(json.loads(result6.content[0].text), indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
