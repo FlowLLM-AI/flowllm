@@ -7,25 +7,30 @@ from flowllm.context.base_context import BaseContext
 from flowllm.context.service_context import C
 
 
-class PromptContext(BaseContext):
+class PromptHandler(BaseContext):
+
+    def __init__(self, language: str = "", **kwargs):
+        super().__init__(**kwargs)
+        self.language: str = language or C.language
 
     def load_prompt_by_file(self, prompt_file_path: Path | str = None):
         if prompt_file_path is None:
-            return
+            return self
 
         if isinstance(prompt_file_path, str):
             prompt_file_path = Path(prompt_file_path)
 
         if not prompt_file_path.exists():
-            return
+            return self
 
         with prompt_file_path.open() as f:
             prompt_dict = yaml.load(f, yaml.FullLoader)
             self.load_prompt_dict(prompt_dict)
+        return self
 
     def load_prompt_dict(self, prompt_dict: dict = None):
         if not prompt_dict:
-            return
+            return self
 
         for key, value in prompt_dict.items():
             if isinstance(value, str):
@@ -36,17 +41,18 @@ class PromptContext(BaseContext):
                 else:
                     self._data[key] = value
                     logger.info(f"add prompt_dict key={key}")
+        return self
 
     def get_prompt(self, prompt_name: str):
-        language: str = C.language
-        if language:
-            return self._data.get(prompt_name + "_" + language.strip())
-        else:
-            return self._data.get(prompt_name)
+        key: str = prompt_name
+        if self.language:
+            key += "_" + self.language.strip()
+
+        assert key in self._data, f"prompt_name={key} not found."
+        return self._data[key]
 
     def prompt_format(self, prompt_name: str, **kwargs) -> str:
-        assert prompt_name in self._data, f"prompt_name={prompt_name} not found."
-        prompt = self._data[prompt_name]
+        prompt = self.get_prompt(prompt_name)
 
         flag_kwargs = {k: v for k, v in kwargs.items() if isinstance(v, bool)}
         other_kwargs = {k: v for k, v in kwargs.items() if not isinstance(v, bool)}

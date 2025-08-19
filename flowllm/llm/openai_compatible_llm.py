@@ -70,8 +70,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
             try:
                 extra_body = {}
                 if self.enable_thinking:
-                    # qwen3 params
-                    extra_body["enable_thinking"] = True
+                    extra_body["enable_thinking"] = True  # qwen3 params
 
                 completion = self._client.chat.completions.create(
                     model=self.model_name,
@@ -83,7 +82,6 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                     temperature=self.temperature,
                     extra_body=extra_body,
                     tools=[x.simple_input_dump() for x in tools] if tools else None,
-                    tool_choice=self.tool_choice,
                     parallel_tool_calls=self.parallel_tool_calls)
 
                 # Initialize tool call tracking
@@ -152,7 +150,8 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                 else:
                     yield e.args, ChunkEnum.ERROR
 
-    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs) -> Message:
+    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
+              **kwargs) -> Message:
         """
         Perform a complete chat completion by aggregating streaming chunks.
         
@@ -163,89 +162,66 @@ class OpenAICompatibleBaseLLM(BaseLLM):
         Args:
             messages: List of conversation messages
             tools: Optional list of tools available to the model
+            enable_stream_print: Whether to print streaming response to console
             **kwargs: Additional parameters
             
         Returns:
             Complete Message with all content aggregated
         """
-        # Initialize content accumulators
+
+        enter_think = False  # Whether we've started printing thinking content
+        enter_answer = False  # Whether we've started printing answer content
         reasoning_content = ""  # Model's internal reasoning
         answer_content = ""  # Final response content
         tool_calls = []  # List of tool calls to execute
 
         # Consume streaming response and aggregate chunks by type
         for chunk, chunk_enum in self.stream_chat(messages, tools, **kwargs):
-            if chunk_enum is ChunkEnum.THINK:
+            if chunk_enum is ChunkEnum.USAGE:
+                # Display token usage statistics
+                if enable_stream_print:
+                    if isinstance(chunk, CompletionUsage):
+                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>")
+                    else:
+                        print(f"\n<usage>{chunk}</usage>")
+
+            elif chunk_enum is ChunkEnum.THINK:
+                if enable_stream_print:
+                    # Format thinking/reasoning content
+                    if not enter_think:
+                        enter_think = True
+                        print("<think>\n", end="")
+                    print(chunk, end="")
+
                 reasoning_content += chunk
 
             elif chunk_enum is ChunkEnum.ANSWER:
+                if enable_stream_print:
+                    if not enter_answer:
+                        enter_answer = True
+                        # Close thinking section if we were in it
+                        if enter_think:
+                            print("\n</think>")
+                    print(chunk, end="")
+
                 answer_content += chunk
 
             elif chunk_enum is ChunkEnum.TOOL:
+                if enable_stream_print:
+                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="")
+
                 tool_calls.append(chunk)
 
-            # Note: USAGE and ERROR chunks are ignored in non-streaming mode
+            elif chunk_enum is ChunkEnum.ERROR:
+                if enable_stream_print:
+                    # Display error information
+                    print(f"\n<error>{chunk}</error>", end="")
 
         # Construct complete response message
         return Message(role=Role.ASSISTANT,
                        reasoning_content=reasoning_content,
                        content=answer_content,
                        tool_calls=tool_calls)
-
-    def stream_print(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
-        """
-        Stream chat completions with formatted console output.
-        
-        This method provides a real-time view of the model's response,
-        with different formatting for different types of content:
-        - Thinking content is wrapped in <think></think> tags
-        - Answer content is printed directly
-        - Tool calls are formatted as JSON
-        - Usage statistics and errors are clearly marked
-        
-        Args:
-            messages: List of conversation messages
-            tools: Optional list of tools available to the model
-            **kwargs: Additional parameters
-        """
-        # Track which sections we've entered for proper formatting
-        enter_think = False  # Whether we've started printing thinking content
-        enter_answer = False  # Whether we've started printing answer content
-
-        # Process each streaming chunk with appropriate formatting
-        for chunk, chunk_enum in self.stream_chat(messages, tools, **kwargs):
-            if chunk_enum is ChunkEnum.USAGE:
-                # Display token usage statistics
-                if isinstance(chunk, CompletionUsage):
-                    print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>")
-                else:
-                    print(f"\n<usage>{chunk}</usage>")
-
-            elif chunk_enum is ChunkEnum.THINK:
-                # Format thinking/reasoning content
-                if not enter_think:
-                    enter_think = True
-                    print("<think>\n", end="")
-                print(chunk, end="")
-
-            elif chunk_enum is ChunkEnum.ANSWER:
-                # Format regular answer content
-                if not enter_answer:
-                    enter_answer = True
-                    # Close thinking section if we were in it
-                    if enter_think:
-                        print("\n</think>")
-                print(chunk, end="")
-
-            elif chunk_enum is ChunkEnum.TOOL:
-                # Format tool calls as structured JSON
-                assert isinstance(chunk, ToolCall)
-                print(f"\n<tool>{chunk.model_dump_json(indent=2)}</tool>", end="")
-
-            elif chunk_enum is ChunkEnum.ERROR:
-                # Display error information
-                print(f"\n<error>{chunk}</error>", end="")
-
 
 def main():
     from flowllm.utils.common_utils import load_env
@@ -254,8 +230,9 @@ def main():
 
     model_name = "qwen-max-2025-01-25"
     llm = OpenAICompatibleBaseLLM(model_name=model_name)
-    llm.stream_print([Message(role=Role.USER, content="hello")], [])
-
+    message: Message = llm.chat([Message(role=Role.USER, content="hello")], [],
+                                enable_stream_print=False)
+    print(message)
 
 if __name__ == "__main__":
     main()

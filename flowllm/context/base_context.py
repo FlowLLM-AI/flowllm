@@ -38,6 +38,9 @@ class BaseContext:
     def keys(self) -> List[str]:
         return sorted(self._data.keys())
 
+    def update(self, **kwargs):
+        self._data.update(kwargs)
+
 
 if __name__ == "__main__":
     ctx = BaseContext(**{"name": "Alice", "age": 30, "city": "New York"})

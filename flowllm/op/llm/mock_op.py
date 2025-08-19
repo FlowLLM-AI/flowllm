@@ -10,8 +10,8 @@ from flowllm.op.llm.llm_base_op import BaseLLMOp
 class Mock1Op(BaseLLMOp):
     def execute(self):
         time.sleep(1)
-        a: int = self.op_params["a"]
-        b: str = self.op_params["b"]
+        a = self.op_params["a"]
+        b = self.op_params["b"]
         logger.info(f"enter class={self.name}. a={a} b={b}")
 
 

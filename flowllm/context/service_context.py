@@ -1,8 +1,9 @@
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from typing import Dict
 
 from flowllm.context.base_context import BaseContext
-from flowllm.context.registry_context import RegistryContext
+from flowllm.context.registry import Registry
 from flowllm.utils.singleton import singleton
 
 
@@ -12,19 +13,12 @@ class ServiceContext(BaseContext):
     def __init__(self, service_id: str = uuid.uuid4().hex, **kwargs):
         super().__init__(**kwargs)
         self.service_id: str = service_id
-
-        self.embedding_model_registry = RegistryContext()
-        self.llm_registry = RegistryContext()
-        self.vector_store_registry = RegistryContext()
-        self.op_registry = RegistryContext()
-        self.flow_engine_registry = RegistryContext()
-
-    def update(self, **kwargs):
-        self._data.update(kwargs)
+        self.registry_dict: Dict[str, Registry] = \
+            {k: Registry(k) for k in ["embedding_model", "llm", "vector_store", "op", "flow_engine", "service"]}
 
     @property
     def language(self) -> str:
-        return self._data.get("language")
+        return self._data.get("language", "")
 
     @language.setter
     def language(self, value: str):
@@ -32,24 +26,24 @@ class ServiceContext(BaseContext):
 
     @property
     def thread_pool(self) -> ThreadPoolExecutor:
-        return self._data.get("thread_pool")
+        return self._data["thread_pool"]
 
     @thread_pool.setter
     def thread_pool(self, thread_pool: ThreadPoolExecutor):
         self._data["thread_pool"] = thread_pool
 
     def get_vector_store(self, name: str = "default"):
-        vector_store_dict: dict = self._data.get("vector_store_dict")
-        if name in vector_store_dict:
-            return vector_store_dict[name]
-        raise KeyError(f"vector store {name} not found")
+        vector_store_dict: dict = self._data["vector_store_dict"]
+        if name not in vector_store_dict:
+            raise KeyError(f"vector store {name} not found")
+
+        return vector_store_dict[name]
 
     def set_vector_store(self, name: str, vector_store):
         if "vector_store_dict" not in self._data:
             self.set_vector_stores({})
 
-        vector_store_dict: dict = self._data.get("vector_store_dict")
-        vector_store_dict[name] = vector_store
+        self._data["vector_store_dict"][name] = vector_store
 
     def set_vector_stores(self, vector_store_dict: dict):
         self._data["vector_store_dict"] = vector_store_dict
@@ -59,43 +53,51 @@ class ServiceContext(BaseContext):
     """
 
     def register_embedding_model(self, name: str = ""):
-        return self.embedding_model_registry.register(name=name)
+        return self.registry_dict["embedding_model"].register(name=name)
 
     def register_llm(self, name: str = ""):
-        return self.llm_registry.register(name=name)
+        return self.registry_dict["llm"].register(name=name)
 
     def register_vector_store(self, name: str = ""):
-        return self.vector_store_registry.register(name=name)
+        return self.registry_dict["vector_store"].register(name=name)
 
     def register_op(self, name: str = ""):
-        return self.op_registry.register(name=name)
+        return self.registry_dict["op"].register(name=name)
 
     def register_flow_engine(self, name: str = ""):
-        return self.flow_engine_registry.register(name=name)
+        return self.registry_dict["flow_engine"].register(name=name)
+
+    def register_service(self, name: str = ""):
+        return self.registry_dict["service"].register(name=name)
 
     """
     resolve models
     """
 
     def resolve_embedding_model(self, name: str):
-        assert name in self.embedding_model_registry, f"embedding_model={name} not found!"
-        return self.embedding_model_registry[name]
+        assert name in self.registry_dict["embedding_model"], f"embedding_model={name} not found!"
+        return self.registry_dict["embedding_model"][name]
 
     def resolve_llm(self, name: str):
-        assert name in self.llm_registry, f"llm={name} not found!"
-        return self.llm_registry[name]
+        assert name in self.registry_dict["llm"], f"llm={name} not found!"
+        return self.registry_dict["llm"][name]
 
     def resolve_vector_store(self, name: str):
-        assert name in self.vector_store_registry, f"vector_store={name} not found!"
-        return self.vector_store_registry[name]
+        assert name in self.registry_dict["vector_store"], f"vector_store={name} not found!"
+        return self.registry_dict["vector_store"][name]
 
     def resolve_op(self, name: str):
-        assert name in self.op_registry, f"op={name} not found!"
-        return self.op_registry[name]
+        assert name in self.registry_dict["op"], f"op={name} not found!"
+        return self.registry_dict["op"][name]
 
     def resolve_flow_engine(self, name: str):
-        assert name in self.flow_engine_registry, f"flow={name} not found!"
-        return self.flow_engine_registry[name]
+        assert name in self.registry_dict["flow_engine"], f"flow={name} not found!"
+        return self.registry_dict["flow_engine"][name]
+
+    def resolve_service(self, name: str):
+        assert name in self.registry_dict["service"], f"service={name} not found!"
+        return self.registry_dict["service"][name]
+
 
 
 C = ServiceContext()

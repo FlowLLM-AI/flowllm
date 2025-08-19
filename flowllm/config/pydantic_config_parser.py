@@ -157,12 +157,12 @@ class PydanticConfigParser(Generic[T]):
 
         return result
 
-    def parse_args(self, args: List[str] = None) -> T:
+    def parse_args(self, *args) -> T:
         """
         Parse command line arguments and return configuration object
         
         Args:
-            args: Command line argument list, if None then get from sys.argv
+            args: Command line arguments, if None then get from sys.argv
             
         Returns:
             Parsed configuration object
@@ -175,7 +175,7 @@ class PydanticConfigParser(Generic[T]):
 
         parser.add_argument("--config", "-c", type=str, help="YAML configuration file path")
         parser.add_argument("overrides", nargs="*", help="shell config, format: key.subkey=value")
-        parsed_args = parser.parse_args(args)
+        parsed_args = parser.parse_args(args=args)
 
         configs_to_merge = []
 

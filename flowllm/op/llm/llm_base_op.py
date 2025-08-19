@@ -1,7 +1,7 @@
 from abc import ABC
 from pathlib import Path
 
-from flowllm.context.prompt_context import PromptContext
+from flowllm.context.prompt_handler import PromptHandler
 from flowllm.context.service_context import C
 from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
 from flowllm.llm.base_llm import BaseLLM
@@ -11,9 +11,10 @@ from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
 
 
 class BaseLLMOp(BaseOp, ABC):
-    current_path: str = __file__
+    file_path: str = __file__
 
     def __init__(self,
+                 prompt_path: str = "",
                  llm: str = "default",
                  embedding_model: str = "default",
                  vector_store: str = "default",
@@ -25,13 +26,9 @@ class BaseLLMOp(BaseOp, ABC):
         self._embedding_model: BaseEmbeddingModel | str = embedding_model
         self._vector_store: BaseVectorStore | str = vector_store
 
-        self.prompt = PromptContext()
-        self._prepare_prompt()
-
-    def _prepare_prompt(self):
-        prompt_file_name = self.name.replace("_op", "_prompt.yaml")
-        prompt_file_path = Path(self.current_path).parent / prompt_file_name
-        self.prompt.load_prompt_by_file(prompt_file_path)
+        default_prompt_path: Path = Path(self.file_path).parent / self.name.replace("_op", "_prompt.yaml")
+        self.prompt_path: Path = Path(prompt_path) if prompt_path else default_prompt_path
+        self.prompt = PromptHandler(language=self.language).load_prompt_by_file(self.prompt_path)
 
     @property
     def llm(self) -> BaseLLM:

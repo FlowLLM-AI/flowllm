@@ -46,6 +46,6 @@ flowllm = [
 
 [project.scripts]
 flowllm_fin = "flowllm.app:main"
-#flowllm = "flowllm.app:main"
-#flowllm_mcp = "flowllm.mcp_server:main"
+flowllm = "flowllm.app:main"
+flowllm_mcp = "flowllm.mcp_server:mcp"
 

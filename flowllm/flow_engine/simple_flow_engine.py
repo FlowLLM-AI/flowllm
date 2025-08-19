@@ -3,14 +3,14 @@ import re
 from loguru import logger
 
 from flowllm.context.service_context import C
-from flowllm.flow.base_flow_engine import BaseFlowEngine
+from flowllm.flow_engine.base_flow_engine import BaseFlowEngine
 from flowllm.op.base_op import BaseOp
 from flowllm.op.parallel_op import ParallelOp
 from flowllm.op.sequential_op import SequentialOp
 from flowllm.schema.service_config import OpConfig
 
 
-@C.register_flow_engine()
+@C.register_flow_engine("simple")
 class SimpleFlowEngine(BaseFlowEngine):
     SEQ_SYMBOL = ">>"
     PARALLEL_SYMBOL = "|"
@@ -34,8 +34,8 @@ class SimpleFlowEngine(BaseFlowEngine):
         Parse the flow content string into executable operations.
         
         Supports expressions with operators:
-        - '>>' for sequential execution
-        - '|' for parallel execution
+        - ">>" for sequential execution
+        - "|" for parallel execution
         - Parentheses for grouping operations
         
         Args:
@@ -140,21 +140,24 @@ class SimpleFlowEngine(BaseFlowEngine):
         if op_name in self.flow_context.service_config.op:
             op_config: OpConfig = self.flow_context.service_config.op[op_name]
             op_cls = C.resolve_op(op_config.backend)
-            op: BaseOp = op_cls(name=op_name,
-                                flow_context=self.flow_context,
-                                llm=op_config.llm,
-                                embedding_model=op_config.embedding_model,
-                                vector_store=op_config.vector_store,
-                                **op_config.params)
+
 
         elif op_name in C.op_registry:
+            op_config: OpConfig = OpConfig()
             op_cls = C.resolve_op(op_name)
-            op: BaseOp = op_cls(name=op_name, flow_context=self.flow_context)
 
         else:
             raise ValueError(f"op='{op_name}' is not registered!")
 
-        return op
+        return op_cls(name=op_name,
+                      language=op_config.language,
+                      raise_exception=op_config.raise_exception,
+                      flow_context=self.flow_context,
+                      prompt_path=op_config.prompt_path,
+                      llm=op_config.llm,
+                      embedding_model=op_config.embedding_model,
+                      vector_store=op_config.vector_store,
+                      **op_config.params)
 
     def _print_flow(self):
         """

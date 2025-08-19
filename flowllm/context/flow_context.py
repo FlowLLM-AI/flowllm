@@ -1,5 +1,7 @@
 import uuid
 
+from pydantic import BaseModel
+
 from flowllm.context.base_context import BaseContext
 from flowllm.schema.flow_io import FlowRequest, FlowResponse
 from flowllm.schema.service_config import ServiceConfig
@@ -7,9 +9,9 @@ from flowllm.schema.service_config import ServiceConfig
 
 class FlowContext(BaseContext):
 
-    def __init__(self, pipeline_id: str = uuid.uuid4().hex, **kwargs):
+    def __init__(self, flow_id: str = uuid.uuid4().hex, **kwargs):
         super().__init__(**kwargs)
-        self.pipeline_id: str = pipeline_id
+        self.flow_id: str = flow_id
 
     @property
     def service_config(self) -> ServiceConfig:
@@ -20,11 +22,11 @@ class FlowContext(BaseContext):
         self._data["service_config"] = value
 
     @property
-    def request(self) -> FlowRequest:
+    def request(self) -> BaseModel:
         return self._data.get("request")
 
     @request.setter
-    def request(self, value: FlowRequest):
+    def request(self, value: BaseModel):
         self._data["request"] = value
 
     @property

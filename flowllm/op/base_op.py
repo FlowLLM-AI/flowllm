@@ -35,15 +35,18 @@ class BaseOp(ABC):
 
     def __init__(self,
                  name: str = "",
-                 flow_context: FlowContext | None = None,
+                 language: str = "",
                  raise_exception: bool = True,
+                 flow_context: FlowContext | None = None,
                  **kwargs):
 
         super().__init__()
 
         self.name: str = name or camel_to_snake(self.__class__.__name__)
-        self.flow_context: FlowContext | None = flow_context
+        self.language: str = language or C.language
         self.raise_exception: bool = raise_exception
+
+        self.flow_context: FlowContext | None = flow_context
         self.op_params: dict = kwargs
 
         self.task_list: List[Future] = []

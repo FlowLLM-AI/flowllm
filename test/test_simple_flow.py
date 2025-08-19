@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('.'))
 
-from flowllm.flow.simple_flow_engine import SimpleFlowEngine
+from flowllm.flow_engine.simple_flow_engine import SimpleFlowEngine
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.op.base_op import BaseOp
@@ -57,9 +57,9 @@ def create_test_context():
 
 def test_simple_expression():
     """Test simple sequential expression"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 1: Simple sequential expression 'op1 >> op2'")
-    print("="*60)
+    print("=" * 60)
 
     flow_context = create_test_context()
 
@@ -74,9 +74,9 @@ def test_simple_expression():
 
 def test_parallel_expression():
     """Test parallel expression"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 2: Parallel expression 'op1 | op2'")
-    print("="*60)
+    print("=" * 60)
 
     flow_context = create_test_context()
 
@@ -91,9 +91,9 @@ def test_parallel_expression():
 
 def test_mixed_expression():
     """Test mixed expression with parentheses"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 3: Mixed expression 'op1 >> (op2 | op3) >> op4'")
-    print("="*60)
+    print("=" * 60)
 
     flow_context = create_test_context()
 
@@ -108,9 +108,9 @@ def test_mixed_expression():
 
 def test_complex_expression():
     """Test complex nested expression"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("TEST 4: Complex expression 'op1 >> (op1 | (op2 >> op3)) >> op4'")
-    print("="*60)
+    print("=" * 60)
 
     flow_context = create_test_context()
 
@@ -127,17 +127,17 @@ def main():
     """Run all tests"""
     print("🧪 Testing SimpleFlow Implementation")
     print("This demonstrates parsing and execution of flow expressions")
-    
+
     try:
         test_simple_expression()
         test_parallel_expression()
         test_mixed_expression()
         test_complex_expression()
-        
-        print("\n" + "="*60)
+
+        print("\n" + "=" * 60)
         print("✅ All tests completed successfully!")
-        print("="*60)
-        
+        print("=" * 60)
+
     except Exception as e:
         print(f"\n❌ Test failed with error: {e}")
         import traceback

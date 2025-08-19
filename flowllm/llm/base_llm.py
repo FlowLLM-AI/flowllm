@@ -1,6 +1,6 @@
 import time
 from abc import ABC
-from typing import List, Literal, Callable
+from typing import List, Callable
 
 from loguru import logger
 from pydantic import Field, BaseModel
@@ -57,21 +57,8 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def stream_print(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
-        """
-        Stream chat completions and print them to console in real-time.
-        
-        This is a convenience method for debugging and interactive use,
-        combining streaming with formatted console output.
-        
-        Args:
-            messages: List of conversation messages
-            tools: Optional list of tools the model can use
-            **kwargs: Additional model-specific parameters
-        """
-        raise NotImplementedError
-
-    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs) -> Message:
+    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
+              **kwargs) -> Message:
         """
         Internal method to perform a single chat completion.
         
@@ -82,6 +69,7 @@ class BaseLLM(BaseModel, ABC):
         Args:
             messages: List of conversation messages
             tools: Optional list of tools the model can use
+            enable_stream_print: Whether to print streaming response to console
             **kwargs: Additional model-specific parameters
             
         Returns:
@@ -89,8 +77,8 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def chat(self, messages: List[Message], tools: List[ToolCall] = None, callback_fn: Callable = None,
-             default_value=None, **kwargs):
+    def chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
+             callback_fn: Callable = None, default_value=None, **kwargs):
         """
         Perform a chat completion with retry logic and error handling.
         
@@ -103,6 +91,7 @@ class BaseLLM(BaseModel, ABC):
             tools: Optional list of tools the model can use
             callback_fn: Optional callback to process the response message
             default_value: Value to return if all retries fail (when raise_exception=False)
+            enable_stream_print: Whether to print streaming response to console
             **kwargs: Additional model-specific parameters
             
         Returns:
@@ -114,7 +103,10 @@ class BaseLLM(BaseModel, ABC):
         for i in range(self.max_retries):
             try:
                 # Attempt to get response from the model
-                message: Message = self._chat(messages, tools, **kwargs)
+                message: Message = self._chat(messages=messages,
+                                              tools=tools,
+                                              enable_stream_print=enable_stream_print,
+                                              **kwargs)
                 
                 # Apply callback function if provided
                 if callback_fn:

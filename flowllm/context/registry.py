@@ -4,10 +4,11 @@ from flowllm.context.base_context import BaseContext
 from flowllm.utils.common_utils import camel_to_snake
 
 
-class RegistryContext(BaseContext):
+class Registry(BaseContext):
 
-    def __init__(self, enable_log: bool = True, **kwargs):
+    def __init__(self, registry_name: str, enable_log: bool = True, **kwargs):
         super().__init__(**kwargs)
+        self.registry_name: str = registry_name
         self.enable_log: bool = enable_log
 
     def register(self, name: str = ""):
@@ -15,9 +16,10 @@ class RegistryContext(BaseContext):
             class_name = name if name else camel_to_snake(cls.__name__)
             if self.enable_log:
                 if class_name in self._data:
-                    logger.warning(f"class({class_name}) is already registered!")
+                    logger.warning(f"{self.registry_name}.class({class_name}) is already registered!")
                 else:
-                    logger.info(f"class({class_name}) is registered.")
+                    logger.info(f"{self.registry_name}.class({class_name}) is registered.")
+
             self._data[class_name] = cls
             return cls
 

@@ -4,8 +4,8 @@ from typing import Dict
 from pydantic import BaseModel, Field
 
 
-class ToolParams(BaseModel):
-    type: str = Field(default="string", description="tool parameter type")
+class ParamAttrs(BaseModel):
+    type: str = Field(default="str", description="tool parameter type")
     description: str = Field(default="", description="tool parameter description")
     required: bool = Field(default=True, description="tool parameter required")
 
@@ -42,23 +42,24 @@ class ToolCall(BaseModel):
     }
     """
 
-    index: int = Field(default=0, description="output schema")
-    id: str = Field(default="", description="output schema")
-    type: str = Field(default="function", description="input/output schema")
-    name: str = Field(default="", description="input/output schema")
+    index: int = Field(default=0)
+    id: str = Field(default="")
+    type: str = Field(default="function")
+    name: str = Field(default="")
 
-    arguments: dict = Field(default_factory=dict, description="output schema")
+    arguments: dict = Field(default_factory=dict, description="tool execution arguments")
 
-    description: str = Field(default="", description="input schema")
-    parameters: Dict[str, ToolParams] = Field(default_factory=dict, description="input schema")
+    description: str = Field(default="")
+    input_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
+    output_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
 
     def simple_input_dump(self, version: str = "v1") -> dict:
         if version == "v1":
-            required_list = [name for name, tool_param in self.parameters.items() if tool_param.required]
+            required_list = [name for name, tool_param in self.input_schema.items() if tool_param.required]
             properties = {name: {
                 "type": tool_param.type,
                 "description": tool_param.description
-            } for name, tool_param in self.parameters.items()}
+            } for name, tool_param in self.input_schema.items()}
 
             return {
                 "type": self.type,
