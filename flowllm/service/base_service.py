@@ -2,7 +2,6 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
 
 from loguru import logger
-from mcp.types import TextContent
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
@@ -50,8 +49,8 @@ class BaseService:
 
         except Exception as e:
             logger.exception(f"flow_name={flow_name} encounter error={e.args}")
-            response.isError = True
-            response.content.append(TextContent(text=str(e.args), type="text"))
+            response.success = False
+            response.answer = str(e.args)
 
         return response
 
