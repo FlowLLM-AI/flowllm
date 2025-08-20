@@ -16,14 +16,12 @@ class BaseFlowEngine(ABC):
         self._parsed_flow: Optional[BaseOp] = None
         self._parsed_ops_cache = {}
 
-    @timer
     def _parse_flow(self):
         raise NotImplementedError
 
     def _create_op(self, op_name: str):
         raise NotImplementedError
 
-    @timer
     def _print_flow(self):
         raise NotImplementedError
 

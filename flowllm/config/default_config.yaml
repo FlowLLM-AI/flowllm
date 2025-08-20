@@ -21,19 +21,17 @@ flow_engine:
 
 
 flow:
-  default:
-    flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
+  get_a_code_infos:
+    flow_content: get_ak_a_code_by_query
+    description: "Obtain the A-share stock codes mentioned in the user question and return the information of these stocks"
     input_schema:
-      a:
+      query:
         type: "str"
-        description: "mock attr a"
-        required: true
-      b:
-        type: "str"
-        description: "mock attr b"
-        required: true
+        description: "user question"
+
   mock_flow:
     flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
+    description: "mock flow"
     input_schema:
       a:
         type: "str"
@@ -49,21 +47,6 @@ op:
     backend: mock1_op
     llm: default
     vector_store: default
-    params:
-      a: 1
-      b: 2
-  mock2_op:
-    backend: mock2_op
-    params:
-      a: 1
-  mock3_op:
-    backend: mock3_op
-  mock4_op:
-    backend: mock4_op
-  mock5_op:
-    backend: mock5_op
-  mock6_op:
-    backend: mock6_op
 
 llm:
   default:
@@ -71,6 +54,9 @@ llm:
     model_name: qwen3-30b-a3b-thinking-2507
     params:
       temperature: 0.6
+  qwen3_30b_instruct:
+    backend: openai_compatible
+    model_name: qwen3-30b-a3b-instruct-2507
 
 embedding_model:
   default:

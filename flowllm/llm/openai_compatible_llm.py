@@ -28,8 +28,9 @@ class OpenAICompatibleBaseLLM(BaseLLM):
     """
 
     # API configuration
-    api_key: str = Field(default_factory=lambda: os.getenv("LLM_API_KEY"), description="API key for authentication")
-    base_url: str = Field(default_factory=lambda: os.getenv("LLM_BASE_URL"),
+    api_key: str = Field(default_factory=lambda: os.getenv("FLOW_LLM_API_KEY"),
+                         description="API key for authentication")
+    base_url: str = Field(default_factory=lambda: os.getenv("FLOW_LLM_BASE_URL"),
                           description="Base URL for the API endpoint")
     _client: OpenAI = PrivateAttr()
 

@@ -149,15 +149,25 @@ class SimpleFlowEngine(BaseFlowEngine):
         else:
             raise ValueError(f"op='{op_name}' is not registered!")
 
-        return op_cls(name=op_name,
-                      language=op_config.language,
-                      raise_exception=op_config.raise_exception,
-                      flow_context=self.flow_context,
-                      prompt_path=op_config.prompt_path,
-                      llm=op_config.llm,
-                      embedding_model=op_config.embedding_model,
-                      vector_store=op_config.vector_store,
-                      **op_config.params)
+        kwargs = {
+            "name": op_name,
+            "raise_exception": op_config.raise_exception,
+            "flow_context": self.flow_context,
+            **op_config.params
+        }
+
+        if op_config.language:
+            kwargs["language"] = op_config.language
+        if op_config.prompt_path:
+            kwargs["prompt_path"] = op_config.prompt_path
+        if op_config.llm:
+            kwargs["llm"] = op_config.llm
+        if op_config.embedding_model:
+            kwargs["embedding_model"] = op_config.embedding_model
+        if op_config.vector_store:
+            kwargs["vector_store"] = op_config.vector_store
+
+        return op_cls(**kwargs)
 
     def _print_flow(self):
         """

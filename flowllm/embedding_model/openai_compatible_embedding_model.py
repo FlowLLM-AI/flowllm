@@ -18,9 +18,9 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
     other services that follow the same interface.
     """
     # API configuration fields
-    api_key: str = Field(default_factory=lambda: os.getenv("EMBEDDING_API_KEY"),
+    api_key: str = Field(default_factory=lambda: os.getenv("FLOW_EMBEDDING_API_KEY"),
                          description="API key for authentication")
-    base_url: str = Field(default_factory=lambda: os.getenv("EMBEDDING_BASE_URL"),
+    base_url: str = Field(default_factory=lambda: os.getenv("FLOW_EMBEDDING_BASE_URL"),
                           description="Base URL for the API endpoint")
     model_name: str = Field(default="", description="Name of the embedding model to use")
     dimensions: int = Field(default=1024, description="Dimensionality of the embedding vectors")

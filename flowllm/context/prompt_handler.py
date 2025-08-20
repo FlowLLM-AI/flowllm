@@ -45,7 +45,7 @@ class PromptHandler(BaseContext):
 
     def get_prompt(self, prompt_name: str):
         key: str = prompt_name
-        if self.language:
+        if self.language and not key.endswith(self.language.strip()):
             key += "_" + self.language.strip()
 
         assert key in self._data, f"prompt_name={key} not found."
