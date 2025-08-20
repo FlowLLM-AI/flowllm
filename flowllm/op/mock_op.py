@@ -2,39 +2,41 @@ import time
 
 from loguru import logger
 
-from flowllm.op import OP_REGISTRY
-from flowllm.op.base_op import BaseOp
+from flowllm.context.service_context import C
+from flowllm.op.llm_base_op import BaseLLMOp
 
 
-@OP_REGISTRY.register()
-class Mock1Op(BaseOp):
+@C.register_op()
+class Mock1Op(BaseLLMOp):
     def execute(self):
         time.sleep(1)
-        a: int = self.op_params["a"]
-        b: str = self.op_params["b"]
-        logger.info(f"enter class={self.simple_name}. a={a} b={b}")
+        a = self.flow_context.a
+        b = self.flow_context.b
+        logger.info(f"enter class={self.name}. a={a} b={b}")
+
+        self.flow_context.response.answer = f"{self.name} {a} {b} answer=47"
 
 
-@OP_REGISTRY.register()
+@C.register_op()
 class Mock2Op(Mock1Op):
     ...
 
 
-@OP_REGISTRY.register()
+@C.register_op()
 class Mock3Op(Mock1Op):
     ...
 
 
-@OP_REGISTRY.register()
+@C.register_op()
 class Mock4Op(Mock1Op):
     ...
 
 
-@OP_REGISTRY.register()
+@C.register_op()
 class Mock5Op(Mock1Op):
     ...
 
 
-@OP_REGISTRY.register()
+@C.register_op()
 class Mock6Op(Mock1Op):
     ...

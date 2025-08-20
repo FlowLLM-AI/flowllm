@@ -101,4 +101,4 @@ class BaseEmbeddingModel(BaseModel, ABC):
             return nodes
 
         else:
-            raise RuntimeError(f"unsupported type={type(nodes)}")
+            raise TypeError(f"unsupported type={type(nodes)}")

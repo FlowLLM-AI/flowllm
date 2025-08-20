@@ -248,8 +248,8 @@ Request → Configuration → Pipeline → Operations → Tools/VectorStore → 
 ### Custom Operations
 
 ```python
-from flowllm.op import OP_REGISTRY
-from flowllm.op.base_op import BaseOp
+from old.op import OP_REGISTRY
+from old.op.base_op import BaseOp
 
 
 @OP_REGISTRY.register()
@@ -269,8 +269,8 @@ class CustomOp(BaseOp):
 ### Custom Tools
 
 ```python
-from flowllm.tool import TOOL_REGISTRY
-from flowllm.tool.base_tool import BaseTool
+from old.tool import TOOL_REGISTRY
+from old.tool.base_tool import BaseTool
 
 
 @TOOL_REGISTRY.register()
@@ -293,8 +293,8 @@ class CustomTool(BaseTool):
 ### Custom Vector Stores
 
 ```python
-from flowllm.vector_store import VECTOR_STORE_REGISTRY
-from flowllm.vector_store.base_vector_store import BaseVectorStore
+from old.vector_store import VECTOR_STORE_REGISTRY
+from old.vector_store.base_vector_store import BaseVectorStore
 
 
 @VECTOR_STORE_REGISTRY.register("custom_store")

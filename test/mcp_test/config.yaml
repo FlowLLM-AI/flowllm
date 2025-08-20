@@ -1,0 +1,35 @@
+# config.yaml
+functions:
+  user_service:
+    name: "create_user"
+    description: "创建用户"
+    parameters:
+      username:
+        type: "string"
+        description: "用户名"
+        required: true
+      email:
+        type: "string"
+        description: "邮箱"
+        required: true
+      age:
+        type: "integer"
+        description: "年龄"
+        required: false
+
+  order_service:
+    name: "create_order"
+    description: "创建订单"
+    parameters:
+      product_id:
+        type: "string"
+        description: "产品ID"
+        required: true
+      quantity:
+        type: "integer"
+        description: "数量"
+        required: true
+      price:
+        type: "number"
+        description: "价格"
+        required: false

@@ -1,15 +1,14 @@
 import os
 from typing import Literal, List
 
-from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.embedding_model import EMBEDDING_MODEL_REGISTRY
+from flowllm.context.service_context import C
 from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
 
 
-@EMBEDDING_MODEL_REGISTRY.register("openai_compatible")
+@C.register_embedding_model("openai_compatible")
 class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
     """
     OpenAI-compatible embedding model implementation.
@@ -81,7 +80,9 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
 
 
 def main():
-    load_dotenv()
+    from flowllm.utils.common_utils import load_env
+
+    load_env()
     model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     res1 = model.get_embeddings(
         "The clothes are of good quality and look good, definitely worth the wait. I love them.")
@@ -92,4 +93,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # launch with: python -m flowllm.model.openai_compatible_embedding_model

@@ -1,21 +1,20 @@
 import os
-from typing import List
+from typing import List, Dict
 
-from dotenv import load_dotenv
 from loguru import logger
 from openai import OpenAI
 from openai.types import CompletionUsage
 from pydantic import Field, PrivateAttr, model_validator
 
+from flowllm.context.service_context import C
 from flowllm.enumeration.chunk_enum import ChunkEnum
 from flowllm.enumeration.role import Role
-from flowllm.llm import LLM_REGISTRY
 from flowllm.llm.base_llm import BaseLLM
-from flowllm.schema.message import Message, ToolCall
-from flowllm.tool.base_tool import BaseTool
+from flowllm.schema.message import Message
+from flowllm.schema.tool_call import ToolCall
 
 
-@LLM_REGISTRY.register("openai_compatible")
+@C.register_llm("openai_compatible")
 class OpenAICompatibleBaseLLM(BaseLLM):
     """
     OpenAI-compatible LLM implementation supporting streaming and tool calls.
@@ -48,7 +47,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
         self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         return self
 
-    def stream_chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
+    def stream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
         Stream chat completions from OpenAI-compatible API.
         
@@ -69,7 +68,10 @@ class OpenAICompatibleBaseLLM(BaseLLM):
         """
         for i in range(self.max_retries):
             try:
-                # Create streaming completion request
+                extra_body = {}
+                if self.enable_thinking:
+                    extra_body["enable_thinking"] = True  # qwen3 params
+
                 completion = self._client.chat.completions.create(
                     model=self.model_name,
                     messages=[x.simple_dump() for x in messages],
@@ -78,14 +80,13 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                     stream=True,
                     stream_options=self.stream_options,
                     temperature=self.temperature,
-                    extra_body={"enable_thinking": self.enable_thinking},  # Enable reasoning mode
-                    tools=[x.simple_dump() for x in tools] if tools else None,
-                    tool_choice=self.tool_choice,
+                    extra_body=extra_body,
+                    tools=[x.simple_input_dump() for x in tools] if tools else None,
                     parallel_tool_calls=self.parallel_tool_calls)
 
                 # Initialize tool call tracking
-                ret_tools = []  # Accumulate tool calls across chunks
-                is_answering = False  # Track when model starts answering
+                ret_tools: List[ToolCall] = []  # Accumulate tool calls across chunks
+                is_answering: bool = False  # Track when model starts answering
 
                 # Process each chunk in the streaming response
                 for chunk in completion:
@@ -130,7 +131,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
 
                 # Yield completed tool calls after streaming finishes
                 if ret_tools:
-                    tool_dict = {x.name: x for x in tools} if tools else {}
+                    tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
                     for tool in ret_tools:
                         # Only yield tool calls that correspond to available tools
                         if tool.name not in tool_dict:
@@ -138,7 +139,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
 
                         yield tool, ChunkEnum.TOOL
 
-                return  # Success - exit retry loop
+                return
 
             except Exception as e:
                 logger.exception(f"stream chat with model={self.model_name} encounter error with e={e.args}")
@@ -149,7 +150,8 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                 else:
                     yield e.args, ChunkEnum.ERROR
 
-    def _chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs) -> Message:
+    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
+              **kwargs) -> Message:
         """
         Perform a complete chat completion by aggregating streaming chunks.
         
@@ -160,28 +162,60 @@ class OpenAICompatibleBaseLLM(BaseLLM):
         Args:
             messages: List of conversation messages
             tools: Optional list of tools available to the model
+            enable_stream_print: Whether to print streaming response to console
             **kwargs: Additional parameters
             
         Returns:
             Complete Message with all content aggregated
         """
-        # Initialize content accumulators
+
+        enter_think = False  # Whether we've started printing thinking content
+        enter_answer = False  # Whether we've started printing answer content
         reasoning_content = ""  # Model's internal reasoning
         answer_content = ""  # Final response content
         tool_calls = []  # List of tool calls to execute
 
         # Consume streaming response and aggregate chunks by type
         for chunk, chunk_enum in self.stream_chat(messages, tools, **kwargs):
-            if chunk_enum is ChunkEnum.THINK:
+            if chunk_enum is ChunkEnum.USAGE:
+                # Display token usage statistics
+                if enable_stream_print:
+                    if isinstance(chunk, CompletionUsage):
+                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>")
+                    else:
+                        print(f"\n<usage>{chunk}</usage>")
+
+            elif chunk_enum is ChunkEnum.THINK:
+                if enable_stream_print:
+                    # Format thinking/reasoning content
+                    if not enter_think:
+                        enter_think = True
+                        print("<think>\n", end="")
+                    print(chunk, end="")
+
                 reasoning_content += chunk
 
             elif chunk_enum is ChunkEnum.ANSWER:
+                if enable_stream_print:
+                    if not enter_answer:
+                        enter_answer = True
+                        # Close thinking section if we were in it
+                        if enter_think:
+                            print("\n</think>")
+                    print(chunk, end="")
+
                 answer_content += chunk
 
             elif chunk_enum is ChunkEnum.TOOL:
+                if enable_stream_print:
+                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="")
+
                 tool_calls.append(chunk)
 
-            # Note: USAGE and ERROR chunks are ignored in non-streaming mode
+            elif chunk_enum is ChunkEnum.ERROR:
+                if enable_stream_print:
+                    # Display error information
+                    print(f"\n<error>{chunk}</error>", end="")
 
         # Construct complete response message
         return Message(role=Role.ASSISTANT,
@@ -189,95 +223,16 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                        content=answer_content,
                        tool_calls=tool_calls)
 
-    def stream_print(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
-        """
-        Stream chat completions with formatted console output.
-        
-        This method provides a real-time view of the model's response,
-        with different formatting for different types of content:
-        - Thinking content is wrapped in <think></think> tags
-        - Answer content is printed directly
-        - Tool calls are formatted as JSON
-        - Usage statistics and errors are clearly marked
-        
-        Args:
-            messages: List of conversation messages
-            tools: Optional list of tools available to the model
-            **kwargs: Additional parameters
-        """
-        # Track which sections we've entered for proper formatting
-        enter_think = False  # Whether we've started printing thinking content
-        enter_answer = False  # Whether we've started printing answer content
-
-        # Process each streaming chunk with appropriate formatting
-        for chunk, chunk_enum in self.stream_chat(messages, tools, **kwargs):
-            if chunk_enum is ChunkEnum.USAGE:
-                # Display token usage statistics
-                if isinstance(chunk, CompletionUsage):
-                    print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>")
-                else:
-                    print(f"\n<usage>{chunk}</usage>")
-
-            elif chunk_enum is ChunkEnum.THINK:
-                # Format thinking/reasoning content
-                if not enter_think:
-                    enter_think = True
-                    print("<think>\n", end="")
-                print(chunk, end="")
-
-            elif chunk_enum is ChunkEnum.ANSWER:
-                # Format regular answer content
-                if not enter_answer:
-                    enter_answer = True
-                    # Close thinking section if we were in it
-                    if enter_think:
-                        print("\n</think>")
-                print(chunk, end="")
-
-            elif chunk_enum is ChunkEnum.TOOL:
-                # Format tool calls as structured JSON
-                assert isinstance(chunk, ToolCall)
-                print(f"\n<tool>{chunk.model_dump_json(indent=2)}</tool>", end="")
-
-            elif chunk_enum is ChunkEnum.ERROR:
-                # Display error information
-                print(f"\n<error>{chunk}</error>", end="")
-
-
 def main():
-    """
-    Demo function to test the OpenAI-compatible LLM implementation.
-    
-    This function demonstrates:
-    1. Basic chat without tools
-    2. Chat with tool usage (search and code tools)
-    3. Real-time streaming output formatting
-    """
-    from flowllm.tool.dashscope_search_tool import DashscopeSearchTool
-    from flowllm.tool.code_tool import CodeTool
-    from flowllm.enumeration.role import Role
+    from flowllm.utils.common_utils import load_env
 
-    # Load environment variables for API credentials
-    load_dotenv()
+    load_env()
 
-    # Initialize the LLM with a specific model
     model_name = "qwen-max-2025-01-25"
     llm = OpenAICompatibleBaseLLM(model_name=model_name)
-
-    # Set up available tools
-    tools: List[BaseTool] = [DashscopeSearchTool(), CodeTool()]
-
-    # Test 1: Simple greeting without tools
-    print("=== Test 1: Simple Chat ===")
-    llm.stream_print([Message(role=Role.USER, content="hello")], [])
-
-    print("\n" + "=" * 20)
-
-    # Test 2: Complex query that might use tools
-    print("\n=== Test 2: Chat with Tools ===")
-    llm.stream_print([Message(role=Role.USER, content="What's the weather like in Beijing today?")], tools)
-
+    message: Message = llm.chat([Message(role=Role.USER, content="hello")], [],
+                                enable_stream_print=False)
+    print(message)
 
 if __name__ == "__main__":
     main()
-    # Launch with: python -m flowllm.llm.openai_compatible_llm

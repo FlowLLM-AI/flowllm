@@ -30,6 +30,7 @@ dependencies = [
     "Requests>=2.32.4",
     "uvicorn>=0.34.3",
     "setuptools>=75.0",
+    "akshare",
 ]
 
 [tool.setuptools.packages.find]
@@ -44,6 +45,7 @@ flowllm = [
 ]
 
 [project.scripts]
+flowllm_fin = "flowllm.app:main"
 flowllm = "flowllm.app:main"
-flowllm_mcp = "flowllm.mcp_server:main"
+flowllm_mcp = "flowllm.mcp_server:mcp"
 

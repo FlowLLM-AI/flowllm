@@ -1,0 +1,88 @@
+# default config.yaml
+backend: mcp
+language: ""
+thread_pool_max_workers: 32
+ray_max_workers: 8
+
+mcp:
+  transport: sse
+  host: "0.0.0.0"
+  port: 8001
+
+http:
+  host: "0.0.0.0"
+  port: 8001
+  timeout_keep_alive: 600
+  limit_concurrency: 64
+
+
+flow_engine:
+  backend: simple
+
+
+flow:
+  default:
+    flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
+    input_schema:
+      a:
+        type: "str"
+        description: "mock attr a"
+        required: true
+      b:
+        type: "str"
+        description: "mock attr b"
+        required: true
+  mock_flow:
+    flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
+    input_schema:
+      a:
+        type: "str"
+        description: "mock attr a"
+        required: true
+      b:
+        type: "str"
+        description: "mock attr b"
+        required: true
+
+op:
+  mock1_op:
+    backend: mock1_op
+    llm: default
+    vector_store: default
+    params:
+      a: 1
+      b: 2
+  mock2_op:
+    backend: mock2_op
+    params:
+      a: 1
+  mock3_op:
+    backend: mock3_op
+  mock4_op:
+    backend: mock4_op
+  mock5_op:
+    backend: mock5_op
+  mock6_op:
+    backend: mock6_op
+
+llm:
+  default:
+    backend: openai_compatible
+    model_name: qwen3-30b-a3b-thinking-2507
+    params:
+      temperature: 0.6
+
+embedding_model:
+  default:
+    backend: openai_compatible
+    model_name: text-embedding-v4
+    params:
+      dimensions: 1024
+
+vector_store:
+  default:
+    backend: elasticsearch
+    embedding_model: default
+    params:
+      hosts: "http://localhost:9200"
+

@@ -1,12 +1,12 @@
 import time
 from abc import ABC
-from typing import List, Literal, Callable
+from typing import List, Callable
 
 from loguru import logger
 from pydantic import Field, BaseModel
 
 from flowllm.schema.message import Message
-from flowllm.tool.base_tool import BaseTool
+from flowllm.schema.tool_call import ToolCall
 
 
 class BaseLLM(BaseModel, ABC):
@@ -30,17 +30,17 @@ class BaseLLM(BaseModel, ABC):
     presence_penalty: float | None = Field(default=None, description="Presence penalty to reduce repetition")
     
     # Model-specific features
-    enable_thinking: bool = Field(default=True, description="Enable reasoning/thinking mode for supported models")
+    enable_thinking: bool = Field(default=False, description="Enable reasoning/thinking mode for supported models")
     
     # Tool usage configuration
-    tool_choice: Literal["none", "auto", "required"] = Field(default="auto", description="Strategy for tool selection")
+    tool_choice: str = Field(default=None, description="Strategy for tool selection")
     parallel_tool_calls: bool = Field(default=True, description="Allow multiple tool calls in parallel")
 
     # Error handling and reliability
     max_retries: int = Field(default=5, description="Maximum number of retry attempts on failure")
     raise_exception: bool = Field(default=False, description="Whether to raise exceptions or return default values")
 
-    def stream_chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
+    def stream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
         Stream chat completions from the LLM.
         
@@ -57,21 +57,8 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def stream_print(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs):
-        """
-        Stream chat completions and print them to console in real-time.
-        
-        This is a convenience method for debugging and interactive use,
-        combining streaming with formatted console output.
-        
-        Args:
-            messages: List of conversation messages
-            tools: Optional list of tools the model can use
-            **kwargs: Additional model-specific parameters
-        """
-        raise NotImplementedError
-
-    def _chat(self, messages: List[Message], tools: List[BaseTool] = None, **kwargs) -> Message:
+    def _chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
+              **kwargs) -> Message:
         """
         Internal method to perform a single chat completion.
         
@@ -82,6 +69,7 @@ class BaseLLM(BaseModel, ABC):
         Args:
             messages: List of conversation messages
             tools: Optional list of tools the model can use
+            enable_stream_print: Whether to print streaming response to console
             **kwargs: Additional model-specific parameters
             
         Returns:
@@ -89,8 +77,8 @@ class BaseLLM(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def chat(self, messages: List[Message], tools: List[BaseTool] = None, callback_fn: Callable = None,
-             default_value=None, **kwargs):
+    def chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
+             callback_fn: Callable = None, default_value=None, **kwargs):
         """
         Perform a chat completion with retry logic and error handling.
         
@@ -103,6 +91,7 @@ class BaseLLM(BaseModel, ABC):
             tools: Optional list of tools the model can use
             callback_fn: Optional callback to process the response message
             default_value: Value to return if all retries fail (when raise_exception=False)
+            enable_stream_print: Whether to print streaming response to console
             **kwargs: Additional model-specific parameters
             
         Returns:
@@ -114,7 +103,10 @@ class BaseLLM(BaseModel, ABC):
         for i in range(self.max_retries):
             try:
                 # Attempt to get response from the model
-                message: Message = self._chat(messages, tools, **kwargs)
+                message: Message = self._chat(messages=messages,
+                                              tools=tools,
+                                              enable_stream_print=enable_stream_print,
+                                              **kwargs)
                 
                 # Apply callback function if provided
                 if callback_fn:
