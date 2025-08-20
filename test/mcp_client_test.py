@@ -13,7 +13,7 @@ async def main():
             # print(result.content)
             # print(result.structured_content)
 
-        result: CallToolResult = await client.call_tool("get_a_code_infos", arguments={"query": "茅台怎么样？"})
+        result: CallToolResult = await client.call_tool("get_a_stock_infos", arguments={"query": "茅台怎么样？"})
         print(result.content)
 
 if __name__ == "__main__":

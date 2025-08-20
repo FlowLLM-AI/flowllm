@@ -21,9 +21,17 @@ flow_engine:
 
 
 flow:
-  get_a_code_infos:
-    flow_content: get_ak_a_code_by_query
-    description: "Obtain the A-share stock codes mentioned in the user question and return the information of these stocks"
+  get_a_stock_infos:
+    flow_content: get_ak_a_code_op >> get_ak_a_info_op >> get_ak_a_spot_op >> get_ak_a_money_flow_op >> get_ak_a_financial_info_op >> merge_ak_a_info_op
+    description: "Retrieve the A-share stock codes from the query, and fetch information about these stocks, including company basic information, current stock price and its change percentage, capital inflow and outflow data for the most recent day, and financial information from the latest quarter."
+    input_schema:
+      query:
+        type: "str"
+        description: "user question"
+
+  get_a_stock_news:
+    flow_content: get_ak_a_code_op >> get_ak_a_news_op >> merge_ak_a_info_op
+    description: "Retrieve the A-share stock codes from the query, and obtain the latest news information about these stocks."
     input_schema:
       query:
         type: "str"
