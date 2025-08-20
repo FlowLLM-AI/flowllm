@@ -21,10 +21,9 @@ class MCPService(BaseService):
 
         async def execute_flow_async(**kwargs) -> str:
             loop = asyncio.get_event_loop()
-            future = loop.run_in_executor(
+            response = await loop.run_in_executor(
                 executor=C.thread_pool,
                 func=partial(self.execute_flow, flow_name=flow_name, **kwargs))  # noqa
-            response = await future
             return response.answer
 
         tool = FunctionTool(name=flow_name,  # noqa
@@ -35,7 +34,7 @@ class MCPService(BaseService):
         logger.info(f"register flow={flow_name}")
 
     def __call__(self):
-        for flow_name in self.flow_config_dict.keys():
+        for flow_name in self.flow_config_dict:
             self.register_flow(flow_name)
 
         if self.mcp_config.transport == "sse":

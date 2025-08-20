@@ -37,8 +37,9 @@ class BaseService:
         response = FlowResponse()
         try:
             logger.info(f"request.params={kwargs}")
-            flow_context = FlowContext(service_config=self.service_config.model_copy(deep=True),
-                                       response=response, **kwargs)
+            flow_context = FlowContext(**kwargs,
+                                       response=response,
+                                       service_config=self.service_config.model_copy(deep=True))
 
             flow_config = self.flow_config_dict[flow_name]
             flow_engine: BaseFlowEngine = self.flow_engine_cls(flow_name=flow_name,

@@ -1,5 +1,3 @@
-import json
-
 from fastmcp import Client
 from mcp.types import CallToolResult
 
