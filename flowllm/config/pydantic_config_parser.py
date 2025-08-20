@@ -1,10 +1,10 @@
-import argparse
 import copy
 import json
 from pathlib import Path
 from typing import Any, Generic, List, Type, TypeVar
 
 import yaml
+from loguru import logger
 from pydantic import BaseModel
 
 T = TypeVar('T', bound=BaseModel)
@@ -162,21 +162,11 @@ class PydanticConfigParser(Generic[T]):
         Parse command line arguments and return configuration object
         
         Args:
-            args: Command line arguments, if None then get from sys.argv
+            args: Command line arguments.
             
         Returns:
             Parsed configuration object
         """
-
-        parser = argparse.ArgumentParser(
-            description="FlowLLM Configuration Parser - Supports dot notation format configuration",
-            formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog="Usage examples: python script.py --config xxx.yaml a.b=xxx c.d=xxx")
-
-        parser.add_argument("--config", "-c", type=str, help="YAML configuration file path")
-        parser.add_argument("overrides", nargs="*", help="shell config, format: key.subkey=value")
-        parsed_args = parser.parse_args(args=args)
-
         configs_to_merge = []
 
         # 1. Default configuration (from Pydantic model)
@@ -184,21 +174,35 @@ class PydanticConfigParser(Generic[T]):
         configs_to_merge.append(default_config)
 
         # 2. YAML configuration file
-        if parsed_args.config:
-            if not parsed_args.config.endswith(".yaml"):
-                parsed_args.config += ".yaml"
+        config = ""
+        filter_args = []
+        for arg in args:
+            if "=" not in arg:
+                continue
+
+            arg = arg.lstrip("--").lstrip("-")
+
+            if "c=" in arg or "config=" in arg:
+                config = arg.split("=")[-1]
+            else:
+                filter_args.append(arg)
+
+        if config:
+            if not config.endswith(".yaml"):
+                config += ".yaml"
 
             # load pre-built configs
-            config_path = Path(__file__).parent / parsed_args.config
+            config_path = Path(__file__).parent / config
             if not config_path.exists():
-                config_path = Path(parsed_args.config)
+                config_path = Path(config)
 
             yaml_config = self.load_from_yaml(config_path)
+            logger.info(f"flowllm using config={config_path}")
             configs_to_merge.append(yaml_config)
 
         # 3. Command line override configuration
-        if parsed_args.overrides:
-            cli_config = self.parse_dot_notation(parsed_args.overrides)
+        if args:
+            cli_config = self.parse_dot_notation(filter_args)
             configs_to_merge.append(cli_config)
 
         # Merge all configurations

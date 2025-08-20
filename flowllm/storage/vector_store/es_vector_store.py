@@ -23,6 +23,7 @@ class EsVectorStore(LocalVectorStore):
         if isinstance(self.hosts, str):
             self.hosts = [self.hosts]
         self._client = Elasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
+        logger.info(f"Elasticsearch client initialized with hosts: {self.hosts}")
         return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:

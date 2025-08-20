@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 from pydantic import BaseModel, Field
 
@@ -6,7 +6,7 @@ from flowllm.schema.tool_call import ToolCall
 
 
 class MCPConfig(BaseModel):
-    transport: str = Field(default="sse", description="stdio/http/sse/streamable-http")
+    transport: str = Field(default="", description="stdio/http/sse/streamable-http")
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8001)
 
@@ -18,20 +18,17 @@ class HttpConfig(BaseModel):
     limit_concurrency: int = Field(default=64)
 
 
-class FlowParams(BaseModel):
-    type: str = Field(default="string")
-    description: str = Field(default="")
-    required: bool = Field(default=True)
-
-
 class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
 
+    def set_name(self, name: str):
+        self.name = name
+        return self
+
 
 class FlowEngineConfig(BaseModel):
-    backend: str = Field(default="simple")
+    backend: str = Field(default="")
     params: dict = Field(default_factory=dict)
-    flows: List[FlowConfig] = Field(default_factory=list)
 
 
 class OpConfig(BaseModel):
@@ -64,8 +61,7 @@ class VectorStoreConfig(BaseModel):
 
 
 class ServiceConfig(BaseModel):
-    backend: str = Field(default="mcp")
-
+    backend: str = Field(default="")
     language: str = Field(default="")
     thread_pool_max_workers: int = Field(default=16)
     ray_max_workers: int = Field(default=8)
@@ -73,6 +69,7 @@ class ServiceConfig(BaseModel):
     mcp: MCPConfig = Field(default_factory=MCPConfig)
     http: HttpConfig = Field(default_factory=HttpConfig)
     flow_engine: FlowEngineConfig = Field(default_factory=FlowEngineConfig)
+    flow: Dict[str, FlowConfig] = Field(default_factory=dict)
     op: Dict[str, OpConfig] = Field(default_factory=dict)
     llm: Dict[str, LLMConfig] = Field(default_factory=dict)
     embedding_model: Dict[str, EmbeddingModelConfig] = Field(default_factory=dict)

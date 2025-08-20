@@ -12,7 +12,7 @@ from flowllm.context.service_context import C
 
 def main():
     config_parser = PydanticConfigParser(ServiceConfig)
-    service_config: ServiceConfig = config_parser.parse_args(sys.argv[1:])
+    service_config: ServiceConfig = config_parser.parse_args(*sys.argv[1:])
     service_cls = C.resolve_service(service_config.backend)
     service: BaseService = service_cls(service_config)
     service()

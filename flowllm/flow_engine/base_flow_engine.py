@@ -1,10 +1,9 @@
 from abc import ABC
 from typing import Optional
 
-from loguru import logger
-
 from flowllm.context.flow_context import FlowContext
 from flowllm.op.base_op import BaseOp
+from flowllm.utils.timer import timer
 
 
 class BaseFlowEngine(ABC):
@@ -17,12 +16,14 @@ class BaseFlowEngine(ABC):
         self._parsed_flow: Optional[BaseOp] = None
         self._parsed_ops_cache = {}
 
+    @timer
     def _parse_flow(self):
         raise NotImplementedError
 
     def _create_op(self, op_name: str):
         raise NotImplementedError
 
+    @timer
     def _print_flow(self):
         raise NotImplementedError
 
@@ -30,17 +31,6 @@ class BaseFlowEngine(ABC):
         raise NotImplementedError
 
     def __call__(self):
-        result = None
-        try:
-            logger.info(f"\n========== Flow: {self.flow_name} start ==========")
-            self._parse_flow()
-            assert self._parsed_flow is not None, "flow_content is not parsed!"
-
-            self._print_flow()
-            result = self._execute_flow()
-            logger.info(f"\n========== Flow: {self.flow_name} end ==========")
-
-        except Exception as e:
-            logger.exception(f"Flow execution encounter error={e.args}")
-
-        return result
+        self._parse_flow()
+        self._print_flow()
+        return self._execute_flow()

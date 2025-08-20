@@ -1,18 +1,48 @@
-# demo config.yaml
+# default config.yaml
+backend: mcp
+language: ""
+thread_pool_max_workers: 16
+ray_max_workers: 8
 
-http_service:
+mcp:
+  transport: sse
+  host: "0.0.0.0"
+  port: 8001
+
+http:
   host: "0.0.0.0"
   port: 8001
   timeout_keep_alive: 600
   limit_concurrency: 64
 
-thread_pool:
-  max_workers: 10
 
-api:
-  retriever: mock1_op->[mock4_op->mock2_op|mock5_op]->[mock3_op|mock6_op]
-  summarizer: mock1_op->[mock4_op->mock2_op|mock5_op]->mock3_op
-  vector_store: mock6_op
+flow_engine:
+  backend: simple
+
+
+flow:
+  default:
+    flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
+    input_schema:
+      a:
+        type: "str"
+        description: "mock attr a"
+        required: true
+      b:
+        type: "str"
+        description: "mock attr b"
+        required: true
+  mock_flow:
+    flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
+    input_schema:
+      a:
+        type: "str"
+        description: "mock attr a"
+        required: true
+      b:
+        type: "str"
+        description: "mock attr b"
+        required: true
 
 op:
   mock1_op:
@@ -38,7 +68,7 @@ op:
 llm:
   default:
     backend: openai_compatible
-    model_name: qwen3-32b
+    model_name: qwen3-30b-a3b-thinking-2507
     params:
       temperature: 0.6
 

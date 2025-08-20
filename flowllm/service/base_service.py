@@ -2,12 +2,12 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
 
 from loguru import logger
-from pydantic import BaseModel
+from mcp.types import TextContent
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.flow_engine.base_flow_engine import BaseFlowEngine
-from flowllm.schema.flow_io import FlowResponse
+from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.service_config import ServiceConfig, EmbeddingModelConfig, FlowConfig
 
 
@@ -28,19 +28,20 @@ class BaseService:
 
         self.flow_engine_config = self.service_config.flow_engine
         self.flow_engine_cls = C.resolve_flow_engine(self.flow_engine_config.backend)
-        self.flow_dict: Dict[str, FlowConfig] = {flow.name: flow for flow in self.flow_engine_config.flows}
+        self.flow_config_dict: Dict[str, FlowConfig] = \
+            {name: config.set_name(name) for name, config in self.service_config.flow.items()}
 
         self.mcp_config = self.service_config.mcp
         self.http_config = self.service_config.http
 
-    def execute_flow(self, flow_name: str, request: BaseModel) -> FlowResponse:
+    def execute_flow(self, flow_name: str, **kwargs) -> FlowResponse:
         response = FlowResponse()
         try:
-            logger.info(f"request={request.model_dump_json()}")
+            logger.info(f"request.params={kwargs}")
             flow_context = FlowContext(service_config=self.service_config.model_copy(deep=True),
-                                       request=request,
-                                       response=FlowResponse())
-            flow_config = self.flow_dict[flow_name]
+                                       response=response, **kwargs)
+
+            flow_config = self.flow_config_dict[flow_name]
             flow_engine: BaseFlowEngine = self.flow_engine_cls(flow_name=flow_name,
                                                                flow_content=flow_config.flow_content,
                                                                flow_context=flow_context,
@@ -49,8 +50,8 @@ class BaseService:
 
         except Exception as e:
             logger.exception(f"flow_name={flow_name} encounter error={e.args}")
-            response.success = False
-            response.metadata["error"] = str(e)
+            response.isError = True
+            response.content.append(TextContent(text=str(e.args), type="text"))
 
         return response
 

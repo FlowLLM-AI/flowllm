@@ -142,7 +142,7 @@ class SimpleFlowEngine(BaseFlowEngine):
             op_cls = C.resolve_op(op_config.backend)
 
 
-        elif op_name in C.op_registry:
+        elif op_name in C.registry_dict["op"]:
             op_config: OpConfig = OpConfig()
             op_cls = C.resolve_op(op_name)
 
