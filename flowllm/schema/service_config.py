@@ -18,6 +18,11 @@ class HttpConfig(BaseModel):
     limit_concurrency: int = Field(default=64)
 
 
+class CmdConfig(BaseModel):
+    flow: str = Field(default="")
+    params: dict = Field(default_factory=dict)
+
+
 class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
 
@@ -57,6 +62,7 @@ class ServiceConfig(BaseModel):
     thread_pool_max_workers: int = Field(default=16)
     ray_max_workers: int = Field(default=8)
 
+    cmd: CmdConfig = Field(default_factory=CmdConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)
     http: HttpConfig = Field(default_factory=HttpConfig)
     flow: Dict[str, FlowConfig] = Field(default_factory=dict)

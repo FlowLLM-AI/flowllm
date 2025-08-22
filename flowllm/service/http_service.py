@@ -1,5 +1,4 @@
 import asyncio
-import json
 from functools import partial
 from typing import Dict, Optional
 
@@ -62,7 +61,7 @@ class HttpService(BaseService):
         tool_flow: BaseToolFlow = C.get_tool_flow(tool_flow_name)
         request_model = self._create_pydantic_model(tool_flow_name, tool_flow.tool_call.input_schema)
 
-        async def execute_flow_endpoint(request: request_model) -> FlowResponse:
+        async def execute_endpoint(request: request_model) -> FlowResponse:
             loop = asyncio.get_event_loop()
             response: FlowResponse = await loop.run_in_executor(
                 executor=C.thread_pool,
@@ -71,26 +70,24 @@ class HttpService(BaseService):
             return response
 
         endpoint_path = f"/{tool_flow.name}"
-        self.app.post(endpoint_path, response_model=FlowResponse)(execute_flow_endpoint)
+        self.app.post(endpoint_path, response_model=FlowResponse)(execute_endpoint)
 
     def integrate_tool_flows(self):
         super().integrate_tool_flows()
 
-        async def execute_flow_endpoint() -> FlowResponse:
+        async def execute_endpoint() -> list:
             loop = asyncio.get_event_loop()
 
-            def list_tool_flows():
-                response: FlowResponse = FlowResponse()
+            def list_tool_flows() -> list:
                 tool_flow_schemas = []
                 for name, tool_flow in C.tool_flow_dict.items():
                     assert isinstance(tool_flow, BaseToolFlow)
                     tool_flow_schemas.append(tool_flow.tool_call.simple_input_dump())
-                response.answer = json.dumps(tool_flow_schemas, ensure_ascii=False)
-                return response
+                return tool_flow_schemas
 
             return await loop.run_in_executor(executor=C.thread_pool, func=list_tool_flows)  # noqa
 
-        self.app.post("/list_tool_flows", response_model=FlowResponse)(execute_flow_endpoint)
+        self.app.post("/list_tool_flows", response_model=list)(execute_endpoint)
 
     def __call__(self):
         self.integrate_tool_flows()

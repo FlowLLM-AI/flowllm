@@ -49,7 +49,7 @@ class ServiceContext(BaseContext):
             self.vector_store_dict[name] = vector_store_cls(embedding_model=embedding_model, **config.params)
 
         from flowllm.flow.base_tool_flow import BaseToolFlow
-        from flowllm.flow import ExpressionToolFlow
+        from flowllm.flow.gallery import ExpressionToolFlow
 
         for name, tool_flow_cls in self.registry_dict["tool_flow"]:
             tool_flow: BaseToolFlow = tool_flow_cls()
@@ -123,4 +123,4 @@ class ServiceContext(BaseContext):
         return self.registry_dict["service"][name]
 
 
-C: ServiceContext | None = None
+C = ServiceContext()

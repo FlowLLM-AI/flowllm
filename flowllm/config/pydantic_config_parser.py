@@ -233,10 +233,3 @@ class PydanticConfigParser(Generic[T]):
         final_config = self.merge_configs(copy.deepcopy(self.config_dict), override_config)
 
         return self.config_class.model_validate(final_config)
-
-
-def get_default_config():
-    from flowllm.schema.service_config import ServiceConfig
-
-    config_parser = PydanticConfigParser(ServiceConfig)
-    return config_parser.parse_args("config=default_config")

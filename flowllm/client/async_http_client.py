@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional
+from typing import Dict
 
 import httpx
 
@@ -34,15 +34,14 @@ class AsyncHttpClient:
         response.raise_for_status()
         return response.json()
 
-    async def execute_flow(self, flow_name: str, **kwargs) -> FlowResponse:
+    async def execute_tool_flow(self, flow_name: str, **kwargs) -> FlowResponse:
         endpoint = f"{self.base_url}/{flow_name}"
         response = await self.client.post(endpoint, json=kwargs)
         response.raise_for_status()
         result_data = response.json()
         return FlowResponse(**result_data)
 
-    async def get_available_flows(self) -> Optional[Dict[str, Any]]:
-        # TODO add available_flows
-        response = await self.client.get(f"{self.base_url}/flows")
+    async def list_tool_flows(self) -> list:
+        response = await self.client.get(f"{self.base_url}/list_tool_flows")
         response.raise_for_status()
         return response.json()

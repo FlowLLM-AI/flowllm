@@ -14,7 +14,7 @@ def http_client_example():
         health = client.health_check()
         print(f"Service health: {health}")
 
-        result = client.execute_flow(flow_name="get_a_stock_infos", query="茅台怎么样？")
+        result = client.execute_tool_flow(flow_name="get_a_stock_infos", query="茅台怎么样？")
         print(f"Flow result: {result.answer}")
 
 
@@ -26,7 +26,7 @@ async def async_http_client_example():
         health = await client.health_check()
         print(f"Service health: {health}")
 
-        result = await client.execute_flow(flow_name="get_a_stock_infos", query="茅台怎么样？")
+        result = await client.execute_tool_flow(flow_name="get_a_stock_infos", query="茅台怎么样？")
         print(f"Flow result: {result.answer}")
 
 
