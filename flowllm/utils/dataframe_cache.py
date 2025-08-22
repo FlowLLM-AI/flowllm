@@ -298,34 +298,3 @@ class DataFrameCache:
         except Exception as e:
             print(f"Failed to clear cache: {e}")
             return False
-
-
-# Create default instance
-default_cache = DataFrameCache()
-
-
-# Convenience functions
-def save_dataframe(key: str, df: pd.DataFrame, expire_hours: Optional[float] = None,
-                   **csv_kwargs) -> bool:
-    """Convenience function: Save DataFrame"""
-    return default_cache.save(key, df, expire_hours, **csv_kwargs)
-
-
-def load_dataframe(key: str, **csv_kwargs) -> Optional[pd.DataFrame]:
-    """Convenience function: Load DataFrame"""
-    return default_cache.load(key, **csv_kwargs)
-
-
-def dataframe_exists(key: str) -> bool:
-    """Convenience function: Check if DataFrame exists"""
-    return default_cache.exists(key)
-
-
-def delete_dataframe(key: str) -> bool:
-    """Convenience function: Delete DataFrame cache"""
-    return default_cache.delete(key)
-
-
-def clean_expired_dataframes() -> int:
-    """Convenience function: Clean expired DataFrame caches"""
-    return default_cache.clean_expired()

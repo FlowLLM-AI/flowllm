@@ -97,7 +97,7 @@ class GetAkACodeOp(BaseLLMOp):
             time.sleep(1)
 
         stock_names = sorted(set(self.join_task()))
-        self.flow_context.code_infos = {name_code_dict[n]: {} for n in stock_names}
+        self.flow_context.code_infos = {name_code_dict[n]: {"股票名称": n} for n in stock_names}
         logger.info(f"code_infos={self.flow_context.code_infos}")
 
 

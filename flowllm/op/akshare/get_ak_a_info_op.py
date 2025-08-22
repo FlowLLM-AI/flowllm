@@ -4,6 +4,7 @@ import time
 import akshare as ak
 import pandas as pd
 from loguru import logger
+from tqdm import tqdm
 
 from flowllm.config.pydantic_config_parser import get_default_config
 from flowllm.context.flow_context import FlowContext
@@ -87,7 +88,7 @@ class GetAkANewsOp(GetAkAInfoOp):
         top_n_news: int = self.op_params.get("top_n_news", 1)
 
         news_content_list = []
-        for i, line in enumerate(stock_news_em_df.to_dict(orient="records")[:top_n_news]):
+        for i, line in enumerate(tqdm(stock_news_em_df.to_dict(orient="records")[:top_n_news])):
             url = line["新闻链接"]
             # http://finance.eastmoney.com/a/202508133482756869.html
             ts = url.split("/")[-1].split(".")[0]

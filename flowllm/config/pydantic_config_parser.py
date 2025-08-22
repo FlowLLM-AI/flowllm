@@ -187,18 +187,18 @@ class PydanticConfigParser(Generic[T]):
             else:
                 filter_args.append(arg)
 
-        if config:
-            if not config.endswith(".yaml"):
-                config += ".yaml"
+        assert config, "add `config=<config_file>` in cmd!"
+        if not config.endswith(".yaml"):
+            config += ".yaml"
 
-            # load pre-built configs
-            config_path = Path(__file__).parent / config
-            if not config_path.exists():
-                config_path = Path(config)
+        # load pre-built configs
+        config_path = Path(__file__).parent / config
+        if not config_path.exists():
+            config_path = Path(config)
 
-            yaml_config = self.load_from_yaml(config_path)
-            logger.info(f"flowllm using config={config_path}")
-            configs_to_merge.append(yaml_config)
+        yaml_config = self.load_from_yaml(config_path)
+        logger.info(f"flowllm using config={config_path}")
+        configs_to_merge.append(yaml_config)
 
         # 3. Command line override configuration
         if args:
