@@ -2,17 +2,17 @@
 DataFrame cache utility tests and usage examples
 """
 
-import pandas as pd
-import numpy as np
-import time
-from datetime import datetime
-import sys
 import os
+import sys
+import time
+
+import numpy as np
+import pandas as pd
 
 # Add project root directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from flowllm.utils.dataframe_cache import DataFrameCache, save_dataframe, load_dataframe
+from flowllm.storage.cache.dataframe_cache import DataFrameCache, save_dataframe, load_dataframe
 
 
 def create_sample_dataframe(rows: int = 100) -> pd.DataFrame:

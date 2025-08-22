@@ -25,7 +25,7 @@ class GetAkAInfoOp(BaseOp):
 
     def execute(self):
         max_retries: int = self.op_params.get("max_retries", 3)
-        for code, info_dict in self.flow_context.code_infos.items():
+        for code, info_dict in self.context.code_infos.items():
             result = {}
             for i in range(max_retries):
                 try:
@@ -40,14 +40,14 @@ class GetAkAInfoOp(BaseOp):
                 info_dict.update(result)
 
         time.sleep(1)
-        logger.info(f"code_infos={json.dumps(self.flow_context.code_infos, ensure_ascii=False, indent=2)}")
+        logger.info(f"code_infos={json.dumps(self.context.code_infos, ensure_ascii=False, indent=2)}")
 
 
 @C.register_op()
 class GetAkASpotOp(GetAkAInfoOp):
 
     def execute_code(self, code: str) -> dict:
-        from flowllm.op import GetAkACodeOp
+        from flowllm.op.akshare import GetAkACodeOp
 
         df: pd.DataFrame = GetAkACodeOp.download_a_stock_df()
         df = df.loc[df["代码"] == code, :]
@@ -105,7 +105,7 @@ class MergeAkAInfoOp(BaseOp):
 
     def execute(self):
         code_content = {}
-        for code, info_dict in self.flow_context.code_infos.items():
+        for code, info_dict in self.context.code_infos.items():
             content_list = [f"\n\n### {code}"]
             for key, value in info_dict.items():
                 content_list.append(f"\n#### {code}-{key}")
@@ -121,24 +121,21 @@ class MergeAkAInfoOp(BaseOp):
 
         answer = "\n".join(code_content.values())
         logger.info(f"answer=\n{answer}")
-        self.flow_context.response.answer = answer.strip()
+        self.context.response.answer = answer.strip()
 
 
 if __name__ == "__main__":
-    from flowllm.schema.flow_response import FlowResponse
+    C.service_config = get_default_config()
 
     code_infos = {"000858": {}, "600519": {}}
-    flow_context = FlowContext(code_infos=code_infos, response=FlowResponse())
-    service_config = get_default_config()
-    flow_context.query = "茅台和五粮现在价格多少？"
-    flow_context.service_config = service_config
+    context = FlowContext(code_infos=code_infos, query="茅台和五粮现在价格多少？")
 
-    op1 = GetAkAInfoOp(flow_context=flow_context)
-    op2 = GetAkASpotOp(flow_context=flow_context)
-    op3 = GetAkAMoneyFlowOp(flow_context=flow_context)
-    op4 = GetAkAFinancialInfoOp(flow_context=flow_context)
-    op5 = GetAkANewsOp(flow_context=flow_context)
-    op6 = MergeAkAInfoOp(flow_context=flow_context)
+    op1 = GetAkAInfoOp()
+    op2 = GetAkASpotOp()
+    op3 = GetAkAMoneyFlowOp()
+    op4 = GetAkAFinancialInfoOp()
+    op5 = GetAkANewsOp()
+    op6 = MergeAkAInfoOp()
 
     op = op1 >> op2 >> op3 >> op4 >> op5 >> op6
-    op.execute()
+    op(context=context)

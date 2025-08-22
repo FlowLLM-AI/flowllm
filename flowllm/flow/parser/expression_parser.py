@@ -1,46 +1,47 @@
 import re
 
-from loguru import logger
-
 from flowllm.context.service_context import C
-from flowllm.flow_engine.base_flow_engine import BaseFlowEngine
 from flowllm.op.base_op import BaseOp
 from flowllm.op.parallel_op import ParallelOp
 from flowllm.op.sequential_op import SequentialOp
 from flowllm.schema.service_config import OpConfig
 
 
-@C.register_flow_engine("simple")
-class SimpleFlowEngine(BaseFlowEngine):
+class ExpressionParser:
     SEQ_SYMBOL = ">>"
     PARALLEL_SYMBOL = "|"
 
     """
-    Simple flow implementation that supports parsing and executing operation expressions.
-    
+    Simple flow implementation that supports parsing operation expressions.
+
     Supports flow expressions like:
-    - "op1 >> op2" (sequential execution)
-    - "op1 | op2" (parallel execution)  
-    - "op1 >> (op2 | op3) >> op4" (mixed execution)
-    - "op1 >> (op1 | (op2 >> op3)) >> op4" (complex nested execution)
+    - "op1 >> op2" (sequential expressions)
+    - "op1 | op2" (parallel expressions)  
+    - "op1 >> (op2 | op3) >> op4" (mixed expressions)
+    - "op1 >> (op1 | (op2 >> op3)) >> op4" (complex nested expressions)
     """
 
-    def _parse_flow(self):
+    def __init__(self, flow_content: str = ""):
+        self.flow_content: str = flow_content
+        self._parsed_ops_cache = {}
+
+    def parse_flow(self):
+        self._parsed_ops_cache.clear()
         expression = re.sub(r'\s+', ' ', self.flow_content.strip())
-        self._parsed_flow = self._parse_expression(expression)
+        return self._parse_expression(expression)
 
     def _parse_expression(self, expression: str) -> BaseOp:
         """
         Parse the flow content string into executable operations.
-        
+
         Supports expressions with operators:
         - ">>" for sequential execution
         - "|" for parallel execution
         - Parentheses for grouping operations
-        
+
         Args:
             expression: The expression string to parse. If None, uses self.flow_content
-        
+
         Returns:
             BaseOp: The parsed flow as an executable operation tree
         """
@@ -78,7 +79,7 @@ class SimpleFlowEngine(BaseFlowEngine):
     def _parse_flat_expression(self, expression: str) -> BaseOp:
         """
         Parse a flat expression (no parentheses) into operation objects.
-        
+
         Args:
             expression: The flat expression string
 
@@ -98,7 +99,7 @@ class SimpleFlowEngine(BaseFlowEngine):
                 else:
                     ops.append(self._parse_parallel_expression(part))
 
-            return SequentialOp(ops=ops, flow_context=self.flow_context)
+            return SequentialOp(ops=ops)
 
         else:
             # no sequential operators, parse for parallel
@@ -107,7 +108,7 @@ class SimpleFlowEngine(BaseFlowEngine):
     def _parse_parallel_expression(self, expression: str) -> BaseOp:
         """
         Parse a parallel expression (operations separated by |).
-        
+
         Args:
             expression: The expression string
 
@@ -126,7 +127,7 @@ class SimpleFlowEngine(BaseFlowEngine):
                 else:
                     ops.append(self._create_op(part))
 
-            return ParallelOp(ops=ops, flow_context=self.flow_context)
+            return ParallelOp(ops=ops)
 
         else:
             # single operation
@@ -136,9 +137,10 @@ class SimpleFlowEngine(BaseFlowEngine):
             else:
                 return self._create_op(part)
 
-    def _create_op(self, op_name: str) -> BaseOp:
-        if op_name in self.flow_context.service_config.op:
-            op_config: OpConfig = self.flow_context.service_config.op[op_name]
+    @staticmethod
+    def _create_op(op_name: str) -> BaseOp:
+        if op_name in C.service_config.op:
+            op_config: OpConfig = C.service_config.op[op_name]
             op_cls = C.resolve_op(op_config.backend)
 
 
@@ -152,7 +154,6 @@ class SimpleFlowEngine(BaseFlowEngine):
         kwargs = {
             "name": op_name,
             "raise_exception": op_config.raise_exception,
-            "flow_context": self.flow_context,
             **op_config.params
         }
 
@@ -168,46 +169,3 @@ class SimpleFlowEngine(BaseFlowEngine):
             kwargs["vector_store"] = op_config.vector_store
 
         return op_cls(**kwargs)
-
-    def _print_flow(self):
-        """
-        Print the parsed flow structure in a readable format.
-        Allows users to visualize the execution flow on screen.
-        """
-        assert self._parsed_flow is not None, "flow_content is not parsed!"
-
-        logger.info(f"Expression: {self.flow_content}")
-        self._print_operation_tree(self._parsed_flow, indent=0)
-
-    def _print_operation_tree(self, op: BaseOp, indent: int = 0):
-        """
-        Recursively print the operation tree structure.
-        
-        Args:
-            op: The operation to print
-            indent: Current indentation level
-        """
-        prefix = "  " * indent
-        if isinstance(op, SequentialOp):
-            logger.info(f"{prefix}Sequential Execution:")
-            for i, sub_op in enumerate(op.ops):
-                logger.info(f"{prefix}  Step {i + 1}:")
-                self._print_operation_tree(sub_op, indent + 2)
-
-        elif isinstance(op, ParallelOp):
-            logger.info(f"{prefix}Parallel Execution:")
-            for i, sub_op in enumerate(op.ops):
-                logger.info(f"{prefix}  Branch {i + 1}:")
-                self._print_operation_tree(sub_op, indent + 2)
-
-        else:
-            logger.info(f"{prefix}Operation: {op.name}")
-
-    def _execute_flow(self):
-        """
-        Execute the parsed flow and return the result.
-        
-        Returns:
-            The result of executing the flow
-        """
-        return self._parsed_flow.execute()

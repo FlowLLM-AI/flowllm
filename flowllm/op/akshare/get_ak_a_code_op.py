@@ -12,7 +12,7 @@ from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
 from flowllm.op.llm_base_op import BaseLLMOp
 from flowllm.schema.message import Message
-from flowllm.utils.dataframe_cache import DataFrameCache
+from flowllm.storage.cache.dataframe_cache import DataFrameCache
 from flowllm.utils.timer import timer
 
 
@@ -73,7 +73,7 @@ class GetAkACodeOp(BaseLLMOp):
         stock_names = "\n".join([x.strip() for x in stock_names if x])
         prompt = self.prompt_format(prompt_name="find_stock_name",
                                     stock_names=stock_names,
-                                    query=self.flow_context.query)
+                                    query=self.context.query)
         logger.info(f"prompt={prompt}")
 
         def callback_fn(msg: Message):
@@ -97,20 +97,16 @@ class GetAkACodeOp(BaseLLMOp):
             time.sleep(1)
 
         stock_names = sorted(set(self.join_task()))
-        self.flow_context.code_infos = {name_code_dict[n]: {"股票名称": n} for n in stock_names}
-        logger.info(f"code_infos={self.flow_context.code_infos}")
+        self.context.code_infos = {name_code_dict[n]: {"股票名称": n} for n in stock_names}
+        logger.info(f"code_infos={self.context.code_infos}")
 
 
 if __name__ == "__main__":
     from concurrent.futures import ThreadPoolExecutor
 
     C.thread_pool = ThreadPoolExecutor(max_workers=10)
-    flow_context = FlowContext()
-    service_config = get_default_config()
-    flow_context.query = "茅台和五粮现在价格多少？"
-    flow_context.service_config = service_config
+    C.service_config = get_default_config()
+    context = FlowContext(query="茅台和五粮现在价格多少？")
 
-    op = GetAkACodeOp(flow_context=flow_context)
-    # for x in op.split_list(list(range(10)), 3):
-    #     print(x)
-    op.execute()
+    op = GetAkACodeOp()
+    op(context=context)

@@ -1,3 +1,4 @@
+import asyncio
 from abc import ABC
 from typing import List
 
@@ -37,6 +38,21 @@ class BaseEmbeddingModel(BaseModel, ABC):
         """
         raise NotImplementedError
 
+    async def _get_embeddings_async(self, input_text: str | List[str]):
+        """
+        Abstract async method to get embeddings from the model.
+        
+        This method must be implemented by concrete subclasses to provide
+        the actual async embedding functionality.
+        
+        Args:
+            input_text: Single text string or list of text strings to embed
+            
+        Returns:
+            Embedding vector(s) corresponding to the input text(s)
+        """
+        raise NotImplementedError
+
     def get_embeddings(self, input_text: str | List[str]):
         """
         Get embeddings with retry logic and error handling.
@@ -54,6 +70,33 @@ class BaseEmbeddingModel(BaseModel, ABC):
         for i in range(self.max_retries):
             try:
                 return self._get_embeddings(input_text)
+
+            except Exception as e:
+                logger.exception(f"embedding model name={self.model_name} encounter error with e={e.args}")
+                # If this is the last retry and raise_exception is True, re-raise the exception
+                if i == self.max_retries - 1 and self.raise_exception:
+                    raise e
+
+        # Return None if all retries failed and raise_exception is False
+        return None
+
+    async def get_embeddings_async(self, input_text: str | List[str]):
+        """
+        Get embeddings asynchronously with retry logic and error handling.
+        
+        This method wraps the _get_embeddings_async method with automatic retry
+        functionality in case of failures.
+        
+        Args:
+            input_text: Single text string or list of text strings to embed
+            
+        Returns:
+            Embedding vector(s) or None if all retries failed and raise_exception is False
+        """
+        # Retry loop with exponential backoff potential
+        for i in range(self.max_retries):
+            try:
+                return await self._get_embeddings_async(input_text)
 
             except Exception as e:
                 logger.exception(f"embedding model name={self.model_name} encounter error with e={e.args}")
@@ -90,6 +133,54 @@ class BaseEmbeddingModel(BaseModel, ABC):
             # Process nodes in batches to respect max_batch_size limits
             embeddings = [emb for i in range(0, len(nodes), self.max_batch_size) for emb in
                           self.get_embeddings(input_text=[node.content for node in nodes[i:i + self.max_batch_size]])]
+
+            # Validate that we got the expected number of embeddings
+            if len(embeddings) != len(nodes):
+                logger.warning(f"embeddings.size={len(embeddings)} <> nodes.size={len(nodes)}")
+            else:
+                # Assign embeddings to corresponding nodes
+                for node, embedding in zip(nodes, embeddings):
+                    node.vector = embedding
+            return nodes
+
+        else:
+            raise TypeError(f"unsupported type={type(nodes)}")
+
+    async def get_node_embeddings_async(self, nodes: VectorNode | List[VectorNode]):
+        """
+        Generate embeddings asynchronously for VectorNode objects and update their vector fields.
+        
+        This method handles both single nodes and lists of nodes, with automatic
+        batching for efficient processing of large node lists.
+        
+        Args:
+            nodes: Single VectorNode or list of VectorNode objects to embed
+            
+        Returns:
+            The same node(s) with updated vector fields containing embeddings
+            
+        Raises:
+            RuntimeError: If unsupported node type is provided
+        """
+        # Handle single VectorNode
+        if isinstance(nodes, VectorNode):
+            nodes.vector = await self.get_embeddings_async(nodes.content)
+            return nodes
+
+        # Handle list of VectorNodes with batch processing
+        elif isinstance(nodes, list):
+            # Process nodes in batches to respect max_batch_size limits
+            batch_tasks = []
+            for i in range(0, len(nodes), self.max_batch_size):
+                batch_nodes = nodes[i:i + self.max_batch_size]
+                batch_content = [node.content for node in batch_nodes]
+                batch_tasks.append(self.get_embeddings_async(batch_content))
+
+            # Execute all batch tasks concurrently
+            batch_results = await asyncio.gather(*batch_tasks)
+
+            # Flatten the results
+            embeddings = [emb for batch_result in batch_results for emb in batch_result]
 
             # Validate that we got the expected number of embeddings
             if len(embeddings) != len(nodes):

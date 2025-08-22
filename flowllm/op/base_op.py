@@ -1,23 +1,3 @@
-"""
-BaseOp operator overloading implementation
-
-Supported operators:
-- op1 >> op2: Sequential execution, output of op1 becomes input of op2
-- op1 | op2: Parallel execution, both operations use the same input, returns list of results
-- Mixed calls: op1 >> (op2 | op3) >> op4
-
-Usage examples:
-    # Sequential execution
-    result = op1 >> op2 >> op3
-    
-    # Parallel execution
-    results = op1 | op2 | op3
-    
-    # Mixed calls
-    result = op1 >> (op2 | op3) >> op4
-    result = op1 >> (op1 | (op2 >> op3)) >> op4
-"""
-
 from abc import abstractmethod, ABC
 from concurrent.futures import Future
 from typing import List
@@ -35,38 +15,36 @@ class BaseOp(ABC):
 
     def __init__(self,
                  name: str = "",
-                 language: str = "",
                  raise_exception: bool = True,
-                 flow_context: FlowContext | None = None,
                  **kwargs):
-
         super().__init__()
 
         self.name: str = name or camel_to_snake(self.__class__.__name__)
-        self.language: str = language or C.language
         self.raise_exception: bool = raise_exception
-
-        self.flow_context: FlowContext | None = flow_context
         self.op_params: dict = kwargs
 
         self.task_list: List[Future] = []
         self.timer = Timer(name=self.name)
+        self.context: FlowContext | None = None
 
     @abstractmethod
     def execute(self):
         ...
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, context: FlowContext = None):
+        self.context = context
         with self.timer:
             if self.raise_exception:
-                return self.execute()
+                self.execute()
 
             else:
-                try:
-                    return self.execute()
 
+                try:
+                    self.execute()
                 except Exception as e:
                     logger.exception(f"op={self.name} execute failed, error={e.args}")
+
+        return self.context.response if self.context else None
 
     def submit_task(self, fn, *args, **kwargs):
         task = C.thread_pool.submit(fn, *args, **kwargs)
@@ -88,7 +66,7 @@ class BaseOp(ABC):
     def __rshift__(self, op: "BaseOp"):
         from flowllm.op.sequential_op import SequentialOp
 
-        sequential_op = SequentialOp(ops=[self], flow_context=self.flow_context)
+        sequential_op = SequentialOp(ops=[self])
 
         if isinstance(op, SequentialOp):
             sequential_op.ops.extend(op.ops)
@@ -99,7 +77,7 @@ class BaseOp(ABC):
     def __or__(self, op: "BaseOp"):
         from flowllm.op.parallel_op import ParallelOp
 
-        parallel_op = ParallelOp(ops=[self], flow_context=self.flow_context)
+        parallel_op = ParallelOp(ops=[self])
 
         if isinstance(op, ParallelOp):
             parallel_op.ops.extend(op.ops)
@@ -127,9 +105,9 @@ def run2():
 
     class TestOp(BaseOp):
 
-        def execute(self, data=None):
-            time.sleep(0.1)  # Simulate execution time
-            op_result = f"{self.name}({data})" if data else self.name
+        def execute(self):
+            time.sleep(0.1)
+            op_result = f"{self.name}"
             logger.info(f"Executing {op_result}")
             return op_result
 

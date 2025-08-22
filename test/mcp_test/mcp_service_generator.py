@@ -1,11 +1,8 @@
+from typing import Dict, Optional
+
 import yaml
-from typing import Dict, Any, Optional
 from fastmcp import FastMCP
 from pydantic import BaseModel, create_model
-import inspect
-
-
-
 
 
 class MCPServiceGenerator:

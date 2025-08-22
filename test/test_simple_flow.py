@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath('.'))
 
-from flowllm.flow_engine.simple_flow_engine import SimpleFlowEngine
+from flowllm.engine.simple_flow_engine import SimpleFlowEngine
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.op.base_op import BaseOp

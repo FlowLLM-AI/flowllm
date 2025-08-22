@@ -5,45 +5,44 @@ import httpx
 from flowllm.schema.flow_response import FlowResponse
 
 
-class HttpClient:
-    """Client for interacting with FlowLLM HTTP service"""
+class AsyncHttpClient:
+    """Async client for interacting with FlowLLM HTTP service"""
 
     def __init__(self, base_url: str = "http://localhost:8001", timeout: float = 30.0):
         """
-        Initialize HTTP client
-        
+        Initialize async HTTP client
+
         Args:
             base_url: Base URL of the FlowLLM HTTP service
             timeout: Request timeout in seconds
         """
         self.base_url = base_url.rstrip('/')
         self.timeout = timeout
-        self.client = httpx.Client(timeout=timeout)
+        self.client = httpx.AsyncClient(timeout=timeout)
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.client.close()
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.aclose()
 
-    def close(self):
-        self.client.close()
+    async def close(self):
+        await self.client.aclose()
 
-    def health_check(self) -> Dict[str, str]:
-        response = self.client.get(f"{self.base_url}/health")
+    async def health_check(self) -> Dict[str, str]:
+        response = await self.client.get(f"{self.base_url}/health")
         response.raise_for_status()
         return response.json()
 
-    def execute_flow(self, flow_name: str, **kwargs) -> FlowResponse:
+    async def execute_flow(self, flow_name: str, **kwargs) -> FlowResponse:
         endpoint = f"{self.base_url}/{flow_name}"
-        response = self.client.post(endpoint, json=kwargs)
+        response = await self.client.post(endpoint, json=kwargs)
         response.raise_for_status()
         result_data = response.json()
         return FlowResponse(**result_data)
 
-    def get_available_flows(self) -> Optional[Dict[str, Any]]:
+    async def get_available_flows(self) -> Optional[Dict[str, Any]]:
         # TODO add available_flows
-        response = self.client.get(f"{self.base_url}/flows")
+        response = await self.client.get(f"{self.base_url}/flows")
         response.raise_for_status()
         return response.json()
-

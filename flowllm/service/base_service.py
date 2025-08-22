@@ -5,7 +5,7 @@ from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
-from flowllm.flow_engine.base_flow_engine import BaseFlowEngine
+# from flowllm.engine.base_flow_engine import BaseFlowEngine
 from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.service_config import ServiceConfig, EmbeddingModelConfig, FlowConfig
 

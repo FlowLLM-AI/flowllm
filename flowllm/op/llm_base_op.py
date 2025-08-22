@@ -14,26 +14,27 @@ class BaseLLMOp(BaseOp, ABC):
     file_path: str = __file__
 
     def __init__(self,
+                 language: str = "",
                  prompt_path: str = "",
                  llm: str = "default",
                  embedding_model: str = "default",
                  vector_store: str = "default",
                  **kwargs):
-
         super().__init__(**kwargs)
 
+        self.language: str = language or C.language
+        self.prompt_path: Path = Path(prompt_path) if prompt_path else \
+            Path(self.file_path).parent / self.name.replace("_op", "_prompt.yaml")
         self._llm: BaseLLM | str = llm
         self._embedding_model: BaseEmbeddingModel | str = embedding_model
         self._vector_store: BaseVectorStore | str = vector_store
 
-        default_prompt_path: Path = Path(self.file_path).parent / self.name.replace("_op", "_prompt.yaml")
-        self.prompt_path: Path = Path(prompt_path) if prompt_path else default_prompt_path
         self.prompt = PromptHandler(language=self.language).load_prompt_by_file(self.prompt_path)
 
     @property
     def llm(self) -> BaseLLM:
         if isinstance(self._llm, str):
-            llm_config: LLMConfig = self.flow_context.service_config.llm[self._llm]
+            llm_config: LLMConfig = C.service_config.llm[self._llm]
             llm_cls = C.resolve_llm(llm_config.backend)
             self._llm = llm_cls(model_name=llm_config.model_name, **llm_config.params)
 
@@ -43,7 +44,7 @@ class BaseLLMOp(BaseOp, ABC):
     def embedding_model(self) -> BaseEmbeddingModel:
         if isinstance(self._embedding_model, str):
             embedding_model_config: EmbeddingModelConfig = \
-                self.flow_context.service_config.embedding_model[self._embedding_model]
+                C.service_config.embedding_model[self._embedding_model]
             embedding_model_cls = C.resolve_embedding_model(embedding_model_config.backend)
             self._embedding_model = embedding_model_cls(model_name=embedding_model_config.model_name,
                                                         **embedding_model_config.params)

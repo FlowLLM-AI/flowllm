@@ -4,6 +4,7 @@ from typing import Dict
 
 from flowllm.context.base_context import BaseContext
 from flowllm.context.registry import Registry
+from flowllm.schema.service_config import ServiceConfig
 from flowllm.utils.singleton import singleton
 
 
@@ -31,6 +32,14 @@ class ServiceContext(BaseContext):
     @thread_pool.setter
     def thread_pool(self, thread_pool: ThreadPoolExecutor):
         self._data["thread_pool"] = thread_pool
+
+    @property
+    def service_config(self) -> ServiceConfig:
+        return self._data.get("service_config")
+
+    @service_config.setter
+    def service_config(self, service_config: ServiceConfig):
+        self._data["service_config"] = service_config
 
     def get_vector_store(self, name: str = "default"):
         vector_store_dict: dict = self._data["vector_store_dict"]

@@ -21,10 +21,6 @@ class HttpConfig(BaseModel):
 class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
 
-    def set_name(self, name: str):
-        self.name = name
-        return self
-
 
 class FlowEngineConfig(BaseModel):
     backend: str = Field(default="")
