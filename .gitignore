@@ -12,7 +12,6 @@ temp*
 private*
 dist/
 nohup*
-cache
 log/
 .trash/
 runs

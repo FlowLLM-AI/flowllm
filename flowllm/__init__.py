@@ -1,5 +1,5 @@
 from flowllm import embedding_model
-# from flowllm import engine
+from flowllm import flow
 from flowllm import llm
 from flowllm import op
 from flowllm import service

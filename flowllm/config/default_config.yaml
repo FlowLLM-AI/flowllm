@@ -37,7 +37,7 @@ flow:
         type: "str"
         description: "user question"
 
-  mock_flow:
+  mock_expression_flow:
     flow_content: mock1_op>>((mock4_op>>mock2_op)|mock5_op)>>(mock3_op|mock6_op)
     description: "mock flow"
     input_schema:
@@ -62,6 +62,7 @@ llm:
     model_name: qwen3-30b-a3b-thinking-2507
     params:
       temperature: 0.6
+
   qwen3_30b_instruct:
     backend: openai_compatible
     model_name: qwen3-30b-a3b-instruct-2507
@@ -79,4 +80,3 @@ vector_store:
     embedding_model: default
     params:
       hosts: "http://localhost:9200"
-

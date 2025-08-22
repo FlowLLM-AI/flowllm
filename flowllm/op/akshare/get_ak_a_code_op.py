@@ -6,7 +6,6 @@ import akshare as ak
 import pandas as pd
 from loguru import logger
 
-from flowllm.config.pydantic_config_parser import get_default_config
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
@@ -102,10 +101,7 @@ class GetAkACodeOp(BaseLLMOp):
 
 
 if __name__ == "__main__":
-    from concurrent.futures import ThreadPoolExecutor
-
-    C.thread_pool = ThreadPoolExecutor(max_workers=10)
-    C.service_config = get_default_config()
+    C.set_default_service_config().init_by_service_config()
     context = FlowContext(query="茅台和五粮现在价格多少？")
 
     op = GetAkACodeOp()

@@ -29,10 +29,10 @@ class BaseLLM(BaseModel, ABC):
     stream_options: dict = Field(default={"include_usage": True}, description="Options for streaming responses")
     temperature: float = Field(default=0.0000001, description="Sampling temperature (low for deterministic outputs)")
     presence_penalty: float | None = Field(default=None, description="Presence penalty to reduce repetition")
-    
+
     # Model-specific features
     enable_thinking: bool = Field(default=False, description="Enable reasoning/thinking mode for supported models")
-    
+
     # Tool usage configuration
     tool_choice: str = Field(default=None, description="Strategy for tool selection")
     parallel_tool_calls: bool = Field(default=True, description="Allow multiple tool calls in parallel")
@@ -145,7 +145,7 @@ class BaseLLM(BaseModel, ABC):
                                               tools=tools,
                                               enable_stream_print=enable_stream_print,
                                               **kwargs)
-                
+
                 # Apply callback function if provided
                 if callback_fn:
                     return callback_fn(message)
@@ -154,7 +154,7 @@ class BaseLLM(BaseModel, ABC):
 
             except Exception as e:
                 logger.exception(f"chat with model={self.model_name} encounter error with e={e.args}")
-                
+
                 # Exponential backoff: wait longer after each failure
                 time.sleep(1 + i)
 

@@ -65,5 +65,3 @@ class MCPClient:
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> CallToolResult:
         return await self.client.call_tool(tool_name, arguments=arguments)
-
-

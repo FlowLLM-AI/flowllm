@@ -1,9 +1,12 @@
+from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.op import Mock1Op, Mock2Op, Mock3Op, Mock4Op, Mock5Op, Mock6Op
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
 
 
-class MockToolCall(BaseToolFlow):
+@C.register_tool_flow()
+class MockToolFlow(BaseToolFlow):
+
     def build_flow(self):
         mock1_op = Mock1Op()
         mock2_op = Mock2Op()

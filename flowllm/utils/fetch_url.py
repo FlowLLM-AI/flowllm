@@ -1,11 +1,13 @@
-import requests
-from bs4 import BeautifulSoup
-import urllib3
 import random
 import time
 
+import requests
+import urllib3
+from bs4 import BeautifulSoup
+
 # Disable SSL warnings (optional, for handling insecure HTTPS)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 def get_random_headers():
     """Generate random headers to avoid detection"""
@@ -21,7 +23,7 @@ def get_random_headers():
         'Mozilla/5.0 (X11; Linux x86_64; rv:89.0) Gecko/20100101 Firefox/89.0',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/91.0.864.59'
     ]
-    
+
     accept_languages = [
         'en-US,en;q=0.9',
         'zh-CN,zh;q=0.9,en;q=0.8',
@@ -29,13 +31,13 @@ def get_random_headers():
         'fr-FR,fr;q=0.9,en;q=0.8',
         'de-DE,de;q=0.9,en;q=0.8'
     ]
-    
+
     accept_encodings = [
         'gzip, deflate, br',
         'gzip, deflate',
         'br, gzip, deflate'
     ]
-    
+
     headers = {
         'User-Agent': random.choice(user_agents),
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -44,7 +46,7 @@ def get_random_headers():
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
     }
-    
+
     # Randomly add some optional headers
     if random.random() > 0.5:
         headers['DNT'] = '1'
@@ -54,8 +56,9 @@ def get_random_headers():
         headers['Sec-Fetch-Dest'] = 'document'
         headers['Sec-Fetch-Mode'] = 'navigate'
         headers['Sec-Fetch-Site'] = 'none'
-    
+
     return headers
+
 
 def fetch_webpage_text(url, min_delay=1, max_delay=3):
     """
@@ -72,12 +75,12 @@ def fetch_webpage_text(url, min_delay=1, max_delay=3):
     # Add random delay to avoid being detected as bot
     delay = random.uniform(min_delay, max_delay)
     time.sleep(delay)
-    
+
     headers = get_random_headers()
-    
+
     # Random timeout between 8-15 seconds
     timeout = random.randint(8, 15)
-    
+
     try:
         # Send request with random headers and timeout
         response = requests.get(url, headers=headers, timeout=timeout, verify=False)
@@ -105,6 +108,7 @@ def fetch_webpage_text(url, min_delay=1, max_delay=3):
         return f"Request failed: {e}"
     except Exception as e:
         return f"Parsing failed: {e}"
+
 
 # Example usage
 if __name__ == "__main__":

@@ -22,11 +22,6 @@ class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
 
 
-class FlowEngineConfig(BaseModel):
-    backend: str = Field(default="")
-    params: dict = Field(default_factory=dict)
-
-
 class OpConfig(BaseModel):
     backend: str = Field(default="")
     language: str = Field(default="")
@@ -64,7 +59,6 @@ class ServiceConfig(BaseModel):
 
     mcp: MCPConfig = Field(default_factory=MCPConfig)
     http: HttpConfig = Field(default_factory=HttpConfig)
-    flow_engine: FlowEngineConfig = Field(default_factory=FlowEngineConfig)
     flow: Dict[str, FlowConfig] = Field(default_factory=dict)
     op: Dict[str, OpConfig] = Field(default_factory=dict)
     llm: Dict[str, LLMConfig] = Field(default_factory=dict)

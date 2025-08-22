@@ -8,7 +8,7 @@ from flowllm.schema.flow_response import FlowResponse
 class HttpClient:
     """Client for interacting with FlowLLM HTTP service"""
 
-    def __init__(self, base_url: str = "http://localhost:8001", timeout: float = 30.0):
+    def __init__(self, base_url: str = "http://localhost:8001", timeout: float = 600.0):
         """
         Initialize HTTP client
         
@@ -46,4 +46,3 @@ class HttpClient:
         response = self.client.get(f"{self.base_url}/flows")
         response.raise_for_status()
         return response.json()
-

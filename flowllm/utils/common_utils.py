@@ -40,25 +40,13 @@ def load_env(path: str | Path = None):
         path = Path(path)
         if path.exists():
             _load_env(path)
+
     else:
-        path1 = Path(".env")
-        path2 = Path("../.env")
-        path3 = Path("../../.env")
-        path4 = Path("../../../.env")
-        path5 = Path("../../../.env")
+        for i in range(5):
+            path = Path("../" * i + ".env")
+            if path.exists():
+                logger.info(f"using path={path}")
+                _load_env(path)
+                return
 
-        if path1.exists():
-            path = path1
-        elif path2.exists():
-            path = path2
-        elif path3.exists():
-            path = path3
-        elif path4.exists():
-            path = path4
-        elif path5.exists():
-            path = path5
-        else:
-            raise FileNotFoundError(".env not found")
-
-        logger.info(f"using path={path}")
-        _load_env(path)
+        raise FileNotFoundError(".env not found")

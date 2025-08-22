@@ -52,7 +52,7 @@ class BaseFlow(ABC):
         else:
             logger.info(f"{prefix}Operation: {op.name}")
 
-    def execute_flow(self, **kwargs) -> FlowResponse:
+    def __call__(self, **kwargs) -> FlowResponse:
         context = FlowContext(**kwargs)
         logger.info(f"request.params={kwargs}")
 

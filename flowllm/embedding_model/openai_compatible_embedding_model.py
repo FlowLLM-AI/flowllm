@@ -130,18 +130,17 @@ def main():
 
 async def async_main():
     from flowllm.utils.common_utils import load_env
-    import asyncio
 
     load_env()
     model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-    
+
     # Test async single text embedding
     res1 = await model.get_embeddings_async(
         "The clothes are of good quality and look good, definitely worth the wait. I love them.")
-    
+
     # Test async batch text embedding
     res2 = await model.get_embeddings_async(["aa", "bb"])
-    
+
     print("Async results:")
     print(res1)
     print(res2)
@@ -150,4 +149,5 @@ async def async_main():
 if __name__ == "__main__":
     # main()
     import asyncio
+
     asyncio.run(async_main())

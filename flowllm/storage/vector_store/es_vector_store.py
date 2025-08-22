@@ -13,7 +13,7 @@ from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 
 @C.register_vector_store("elasticsearch")
 class EsVectorStore(LocalVectorStore):
-    hosts: str | List[str] = Field(default_factory=lambda: os.getenv("ES_HOSTS", "http://localhost:9200"))
+    hosts: str | List[str] = Field(default_factory=lambda: os.getenv("FLOW_ES_HOSTS", "http://localhost:9200"))
     basic_auth: str | Tuple[str, str] | None = Field(default=None)
     retrieve_filters: List[dict] = []
     _client: Elasticsearch = PrivateAttr()

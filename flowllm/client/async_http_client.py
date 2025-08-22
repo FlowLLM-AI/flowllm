@@ -8,7 +8,7 @@ from flowllm.schema.flow_response import FlowResponse
 class AsyncHttpClient:
     """Async client for interacting with FlowLLM HTTP service"""
 
-    def __init__(self, base_url: str = "http://localhost:8001", timeout: float = 30.0):
+    def __init__(self, base_url: str = "http://localhost:8001", timeout: float = 600.0):
         """
         Initialize async HTTP client
 

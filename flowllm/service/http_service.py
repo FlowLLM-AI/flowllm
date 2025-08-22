@@ -1,14 +1,15 @@
 import asyncio
+import json
 from functools import partial
 from typing import Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from loguru import logger
 from pydantic import BaseModel, create_model, Field
 
 from flowllm.context.service_context import C
+from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.tool_call import ParamAttrs
 from flowllm.service.base_service import BaseService
@@ -27,7 +28,7 @@ class HttpService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.app = FastAPI(title="FlowLLM", description="HTTP API for FlowLLM")
-        
+
         # Add CORS middleware
         self.app.add_middleware(
             CORSMiddleware,
@@ -36,16 +37,15 @@ class HttpService(BaseService):
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        
+
         # Add health check endpoint
         self.app.get("/health")(self.health_check)
 
     @staticmethod
     def health_check():
         return {"status": "healthy"}
-    
+
     def _create_pydantic_model(self, flow_name: str, input_schema: Dict[str, ParamAttrs]) -> BaseModel:
-        # Create a dynamic Pydantic model based on flow input schema
         fields = {}
 
         for param_name, param_config in input_schema.items():
@@ -57,29 +57,44 @@ class HttpService(BaseService):
                 fields[param_name] = (field_type, Field(default=..., description=param_config.description))
 
         return create_model(f"{snake_to_camel(flow_name)}Model", **fields)
-    
-    def register_flow(self, flow_name: str):
-        """Register a flow as an HTTP endpoint"""
-        flow_config = self.flow_config_dict[flow_name]
-        request_model = self._create_pydantic_model(flow_name, flow_config.input_schema)
+
+    def integrate_tool_flow(self, tool_flow_name: str):
+        tool_flow: BaseToolFlow = C.get_tool_flow(tool_flow_name)
+        request_model = self._create_pydantic_model(tool_flow_name, tool_flow.tool_call.input_schema)
 
         async def execute_flow_endpoint(request: request_model) -> FlowResponse:
             loop = asyncio.get_event_loop()
             response: FlowResponse = await loop.run_in_executor(
                 executor=C.thread_pool,
-                func=partial(self.execute_flow, flow_name=flow_name, **request.model_dump()))  # noqa
+                func=partial(tool_flow.__call__, **request.model_dump()))  # noqa
 
             return response
 
-        endpoint_path = f"/{flow_name}"
+        endpoint_path = f"/{tool_flow.name}"
         self.app.post(endpoint_path, response_model=FlowResponse)(execute_flow_endpoint)
-        logger.info(f"register flow={flow_name} endpoint={endpoint_path}")
-    
+
+    def integrate_tool_flows(self):
+        super().integrate_tool_flows()
+
+        async def execute_flow_endpoint() -> FlowResponse:
+            loop = asyncio.get_event_loop()
+
+            def list_tool_flows():
+                response: FlowResponse = FlowResponse()
+                tool_flow_schemas = []
+                for name, tool_flow in C.tool_flow_dict.items():
+                    assert isinstance(tool_flow, BaseToolFlow)
+                    tool_flow_schemas.append(tool_flow.tool_call.simple_input_dump())
+                response.answer = json.dumps(tool_flow_schemas, ensure_ascii=False)
+                return response
+
+            return await loop.run_in_executor(executor=C.thread_pool, func=list_tool_flows)  # noqa
+
+        self.app.post("/list_tool_flows", response_model=FlowResponse)(execute_flow_endpoint)
+
     def __call__(self):
-        for flow_name in self.flow_config_dict:
-            self.register_flow(flow_name)
-        
-        # Start the server
+        self.integrate_tool_flows()
+
         uvicorn.run(self.app,
                     host=self.http_config.host,
                     port=self.http_config.port,
