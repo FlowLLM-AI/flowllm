@@ -5,6 +5,7 @@ from typing import Dict, Optional
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from loguru import logger
 from pydantic import BaseModel, create_model, Field
 
 from flowllm.context.service_context import C
@@ -87,7 +88,9 @@ class HttpService(BaseService):
 
             return await loop.run_in_executor(executor=C.thread_pool, func=list_tool_flows)  # noqa
 
-        self.app.post("/list_tool_flows", response_model=list)(execute_endpoint)
+        endpoint_path = "/list"
+        self.app.get(endpoint_path, response_model=list)(execute_endpoint)
+        logger.info(f"integrate endpoint={endpoint_path}")
 
     def __call__(self):
         self.integrate_tool_flows()

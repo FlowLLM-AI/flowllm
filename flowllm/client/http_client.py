@@ -42,6 +42,6 @@ class HttpClient:
         return FlowResponse(**result_data)
 
     def list_tool_flows(self) -> list:
-        response = self.client.get(f"{self.base_url}/list_tool_flows")
+        response = self.client.get(f"{self.base_url}/list")
         response.raise_for_status()
         return response.json()

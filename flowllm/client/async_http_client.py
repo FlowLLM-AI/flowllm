@@ -42,6 +42,6 @@ class AsyncHttpClient:
         return FlowResponse(**result_data)
 
     async def list_tool_flows(self) -> list:
-        response = await self.client.get(f"{self.base_url}/list_tool_flows")
+        response = await self.client.get(f"{self.base_url}/list")
         response.raise_for_status()
         return response.json()

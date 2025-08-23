@@ -6,5 +6,6 @@ class CmdFlow(BaseFlow):
 
     def build_flow(self):
         flow: str = self.flow_params["flow"]
+        assert flow, "flow is empty!"
         parser = ExpressionParser(flow)
         return parser.parse_flow()

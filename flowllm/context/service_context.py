@@ -1,5 +1,6 @@
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from inspect import isclass
 from typing import Dict, List
 
 from loguru import logger
@@ -51,16 +52,19 @@ class ServiceContext(BaseContext):
         from flowllm.flow.base_tool_flow import BaseToolFlow
         from flowllm.flow.gallery import ExpressionToolFlow
 
-        for name, tool_flow_cls in self.registry_dict["tool_flow"]:
+        for name, tool_flow_cls in self.registry_dict["tool_flow"].items():
+            if not isclass(tool_flow_cls):
+                continue
+
             tool_flow: BaseToolFlow = tool_flow_cls()
             self.tool_flow_dict[tool_flow.name] = tool_flow
-            logger.info(f"add diy tool_flow={tool_flow.name}")
+            logger.info(f"add diy tool_flow: {tool_flow.name}")
 
         for name, flow_config in self.service_config.flow.items():
             flow_config.name = name
-            tool_flow: BaseToolFlow = ExpressionToolFlow()
+            tool_flow: BaseToolFlow = ExpressionToolFlow(flow_config=flow_config)
             self.tool_flow_dict[tool_flow.name] = tool_flow
-            logger.info(f"add expression tool_flow={tool_flow.name}")
+            logger.info(f"add expression tool_flow:{tool_flow.name}")
 
     def get_vector_store(self, name: str = "default"):
         return self.vector_store_dict[name]

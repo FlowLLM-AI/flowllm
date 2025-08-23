@@ -35,12 +35,14 @@ class BaseContext:
         return self._data
 
     @property
-    def keys(self) -> List[str]:
-        return sorted(self._data.keys())
+    def keys(self):
+        return self._data.keys()
 
     def update(self, **kwargs):
         self._data.update(kwargs)
 
+    def items(self):
+        return self._data.items()
 
 if __name__ == "__main__":
     ctx = BaseContext(**{"name": "Alice", "age": 30, "city": "New York"})

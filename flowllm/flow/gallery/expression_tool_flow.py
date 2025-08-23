@@ -7,12 +7,12 @@ from flowllm.schema.tool_call import ToolCall
 class ExpressionToolFlow(BaseToolFlow):
 
     def __init__(self, flow_config: FlowConfig = None, **kwargs):
-        super().__init__(name=flow_config.name, **kwargs)
         self.flow_config: FlowConfig = flow_config
-        self.parser = ExpressionParser(flow_config.flow_content)
+        super().__init__(name=flow_config.name, **kwargs)
 
     def build_flow(self):
-        return self.parser.parse_flow()
+        parser = ExpressionParser(self.flow_config.flow_content)
+        return parser.parse_flow()
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**self.flow_config.model_dump())

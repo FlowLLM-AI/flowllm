@@ -2,6 +2,7 @@
 Example usage of FlowLLM service clients
 """
 import asyncio
+import json
 
 from flowllm.client import HttpClient, AsyncHttpClient, MCPClient, SyncMCPClient
 
@@ -17,6 +18,8 @@ def http_client_example():
         result = client.execute_tool_flow(flow_name="get_a_stock_infos", query="茅台怎么样？")
         print(f"Flow result: {result.answer}")
 
+        result = client.list_tool_flows()
+        print(json.dumps(result, ensure_ascii=False))
 
 async def async_http_client_example():
     """Example of using asynchronous HTTP client"""
@@ -28,6 +31,10 @@ async def async_http_client_example():
 
         result = await client.execute_tool_flow(flow_name="get_a_stock_infos", query="茅台怎么样？")
         print(f"Flow result: {result.answer}")
+
+        result = await client.list_tool_flows()
+        print(json.dumps(result, ensure_ascii=False))
+
 
 
 async def mcp_client_example():
@@ -69,5 +76,5 @@ def main_sync():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
-    # main_sync()
+    # asyncio.run(main())
+    main_sync()

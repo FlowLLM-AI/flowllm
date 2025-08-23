@@ -26,7 +26,9 @@ class BaseFlow(ABC):
 
     def print_flow(self):
         assert self.flow_op is not None, "flow_content is not parsed!"
+        logger.info(f"---------- start print flow={self.name} ----------")
         self._print_operation_tree(self.flow_op, indent=0)
+        logger.info(f"---------- end print flow={self.name} ----------")
 
     def _print_operation_tree(self, op: BaseOp, indent: int):
         """

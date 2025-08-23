@@ -26,7 +26,7 @@ class MCPService(BaseService):
                 func=partial(tool_flow.__call__, **kwargs))  # noqa
             return response.answer
 
-        tool = FunctionTool(name=flow_name,  # noqa
+        tool = FunctionTool(name=tool_flow.name,  # noqa
                             description=tool_flow.tool_call.description,  # noqa
                             fn=execute_flow_async,
                             parameters=tool_flow.tool_call.input_schema)
@@ -37,6 +37,8 @@ class MCPService(BaseService):
 
         if self.mcp_config.transport == "sse":
             self.mcp.run(transport="sse", host=self.mcp_config.host, port=self.mcp_config.port)
+        if self.mcp_config.transport == "http":
+            self.mcp.run(transport="http", host=self.mcp_config.host, port=self.mcp_config.port)
         elif self.mcp_config.transport == "stdio":
             self.mcp.run(transport="stdio")
         else:

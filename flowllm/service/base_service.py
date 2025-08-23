@@ -29,7 +29,7 @@ class BaseService(ABC):
     def integrate_tool_flows(self):
         for tool_flow_name in C.tool_flow_names:
             self.integrate_tool_flow(tool_flow_name)
-            logger.info(f"integrate flow={tool_flow_name}")
+            logger.info(f"integrate flow_endpoint={tool_flow_name}")
 
     @abstractmethod
     def __call__(self):
