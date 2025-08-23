@@ -60,7 +60,7 @@ class ServiceConfig(BaseModel):
     backend: str = Field(default="")
     language: str = Field(default="")
     thread_pool_max_workers: int = Field(default=16)
-    ray_max_workers: int = Field(default=8)
+    ray_max_workers: int = Field(default=1)
 
     cmd: CmdConfig = Field(default_factory=CmdConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)

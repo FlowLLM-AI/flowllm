@@ -1,6 +1,3 @@
-from typing import List
-
-
 class BaseContext:
     def __init__(self, **kwargs):
         self._data = {**kwargs}

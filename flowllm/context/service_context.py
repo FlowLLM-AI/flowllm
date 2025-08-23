@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from inspect import isclass
 from typing import Dict, List
 
+import ray
 from loguru import logger
 
 from flowllm.context.base_context import BaseContext
@@ -39,6 +40,8 @@ class ServiceContext(BaseContext):
         self.service_config = service_config
         self.language = self.service_config.language
         self.thread_pool = ThreadPoolExecutor(max_workers=self.service_config.thread_pool_max_workers)
+        if self.service_config.ray_max_workers > 1:
+            ray.init(num_cpus=self.service_config.ray_max_workers)
 
         # add vector store
         for name, config in self.service_config.vector_store.items():
