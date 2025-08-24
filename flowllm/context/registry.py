@@ -6,13 +6,17 @@ from flowllm.utils.common_utils import camel_to_snake
 
 class Registry(BaseContext):
 
-    def __init__(self, registry_name: str, enable_log: bool = True, **kwargs):
+    def __init__(self, registry_name: str, enable_log: bool = True, register_flow_module: bool = True, **kwargs):
         super().__init__(**kwargs)
         self.registry_name: str = registry_name
         self.enable_log: bool = enable_log
+        self.register_flow_module: bool = register_flow_module
 
     def register(self, name: str = ""):
         def decorator(cls):
+            if not self.register_flow_module and cls.__module__.startswith("flowllm"):
+                return cls
+
             class_name = name if name else camel_to_snake(cls.__name__)
             if self.enable_log:
                 if class_name in self._data:

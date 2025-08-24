@@ -1,3 +1,7 @@
+from flowllm.utils.common_utils import load_env
+
+load_env()
+
 from flowllm import embedding_model
 from flowllm import flow
 from flowllm import llm

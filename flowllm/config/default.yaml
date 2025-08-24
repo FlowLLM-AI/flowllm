@@ -15,11 +15,6 @@ http:
   timeout_keep_alive: 600
   limit_concurrency: 64
 
-
-flow_engine:
-  backend: simple
-
-
 flow:
   get_a_stock_infos:
     flow_content: get_ak_a_code_op >> get_ak_a_info_op >> get_ak_a_spot_op >> get_ak_a_money_flow_op >> get_ak_a_financial_info_op >> merge_ak_a_info_op

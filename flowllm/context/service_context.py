@@ -1,3 +1,4 @@
+import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from inspect import isclass
@@ -19,14 +20,23 @@ class ServiceContext(BaseContext):
         super().__init__(**kwargs)
 
         self.service_id: str = service_id
-
         self.service_config: ServiceConfig | None = None
         self.language: str = ""
         self.thread_pool: ThreadPoolExecutor | None = None
         self.vector_store_dict: dict = {}
 
-        self.registry_dict: Dict[str, Registry] = \
-            {k: Registry(k) for k in ["embedding_model", "llm", "vector_store", "op", "tool_flow", "service"]}
+        self.registry_dict: Dict[str, Registry] = {}
+        use_framework: bool = os.environ.get("FLOW_USE_FRAMEWORK", "").lower() == "true"
+        for key in ["embedding_model", "llm", "vector_store", "op", "tool_flow", "service"]:
+            enable_log = True
+            register_flow_module = True
+
+            if use_framework:
+                enable_log = False
+                if key in ["op", "tool_flow"]:
+                    register_flow_module = False
+            self.registry_dict[key] = Registry(key, enable_log=enable_log, register_flow_module=register_flow_module)
+
         self.tool_flow_dict: dict = {}
 
     def set_default_service_config(self):
@@ -55,6 +65,7 @@ class ServiceContext(BaseContext):
         from flowllm.flow.base_tool_flow import BaseToolFlow
         from flowllm.flow.gallery import ExpressionToolFlow
 
+        # add tool flow cls
         for name, tool_flow_cls in self.registry_dict["tool_flow"].items():
             if not isclass(tool_flow_cls):
                 continue
@@ -63,6 +74,7 @@ class ServiceContext(BaseContext):
             self.tool_flow_dict[tool_flow.name] = tool_flow
             logger.info(f"add diy tool_flow: {tool_flow.name}")
 
+        # add tool flow config
         for name, flow_config in self.service_config.flow.items():
             flow_config.name = name
             tool_flow: BaseToolFlow = ExpressionToolFlow(flow_config=flow_config)
