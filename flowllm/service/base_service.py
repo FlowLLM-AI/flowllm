@@ -17,8 +17,8 @@ class BaseService(ABC):
         C.init_by_service_config(self.service_config)
 
     @classmethod
-    def get_service(cls, *args) -> "BaseService":
-        config_parser = PydanticConfigParser(ServiceConfig)
+    def get_service(cls, parser: type[PydanticConfigParser] = PydanticConfigParser, *args) -> "BaseService":
+        config_parser = parser(ServiceConfig)
         service_config: ServiceConfig = config_parser.parse_args(*args)
         service_cls = C.resolve_service(service_config.backend)
         return service_cls(service_config)
@@ -30,6 +30,12 @@ class BaseService(ABC):
         for tool_flow_name in C.tool_flow_names:
             self.integrate_tool_flow(tool_flow_name)
             logger.info(f"integrate flow_endpoint={tool_flow_name}")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        ...
 
     @abstractmethod
     def __call__(self):
