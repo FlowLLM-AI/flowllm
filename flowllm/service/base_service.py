@@ -17,7 +17,7 @@ class BaseService(ABC):
         C.init_by_service_config(self.service_config)
 
     @classmethod
-    def get_service(cls, parser: type[PydanticConfigParser] = PydanticConfigParser, *args) -> "BaseService":
+    def get_service(cls, *args, parser: type[PydanticConfigParser] = PydanticConfigParser) -> "BaseService":
         config_parser = parser(ServiceConfig)
         service_config: ServiceConfig = config_parser.parse_args(*args)
         service_cls = C.resolve_service(service_config.backend)
