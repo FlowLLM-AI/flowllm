@@ -3,8 +3,18 @@ class BaseContext:
         self._data = {**kwargs}
 
     def __getattr__(self, name: str):
-        if name in self._data:
-            return self._data[name]
+        # Avoid infinite recursion when _data is not yet initialized
+        if name == '_data':
+            raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
+        
+        # Use object.__getattribute__ to safely access _data
+        try:
+            data = object.__getattribute__(self, '_data')
+        except AttributeError:
+            raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
+            
+        if name in data:
+            return data[name]
 
         raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
@@ -40,6 +50,14 @@ class BaseContext:
 
     def items(self):
         return self._data.items()
+
+    def __getstate__(self):
+        """Support for pickle serialization"""
+        return {'_data': self._data}
+    
+    def __setstate__(self, state):
+        """Support for pickle deserialization"""
+        self._data = state['_data']
 
 if __name__ == "__main__":
     ctx = BaseContext(**{"name": "Alice", "age": 30, "city": "New York"})
