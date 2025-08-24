@@ -1,5 +1,6 @@
 from abc import ABC
 
+import pandas as pd
 import ray
 from loguru import logger
 from tqdm import tqdm
@@ -9,6 +10,40 @@ from flowllm.op.base_op import BaseOp
 
 
 class BaseRayOp(BaseOp, ABC):
+
+    def submit_and_join_ray_task(self, fn,  parallel_key: str, task_desc: str = "", **kwargs):
+        max_workers = C.service_config.ray_max_workers
+        self.ray_task_list.clear()
+
+        parallel_list = kwargs.pop(parallel_key)
+        assert isinstance(parallel_list, list)
+        for key in sorted(kwargs.keys()):
+            value = kwargs[key]
+            if isinstance(value, pd.DataFrame):
+                kwargs[key] = ray.put(value)
+
+        for i in range(max_workers):
+            def fn_wrapper():
+                result_list = []
+                for parallel_value in parallel_list[i::max_workers]:
+                    kwargs.update({
+                        "actor_index": i,
+                        parallel_key: parallel_value,
+                    })
+                    t_result = fn(**kwargs)
+                    if t_result:
+                        if isinstance(t_result, list):
+                            result_list.extend(t_result)
+                        else:
+                            result_list.append(t_result)
+                return result_list
+
+            self.submit_ray_task(fn=fn_wrapper)
+            logger.info(f"ray.submit task_desc={task_desc} id={i}")
+
+        result = self.join_ray_task(task_desc=task_desc)
+        logger.info(f"{task_desc} complete. result_size={len(result)} resources={ray.available_resources()}")
+        return result
 
     def submit_ray_task(self, fn, *args, **kwargs):
         if C.service_config.ray_max_workers <= 1:
