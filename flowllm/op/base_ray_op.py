@@ -15,7 +15,8 @@ class BaseRayOp(BaseOp, ABC):
     Inherits from BaseOp and provides methods for submitting and joining Ray tasks.
     """
 
-    def submit_and_join_ray_task(self, fn,  parallel_key: str = "", task_desc: str = "", **kwargs):
+    def submit_and_join_ray_task(self, fn, parallel_key: str = "", task_desc: str = "",
+                                 enable_test: bool = False, **kwargs):
         """
         Submit multiple Ray tasks in parallel and wait for all results.
         
@@ -26,6 +27,7 @@ class BaseRayOp(BaseOp, ABC):
             fn: Function to execute in parallel
             parallel_key: Key of the parameter to parallelize over (auto-detected if empty)
             task_desc: Description for logging and progress bars
+            enable_test: Enable test mode (prints results instead of executing)
             **kwargs: Arguments to pass to the function, including the list to parallelize over
         
         Returns:
@@ -52,6 +54,18 @@ class BaseRayOp(BaseOp, ABC):
             if isinstance(value, pd.DataFrame):
                 kwargs[key] = ray.put(value)
 
+        if enable_test:
+            test_result_list = []
+            for value in parallel_list:
+                kwargs.update({"actor_index": 0, parallel_key: value})
+                t_result = fn(**kwargs)
+                if t_result:
+                    if isinstance(t_result, list):
+                        test_result_list.extend(t_result)
+                    else:
+                        test_result_list.append(t_result)
+            return test_result_list
+
         # Create and submit tasks for each worker
         for i in range(max_workers):
             def fn_wrapper():
@@ -62,12 +76,12 @@ class BaseRayOp(BaseOp, ABC):
                         "actor_index": i,
                         parallel_key: parallel_value,
                     })
-                    t_result = fn(**kwargs)
-                    if t_result:
-                        if isinstance(t_result, list):
-                            result_list.extend(t_result)
+                    part_result = fn(**kwargs)
+                    if part_result:
+                        if isinstance(part_result, list):
+                            result_list.extend(part_result)
                         else:
-                            result_list.append(t_result)
+                            result_list.append(part_result)
                 return result_list
 
             self.submit_ray_task(fn=fn_wrapper)
