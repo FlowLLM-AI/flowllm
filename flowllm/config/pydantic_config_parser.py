@@ -11,6 +11,9 @@ T = TypeVar('T', bound=BaseModel)
 
 
 class PydanticConfigParser(Generic[T]):
+    current_file: str = __file__
+    default_config_name: str = ""
+
     """
     Pydantic Configuration Parser
     
@@ -187,12 +190,16 @@ class PydanticConfigParser(Generic[T]):
             else:
                 filter_args.append(arg)
 
-        assert config, "add `config=<config_file>` in cmd!"
+        if not config:
+            if self.default_config_name:
+                config = self.default_config_name
+            assert config, "add `config=<config_file>` in cmd!"
+
         if not config.endswith(".yaml"):
             config += ".yaml"
 
         # load pre-built configs
-        config_path = Path(__file__).parent / config
+        config_path = Path(self.current_file).parent / config
         if not config_path.exists():
             config_path = Path(config)
 

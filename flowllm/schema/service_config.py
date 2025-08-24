@@ -32,9 +32,9 @@ class OpConfig(BaseModel):
     language: str = Field(default="")
     raise_exception: bool = Field(default=True)
     prompt_path: str = Field(default="")
-    llm: str = Field(default="default")
-    embedding_model: str = Field(default="default")
-    vector_store: str = Field(default="default")
+    llm: str = Field(default="")
+    embedding_model: str = Field(default="")
+    vector_store: str = Field(default="")
     params: dict = Field(default_factory=dict)
 
 

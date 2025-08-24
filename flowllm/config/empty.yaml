@@ -2,7 +2,7 @@
 backend: http
 language: ""
 thread_pool_max_workers: 32
-ray_max_workers: 8
+ray_max_workers: 1
 
 mcp:
   transport: sse

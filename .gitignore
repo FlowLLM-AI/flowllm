@@ -18,3 +18,4 @@ runs
 logs
 *.egg-info/*
 **/cache_df
+build/*
