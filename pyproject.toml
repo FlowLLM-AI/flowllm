@@ -14,9 +14,6 @@ maintainers = [
 ]
 license = {file = "LICENSE"}
 readme = "README.md"
-homepage = "https://github.com/flowllm-ai/flowllm"
-repository = "https://github.com/flowllm-ai/flowllm"
-documentation = "https://github.com/flowllm-ai/flowllm"
 keywords = ["llm", "ai", "flow", "framework", "openai", "chatgpt", "language-model", "mcp", "http"]
 requires-python = ">=3.12"
 
@@ -58,36 +55,14 @@ dependencies = [
     "uvicorn[standard]",
     "chromadb",
     "elasticsearch",
+    "ray",
 ]
 
 [project.optional-dependencies]
 
-# Distributed computing
-distributed = ["ray>=2.0.0"]
+distributed = ["ray"]
 
-# Development dependencies
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "isort>=5.12.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "pre-commit>=3.0.0",
-]
-
-# Testing dependencies
-test = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "pytest-cov>=4.0.0",
-    "httpx>=0.24.0",
-]
-# All optional dependencies
-all = [
-    "flowllm[distributed,dev,test]"
-]
+all = ["flowllm[distributed]"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -102,121 +77,3 @@ flowllm = [
 
 [project.scripts]
 flowllm = "flowllm.app:main"
-
-[project.urls]
-Homepage = "https://github.com/flowllm-ai/flowllm"
-Repository = "https://github.com/flowllm-ai/flowllm"
-Documentation = "https://github.com/flowllm-ai/flowllm"
-"Bug Tracker" = "https://github.com/flowllm-ai/flowllm/issues"
-Changelog = "https://github.com/flowllm-ai/flowllm/blob/main/CHANGELOG.md"
-
-# Tool configurations
-[tool.black]
-line-length = 88
-target-version = ['py312']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 88
-known_first_party = ["flowllm"]
-skip_glob = ["*/__init__.py"]
-
-[tool.pytest.ini_options]
-minversion = "7.0"
-addopts = [
-    "-ra",
-    "--strict-markers",
-    "--strict-config",
-    "--cov=flowllm",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
-]
-testpaths = ["test"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-    "integration: marks tests as integration tests",
-    "unit: marks tests as unit tests",
-]
-
-[tool.coverage.run]
-source = ["flowllm"]
-omit = [
-    "*/test/*",
-    "*/tests/*",
-    "*/__init__.py",
-    "*/conftest.py",
-]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-]
-
-[tool.mypy]
-python_version = "3.12"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-show_error_codes = true
-
-[[tool.mypy.overrides]]
-module = [
-    "akshare.*",
-    "dashscope.*",
-    "elasticsearch.*",
-    "fastmcp.*",
-    "mcp.*",
-    "chromadb.*",
-]
-ignore_missing_imports = true
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503"]
-exclude = [
-    ".git",
-    "__pycache__",
-    ".venv",
-    ".eggs",
-    "*.egg",
-    "build",
-    "dist",
-]
-
