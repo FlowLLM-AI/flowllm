@@ -11,7 +11,7 @@ from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
 from flowllm.op.base_llm_op import BaseLLMOp
 from flowllm.schema.message import Message
-from flowllm.storage.cache.dataframe_cache import DataFrameCache
+from flowllm.storage.cache.data_cache import DataCache
 from flowllm.utils.timer import timer
 
 
@@ -24,9 +24,9 @@ class GetAkACodeOp(BaseLLMOp):
 
     @staticmethod
     def download_a_stock_df():
-        df_cache = DataFrameCache()
+        cache = DataCache()
         save_df_key: str = "all_a_stock_name_code"
-        if not df_cache.exists(save_df_key):
+        if not cache.exists(save_df_key):
             stock_sh_a_spot_em_df = ak.stock_sh_a_spot_em()
             stock_sz_a_spot_em_df = ak.stock_sz_a_spot_em()
             stock_bj_a_spot_em_df = ak.stock_bj_a_spot_em()
@@ -35,9 +35,9 @@ class GetAkACodeOp(BaseLLMOp):
             df = df.drop(columns=["序号"])
             df = df.reset_index(drop=True)
             df = df.sort_values(by="代码")
-            df_cache.save(save_df_key, df, expire_hours=0.25)
+            cache.save(save_df_key, df, expire_hours=0.25)
 
-        df = df_cache.load(save_df_key, dtype={"代码": str})
+        df = cache.load(save_df_key, dtype={"代码": str})
         return df
 
     def get_name_code_dict(self) -> dict:

@@ -43,11 +43,13 @@ class ServiceContext(BaseContext):
         from flowllm.config.pydantic_config_parser import PydanticConfigParser
 
         config_parser = PydanticConfigParser(ServiceConfig)
-        self.service_config = config_parser.parse_args("config=default_config")
+        self.service_config = config_parser.parse_args("config=default")
         return self
 
-    def init_by_service_config(self, service_config: ServiceConfig):
-        self.service_config = service_config
+    def init_by_service_config(self, service_config: ServiceConfig = None):
+        if service_config:
+            self.service_config = service_config
+
         self.language = self.service_config.language
         self.thread_pool = ThreadPoolExecutor(max_workers=self.service_config.thread_pool_max_workers)
         if self.service_config.ray_max_workers > 1:

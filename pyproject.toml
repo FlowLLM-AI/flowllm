@@ -51,6 +51,7 @@ dependencies = [
     "ray",
     "requests",
     "scikit-learn",
+    "tavily-python",
     "tqdm",
     "urllib3",
     "uvicorn[standard]",

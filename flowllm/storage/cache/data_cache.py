@@ -1,32 +1,64 @@
 """
-DataFrame cache utility that supports local CSV file storage and reading with data expiration functionality
+DataCache utility that supports multiple data types with local storage and data expiration functionality
 """
 
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union, Type
 
 import pandas as pd
 
+from flowllm.storage.cache.cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
 
-class DataFrameCache:
+
+class DataCache:
     """
-    DataFrame cache utility class
-    
+    Generic data cache utility class
+
     Features:
-    - Support for pandas DataFrame local CSV storage and reading
+    - Support for multiple data types (DataFrame, dict, and extensible for others)
     - Support for data expiration time settings
     - Automatic cleanup of expired data
     - Recording and managing update timestamps
+    - Type-specific storage formats (CSV for DataFrame, JSON for dict)
     """
 
-    def __init__(self, cache_dir: str = "cache_df"):
+    def __init__(self, cache_dir: str = "cache"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.metadata_file = self.cache_dir / "metadata.json"
         self.metadata = {}
+
+        # Register default handlers
+        self.handlers: Dict[Type, CacheDataHandler] = {
+            pd.DataFrame: DataFrameHandler(),
+            dict: DictHandler()
+        }
+
         self._load_metadata()
+
+    def register_handler(self, data_type: Type, handler: CacheDataHandler):
+        """
+        Register a custom data handler for a specific data type
+
+        Args:
+            data_type: The data type to handle
+            handler: The handler instance
+        """
+        self.handlers[data_type] = handler
+
+    def _get_handler(self, data_type: Type) -> CacheDataHandler:
+        """Get the appropriate handler for a data type"""
+        if data_type in self.handlers:
+            return self.handlers[data_type]
+
+        # Try to find a handler for parent classes
+        for registered_type, handler in self.handlers.items():
+            if issubclass(data_type, registered_type):
+                return handler
+
+        raise ValueError(f"No handler registered for data type: {data_type}")
 
     def _load_metadata(self):
         """Load metadata"""
@@ -39,9 +71,35 @@ class DataFrameCache:
         with open(self.metadata_file, "w") as f:
             json.dump(self.metadata, f, ensure_ascii=False, indent=2)
 
-    def _get_file_path(self, key: str) -> Path:
-        """Get data file path"""
-        return self.cache_dir / f"{key}.csv"
+    def _get_file_path(self, key: str, data_type: Type = None) -> Path:
+        """Get data file path with appropriate extension"""
+        if data_type is None:
+            # Try to get extension from metadata
+            if key in self.metadata and 'data_type' in self.metadata[key]:
+                stored_type_name = self.metadata[key]['data_type']
+                if stored_type_name == 'DataFrame':
+                    extension = '.csv'
+                elif stored_type_name == 'dict':
+                    extension = '.json'
+                elif stored_type_name == 'str':
+                    extension = '.txt'
+                else:
+                    # Try to find extension from registered handlers
+                    extension = '.dat'  # Default extension
+                    for registered_type, handler in self.handlers.items():
+                        if registered_type.__name__ == stored_type_name:
+                            extension = handler.get_file_extension()
+                            break
+            else:
+                extension = '.dat'  # Default extension
+        else:
+            try:
+                handler = self._get_handler(data_type)
+                extension = handler.get_file_extension()
+            except ValueError:
+                extension = '.dat'  # Default extension
+
+        return self.cache_dir / f"{key}{extension}"
 
     def _is_expired(self, key: str) -> bool:
         """Check if data is expired"""
@@ -55,32 +113,27 @@ class DataFrameCache:
         expire_time = datetime.fromisoformat(expire_time_str)
         return datetime.now() > expire_time
 
-    def save(self, key: str, df: pd.DataFrame, expire_hours: Optional[float] = None,
-             **csv_kwargs) -> bool:
+    def save(self, key: str, data: Union[pd.DataFrame, dict, Any], expire_hours: Optional[float] = None,
+             **handler_kwargs) -> bool:
         """
-        Save DataFrame to cache
-        
+        Save data to cache
+
         Args:
             key: Cache key name
-            df: DataFrame to save
+            data: Data to save (DataFrame, dict, or other supported types)
             expire_hours: Expiration time in hours, None means never expires
-            **csv_kwargs: Additional parameters passed to pandas to_csv
-            
+            **handler_kwargs: Additional parameters passed to the data handler
+
         Returns:
             bool: Whether save was successful
         """
         try:
-            file_path = self._get_file_path(key)
+            data_type = type(data)
+            handler = self._get_handler(data_type)
+            file_path = self._get_file_path(key, data_type)
 
-            # Set default CSV parameters
-            csv_params = {
-                "index": False,
-                "encoding": "utf-8"
-            }
-            csv_params.update(csv_kwargs)
-
-            # Save CSV file
-            df.to_csv(file_path, **csv_params)
+            # Save data using appropriate handler
+            handler_metadata = handler.save(data, file_path, **handler_kwargs)
 
             # Update metadata
             current_time = datetime.now()
@@ -88,29 +141,28 @@ class DataFrameCache:
                 'created_time': current_time.isoformat(),
                 'updated_time': current_time.isoformat(),
                 'expire_time': (current_time + timedelta(hours=expire_hours)).isoformat() if expire_hours else None,
-                'file_size': file_path.stat().st_size,
-                'row_count': len(df),
-                'column_count': len(df.columns)
+                'data_type': data_type.__name__,
+                **handler_metadata
             }
 
             self._save_metadata()
             return True
 
         except Exception as e:
-            print(f"Failed to save DataFrame: {e}")
+            print(f"Failed to save data: {e}")
             return False
 
-    def load(self, key: str, auto_clean_expired: bool = True, **csv_kwargs) -> Optional[pd.DataFrame]:
+    def load(self, key: str, auto_clean_expired: bool = True, **handler_kwargs) -> Optional[Any]:
         """
-        Load DataFrame from cache
-        
+        Load data from cache
+
         Args:
             key: Cache key name
             auto_clean_expired: Whether to automatically clean expired data
-            **csv_kwargs: Additional parameters passed to pandas read_csv
-            
+            **handler_kwargs: Additional parameters passed to the data handler
+
         Returns:
-            Optional[pd.DataFrame]: Loaded DataFrame, returns None if not exists or expired
+            Optional[Any]: Loaded data, returns None if not exists or expired
         """
         try:
             # Check if expired
@@ -124,34 +176,56 @@ class DataFrameCache:
             if not file_path.exists():
                 return None
 
-            # Set default CSV parameters
-            csv_params = {
-                'encoding': 'utf-8'
-            }
-            csv_params.update(csv_kwargs)
+            # Get data type from metadata
+            if key not in self.metadata or 'data_type' not in self.metadata[key]:
+                print(f"No data type information found for key '{key}'")
+                return None
 
-            # Read CSV file
-            df = pd.read_csv(file_path, **csv_params)
+            data_type_name = self.metadata[key]['data_type']
+
+            # Map type name back to actual type
+            if data_type_name == 'DataFrame':
+                data_type = pd.DataFrame
+            elif data_type_name == 'dict':
+                data_type = dict
+            elif data_type_name == 'str':
+                data_type = str
+            else:
+                # For other custom types, try to find a handler by checking registered types
+                data_type = None
+                for registered_type in self.handlers.keys():
+                    if registered_type.__name__ == data_type_name:
+                        data_type = registered_type
+                        break
+
+                if data_type is None:
+                    print(f"Unknown data type: {data_type_name}")
+                    return None
+
+            handler = self._get_handler(data_type)
+
+            # Load data using appropriate handler
+            data = handler.load(file_path, **handler_kwargs)
 
             # Update last access time
             if key in self.metadata:
                 self.metadata[key]['last_accessed'] = datetime.now().isoformat()
                 self._save_metadata()
 
-            return df
+            return data
 
         except Exception as e:
-            print(f"Failed to load DataFrame: {e}")
+            print(f"Failed to load data: {e}")
             return None
 
     def exists(self, key: str, check_expired: bool = True) -> bool:
         """
         Check if cache exists
-        
+
         Args:
             key: Cache key name
             check_expired: Whether to check expiration status
-            
+
         Returns:
             bool: Whether cache exists and is not expired
         """
@@ -164,17 +238,17 @@ class DataFrameCache:
     def delete(self, key: str) -> bool:
         """
         Delete cache
-        
+
         Args:
             key: Cache key name
-            
+
         Returns:
             bool: Whether deletion was successful
         """
         try:
             file_path = self._get_file_path(key)
 
-            # Delete CSV file
+            # Delete data file
             if file_path.exists():
                 file_path.unlink()
 
@@ -192,7 +266,7 @@ class DataFrameCache:
     def clean_expired(self) -> int:
         """
         Clean all expired caches
-        
+
         Returns:
             int: Number of cleaned caches
         """
@@ -212,10 +286,10 @@ class DataFrameCache:
     def get_info(self, key: str) -> Optional[Dict[str, Any]]:
         """
         Get cache information
-        
+
         Args:
             key: Cache key name
-            
+
         Returns:
             Optional[Dict]: Cache information including creation time, update time, expiration time, etc.
         """
@@ -232,10 +306,10 @@ class DataFrameCache:
     def list_all(self, include_expired: bool = False) -> Dict[str, Dict[str, Any]]:
         """
         List all caches
-        
+
         Args:
             include_expired: Whether to include expired caches
-            
+
         Returns:
             Dict: Information of all caches
         """
@@ -254,7 +328,7 @@ class DataFrameCache:
     def get_cache_stats(self) -> Dict[str, Any]:
         """
         Get cache statistics
-        
+
         Returns:
             Dict: Cache statistics information
         """
@@ -280,14 +354,15 @@ class DataFrameCache:
     def clear_all(self) -> bool:
         """
         Clear all caches
-        
+
         Returns:
             bool: Whether clearing was successful
         """
         try:
-            # Delete all CSV files
-            for csv_file in self.cache_dir.glob("*.csv"):
-                csv_file.unlink()
+            # Delete all data files (CSV, JSON, and other supported formats)
+            for data_file in self.cache_dir.glob("*"):
+                if data_file.is_file() and data_file.name != "metadata.json":
+                    data_file.unlink()
 
             # Clear metadata
             self.metadata = {}

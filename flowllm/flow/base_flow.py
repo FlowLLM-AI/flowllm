@@ -54,6 +54,9 @@ class BaseFlow(ABC):
         else:
             logger.info(f"{prefix}Operation: {op.name}")
 
+    def return_callback(self, context: FlowContext):
+        return context.response
+
     def __call__(self, **kwargs) -> FlowResponse:
         context = FlowContext(**kwargs)
         logger.info(f"request.params={kwargs}")
@@ -66,4 +69,4 @@ class BaseFlow(ABC):
             context.response.success = False
             context.response.answer = str(e.args)
 
-        return context.response
+        return self.return_callback(context=context)
