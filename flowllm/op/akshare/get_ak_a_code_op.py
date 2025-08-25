@@ -9,7 +9,7 @@ from loguru import logger
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
-from flowllm.op.llm_base_op import BaseLLMOp
+from flowllm.op.base_llm_op import BaseLLMOp
 from flowllm.schema.message import Message
 from flowllm.storage.cache.dataframe_cache import DataFrameCache
 from flowllm.utils.timer import timer
