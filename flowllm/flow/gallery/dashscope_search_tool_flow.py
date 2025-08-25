@@ -27,3 +27,8 @@ class DashscopeSearchToolFlow(BaseToolFlow):
     def return_callback(self, context: FlowContext):
         context.response.answer = context.dashscope_search_result
         return context.response
+
+
+if __name__ == "__main__":
+    flow = DashscopeSearchToolFlow()
+    flow(query="what is AI?")

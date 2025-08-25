@@ -41,6 +41,9 @@ class BaseContext:
     def dump(self) -> dict:
         return self._data
 
+    def get(self, key: str, default=None):
+        return self._data.get(key, default)
+
     @property
     def keys(self):
         return self._data.keys()
