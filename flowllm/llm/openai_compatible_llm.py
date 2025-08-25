@@ -432,8 +432,7 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
 
-    import asyncio
-
-    asyncio.run(async_main())
+    # import asyncio
+    # asyncio.run(async_main())
