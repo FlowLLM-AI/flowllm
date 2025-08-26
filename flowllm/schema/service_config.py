@@ -14,7 +14,7 @@ class MCPConfig(BaseModel):
 class HttpConfig(BaseModel):
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8001)
-    timeout_keep_alive: int = Field(default=600)
+    timeout_keep_alive: int = Field(default=3600)
     limit_concurrency: int = Field(default=64)
 
 
@@ -25,7 +25,7 @@ class CmdConfig(BaseModel):
 
 class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
-
+    service_type: str = Field(default="all", description="all/http/mcp/cmd")
 
 class OpConfig(BaseModel):
     backend: str = Field(default="")

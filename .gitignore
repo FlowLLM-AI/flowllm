@@ -19,3 +19,4 @@ logs
 *.egg-info/*
 **/cache_df
 build/*
+**/dashscope_deep_research_cache/*
