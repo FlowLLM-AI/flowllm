@@ -408,12 +408,13 @@ async def async_main():
 
     load_env()
 
-    model_name = "qwen-max-2025-01-25"
+    # model_name = "qwen-max-2025-01-25"
+    model_name = "qwen3-30b-a3b-thinking-2507"
     llm = OpenAICompatibleBaseLLM(model_name=model_name)
 
     # Test async chat
     message: Message = await llm.achat([Message(role=Role.USER, content="hello")], [],
-                                       enable_stream_print=False)
+                                       enable_stream_print=True)
     print("Async result:", message)
 
 
@@ -432,7 +433,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
 
-    # import asyncio
-    # asyncio.run(async_main())
+    import asyncio
+    asyncio.run(async_main())

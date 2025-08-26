@@ -6,10 +6,11 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-from pydantic import BaseModel, create_model, Field
+from pydantic import create_model, Field
 
 from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
+from flowllm.schema.flow_request import FlowRequest
 from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.tool_call import ParamAttrs
 from flowllm.service.base_service import BaseService
@@ -22,7 +23,9 @@ class HttpService(BaseService):
         "str": str,
         "int": int,
         "float": float,
-        "bool": bool
+        "bool": bool,
+        "list": list,
+        "dict": dict,
     }
 
     def __init__(self, *args, **kwargs):
@@ -45,7 +48,7 @@ class HttpService(BaseService):
     def health_check():
         return {"status": "healthy"}
 
-    def _create_pydantic_model(self, flow_name: str, input_schema: Dict[str, ParamAttrs]) -> BaseModel:
+    def _create_pydantic_model(self, flow_name: str, input_schema: Dict[str, ParamAttrs]):
         fields = {}
 
         for param_name, param_config in input_schema.items():
@@ -56,7 +59,7 @@ class HttpService(BaseService):
             else:
                 fields[param_name] = (field_type, Field(default=..., description=param_config.description))
 
-        return create_model(f"{snake_to_camel(flow_name)}Model", **fields)
+        return create_model(f"{snake_to_camel(flow_name)}Model", __base__=FlowRequest, **fields)
 
     def integrate_tool_flow(self, tool_flow_name: str):
         tool_flow: BaseToolFlow = C.get_tool_flow(tool_flow_name)
