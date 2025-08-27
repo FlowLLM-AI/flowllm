@@ -18,12 +18,14 @@ class MCPService(BaseService):
 
     def integrate_tool_flow(self, tool_flow_name: str):
         tool_flow: BaseToolFlow = C.get_tool_flow(tool_flow_name)
+        request_model = self._create_pydantic_model(tool_flow_name, tool_flow.tool_call.input_schema)
 
         async def execute_flow_async(**kwargs) -> str:
+            request: request_model = request_model(**kwargs)
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 executor=C.thread_pool,
-                func=partial(tool_flow.__call__, **kwargs))  # noqa
+                func=partial(tool_flow.__call__, **request.model_dump()))  # noqa
             return response.answer
 
         tool = FunctionTool(name=tool_flow.name,  # noqa

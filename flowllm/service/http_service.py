@@ -1,32 +1,19 @@
 import asyncio
 from functools import partial
-from typing import Dict, Optional
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-from pydantic import create_model, Field
 
 from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.schema.flow_request import FlowRequest
 from flowllm.schema.flow_response import FlowResponse
-from flowllm.schema.tool_call import ParamAttrs
 from flowllm.service.base_service import BaseService
-from flowllm.utils.common_utils import snake_to_camel
 
 
 @C.register_service("http")
 class HttpService(BaseService):
-    TYPE_MAPPING = {
-        "str": str,
-        "int": int,
-        "float": float,
-        "bool": bool,
-        "list": list,
-        "dict": dict,
-    }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -47,19 +34,6 @@ class HttpService(BaseService):
     @staticmethod
     def health_check():
         return {"status": "healthy"}
-
-    def _create_pydantic_model(self, flow_name: str, input_schema: Dict[str, ParamAttrs]):
-        fields = {}
-
-        for param_name, param_config in input_schema.items():
-            field_type = self.TYPE_MAPPING.get(param_config.type, str)
-
-            if not param_config.required:
-                fields[param_name] = (Optional[field_type], Field(default=None, description=param_config.description))
-            else:
-                fields[param_name] = (field_type, Field(default=..., description=param_config.description))
-
-        return create_model(f"{snake_to_camel(flow_name)}Model", __base__=FlowRequest, **fields)
 
     def integrate_tool_flow(self, tool_flow_name: str):
         tool_flow: BaseToolFlow = C.get_tool_flow(tool_flow_name)

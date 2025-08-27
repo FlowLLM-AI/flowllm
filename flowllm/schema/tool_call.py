@@ -1,5 +1,5 @@
 import json
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -8,7 +8,18 @@ class ParamAttrs(BaseModel):
     type: str = Field(default="str", description="tool parameter type")
     description: str = Field(default="", description="tool parameter description")
     required: bool = Field(default=True, description="tool parameter required")
+    enum: List[str] | None = Field(default=None, description="tool parameter enum")
 
+    def simple_dump(self) -> dict:
+        result: dict = {
+            "type": self.type,
+            "description": self.description,
+        }
+
+        if self.enum:
+            result["enum"] = self.enum
+
+        return result
 
 class ToolCall(BaseModel):
     """
@@ -56,10 +67,7 @@ class ToolCall(BaseModel):
     def simple_input_dump(self, version: str = "v1") -> dict:
         if version == "v1":
             required_list = [name for name, tool_param in self.input_schema.items() if tool_param.required]
-            properties = {name: {
-                "type": tool_param.type,
-                "description": tool_param.description
-            } for name, tool_param in self.input_schema.items()}
+            properties = {name: tool_param.simple_dump() for name, tool_param in self.input_schema.items()}
 
             return {
                 "type": self.type,

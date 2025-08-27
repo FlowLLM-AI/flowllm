@@ -38,6 +38,7 @@ class HttpClientTest:
             response = await self.client.get(f"{self.base_url}/openapi.json")
             response.raise_for_status()
             return response.json()
+
         except Exception as e:
             logger.warning(f"Could not fetch OpenAPI schema: {e}")
             return {}

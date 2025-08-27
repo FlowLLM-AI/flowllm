@@ -61,7 +61,7 @@ def sync_mcp_client_example():
             print(tool.model_dump_json())
 
         if tools:
-            result = client.call_tool(tool_name=tools[0].name, arguments={"query": "茅台怎么样？"})
+            result = client.call_tool(tool_name=tools[1].name, arguments={"query": "茅台怎么样？"})
             print(f"tool result: {result}")
 
 
@@ -71,8 +71,8 @@ async def main():
 
 
 def main_sync():
-    http_client_example()
-    # sync_mcp_client_example()
+    # http_client_example()
+    sync_mcp_client_example()
 
 
 if __name__ == "__main__":
