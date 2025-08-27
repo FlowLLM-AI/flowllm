@@ -12,7 +12,6 @@ class TerminateToolFlow(BaseToolFlow):
         return TerminateOp()
 
     def build_tool_call(self) -> ToolCall:
-        # TODO add "enum": ["success", "failure"]
         return ToolCall(**{
             "name": "terminate",
             "description": "If you can answer the user's question based on the context, be sure to use the **terminate** tool.",
@@ -20,7 +19,8 @@ class TerminateToolFlow(BaseToolFlow):
                 "status": {
                     "type": "str",
                     "description": "Please determine whether the user's question has been completed. (success / failure)",
-                    "required": True
+                    "required": True,
+                    "enum": ["success", "failure"],
                 }
             }
         })
