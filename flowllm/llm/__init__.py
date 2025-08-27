@@ -1,2 +1,2 @@
-from flowllm.llm.litellm_llm import LiteLLMBaseLLM
-from flowllm.llm.openai_compatible_llm import OpenAICompatibleBaseLLM
+from .litellm_llm import LiteLLMBaseLLM
+from .openai_compatible_llm import OpenAICompatibleBaseLLM

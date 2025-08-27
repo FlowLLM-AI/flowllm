@@ -1,1 +1,1 @@
-from flowllm.embedding_model.openai_compatible_embedding_model import OpenAICompatibleEmbeddingModel
+from .openai_compatible_embedding_model import OpenAICompatibleEmbeddingModel

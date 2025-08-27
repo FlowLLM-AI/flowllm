@@ -1,1 +1,1 @@
-from flowllm.flow import gallery
+from . import gallery
