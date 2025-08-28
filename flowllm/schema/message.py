@@ -1,3 +1,4 @@
+import datetime
 from typing import List
 
 from pydantic import BaseModel, Field
@@ -12,6 +13,7 @@ class Message(BaseModel):
     reasoning_content: str = Field(default="")
     tool_calls: List[ToolCall] = Field(default_factory=list)
     tool_call_id: str = Field(default="")
+    time_created: str = Field(default_factory=lambda: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     metadata: dict = Field(default_factory=dict)
 
     def simple_dump(self, add_reason_content: bool = True) -> dict:

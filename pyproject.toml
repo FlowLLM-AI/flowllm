@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flowllm"
-version = "0.1.2"
+version = "0.1.3"
 description = "A flexible framework for building LLM-powered flows and mcp services"
 authors = [
     {name = "FlowLLM Team", email = "flowllm@example.com"}

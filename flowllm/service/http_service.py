@@ -65,8 +65,8 @@ class HttpService(BaseService):
 
             return await loop.run_in_executor(executor=C.thread_pool, func=list_tool_flows)  # noqa
 
-        endpoint_path = "/list"
-        self.app.get(endpoint_path, response_model=list)(execute_endpoint)
+        endpoint_path = "list"
+        self.app.get("/" + endpoint_path, response_model=list)(execute_endpoint)
         logger.info(f"integrate endpoint={endpoint_path}")
 
     def __call__(self):
