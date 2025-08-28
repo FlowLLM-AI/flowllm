@@ -25,11 +25,6 @@ class MockToolFlow(BaseToolFlow):
             "type": "function",
             "name": "mock_data_processor",
             "description": "A mock tool that processes data through multiple operations and returns structured results",
-            "arguments": {
-                "input_data": "sample_data",
-                "processing_mode": "advanced",
-                "output_format": "json"
-            },
             "input_schema": {
                 "input_data": ParamAttrs(
                     type="string",

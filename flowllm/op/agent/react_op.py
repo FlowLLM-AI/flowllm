@@ -5,14 +5,15 @@ from typing import List, Dict
 from loguru import logger
 
 from flowllm import C, BaseLLMOp
+from flowllm.context.flow_context import FlowContext
 from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.flow.gallery import DashscopeSearchToolFlow, CodeToolFlow, TerminateToolFlow
+from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.message import Message, Role
 
 
 @C.register_op()
 class ReactOp(BaseLLMOp):
-    # TODO: test react op
     file_path: str = __file__
 
     def execute(self):
@@ -20,13 +21,18 @@ class ReactOp(BaseLLMOp):
 
         max_steps: int = int(self.op_params.get("max_steps", 10))
         tools: List[BaseToolFlow] = [DashscopeSearchToolFlow(), CodeToolFlow(), TerminateToolFlow()]
-        tool_dict: Dict[str, BaseToolFlow] = {x.name: x for x in tools}
+
+        """
+        NOTE : x.tool_call.name != x.name
+        `x.tool_call.name` is tool's namex.name is flow's name(unique service name)
+        """
+        tool_dict: Dict[str, BaseToolFlow] = {x.tool_call.name: x for x in tools}
         now_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         has_terminate_tool = False
 
         user_prompt = self.prompt_format(prompt_name="role_prompt",
                                          time=now_time,
-                                         tools=",".join([x.name for x in tools]),
+                                         tools=",".join(list(tool_dict.keys())),
                                          query=query)
         messages: List[Message] = [Message(role=Role.USER, content=user_prompt)]
         logger.info(f"step.0 user_prompt={user_prompt}")
@@ -59,6 +65,7 @@ class ReactOp(BaseLLMOp):
                 logger.info(f"submit step={i} tool_calls.name={tool_call.name} argument_dict={tool_call.argument_dict}")
 
                 if tool_call.name not in tool_dict:
+                    logger.warning(f"step={i} no tool_call.name={tool_call.name}")
                     continue
 
                 self.submit_task(tool_dict[tool_call.name].__call__, **tool_call.argument_dict)
@@ -68,7 +75,10 @@ class ReactOp(BaseLLMOp):
                 user_content_list = []
                 for tool_result, tool_call in zip(self.join_task(), assistant_message.tool_calls):
                     logger.info(f"submit step={i} tool_calls.name={tool_call.name} tool_result={tool_result}")
-                    assert isinstance(tool_result, str)
+                    if isinstance(tool_result, FlowResponse):
+                        tool_result = tool_result.answer
+                    else:
+                        tool_result = str(tool_result)
                     user_content_list.append(f"<tool_response>\n{tool_result}\n</tool_response>")
                 user_content_list.append(self.prompt_format(prompt_name="next_prompt"))
                 assistant_message.tool_calls.clear()
@@ -81,3 +91,11 @@ class ReactOp(BaseLLMOp):
         # Store results in context instead of response
         self.context.messages = messages
         self.context.answer = messages[-1].content
+
+
+if __name__ == "__main__":
+    C.set_default_service_config().init_by_service_config()
+    context = FlowContext(query="茅台和五粮现在股价多少？")
+
+    op = ReactOp()
+    op(context=context)

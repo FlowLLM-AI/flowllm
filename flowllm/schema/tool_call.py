@@ -58,11 +58,15 @@ class ToolCall(BaseModel):
     type: str = Field(default="function")
     name: str = Field(default="")
 
-    arguments: dict = Field(default_factory=dict, description="tool execution arguments")
+    arguments: str = Field(default="", description="tool execution arguments")
 
     description: str = Field(default="")
     input_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
     output_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
+
+    @property
+    def argument_dict(self) -> dict:
+        return json.loads(self.arguments)
 
     def simple_input_dump(self, version: str = "v1") -> dict:
         if version == "v1":
@@ -91,7 +95,7 @@ class ToolCall(BaseModel):
                 "index": self.index,
                 "id": self.id,
                 self.type: {
-                    "arguments": json.dumps(self.arguments, ensure_ascii=False),
+                    "arguments": self.arguments,
                     "name": self.name
                 },
                 "type": self.type,
@@ -111,7 +115,7 @@ class ToolCall(BaseModel):
                 if name:
                     self.name = name
                 if arguments:
-                    self.arguments = json.loads(arguments)
+                    self.arguments = arguments
         else:
             raise NotImplementedError(f"version {version} not supported")
 
