@@ -17,7 +17,7 @@ class BaseFlow(ABC):
         self.name: str = name or camel_to_snake(self.__class__.__name__)
         self.flow_params: dict = kwargs
 
-        self.flow_op: Optional[BaseOp] = self.build_flow()
+        self.flow_op: BaseOp = self.build_flow()
         self.print_flow()
 
     @abstractmethod
@@ -63,7 +63,8 @@ class BaseFlow(ABC):
         logger.info(f"request.params={kwargs}")
 
         try:
-            self.flow_op(context=context)
+            flow_op = self.build_flow()
+            flow_op(context=context)
 
         except Exception as e:
             logger.exception(f"flow_name={self.name} encounter error={e.args}")
