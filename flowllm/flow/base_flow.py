@@ -55,6 +55,7 @@ class BaseFlow(ABC):
             logger.info(f"{prefix}Operation: {op.name}")
 
     def return_callback(self, context: FlowContext):
+        logger.info(f"context.response={context.response.model_dump_json()}")
         return context.response
 
     def __call__(self, **kwargs) -> FlowResponse:

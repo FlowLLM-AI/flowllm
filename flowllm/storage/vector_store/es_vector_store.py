@@ -62,7 +62,7 @@ class EsVectorStore(LocalVectorStore):
         node.workspace_id = workspace_id
         node.unique_id = doc["_id"]
         if "_score" in doc:
-            node.metadata["_score"] = doc["_score"] - 1
+            node.metadata["score"] = doc["_score"] - 1
         return node
 
     def add_term_filter(self, key: str, value):
