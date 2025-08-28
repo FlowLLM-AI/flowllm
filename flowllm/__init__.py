@@ -1,5 +1,9 @@
 import os
 
+from flowllm.utils.logger_utils import init_logger
+
+init_logger()
+
 from flowllm.utils.common_utils import load_env
 
 load_env()

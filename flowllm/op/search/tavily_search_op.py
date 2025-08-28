@@ -16,8 +16,8 @@ from flowllm.storage.cache.data_cache import DataCache
 class TavilySearchOp(BaseOp):
     def __init__(self,
                  enable_print: bool = True,
-                 enable_cache: bool = False,
-                 cache_path: str = "./web_search_cache",
+                 enable_cache: bool = True,
+                 cache_path: str = "./tavily_search_cache",
                  cache_expire_hours: float = 0.1,
                  topic: Literal["general", "news", "finance"] = "general",
                  max_retries: int = 3,
@@ -33,8 +33,15 @@ class TavilySearchOp(BaseOp):
         self.return_only_content = return_only_content
 
         # Initialize DataCache if caching is enabled
-        self.cache = DataCache(cache_path) if self.enable_cache else None
         self._client = TavilyClient(api_key=os.getenv("FLOW_TAVILY_API_KEY", ""))
+        self.cache_path: str = cache_path
+        self._cache: DataCache | None = None
+
+    @property
+    def cache(self):
+        if self.enable_cache and self._cache is None:
+            self._cache = DataCache(self.cache_path)
+        return self._cache
 
     def post_process(self, response):
         if self.enable_print:

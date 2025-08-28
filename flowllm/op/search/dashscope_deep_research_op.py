@@ -41,7 +41,14 @@ class DashscopeDeepResearchOp(BaseLLMOp):
 
         # Ensure API key is available
         self.api_key = os.getenv("FLOW_DASHSCOPE_API_KEY")
-        self.cache = DataCache(cache_path) if self.enable_cache else None
+        self.cache_path: str = cache_path
+        self._cache: DataCache | None = None
+
+    @property
+    def cache(self):
+        if self.enable_cache and self._cache is None:
+            self._cache = DataCache(self.cache_path)
+        return self._cache
 
     def process_responses(self, responses, step_name):
         """Process streaming responses from the deep research model"""
