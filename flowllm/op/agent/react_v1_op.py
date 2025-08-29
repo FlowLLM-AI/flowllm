@@ -6,8 +6,6 @@ from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
-from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.flow.gallery import DashscopeSearchToolFlow, CodeToolFlow, TerminateToolFlow
 from flowllm.op.base_llm_op import BaseLLMOp
 from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.message import Message, Role
@@ -21,6 +19,9 @@ class ReactV1Op(BaseLLMOp):
         query: str = self.context.query
 
         max_steps: int = int(self.op_params.get("max_steps", 10))
+        from flowllm.flow.base_tool_flow import BaseToolFlow
+        from flowllm.flow.gallery import DashscopeSearchToolFlow, CodeToolFlow, TerminateToolFlow
+
         tools: List[BaseToolFlow] = [DashscopeSearchToolFlow(), CodeToolFlow(), TerminateToolFlow()]
 
         """
