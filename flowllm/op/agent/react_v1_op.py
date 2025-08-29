@@ -4,10 +4,11 @@ from typing import List, Dict
 
 from loguru import logger
 
-from flowllm import C, BaseLLMOp
 from flowllm.context.flow_context import FlowContext
+from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.flow.gallery import DashscopeSearchToolFlow, CodeToolFlow, TerminateToolFlow
+from flowllm.op.base_llm_op import BaseLLMOp
 from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.message import Message, Role
 
@@ -98,5 +99,5 @@ if __name__ == "__main__":
     C.set_default_service_config().init_by_service_config()
     context = FlowContext(query="茅台和五粮现在股价多少？")
 
-    op = ReactOp()
+    op = ReactV1Op()
     op(context=context)

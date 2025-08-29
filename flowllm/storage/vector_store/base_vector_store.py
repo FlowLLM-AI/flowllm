@@ -24,6 +24,9 @@ class BaseVectorStore(BaseModel, ABC):
     def _iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
         raise NotImplementedError
 
+    def iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
+        return self._iter_workspace_nodes(workspace_id, **kwargs)
+
     def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
         raise NotImplementedError
 
