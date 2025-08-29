@@ -23,8 +23,9 @@ class BaseLLMOp(BaseOp, ABC):
         super().__init__(**kwargs)
 
         self.language: str = language or C.language
-        self.prompt_path: Path = Path(prompt_path) if prompt_path else \
-            Path(self.file_path).parent / self.name.replace("_op", "_prompt.yaml")
+        default_prompt_path = self.file_path.replace("op.py", "prompt.yaml")
+        self.prompt_path: Path = Path(prompt_path) if prompt_path else default_prompt_path
+
         self._llm: BaseLLM | str = llm
         self._embedding_model: BaseEmbeddingModel | str = embedding_model
         self._vector_store: BaseVectorStore | str = vector_store

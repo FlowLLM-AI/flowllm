@@ -9,3 +9,4 @@ from . import akshare
 from . import code
 from . import gallery
 from . import search
+from . import agent

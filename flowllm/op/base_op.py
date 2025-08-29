@@ -16,11 +16,13 @@ class BaseOp(ABC):
     def __init__(self,
                  name: str = "",
                  raise_exception: bool = True,
+                 enable_multithread: bool = True,
                  **kwargs):
         super().__init__()
 
         self.name: str = name or camel_to_snake(self.__class__.__name__)
         self.raise_exception: bool = raise_exception
+        self.enable_multithread: bool = enable_multithread
         self.op_params: dict = kwargs
 
         self.task_list: List[Future] = []
@@ -48,19 +50,34 @@ class BaseOp(ABC):
         return self.context.response if self.context else None
 
     def submit_task(self, fn, *args, **kwargs):
-        task = C.thread_pool.submit(fn, *args, **kwargs)
-        self.task_list.append(task)
+        if self.enable_multithread:
+            task = C.thread_pool.submit(fn, *args, **kwargs)
+            self.task_list.append(task)
+
+        else:
+            result = fn(*args, **kwargs)
+            if result:
+                if isinstance(result, list):
+                    result.extend(result)
+                else:
+                    result.append(result)
+
         return self
 
     def join_task(self, task_desc: str = None) -> list:
         result = []
-        for task in tqdm(self.task_list, desc=task_desc or self.name):
-            t_result = task.result()
-            if t_result:
-                if isinstance(t_result, list):
-                    result.extend(t_result)
-                else:
-                    result.append(t_result)
+        if self.enable_multithread:
+            for task in tqdm(self.task_list, desc=task_desc or self.name):
+                t_result = task.result()
+                if t_result:
+                    if isinstance(t_result, list):
+                        result.extend(t_result)
+                    else:
+                        result.append(t_result)
+
+        else:
+            result.extend(self.task_list)
+
         self.task_list.clear()
         return result
 

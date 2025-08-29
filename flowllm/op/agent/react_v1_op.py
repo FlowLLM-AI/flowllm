@@ -13,7 +13,7 @@ from flowllm.schema.message import Message, Role
 
 
 @C.register_op()
-class ReactOp(BaseLLMOp):
+class ReactV1Op(BaseLLMOp):
     file_path: str = __file__
 
     def execute(self):
@@ -86,11 +86,12 @@ class ReactOp(BaseLLMOp):
 
             else:
                 assistant_message.tool_calls.clear()
-                messages.append(Message(role=Role.USER, content=self.prompt_format(prompt_name="final_prompt")))
+                query = self.prompt_format(prompt_name="final_prompt", query=query)
+                messages.append(Message(role=Role.USER, content=query))
 
         # Store results in context instead of response
-        self.context.messages = messages
-        self.context.answer = messages[-1].content
+        self.context.response.messages = messages
+        self.context.response.answer = messages[-1].content
 
 
 if __name__ == "__main__":

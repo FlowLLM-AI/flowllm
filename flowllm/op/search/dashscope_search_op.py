@@ -45,7 +45,7 @@ class DashscopeSearchOp(BaseLLMOp):
         self.enable_role_prompt = enable_role_prompt
 
         # Ensure API key is available
-        self.api_key = os.getenv("FLOW_DASHSCOPE_API_KEY")
+        self.api_key = os.environ["FLOW_DASHSCOPE_API_KEY"]
         self.cache_path: str = cache_path
         self._cache: DataCache | None = None
 

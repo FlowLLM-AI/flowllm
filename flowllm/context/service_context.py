@@ -39,10 +39,12 @@ class ServiceContext(BaseContext):
 
         self.tool_flow_dict: dict = {}
 
-    def set_default_service_config(self):
-        from flowllm.config.pydantic_config_parser import PydanticConfigParser
+    def set_default_service_config(self, parser=None):
+        if parser is None:
+            from flowllm.config.pydantic_config_parser import PydanticConfigParser
+            parser = PydanticConfigParser
 
-        config_parser = PydanticConfigParser(ServiceConfig)
+        config_parser = parser(ServiceConfig)
         self.service_config = config_parser.parse_args("config=default")
         return self
 
