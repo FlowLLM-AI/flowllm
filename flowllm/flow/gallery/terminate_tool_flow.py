@@ -18,7 +18,7 @@ class TerminateToolFlow(BaseToolFlow):
             "input_schema": {
                 "status": {
                     "type": "str",
-                    "description": "Please determine whether the user's question has been completed. (success / failure)",
+                    "description": "If the user's question can be answered, return success, otherwise return failure.",
                     "required": True,
                     "enum": ["success", "failure"],
                 }

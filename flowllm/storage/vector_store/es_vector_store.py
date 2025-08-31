@@ -111,7 +111,7 @@ class EsVectorStore(LocalVectorStore):
         self.retrieve_filters.clear()
         return nodes
 
-    def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, refresh: bool = False, **kwargs):
+    def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, refresh: bool = True, **kwargs):
         if not self.exist_workspace(workspace_id=workspace_id):
             self.create_workspace(workspace_id=workspace_id)
 
@@ -140,7 +140,7 @@ class EsVectorStore(LocalVectorStore):
         if refresh:
             self.refresh(workspace_id=workspace_id)
 
-    def delete(self, node_ids: str | List[str], workspace_id: str, refresh: bool = False, **kwargs):
+    def delete(self, node_ids: str | List[str], workspace_id: str, refresh: bool = True, **kwargs):
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return
