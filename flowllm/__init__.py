@@ -21,5 +21,5 @@ from flowllm import service
 from flowllm.context.service_context import C
 from flowllm.op import BaseOp, BaseRayOp, BaseLLMOp
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
