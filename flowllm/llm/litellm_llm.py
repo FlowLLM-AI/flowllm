@@ -2,7 +2,6 @@ import asyncio
 import os
 from typing import List, Dict
 
-from litellm import completion, acompletion
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
@@ -98,6 +97,7 @@ class LiteLLMBaseLLM(BaseLLM):
         Yields:
             Tuple of (chunk_content, ChunkEnum) for each streaming piece
         """
+        from litellm import completion
         for i in range(self.max_retries):
             try:
                 # Prepare parameters for LiteLLM
@@ -200,6 +200,7 @@ class LiteLLMBaseLLM(BaseLLM):
         Yields:
             Tuple of (chunk_content, ChunkEnum) for each streaming piece
         """
+        from litellm import acompletion
         for i in range(self.max_retries):
             try:
                 # Prepare parameters for LiteLLM
