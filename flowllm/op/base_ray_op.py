@@ -1,7 +1,6 @@
 from abc import ABC
 
 import pandas as pd
-import ray
 from loguru import logger
 from tqdm import tqdm
 
@@ -33,6 +32,7 @@ class BaseRayOp(BaseOp, ABC):
         Returns:
             List of results from all parallel tasks
         """
+        import ray
         max_workers = C.service_config.ray_max_workers
         self.ray_task_list.clear()
 
@@ -107,6 +107,7 @@ class BaseRayOp(BaseOp, ABC):
         Raises:
             RuntimeError: If Ray is not configured (ray_max_workers <= 1)
         """
+        import ray
         if C.service_config.ray_max_workers <= 1:
             raise RuntimeError("Ray is not configured. Please set ray_max_workers > 1 in service config.")
 
@@ -133,6 +134,7 @@ class BaseRayOp(BaseOp, ABC):
         """
         result = []
         # Process each task and collect results with progress bar
+        import ray
         for task in tqdm(self.ray_task_list, desc=task_desc or f"{self.name}_ray"):
             t_result = ray.get(task)
             if t_result:
