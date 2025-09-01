@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ParamAttrs(BaseModel):
@@ -64,6 +64,17 @@ class ToolCall(BaseModel):
     input_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
     output_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
 
+    @model_validator(mode="before")
+    @classmethod
+    def init_tool_call(cls, data: dict):
+        tool_type = data.get("type", "")
+        tool_type_dict = data.get(tool_type, {})
+
+        for key in ["name", "arguments"]:
+            if key not in data:
+                data[key] = tool_type_dict.get(key, "")
+        return data
+
     @property
     def argument_dict(self) -> dict:
         return json.loads(self.arguments)
@@ -120,3 +131,16 @@ class ToolCall(BaseModel):
             raise NotImplementedError(f"version {version} not supported")
 
         return self
+
+
+if __name__ == "__main__":
+    tool_call = ToolCall(**{
+        "id": "call_0fb6077ad56f4647b0b04a",
+        "function": {
+            "arguments": "{\"symbol\": \"ZETA\"}",
+            "name": "get_stock_info"
+        },
+        "type": "function",
+        "index": 0
+    })
+    print(tool_call.simple_output_dump())
