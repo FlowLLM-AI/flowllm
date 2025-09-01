@@ -141,11 +141,13 @@ class ExpressionParser:
     def _create_op(op_name: str) -> BaseOp:
         if op_name in C.service_config.op:
             op_config: OpConfig = C.service_config.op[op_name]
+        else:
+            op_config: OpConfig = OpConfig()
+
+        if op_config.backend in C.registry_dict["op"]:
             op_cls = C.resolve_op(op_config.backend)
 
-
         elif op_name in C.registry_dict["op"]:
-            op_config: OpConfig = OpConfig()
             op_cls = C.resolve_op(op_name)
 
         else:
