@@ -1,7 +1,8 @@
+from flowllm.op.search.dashscope_deep_research_op import DashscopeDeepResearchOp
+
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.op.search.dashscope_deep_research_op import DashscopeDeepResearchOp
 from flowllm.schema.tool_call import ToolCall
 
 

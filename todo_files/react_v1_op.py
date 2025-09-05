@@ -102,7 +102,7 @@ class ReactV1Op(BaseLLMOp):
 
 
 if __name__ == "__main__":
-    C.set_default_service_config().init_by_service_config()
+    C.set_service_config().init_by_service_config()
     context = FlowContext(query="茅台和五粮现在股价多少？")
 
     op = ReactV1Op()

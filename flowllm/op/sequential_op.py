@@ -13,6 +13,10 @@ class SequentialOp(BaseOp):
         for op in self.ops:
             op.__call__(self.context)
 
+    async def async_execute(self):
+        for op in self.ops:
+            await op.async_call(self.context)
+
     def __rshift__(self, op: BaseOp):
         if isinstance(op, SequentialOp):
             self.ops.extend(op.ops)

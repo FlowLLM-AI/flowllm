@@ -155,6 +155,7 @@ class ExpressionParser:
 
         kwargs = {
             "name": op_name,
+            "max_retries": op_config.max_retries,
             "raise_exception": op_config.raise_exception,
             **op_config.params
         }

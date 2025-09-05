@@ -30,7 +30,7 @@ class ExecuteCodeOp(BaseOp):
 
 
 if __name__ == "__main__":
-    C.set_default_service_config().init_by_service_config()
+    C.set_service_config().init_by_service_config()
     op = ExecuteCodeOp()
 
     context = FlowContext(code="print('Hello World')")

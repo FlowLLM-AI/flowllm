@@ -1,109 +1,89 @@
+import asyncio
 import json
 import os
-import time
-from typing import Literal
+from functools import partial
+from typing import Union, List
 
-from loguru import logger
 from tavily import TavilyClient
 
-from flowllm.context.flow_context import FlowContext
-from flowllm.context.service_context import C
-from flowllm.op.base_op import BaseOp
-from flowllm.storage.cache.data_cache import DataCache
+from flowllm.context import FlowContext, C
+from flowllm.op.base_tool_op import BaseToolOp
+from flowllm.schema.tool_call import ToolCall
 
 
 @C.register_op()
-class TavilySearchOp(BaseOp):
-    def __init__(self,
-                 enable_print: bool = True,
-                 enable_cache: bool = True,
-                 cache_path: str = "./tavily_search_cache",
-                 cache_expire_hours: float = 0.1,
-                 topic: Literal["general", "news", "finance"] = "general",
-                 max_retries: int = 3,
-                 return_only_content: bool = True,
-                 **kwargs):
+class TavilySearchOp(BaseToolOp):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._client: TavilyClient | None = None
 
-        self.enable_print = enable_print
-        self.enable_cache = enable_cache
-        self.cache_expire_hours = cache_expire_hours
-        self.topic = topic
-        self.max_retries = max_retries
-        self.return_only_content = return_only_content
-
-        # Initialize DataCache if caching is enabled
-        self._client = TavilyClient(api_key=os.getenv("FLOW_TAVILY_API_KEY", ""))
-        self.cache_path: str = cache_path
-        self._cache: DataCache | None = None
+    def build_tool_call(self) -> ToolCall:
+        return ToolCall(**{
+            "name": "web_search",
+            "description": "Use search keywords to retrieve relevant information from the internet. If there are multiple search keywords, please use each keyword separately to call this tool.",
+            "input_schema": {
+                "query": {
+                    "type": "str",
+                    "description": "search keyword",
+                    "required": True
+                }
+            }
+        })
 
     @property
-    def cache(self):
-        if self.enable_cache and self._cache is None:
-            self._cache = DataCache(self.cache_path)
-        return self._cache
+    def client(self):
+        if self._client is None:
+            self._client = TavilyClient(api_key=os.environ["FLOW_TAVILY_API_KEY"])
+        return self._client
 
-    def post_process(self, response):
-        if self.enable_print:
-            logger.info("response=\n" + json.dumps(response, indent=2, ensure_ascii=False))
+    def default_execute(self):
+        self.output_dict["tavily_search_result"] = "tavily search failed!"
 
-        return response
+    async def search(self, query: str):
+        loop = asyncio.get_event_loop()
+        func = partial(self.client.search, query=query)
+        task = loop.run_in_executor(executor=C.thread_pool, func=func)  # noqa
+        return await task
 
-    def execute(self):
-        # Get query from context
-        query: str = self.context.query
+    async def extract(self, urls: Union[List[str], str]):
+        loop = asyncio.get_event_loop()
+        func = partial(self.client.extract, urls=urls, format="text")
+        task = loop.run_in_executor(executor=C.thread_pool, func=func)  # noqa
+        return await task
 
-        # Check cache first
+    async def async_execute(self):
+        query: str = self.input_dict["query"]
+
         if self.enable_cache and self.cache:
             cached_result = self.cache.load(query)
             if cached_result:
-                final_result = self.post_process(cached_result)
-                if self.return_only_content:
-                    self.context.tavily_search_result = json.dumps(final_result, ensure_ascii=False, indent=2)
-                else:
-                    self.context.tavily_search_result = final_result
+                self.output_dict["tavily_search_result"] = json.dumps(cached_result, ensure_ascii=False, indent=2)
                 return
 
-        for i in range(self.max_retries):
-            try:
-                response = self._client.search(query=query, topic=self.topic)
-                url_info_dict = {item["url"]: item for item in response["results"]}
-                response_extract = self._client.extract(urls=[item["url"] for item in response["results"]],
-                                                        format="text")
+        response = await self.search(query=query)
+        url_info_dict = {item["url"]: item for item in response["results"]}
+        response_extract = await self.extract(urls=[item["url"] for item in response["results"]])
 
-                final_result = {}
-                for item in response_extract["results"]:
-                    url = item["url"]
-                    final_result[url] = url_info_dict[url]
-                    final_result[url]["raw_content"] = item["raw_content"]
+        final_result = {}
+        for item in response_extract["results"]:
+            url = item["url"]
+            final_result[url] = url_info_dict[url]
+            final_result[url]["raw_content"] = item["raw_content"]
 
-                # Cache the result if enabled
-                if self.enable_cache and self.cache:
-                    self.cache.save(query, final_result, expire_hours=self.cache_expire_hours)
+        if self.enable_cache and self.cache is not None:
+            self.cache.save(query, final_result, expire_hours=self.cache_expire_hours)
 
-                final_result = self.post_process(final_result)
+        self.output_dict["tavily_search_result"] = json.dumps(final_result, ensure_ascii=False, indent=2)
 
-                if self.return_only_content:
-                    self.context.tavily_search_result = json.dumps(final_result, ensure_ascii=False, indent=2)
-                else:
-                    self.context.tavily_search_result = final_result
-                return
 
-            except Exception as e:
-                logger.exception(f"tavily search with query={query} encounter error with e={e.args}")
-                time.sleep(i + 1)
+async def async_main():
+    C.set_service_config().init_by_service_config()
 
-        self.context.tavily_search_result = "tavily search failed!"
+    op = TavilySearchOp()
+    context = FlowContext(query="what is AI?")
+    await op.async_call(context=context)
+    print(context.tavily_search_result)
 
 
 if __name__ == "__main__":
-    from flowllm.utils.common_utils import load_env
-
-    load_env()
-
-    C.set_default_service_config().init_by_service_config()
-
-    op = TavilySearchOp(enable_cache=True)
-    context = FlowContext(query="A股医药为什么一直涨")
-    op(context=context)
-    print(context.tavily_search_result)
+    asyncio.run(async_main())

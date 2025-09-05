@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flowllm"
-version = "0.1.4"
+version = "0.1.5"
 description = "A flexible framework for building LLM-powered flows and mcp services"
 authors = [
     {name = "FlowLLM Team", email = "flowllm@example.com"}
@@ -15,7 +15,7 @@ maintainers = [
 license = {file = "LICENSE"}
 readme = "README.md"
 keywords = ["llm", "ai", "flow", "framework", "openai", "chatgpt", "language-model", "mcp", "http"]
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -62,9 +62,9 @@ dependencies = [
 
 [project.optional-dependencies]
 
-distributed = ["ray"]
+dist = ["ray"]
 
-all = ["flowllm[distributed]"]
+all = ["flowllm[dist]"]
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -73,8 +73,7 @@ exclude = ["cookbook*"]
 
 [tool.setuptools.package-data]
 flowllm = [
-    "config/*.yaml", 
-    "op/**/*.yaml",
+    "**/*.yaml",
 ]
 
 [project.scripts]

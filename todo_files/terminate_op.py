@@ -15,7 +15,7 @@ class TerminateOp(BaseOp):
 if __name__ == "__main__":
     from flowllm.context.flow_context import FlowContext
 
-    C.set_default_service_config().init_by_service_config()
+    C.set_service_config().init_by_service_config()
 
     # Test success termination
     op = TerminateOp()

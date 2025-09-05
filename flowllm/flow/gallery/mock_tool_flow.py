@@ -7,56 +7,74 @@ from flowllm.schema.tool_call import ToolCall, ParamAttrs
 @C.register_tool_flow()
 class MockToolFlow(BaseToolFlow):
 
+    def __init__(self,
+                 use_async: bool = False,
+                 stream: bool = False,
+                 service_type: str = "http+mcp",
+                 **kwargs):
+        super().__init__(use_async=use_async, stream=stream, service_type=service_type, **kwargs)
+
     def build_flow(self):
         mock1_op = Mock1Op()
         mock2_op = Mock2Op()
         mock3_op = Mock3Op()
-        mock4_op = Mock4Op()
-        mock5_op = Mock5Op()
-        mock6_op = Mock6Op()
 
-        op = mock1_op >> ((mock4_op >> mock2_op) | mock5_op) >> (mock3_op | mock6_op)
+        op = mock1_op >> ((mock2_op >> mock3_op) | mock1_op) >> (mock2_op | mock3_op)
         return op
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "index": 0,
-            "id": "call_mock_tool_12345",
             "type": "function",
-            "name": "mock_data_processor",
+            "name": "mock_data",
             "description": "A mock tool that processes data through multiple operations and returns structured results",
             "input_schema": {
-                "input_data": ParamAttrs(
-                    type="string",
+                "a": ParamAttrs(
+                    type="str",
                     description="The input data to be processed",
                     required=True
                 ),
-                "processing_mode": ParamAttrs(
+                "b": ParamAttrs(
                     type="string",
                     description="Processing mode: basic, advanced, or expert",
                     required=False
                 ),
-                "output_format": ParamAttrs(
-                    type="string",
-                    description="Output format: json, xml, or plain",
-                    required=False
-                )
-            },
-            "output_schema": {
-                "result": ParamAttrs(
-                    type="object",
-                    description="Processed result data",
+            }
+        })
+
+
+@C.register_tool_flow()
+class MockAsyncToolFlow(BaseToolFlow):
+
+    def __init__(self,
+                 use_async: bool = True,
+                 stream: bool = False,
+                 service_type: str = "http+mcp",
+                 **kwargs):
+        super().__init__(use_async=use_async, stream=stream, service_type=service_type, **kwargs)
+
+    def build_flow(self):
+        mock4_op = Mock4Op()
+        mock5_op = Mock5Op()
+        mock6_op = Mock6Op()
+
+        op = mock4_op >> ((mock5_op >> mock6_op) | mock4_op) >> (mock5_op | mock6_op)
+        return op
+
+    def build_tool_call(self) -> ToolCall:
+        return ToolCall(**{
+            "type": "function",
+            "name": "mock_data",
+            "description": "A mock tool that processes data through multiple operations and returns structured results",
+            "input_schema": {
+                "a": ParamAttrs(
+                    type="str",
+                    description="The input data to be processed",
                     required=True
                 ),
-                "status": ParamAttrs(
+                "b": ParamAttrs(
                     type="string",
-                    description="Processing status: success, warning, or error",
-                    required=True
-                ),
-                "metadata": ParamAttrs(
-                    type="object",
-                    description="Additional metadata about the processing",
+                    description="Processing mode: basic, advanced, or expert",
                     required=False
-                )
+                ),
             }
         })

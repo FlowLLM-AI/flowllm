@@ -155,10 +155,8 @@ class BaseLLM(BaseModel, ABC):
             except Exception as e:
                 logger.exception(f"chat with model={self.model_name} encounter error with e={e.args}")
 
-                # Exponential backoff: wait longer after each failure
                 time.sleep(1 + i)
 
-                # Handle final retry failure
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
