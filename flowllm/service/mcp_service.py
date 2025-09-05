@@ -32,10 +32,10 @@ class MCPService(BaseService):
 
     def execute(self):
         if self.mcp_config.transport == "sse":
-            self.mcp.run(transport="sse", host=self.mcp_config.host, port=self.mcp_config.port)
+            self.mcp.run(transport="sse", host=self.mcp_config.host, port=self.mcp_config.port, show_banner=False)
         elif self.mcp_config.transport == "http":
-            self.mcp.run(transport="http", host=self.mcp_config.host, port=self.mcp_config.port)
+            self.mcp.run(transport="http", host=self.mcp_config.host, port=self.mcp_config.port, show_banner=False)
         elif self.mcp_config.transport == "stdio":
-            self.mcp.run(transport="stdio")
+            self.mcp.run(transport="stdio", show_banner=False)
         else:
             raise ValueError(f"unsupported mcp transport: {self.mcp_config.transport}")

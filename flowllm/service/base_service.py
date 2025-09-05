@@ -10,8 +10,7 @@ from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.schema.flow_request import FlowRequest
 from flowllm.schema.service_config import ServiceConfig
 from flowllm.schema.tool_call import ParamAttrs
-from flowllm.utils.common_utils import snake_to_camel
-
+from flowllm.utils.common_utils import snake_to_camel, print_banner
 
 class BaseService(ABC):
     TYPE_MAPPING = {
@@ -77,6 +76,7 @@ class BaseService(ABC):
 
     def __call__(self):
         self.integrate_flows()
+        print_banner(name="FlowLLM", service_config=self.service_config, width=400)
         self.execute()
 
     def execute(self):
