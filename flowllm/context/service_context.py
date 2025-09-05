@@ -106,12 +106,18 @@ class ServiceContext(BaseContext):
             if not isclass(tool_flow_cls):
                 continue
 
+            if name in self.service_config.disabled_flows:
+                continue
+
             tool_flow: BaseToolFlow = tool_flow_cls()
             self.flow_dict[tool_flow.name] = tool_flow
-            logger.info(f"add diy tool_flow: {tool_flow.name}")
+            logger.info(f"add cls tool_flow: {tool_flow.name}")
 
         # add tool flow config
         for name, flow_config in self.service_config.flow.items():
+            if name in self.service_config.disabled_flows:
+                continue
+
             flow_config.name = name
             tool_flow: BaseToolFlow = ExpressionToolFlow(flow_config=flow_config)
             self.flow_dict[tool_flow.name] = tool_flow

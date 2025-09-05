@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -65,6 +65,7 @@ class ServiceConfig(BaseModel):
     thread_pool_max_workers: int = Field(default=16)
     ray_max_workers: int = Field(default=1)
     import_config: str = Field(default="", description="Import the configuration in the same path as the base")
+    disabled_flows: List[str] = Field(default_factory=list)
 
     cmd: CmdConfig = Field(default_factory=CmdConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)

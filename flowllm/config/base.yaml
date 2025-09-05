@@ -1,6 +1,6 @@
 backend: http
 language: ""
-thread_pool_max_workers: 32
+thread_pool_max_workers: 64
 ray_max_workers: 1
 
 mcp:
@@ -15,22 +15,6 @@ http:
   limit_concurrency: 64
 
 flow:
-  mock_expression_flow:
-    flow_content: mock1_op>>((mock2_op>>mock3_op)|mock1_op)>>(mock2_op|mock3_op)
-    stream: false
-    use_async: false
-    service_type: http+mcp
-    description: "mock flow"
-    input_schema:
-      a:
-        type: "str"
-        description: "mock attr a"
-        required: true
-      b:
-        type: "str"
-        description: "mock attr b"
-        required: true
-
   llm_flow:
     flow_content: simple_llm_op
     stream: false

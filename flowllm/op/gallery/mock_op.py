@@ -3,7 +3,7 @@ import time
 
 from loguru import logger
 
-from flowllm.context.service_context import C
+from flowllm.context import C
 from flowllm.op.base_llm_op import BaseLLMOp
 
 

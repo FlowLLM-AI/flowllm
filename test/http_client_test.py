@@ -11,7 +11,7 @@ from flowllm.schema.flow_response import FlowResponse
 class HttpClientTest:
     def __init__(self, base_url: str = "http://0.0.0.0:8001"):
         self.base_url = base_url
-        self.client = httpx.AsyncClient(timeout=30.0)
+        self.client = httpx.AsyncClient(timeout=30000.0)
 
     async def __aenter__(self):
         return self
@@ -72,64 +72,45 @@ async def main():
         except Exception as e:
             print(f"Failed to get endpoints: {e}")
 
-        # Test 3: Test default flow
-        print("=" * 50)
-        print("Testing default flow...")
-        try:
-            flow_result = await client.execute_flow("default", a="test_value_a", b="test_value_b")
-            print(f"Flow execution result:")
-            print(f"  Success: {flow_result.success}")
-            print(f"  Answer: {flow_result.answer}")
-            print(f"  Messages count: {len(flow_result.messages)}")
-            print(f"  Metadata: {json.dumps(flow_result.metadata, indent=2)}")
-        except Exception as e:
-            print(f"Default flow execution failed: {e}")
+        query1 = "阿里巴巴怎么样？"
+        query2 = "寒武纪还可以买吗？"
 
-        # Test 4: Test mock_flow
-        print("=" * 50)
-        print("Testing mock_flow...")
-        try:
-            mock_flow_result = await client.execute_flow("mock_flow", a="mock_a", b="mock_b")
-            print(f"Mock flow execution result:")
-            print(f"  Success: {mock_flow_result.success}")
-            print(f"  Answer: {mock_flow_result.answer}")
-            print(f"  Messages count: {len(mock_flow_result.messages)}")
-            print(f"  Metadata: {json.dumps(mock_flow_result.metadata, indent=2)}")
-        except Exception as e:
-            print(f"Mock flow execution failed: {e}")
+        # response = await client.execute_flow("ant_search", query="阿里巴巴怎么样？", entity="阿里巴巴")
+        # print(f"result: {response.answer}")
 
-        # Test 5: Test flow with optional parameters
-        print("=" * 50)
-        print("Testing flow with minimal required parameters...")
-        try:
-            minimal_result = await client.execute_flow("default", a="minimal_a", b="minimal_b")
-            print(f"Minimal parameters result:")
-            print(f"  Success: {minimal_result.success}")
-            print(f"  Answer: {minimal_result.answer}")
-        except Exception as e:
-            print(f"Minimal parameters test failed: {e}")
+        # response = await client.execute_flow("ant_investment", entity="阿里巴巴", analysis_category="股票")
+        # print(f"result: {response.answer}")
 
-        # Test 6: Test error handling - invalid flow
-        print("=" * 50)
-        print("Testing error handling with invalid flow...")
-        try:
-            error_result = await client.execute_flow("nonexistent_flow", a="test", b="test")
-            print(f"Unexpected success with invalid flow: {error_result}")
-        except httpx.HTTPStatusError as e:
-            print(f"Expected error for invalid flow: {e.response.status_code} - {e.response.text}")
-        except Exception as e:
-            print(f"Error handling test result: {e}")
+        # response = await client.execute_flow("dashscope_search_tool_flow", query="阿里巴巴怎么样？")
+        # print(f"result: {response.answer}")
 
-        # Test 7: Test missing required parameters
-        print("=" * 50)
-        print("Testing missing required parameters...")
-        try:
-            missing_params_result = await client.execute_flow("default", a="only_a")  # missing 'b'
-            print(f"Unexpected success with missing params: {missing_params_result}")
-        except httpx.HTTPStatusError as e:
-            print(f"Expected validation error: {e.response.status_code} - {e.response.text}")
-        except Exception as e:
-            print(f"Missing parameters test result: {e}")
+        # response = await client.execute_flow("get_a_stock_infos", query=query2)
+        # print(f"result: {response.answer}")
+
+        # response = await client.execute_flow("get_a_stock_news", query=query2)
+        # print(f"result: {response.answer}")
+
+        # response = await client.execute_flow("llm_flow", query=query2)
+        # print(f"result: {response.answer}")
+
+        # response = await client.execute_flow("mock_tool_flow", a=query2)
+        # print(f"result: {response.answer}")
+
+        # response = await client.execute_flow("mock_async_tool_flow", a=query2)
+        # print(f"result: {response.answer}")
+
+        # response = await client.execute_flow("react_llm_tool_flow", query=query2)
+        # print(f"result: {response.answer}")
+
+        # response = await client.execute_flow("simple_llm_tool_flow", query=query2)
+        # print(f"result: {response.answer}")
+
+        response = await client.execute_flow("tavily_search_tool_flow", query=query2)
+        print(f"result: {response.answer}")
+
+        """
+        curl -X POST http://0.0.0.0:8001/llm_flow_stream -H "Content-Type: application/json" -d '{"query": "what is AI?"}'
+        """
 
 
 if __name__ == "__main__":

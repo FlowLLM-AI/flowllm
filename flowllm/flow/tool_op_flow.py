@@ -43,7 +43,7 @@ class DashscopeSearchToolFlow(BaseToolFlow):
         return self.flow_op.tool_call
 
     def after_flow(self, context):
-        context.response.answer = context.tavily_search_result
+        context.response.answer = context.dashscope_search_result
 
 
 @C.register_tool_flow(name="stream_llm_tool_flow")

@@ -18,6 +18,9 @@ from flowllm.schema.tool_call import ToolCall
 class ReactLLMOp(BaseToolOp):
     file_path: str = __file__
 
+    def __init__(self, llm="qwen3_30b_instruct", **kwargs):
+        super().__init__(llm=llm, **kwargs)
+
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
             "name": "query_llm",
