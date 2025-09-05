@@ -9,6 +9,9 @@ def camel_to_snake(content: str) -> str:
     """
     BaseWorker -> base_worker
     """
+    # FIXME
+    content = content.replace("LLM", "Llm")
+
     snake_str = re.sub(r'(?<!^)(?=[A-Z])', '_', content).lower()
     return snake_str
 
@@ -18,6 +21,9 @@ def snake_to_camel(content: str) -> str:
     base_worker -> BaseWorker
     """
     camel_str = "".join(x.capitalize() for x in content.split("_"))
+
+    # FIXME
+    camel_str = camel_str.replace("Llm", "LLM")
     return camel_str
 
 

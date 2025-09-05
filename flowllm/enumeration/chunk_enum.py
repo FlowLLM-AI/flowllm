@@ -7,3 +7,4 @@ class ChunkEnum(str, Enum):
     TOOL = "tool"
     USAGE = "usage"
     ERROR = "error"
+    DONE = "done"

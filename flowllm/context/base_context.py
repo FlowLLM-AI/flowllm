@@ -1,22 +1,13 @@
 class BaseContext:
     def __init__(self, **kwargs):
-        self._data = {**kwargs}
+        self._data: dict = {**kwargs}
 
     def __getattr__(self, name: str):
-        # Avoid infinite recursion when _data is not yet initialized
-        if name == '_data':
-            raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
-        
-        # Use object.__getattribute__ to safely access _data
-        try:
-            data = object.__getattribute__(self, '_data')
-        except AttributeError:
-            raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
-            
+        data = object.__getattribute__(self, "_data")
         if name in data:
             return data[name]
-
-        raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
+        else:
+            raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
     def __setattr__(self, name: str, value):
         if name == "_data":
@@ -25,9 +16,10 @@ class BaseContext:
             self._data[name] = value
 
     def __getitem__(self, name: str):
-        if name not in self._data:
+        if name in self._data:
+            return self._data[name]
+        else:
             raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
-        return self._data[name]
 
     def __setitem__(self, name: str, value):
         self._data[name] = value
@@ -48,19 +40,17 @@ class BaseContext:
     def keys(self):
         return self._data.keys()
 
-    def update(self, **kwargs):
+    def update(self, kwargs: dict):
         self._data.update(kwargs)
 
     def items(self):
         return self._data.items()
 
     def __getstate__(self):
-        """Support for pickle serialization"""
-        return {'_data': self._data}
+        return self._data
     
     def __setstate__(self, state):
-        """Support for pickle deserialization"""
-        self._data = state['_data']
+        self._data = state
 
 if __name__ == "__main__":
     ctx = BaseContext(**{"name": "Alice", "age": 30, "city": "New York"})

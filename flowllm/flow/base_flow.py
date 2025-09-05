@@ -1,23 +1,35 @@
+import asyncio
 from abc import ABC, abstractmethod
-from typing import Optional
+from functools import partial
+from typing import Union
 
 from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
+from flowllm.context.service_context import C
 from flowllm.op.base_op import BaseOp
 from flowllm.op.parallel_op import ParallelOp
 from flowllm.op.sequential_op import SequentialOp
 from flowllm.schema.flow_response import FlowResponse
+from flowllm.schema.flow_stream_chunk import FlowStreamChunk
 from flowllm.utils.common_utils import camel_to_snake
 
 
 class BaseFlow(ABC):
 
-    def __init__(self, name: str = "", **kwargs):
+    def __init__(self,
+                 name: str = "",
+                 use_async: bool = True,
+                 stream: bool = True,
+                 service_type: str = "",
+                 **kwargs):
         self.name: str = name or camel_to_snake(self.__class__.__name__)
+        self.use_async: bool = use_async
+        self.stream: bool = stream
+        self.service_type: str = service_type
         self.flow_params: dict = kwargs
 
-        self.flow_op: BaseOp = self.build_flow()
+        self.flow_op = self.build_flow()
         self.print_flow()
 
     @abstractmethod
@@ -53,22 +65,41 @@ class BaseFlow(ABC):
 
         else:
             logger.info(f"{prefix}Operation: {op.name}")
+            if op.sub_op is not None:
+                self._print_operation_tree(op.sub_op, indent + 2)
 
-    def return_callback(self, context: FlowContext):
-        logger.info(f"context.response={context.response.model_dump_json()}")
-        return context.response
+    def after_flow(self, context):
+        ...
 
-    def __call__(self, **kwargs) -> FlowResponse:
-        context = FlowContext(**kwargs)
+    async def __call__(self, **kwargs) -> Union[FlowResponse | FlowStreamChunk | None]:
+        context = FlowContext(stream=self.stream, use_async=self.use_async, service_type=self.service_type, **kwargs)
         logger.info(f"request.params={kwargs}")
 
         try:
-            flow_op = self.build_flow()
-            flow_op(context=context)
+            flow_op: BaseOp = self.build_flow()
+
+            if self.use_async:
+                await flow_op.async_call(context=context)
+
+            else:
+                loop = asyncio.get_event_loop()
+                op_call_fn = partial(flow_op.__call__, context=context)
+                await loop.run_in_executor(executor=C.thread_pool, func=op_call_fn)  # noqa
+
+            if self.stream:
+                await context.add_stream_done()
+            else:
+                self.after_flow(context)
 
         except Exception as e:
             logger.exception(f"flow_name={self.name} encounter error={e.args}")
-            context.response.success = False
-            context.response.answer = str(e.args)
 
-        return self.return_callback(context=context)
+            if self.stream:
+                await context.add_stream_error(e)
+            else:
+                context.add_response_error(e)
+
+        if self.stream:
+            return context.stream_queue
+        else:
+            return context.response

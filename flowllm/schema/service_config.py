@@ -6,7 +6,7 @@ from flowllm.schema.tool_call import ToolCall
 
 
 class MCPConfig(BaseModel):
-    transport: str = Field(default="", description="stdio/http/sse/streamable-http")
+    transport: str = Field(default="", description="stdio/http/sse")
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8001)
 
@@ -25,11 +25,14 @@ class CmdConfig(BaseModel):
 
 class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
-    service_type: str = Field(default="all", description="all/http/mcp/cmd")
+    use_async: bool = Field(default=True)
+    service_type: str = Field(default="http+mcp", description="http+mcp/http/mcp")
+    stream: bool = Field(default=False)
 
 class OpConfig(BaseModel):
     backend: str = Field(default="")
     language: str = Field(default="")
+    max_retries: int = Field(default=1)
     raise_exception: bool = Field(default=True)
     prompt_path: str = Field(default="")
     llm: str = Field(default="")
@@ -61,6 +64,7 @@ class ServiceConfig(BaseModel):
     language: str = Field(default="")
     thread_pool_max_workers: int = Field(default=16)
     ray_max_workers: int = Field(default=1)
+    import_config: str = Field(default="", description="Import the configuration in the same path as the base")
 
     cmd: CmdConfig = Field(default_factory=CmdConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)

@@ -43,7 +43,7 @@ First, instantiate the required atomic operations:
 ```python
 from flowllm.op.gallery.mock_op import MockOp
 from flowllm.op.search.tavily_search_op import TavilySearchOp
-from flowllm.op.agent.react_v2_op import ReactV2Op
+from flowllm.op.llm.react_v2_op import ReactV2Op
 
 # Create atomic operation instances
 search_op = TavilySearchOp()
@@ -139,8 +139,9 @@ Below is a complete example demonstrating how to build a search Q&A SOP:
 ```python
 from flowllm.op.base_op import BaseOp
 from flowllm.op.search.tavily_search_op import TavilySearchOp
-from flowllm.op.agent.react_v2_op import ReactV2Op
+from flowllm.op.llm.react_v2_op import ReactV2Op
 from flowllm.schema.vector_node import ParamAttr
+
 
 class SearchQAOp(BaseOp):
     description = "Search for information and answer questions based on search results"
@@ -150,25 +151,25 @@ class SearchQAOp(BaseOp):
     output_schema = {
         "answer": ParamAttr(type=str, description="Answer based on search results")
     }
-    
+
     def __init__(self):
         super().__init__()
-        
+
         # 1. Create atomic operation instances
         search_op = TavilySearchOp()
         react_op = ReactV2Op()
-        
+
         # 2. Set data flow
         search_op.set_input("query", "question")  # Get search query from input question
         search_op.set_output("results", "search_results")  # Store search results in search_results
-        
+
         react_op.set_input("question", "question")  # Get question from input question
         react_op.set_input("context", "search_results")  # Get context from search_results
         react_op.set_output("answer", "answer")  # Store answer in answer
-        
+
         # 3. Build operation flow graph
         self.flow = search_op >> react_op
-    
+
     async def execute(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         return await self.flow.execute(inputs)
 ```

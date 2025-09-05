@@ -202,9 +202,24 @@ class PydanticConfigParser(Generic[T]):
         config_path = Path(self.current_file).parent / config
         if not config_path.exists():
             config_path = Path(config)
+        logger.info(f"flowllm using config={config_path}")
 
         yaml_config = self.load_from_yaml(config_path)
-        logger.info(f"flowllm using config={config_path}")
+
+        # load import configs
+        import_config = yaml_config.get("import_config", "")
+        if import_config:
+            if not import_config.endswith(".yaml"):
+                import_config += ".yaml"
+            import_config_path = Path(self.current_file).parent / import_config
+            if not import_config_path.exists():
+                import_config_path = Path(import_config)
+            logger.info(f"flowllm using import_config_path={import_config_path}")
+
+            # load import config
+            import_yaml_config = self.load_from_yaml(import_config_path)
+            configs_to_merge.append(import_yaml_config)
+
         configs_to_merge.append(yaml_config)
 
         # 3. Command line override configuration

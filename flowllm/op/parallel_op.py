@@ -12,8 +12,12 @@ class ParallelOp(BaseOp):
     def execute(self):
         for op in self.ops:
             self.submit_task(op.__call__, context=self.context)
-
         self.join_task(task_desc="parallel execution")
+
+    async def async_execute(self):
+        for op in self.ops:
+            self.submit_async_task(op.async_call, context=self.context)
+        return await self.join_async_task()
 
     def __or__(self, op: BaseOp):
         if isinstance(op, ParallelOp):

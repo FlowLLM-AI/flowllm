@@ -18,8 +18,9 @@ if not os.environ.get("FLOW_USE_FRAMEWORK", "").lower() == "true":
 
 from flowllm import service
 
-from flowllm.context.service_context import C
-from flowllm.op import BaseOp, BaseRayOp, BaseLLMOp
+from flowllm.context import C
+from flowllm.op import BaseOp, BaseLLMOp, BaseToolOp
 
-__version__ = "0.1.4"
+
+__version__ = "0.1.5"
 

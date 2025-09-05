@@ -101,7 +101,7 @@ class GetAkACodeOp(BaseLLMOp):
 
 
 if __name__ == "__main__":
-    C.set_default_service_config().init_by_service_config()
+    C.set_service_config().init_by_service_config()
     context = FlowContext(query="茅台和五粮现在价格多少？")
 
     op = GetAkACodeOp()

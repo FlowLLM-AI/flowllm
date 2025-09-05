@@ -1,6 +1,7 @@
 import json
 from typing import Dict, List
 
+from mcp.types import Tool
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -131,6 +132,26 @@ class ToolCall(BaseModel):
             raise NotImplementedError(f"version {version} not supported")
 
         return self
+
+    @classmethod
+    def from_mcp_tool(cls, tool: Tool) -> "ToolCall":
+        input_schema = {}
+        properties = tool.inputSchema["properties"]
+        required = tool.inputSchema["required"]
+        for name, attr_dict in properties.items():
+            param_attrs = ParamAttrs()
+
+            if name in required:
+                param_attrs.required = True
+            param_attrs.type = attr_dict.get("type", "str")
+            param_attrs.description = attr_dict.get("description", "")
+            if "enum" in attr_dict:
+                param_attrs.enum = attr_dict["enum"]
+            input_schema[name] = param_attrs
+
+        return cls(name=tool.name,
+                   description=tool.description,
+                   input_schema=input_schema)
 
 
 if __name__ == "__main__":

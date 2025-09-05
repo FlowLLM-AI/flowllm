@@ -1,14 +1,18 @@
+import asyncio
+import json
 import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from inspect import isclass
 from typing import Dict, List
 
+from fastmcp import Client
 from loguru import logger
 
 from flowllm.context.base_context import BaseContext
 from flowllm.context.registry import Registry
 from flowllm.schema.service_config import ServiceConfig, EmbeddingModelConfig
+from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.singleton import singleton
 
 
@@ -23,6 +27,7 @@ class ServiceContext(BaseContext):
         self.language: str = ""
         self.thread_pool: ThreadPoolExecutor | None = None
         self.vector_store_dict: dict = {}
+        self.sse_mcp_dict: dict = {}
 
         self.registry_dict: Dict[str, Registry] = {}
         use_framework: bool = os.environ.get("FLOW_USE_FRAMEWORK", "").lower() == "true"
@@ -36,15 +41,42 @@ class ServiceContext(BaseContext):
                     register_flow_module = False
             self.registry_dict[key] = Registry(key, enable_log=enable_log, register_flow_module=register_flow_module)
 
-        self.tool_flow_dict: dict = {}
+        self.flow_dict: dict = {}
 
-    def set_default_service_config(self, parser=None):
+    def set_service_config(self, parser=None, config_name: str = "config=base"):
         if parser is None:
             from flowllm.config.pydantic_config_parser import PydanticConfigParser
             parser = PydanticConfigParser
 
         config_parser = parser(ServiceConfig)
-        self.service_config = config_parser.parse_args("config=default")
+        self.service_config = config_parser.parse_args(config_name)
+        return self
+
+    @staticmethod
+    async def get_sse_mcp_dict(hosts: List[str]):
+        tool_call_dict = {}
+
+        for host in hosts:
+            async with Client(f"{host}/sse/") as client:
+                tools = await client.list_tools()
+                for tool in tools:
+                    tool_call = ToolCall.from_mcp_tool(tool)
+                    key = host + "/" + tool.name
+                    tool_call_dict[key] = tool_call
+                    logger.info(f"{host} find mcp_name={key} "
+                                f"tool_call={json.dumps(tool_call.simple_input_dump(), ensure_ascii=False)}")
+        return tool_call_dict
+
+    def prepare_sse_mcp(self):
+        hosts = os.getenv("FLOW_MCP_HOSTS")
+        if not hosts:
+            return self
+
+        hosts = [x.strip() for x in hosts.strip().split(",") if x.strip()]
+        if not hosts:
+            return self
+
+        self.sse_mcp_dict = asyncio.run(self.get_sse_mcp_dict(hosts))
         return self
 
     def init_by_service_config(self, service_config: ServiceConfig = None):
@@ -67,7 +99,7 @@ class ServiceContext(BaseContext):
             self.vector_store_dict[name] = vector_store_cls(embedding_model=embedding_model, **config.params)
 
         from flowllm.flow.base_tool_flow import BaseToolFlow
-        from flowllm.flow.gallery import ExpressionToolFlow
+        from flowllm.flow.expression.expression_tool_flow import ExpressionToolFlow
 
         # add tool flow cls
         for name, tool_flow_cls in self.registry_dict["tool_flow"].items():
@@ -75,25 +107,25 @@ class ServiceContext(BaseContext):
                 continue
 
             tool_flow: BaseToolFlow = tool_flow_cls()
-            self.tool_flow_dict[tool_flow.name] = tool_flow
+            self.flow_dict[tool_flow.name] = tool_flow
             logger.info(f"add diy tool_flow: {tool_flow.name}")
 
         # add tool flow config
         for name, flow_config in self.service_config.flow.items():
             flow_config.name = name
             tool_flow: BaseToolFlow = ExpressionToolFlow(flow_config=flow_config)
-            self.tool_flow_dict[tool_flow.name] = tool_flow
+            self.flow_dict[tool_flow.name] = tool_flow
             logger.info(f"add expression tool_flow:{tool_flow.name}")
 
     def get_vector_store(self, name: str = "default"):
         return self.vector_store_dict[name]
 
     def get_tool_flow(self, name: str = "default"):
-        return self.tool_flow_dict[name]
+        return self.flow_dict[name]
 
     @property
     def tool_flow_names(self) -> List[str]:
-        return sorted(self.tool_flow_dict.keys())
+        return sorted(self.flow_dict.keys())
 
     """
     register models
@@ -144,6 +176,16 @@ class ServiceContext(BaseContext):
     def resolve_service(self, name: str):
         assert name in self.registry_dict["service"], f"service={name} not found!"
         return self.registry_dict["service"][name]
+
+    @staticmethod
+    def list_flow_schemas() -> List[dict]:
+        from flowllm.flow.base_tool_flow import BaseToolFlow
+
+        flow_schemas = []
+        for name, tool_flow in C.flow_dict.items():
+            assert isinstance(tool_flow, BaseToolFlow)
+            flow_schemas.append(tool_flow.tool_call.simple_input_dump())
+        return flow_schemas
 
 
 C = ServiceContext()

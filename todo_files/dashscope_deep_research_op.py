@@ -40,7 +40,7 @@ class DashscopeDeepResearchOp(BaseLLMOp):
         self.return_only_content = return_only_content
 
         # Ensure API key is available
-        self.api_key = os.environ["FLOW_DASHSCOPE_API_KEY"]
+        self.api_key = os.environ.get("FLOW_DASHSCOPE_API_KEY", "xxx")
         self.cache_path: str = cache_path
         self._cache: DataCache | None = None
 
@@ -254,7 +254,7 @@ class DashscopeDeepResearchOp(BaseLLMOp):
 
 
 def main():
-    C.set_default_service_config().init_by_service_config()
+    C.set_service_config().init_by_service_config()
 
     op = DashscopeDeepResearchOp(enable_print=True, enable_cache=True)
 

@@ -1,0 +1,30 @@
+import_config: base
+
+flow:
+  get_a_stock_infos:
+    flow_content: get_ak_a_code_op >> get_ak_a_info_op >> get_ak_a_spot_op >> get_ak_a_money_flow_op >> get_ak_a_financial_info_op >> merge_ak_a_info_op
+    stream: false
+    use_async: false
+    service_type: http+mcp
+    description: "Retrieve the A-share stock codes from the query, and fetch information about these stocks, including company basic information, current stock price and its change percentage, capital inflow and outflow data for the most recent day, and financial information from the latest quarter."
+    input_schema:
+      query:
+        type: "str"
+        description: "user question"
+
+  get_a_stock_news:
+    flow_content: get_ak_a_code_op >> get_ak_a_news_op >> merge_ak_a_info_op
+    stream: false
+    use_async: false
+    service_type: http+mcp
+    description: "Retrieve the A-share stock codes from the query, and obtain the latest news information about these stocks."
+    input_schema:
+      query:
+        type: "str"
+        description: "user question"
+
+  ant_search:
+    flow_content: ant_search_op
+
+  ant_investment:
+    flow_content: ant_investment_op

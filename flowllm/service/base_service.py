@@ -1,4 +1,4 @@
-from abc import abstractmethod, ABC
+from abc import ABC
 from typing import Dict, Optional
 
 from loguru import logger
@@ -6,6 +6,7 @@ from pydantic import create_model, Field
 
 from flowllm.config.pydantic_config_parser import PydanticConfigParser
 from flowllm.context.service_context import C
+from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.schema.flow_request import FlowRequest
 from flowllm.schema.service_config import ServiceConfig
 from flowllm.schema.tool_call import ParamAttrs
@@ -15,7 +16,9 @@ from flowllm.utils.common_utils import snake_to_camel
 class BaseService(ABC):
     TYPE_MAPPING = {
         "str": str,
+        "string": str,
         "int": int,
+        "integer": int,
         "float": float,
         "bool": bool,
         "list": list,
@@ -24,10 +27,16 @@ class BaseService(ABC):
 
     def __init__(self, service_config: ServiceConfig):
         self.service_config = service_config
-
         self.mcp_config = self.service_config.mcp
         self.http_config = self.service_config.http
+
+    def __enter__(self):
+        C.prepare_sse_mcp()
         C.init_by_service_config(self.service_config)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        ...
 
     @classmethod
     def get_service(cls, *args, parser: type[PydanticConfigParser] = PydanticConfigParser) -> "BaseService":
@@ -49,20 +58,26 @@ class BaseService(ABC):
 
         return create_model(f"{snake_to_camel(flow_name)}Model", __base__=FlowRequest, **fields)
 
-    def integrate_tool_flow(self, tool_flow_name: str):
+    def integrate_flow(self, tool_flow: BaseToolFlow):
         ...
 
-    def integrate_tool_flows(self):
+    def integrate_stream_flow(self, tool_flow: BaseToolFlow):
+        ...
+
+    def integrate_flows(self):
         for tool_flow_name in C.tool_flow_names:
-            self.integrate_tool_flow(tool_flow_name)
-            logger.info(f"integrate flow_endpoint={tool_flow_name}")
+            tool_flow: BaseToolFlow = C.get_tool_flow(tool_flow_name)
+            if tool_flow.stream:
+                self.integrate_stream_flow(tool_flow)
+                logger.info(f"integrate stream_endpoint={tool_flow_name}")
 
-    def __enter__(self):
-        return self
+            else:
+                self.integrate_flow(tool_flow)
+                logger.info(f"integrate endpoint={tool_flow_name}")
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        ...
-
-    @abstractmethod
     def __call__(self):
+        self.integrate_flows()
+        self.execute()
+
+    def execute(self):
         ...

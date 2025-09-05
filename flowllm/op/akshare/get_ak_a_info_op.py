@@ -124,7 +124,7 @@ class MergeAkAInfoOp(BaseOp):
 
 
 if __name__ == "__main__":
-    C.set_default_service_config().init_by_service_config()
+    C.set_service_config().init_by_service_config()
 
     code_infos = {"000858": {}, "600519": {}}
     context = FlowContext(code_infos=code_infos, query="茅台和五粮现在价格多少？")
