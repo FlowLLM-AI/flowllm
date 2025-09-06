@@ -72,9 +72,8 @@ class ReactLLMOp(BaseToolOp):
                     logger.warning(f"step={i} no tool_call.name={tool_call.name}")
                     continue
 
-                context = self.context.copy()
-                context.update(tool_call.argument_dict)
-                self.submit_async_task(tool_dict[tool_call.name].async_call, context=context)
+                self.submit_async_task(tool_dict[tool_call.name].copy().async_call,
+                                       context=self.context.copy(**tool_call.argument_dict))
                 time.sleep(1)
 
             task_results = await self.join_async_task()

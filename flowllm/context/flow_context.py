@@ -51,5 +51,9 @@ class FlowContext(BaseContext):
         self.response.success = False
         self.response.answer = str(e.args)
 
-    def copy(self) -> "FlowContext":
-        return FlowContext(**self.dump())
+    def copy(self, **kwargs) -> "FlowContext":
+        context_kwargs = self.dump()
+        context_kwargs.update(kwargs)
+        context_kwargs["response"] = FlowResponse()
+        context = FlowContext(**context_kwargs)
+        return context

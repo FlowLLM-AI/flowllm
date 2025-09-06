@@ -1,4 +1,5 @@
 import asyncio
+import copy
 from abc import ABC
 from concurrent.futures import Future
 from typing import List, Any, Optional, Callable
@@ -13,6 +14,12 @@ from flowllm.utils.timer import Timer
 
 
 class BaseOp(ABC):
+
+    def __new__(cls, *args, **kwargs):
+        instance = super().__new__(cls)
+        instance._init_args = copy.copy(args)
+        instance._init_kwargs = copy.copy(kwargs)
+        return instance
 
     def __init__(self,
                  name: str = "",
@@ -184,6 +191,9 @@ class BaseOp(ABC):
 
         return parallel_op
 
+    def copy(self) -> "BaseOp":
+        return self.__class__(*self._init_args, **self._init_kwargs)
+
 
 def run1():
     """Basic test"""
@@ -300,10 +310,63 @@ async def async_run2():
     result = await complex_mixed.async_call()
     logger.info(f"Async complex mixed result: {result}")
 
+
+def test_copy():
+    class TestOp(BaseOp):
+        def __init__(self, name="", custom_param="default", **kwargs):
+            super().__init__(name=name, **kwargs)
+            self.custom_param = custom_param
+
+        def execute(self):
+            logger.info(f"TestOp {self.name} executing with custom_param={self.custom_param}")
+
+    class AdvancedOp(TestOp):
+        def __init__(self, name="", custom_param="default", advanced_param=42, **kwargs):
+            super().__init__(name=name, custom_param=custom_param, **kwargs)
+            self.advanced_param = advanced_param
+
+        def execute(self):
+            logger.info(
+                f"AdvancedOp {self.name} executing with custom_param={self.custom_param}, advanced_param={self.advanced_param}")
+
+    logger.info("=== Testing copy functionality ===")
+
+    original_op = TestOp(name="test_op", custom_param="custom_value", max_retries=3, enable_multithread=False)
+    copied_op = original_op.copy()
+
+    logger.info(
+        f"Original: name={original_op.name}, custom_param={original_op.custom_param}, max_retries={original_op.max_retries}")
+    logger.info(
+        f"Copied: name={copied_op.name}, custom_param={copied_op.custom_param}, max_retries={copied_op.max_retries}")
+    logger.info(f"Same object? {original_op is copied_op}")
+    logger.info(f"Same class? {type(original_op) == type(copied_op)}")
+
+    original_advanced = AdvancedOp(
+        name="advanced_op",
+        custom_param="advanced_custom",
+        advanced_param=100,
+        max_retries=5,
+        raise_exception=False
+    )
+    copied_advanced = original_advanced.copy()
+
+    logger.info(
+        f"Advanced Original: name={original_advanced.name}, custom_param={original_advanced.custom_param}, advanced_param={original_advanced.advanced_param}")
+    logger.info(
+        f"Advanced Copied: name={copied_advanced.name}, custom_param={copied_advanced.custom_param}, advanced_param={copied_advanced.advanced_param}")
+    logger.info(f"Advanced Same object? {original_advanced is copied_advanced}")
+    logger.info(f"Advanced Same class? {type(original_advanced) == type(copied_advanced)}")
+
+    copied_op.name = "modified_name"
+    logger.info(f"After modifying copy - Original name: {original_op.name}, Copied name: {copied_op.name}")
+
+
 if __name__ == "__main__":
     run1()
     print("\n" + "=" * 50 + "\n")
     run2()
+    print("\n" + "=" * 50 + "\n")
+    test_copy()
 
     print("\n" + "=" * 50 + "\n")
     print("Running async tests:")
