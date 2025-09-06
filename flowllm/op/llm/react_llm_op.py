@@ -41,7 +41,7 @@ class ReactLLMOp(BaseToolOp):
         from flowllm.op import BaseToolOp
         from flowllm.op.search import DashscopeSearchOp
 
-        tools: List[BaseToolOp] = [DashscopeSearchOp()]
+        tools: List[BaseToolOp] = [DashscopeSearchOp(save_answer=True)]
         tool_dict: Dict[str, BaseToolOp] = {x.tool_call.name: x for x in tools}
         for name, tool_call in tool_dict.items():
             logger.info(f"name={name} "

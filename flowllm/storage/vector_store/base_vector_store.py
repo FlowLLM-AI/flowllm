@@ -22,6 +22,7 @@ class BaseVectorStore(BaseModel, ABC):
     def add_dict_filter(self, **kwargs):
         for k, v in kwargs.items():
             self.add_term_filter(k, v)
+        return self
 
     def add_range_filter(self, key: str, gte=None, lte=None):
         raise NotImplementedError

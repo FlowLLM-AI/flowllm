@@ -25,12 +25,14 @@ class DashscopeSearchOp(BaseToolOp):
                  model: str = "qwen-plus",
                  search_strategy: str = "max",
                  enable_role_prompt: bool = True,
+                 save_answer: bool = False,
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.model = model
-        self.search_strategy = search_strategy
-        self.enable_role_prompt = enable_role_prompt
+        self.model: str = model
+        self.search_strategy: str = search_strategy
+        self.enable_role_prompt: bool = enable_role_prompt
+        self.save_answer: bool = save_answer
 
         self.api_key = os.getenv("FLOW_DASHSCOPE_API_KEY", "")
 
@@ -112,6 +114,8 @@ class DashscopeSearchOp(BaseToolOp):
             self.cache.save(query, final_result, expire_hours=self.cache_expire_hours)
 
         self.output_dict["dashscope_search_result"] = final_result["response_content"]
+        if self.save_answer:
+            self.context.response.answer = final_result["response_content"]
 
 
 async def async_main():

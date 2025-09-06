@@ -13,8 +13,9 @@ from flowllm.schema.tool_call import ToolCall
 
 @C.register_op()
 class TavilySearchOp(BaseToolOp):
-    def __init__(self, **kwargs):
+    def __init__(self, save_answer: bool = False, **kwargs):
         super().__init__(**kwargs)
+        self.save_answer = save_answer
         self._client: TavilyClient | None = None
 
     def build_tool_call(self) -> ToolCall:
@@ -74,7 +75,8 @@ class TavilySearchOp(BaseToolOp):
             self.cache.save(query, final_result, expire_hours=self.cache_expire_hours)
 
         self.output_dict["tavily_search_result"] = json.dumps(final_result, ensure_ascii=False, indent=2)
-
+        if self.save_answer:
+            self.context.response.answer = self.output_dict["tavily_search_result"]
 
 async def async_main():
     C.set_service_config().init_by_service_config()
