@@ -1,4 +1,5 @@
 import asyncio
+import os
 from functools import partial
 from typing import List, Iterable
 
@@ -7,6 +8,9 @@ from chromadb import Collection
 from chromadb.config import Settings
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
+
+# Disable ChromaDB telemetry to avoid PostHog warnings
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "false")
 
 from flowllm.context.service_context import C
 from flowllm.schema.vector_node import VectorNode
@@ -21,7 +25,12 @@ class ChromaVectorStore(LocalVectorStore):
 
     @model_validator(mode="after")
     def init_client(self):
-        self._client = chromadb.Client(Settings(persist_directory=self.store_dir))
+        # Disable telemetry to avoid PostHog warnings
+        settings = Settings(
+            persist_directory=self.store_dir,
+            anonymized_telemetry=False
+        )
+        self._client = chromadb.Client(settings)
         return self
 
     def _get_collection(self, workspace_id: str) -> Collection:
@@ -57,7 +66,31 @@ class ChromaVectorStore(LocalVectorStore):
 
         collection: Collection = self._get_collection(workspace_id)
         query_vector = self.embedding_model.get_embeddings(query)
-        results = collection.query(query_embeddings=[query_vector], n_results=top_k)
+        
+        # Build where clause from filters
+        where_clause = None
+        if self.retrieve_filters:
+            where_conditions = {}
+            for filter_item in self.retrieve_filters:
+                key = filter_item["key"]
+                if filter_item["type"] == "term":
+                    where_conditions[key] = filter_item["value"]
+                elif filter_item["type"] == "range":
+                    range_conditions = {}
+                    if "gte" in filter_item:
+                        range_conditions["$gte"] = filter_item["gte"]
+                    if "lte" in filter_item:
+                        range_conditions["$lte"] = filter_item["lte"]
+                    if range_conditions:
+                        where_conditions[key] = range_conditions
+            where_clause = where_conditions if where_conditions else None
+        
+        results = collection.query(
+            query_embeddings=[query_vector], 
+            n_results=top_k,
+            where=where_clause
+        )
+        
         nodes = []
         for i in range(len(results["ids"][0])):
             node = VectorNode(workspace_id=workspace_id,
@@ -65,6 +98,8 @@ class ChromaVectorStore(LocalVectorStore):
                               content=results["documents"][0][i],
                               metadata=results["metadatas"][0][i])
             nodes.append(node)
+        
+        self.retrieve_filters.clear()
         return nodes
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -96,6 +131,23 @@ class ChromaVectorStore(LocalVectorStore):
         collection: Collection = self._get_collection(workspace_id)
         collection.delete(ids=node_ids)
 
+    def add_term_filter(self, key: str, value):
+        """Add a term filter for ChromaDB queries"""
+        if key:
+            self.retrieve_filters.append({"key": key, "value": value, "type": "term"})
+        return self
+
+    def add_range_filter(self, key: str, gte=None, lte=None):
+        """Add a range filter for ChromaDB queries"""
+        if key:
+            filter_item = {"key": key, "type": "range"}
+            if gte is not None:
+                filter_item["gte"] = gte
+            if lte is not None:
+                filter_item["lte"] = lte
+            self.retrieve_filters.append(filter_item)
+        return self
+
     # Async methods using run_in_executor (ChromaDB doesn't have native async support)
     async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
         """Async version of search using async embedding and run_in_executor for ChromaDB operations"""
@@ -106,12 +158,30 @@ class ChromaVectorStore(LocalVectorStore):
         # Use async embedding
         query_vector = await self.embedding_model.get_embeddings_async(query)
 
+        # Build where clause from filters
+        where_clause = None
+        if self.retrieve_filters:
+            where_conditions = {}
+            for filter_item in self.retrieve_filters:
+                key = filter_item["key"]
+                if filter_item["type"] == "term":
+                    where_conditions[key] = filter_item["value"]
+                elif filter_item["type"] == "range":
+                    range_conditions = {}
+                    if "gte" in filter_item:
+                        range_conditions["$gte"] = filter_item["gte"]
+                    if "lte" in filter_item:
+                        range_conditions["$lte"] = filter_item["lte"]
+                    if range_conditions:
+                        where_conditions[key] = range_conditions
+            where_clause = where_conditions if where_conditions else None
+
         # Execute ChromaDB query in thread pool
         loop = asyncio.get_event_loop()
         collection = await loop.run_in_executor(C.thread_pool, self._get_collection, workspace_id)
         results = await loop.run_in_executor(
             C.thread_pool,
-            partial(collection.query, query_embeddings=[query_vector], n_results=top_k)
+            partial(collection.query, query_embeddings=[query_vector], n_results=top_k, where=where_clause)
         )
 
         nodes = []
@@ -121,6 +191,8 @@ class ChromaVectorStore(LocalVectorStore):
                               content=results["documents"][0][i],
                               metadata=results["metadatas"][0][i])
             nodes.append(node)
+        
+        self.retrieve_filters.clear()
         return nodes
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -231,6 +303,14 @@ def main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
+    # Test add_term_filter
+    logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
+    results = chroma_store.add_term_filter("node_type", "n1").search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"Filtered results (node_type=n1): {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
     node2_update = VectorNode(
         unique_id="node2",
         workspace_id=workspace_id,
@@ -266,7 +346,7 @@ async def async_main():
 
     chroma_store = ChromaVectorStore(
         embedding_model=embedding_model,
-        store_dir="./chroma_async_test_db"
+        store_dir="./async_chroma_async_test_db"
     )
 
     # Clean up and create workspace

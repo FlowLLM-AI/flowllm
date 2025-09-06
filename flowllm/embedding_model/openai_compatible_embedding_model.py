@@ -65,8 +65,7 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
             model=self.model_name,
             input=input_text,
             dimensions=self.dimensions,
-            encoding_format=self.encoding_format
-        )
+            encoding_format=self.encoding_format)
 
         if isinstance(input_text, str):
             return completion.data[0].embedding

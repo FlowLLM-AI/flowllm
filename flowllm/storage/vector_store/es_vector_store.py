@@ -16,7 +16,6 @@ from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 class EsVectorStore(LocalVectorStore):
     hosts: str | List[str] = Field(default_factory=lambda: os.getenv("FLOW_ES_HOSTS", "http://localhost:9200"))
     basic_auth: str | Tuple[str, str] | None = Field(default=None)
-    retrieve_filters: List[dict] = []
     _client: Elasticsearch = PrivateAttr()
     _async_client: AsyncElasticsearch = PrivateAttr()
 
@@ -81,10 +80,6 @@ class EsVectorStore(LocalVectorStore):
                 self.retrieve_filters.append({"range": {key: {"gte": gte}}})
             elif lte is not None:
                 self.retrieve_filters.append({"range": {key: {"lte": lte}}})
-        return self
-
-    def clear_filter(self):
-        self.retrieve_filters.clear()
         return self
 
     def search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
@@ -355,15 +350,17 @@ def main():
 
     es.insert(sample_nodes, workspace_id=workspace_id, refresh=True)
 
-    logger.info("=" * 20)
+    logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
     results = es.add_term_filter(key="metadata.node_type", value="n1") \
         .search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"Filtered results (metadata.node_type=n1): {len(results)} results")
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
-    logger.info("=" * 20)
+    logger.info("=" * 20 + " UNFILTERED TEST " + "=" * 20)
     results = es.search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"Unfiltered results: {len(results)} results")
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)

@@ -14,6 +14,21 @@ from flowllm.schema.vector_node import VectorNode
 class BaseVectorStore(BaseModel, ABC):
     embedding_model: BaseEmbeddingModel | None = Field(default=None)
     batch_size: int = Field(default=1024)
+    retrieve_filters: List[dict] = []
+
+    def add_term_filter(self, key: str, value):
+        raise NotImplementedError
+
+    def add_dict_filter(self, **kwargs):
+        for k, v in kwargs.items():
+            self.add_term_filter(k, v)
+
+    def add_range_filter(self, key: str, gte=None, lte=None):
+        raise NotImplementedError
+
+    def clear_filter(self):
+        self.retrieve_filters.clear()
+        return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         raise NotImplementedError

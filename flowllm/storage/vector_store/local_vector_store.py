@@ -142,6 +142,51 @@ class LocalVectorStore(BaseVectorStore):
             self.insert(nodes=nodes, workspace_id=dest_workspace_id, **kwargs)
         return {"size": node_size}
 
+    def add_term_filter(self, key: str, value):
+        """Add a term filter for local vector store queries"""
+        if key:
+            self.retrieve_filters.append({"key": key, "value": value, "type": "term"})
+        return self
+
+    def add_range_filter(self, key: str, gte=None, lte=None):
+        """Add a range filter for local vector store queries"""
+        if key:
+            filter_item = {"key": key, "type": "range"}
+            if gte is not None:
+                filter_item["gte"] = gte
+            if lte is not None:
+                filter_item["lte"] = lte
+            self.retrieve_filters.append(filter_item)
+        return self
+
+    def _matches_filters(self, node: VectorNode) -> bool:
+        """Check if a node matches all current filters"""
+        if not self.retrieve_filters:
+            return True
+        
+        for filter_item in self.retrieve_filters:
+            key = filter_item["key"]
+            filter_type = filter_item["type"]
+            
+            # Navigate nested keys (e.g., "metadata.node_type")
+            value = node.metadata
+            for key_part in key.split('.'):
+                if isinstance(value, dict) and key_part in value:
+                    value = value[key_part]
+                else:
+                    return False  # Key not found
+            
+            if filter_type == "term":
+                if value != filter_item["value"]:
+                    return False
+            elif filter_type == "range":
+                if "gte" in filter_item and value < filter_item["gte"]:
+                    return False
+                if "lte" in filter_item and value > filter_item["lte"]:
+                    return False
+        
+        return True
+
     @staticmethod
     def calculate_similarity(query_vector: List[float], node_vector: List[float]):
         assert query_vector, f"query_vector is empty!"
@@ -158,10 +203,13 @@ class LocalVectorStore(BaseVectorStore):
         query_vector = self.embedding_model.get_embeddings(query)
         nodes: List[VectorNode] = []
         for node in self._load_from_path(path=self.store_path, workspace_id=workspace_id, **kwargs):
-            node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
-            nodes.append(node)
+            # Apply filters
+            if self._matches_filters(node):
+                node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
+                nodes.append(node)
 
         nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
+        self.retrieve_filters.clear()
         return nodes[:top_k]
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -219,10 +267,13 @@ class LocalVectorStore(BaseVectorStore):
 
         nodes: List[VectorNode] = []
         for node in nodes_iter:
-            node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
-            nodes.append(node)
+            # Apply filters
+            if self._matches_filters(node):
+                node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
+                nodes.append(node)
 
         nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
+        self.retrieve_filters.clear()
         return nodes[:top_k]
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -309,6 +360,14 @@ def main():
 
     logger.info("=" * 20)
     results = client.search("What is AI?", workspace_id=workspace_id, top_k=5)
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Test add_term_filter
+    logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
+    results = client.add_term_filter("node_type", "n1").search("What is AI?", workspace_id=workspace_id, top_k=5)
+    logger.info(f"Filtered results (node_type=n1): {len(results)} results")
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
