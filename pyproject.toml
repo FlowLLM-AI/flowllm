@@ -57,7 +57,8 @@ dependencies = [
     "uvicorn[standard]",
     "chromadb",
     "elasticsearch",
-    "ray",
+    "pyfiglet",
+    "rich",
 ]
 
 [project.optional-dependencies]
