@@ -1,9 +1,12 @@
+import asyncio
 from abc import ABC
+from functools import partial
 from pathlib import Path
 from typing import List, Iterable
 
 from pydantic import BaseModel, Field
 
+from flowllm.context.service_context import C
 from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
 from flowllm.schema.vector_node import VectorNode
 
@@ -45,3 +48,54 @@ class BaseVectorStore(BaseModel, ABC):
 
     def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
         raise NotImplementedError
+
+    # Async versions of all methods
+    async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
+        """Async version of exist_workspace"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.exist_workspace, workspace_id, **kwargs))
+
+    async def async_delete_workspace(self, workspace_id: str, **kwargs):
+        """Async version of delete_workspace"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.delete_workspace, workspace_id, **kwargs))
+
+    async def async_create_workspace(self, workspace_id: str, **kwargs):
+        """Async version of create_workspace"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.create_workspace, workspace_id, **kwargs))
+
+    async def async_dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
+        """Async version of dump_workspace"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool,
+                                          partial(self.dump_workspace, workspace_id, path, callback_fn, **kwargs))
+
+    async def async_load_workspace(self, workspace_id: str, path: str | Path = "", nodes: List[VectorNode] = None,
+                                   callback_fn=None, **kwargs):
+        """Async version of load_workspace"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool,
+                                          partial(self.load_workspace, workspace_id, path, nodes, callback_fn,
+                                                  **kwargs))
+
+    async def async_copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):
+        """Async version of copy_workspace"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool,
+                                          partial(self.copy_workspace, src_workspace_id, dest_workspace_id, **kwargs))
+
+    async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+        """Async version of search"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.search, query, workspace_id, top_k, **kwargs))
+
+    async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
+        """Async version of insert"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.insert, nodes, workspace_id, **kwargs))
+
+    async def async_delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
+        """Async version of delete"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.delete, node_ids, workspace_id, **kwargs))

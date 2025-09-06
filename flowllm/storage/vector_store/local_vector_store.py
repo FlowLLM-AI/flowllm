@@ -1,6 +1,8 @@
+import asyncio
 import fcntl
 import json
 import math
+from functools import partial
 from pathlib import Path
 from typing import List, Iterable
 
@@ -203,6 +205,63 @@ class LocalVectorStore(BaseVectorStore):
         self._dump_to_path(nodes=all_nodes, workspace_id=workspace_id, path=self.store_path, **kwargs)
         logger.info(f"delete workspace_id={workspace_id} before_size={before_size} after_size={after_size}")
 
+    # Override async methods for better performance with file I/O
+    async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+        """Async version of search using embedding model async capabilities"""
+        query_vector = await self.embedding_model.get_embeddings_async(query)
+
+        # Load nodes asynchronously
+        loop = asyncio.get_event_loop()
+        nodes_iter = await loop.run_in_executor(
+            C.thread_pool,
+            partial(self._load_from_path, path=self.store_path, workspace_id=workspace_id, **kwargs)
+        )
+
+        nodes: List[VectorNode] = []
+        for node in nodes_iter:
+            node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
+            nodes.append(node)
+
+        nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
+        return nodes[:top_k]
+
+    async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
+        """Async version of insert using embedding model async capabilities"""
+        if isinstance(nodes, VectorNode):
+            nodes = [nodes]
+
+        # Use async embedding
+        nodes = await self.embedding_model.get_node_embeddings_async(nodes)
+
+        # Load existing nodes asynchronously
+        loop = asyncio.get_event_loop()
+        exist_nodes_iter = await loop.run_in_executor(
+            C.thread_pool,
+            partial(self._load_from_path, path=self.store_path, workspace_id=workspace_id)
+        )
+
+        all_node_dict = {}
+        exist_nodes: List[VectorNode] = list(exist_nodes_iter)
+        for node in exist_nodes:
+            all_node_dict[node.unique_id] = node
+
+        update_cnt = 0
+        for node in nodes:
+            if node.unique_id in all_node_dict:
+                update_cnt += 1
+            all_node_dict[node.unique_id] = node
+
+        # Dump to path asynchronously
+        await loop.run_in_executor(
+            C.thread_pool,
+            partial(self._dump_to_path, nodes=list(all_node_dict.values()),
+                    workspace_id=workspace_id, path=self.store_path, **kwargs)
+        )
+
+        logger.info(f"update workspace_id={workspace_id} nodes.size={len(nodes)} all.size={len(all_node_dict)} "
+                    f"update_cnt={update_cnt}")
+
+
 def main():
     from flowllm.utils.common_utils import load_env
     from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
@@ -258,5 +317,93 @@ def main():
     client.delete_workspace(workspace_id)
 
 
+async def async_main():
+    from flowllm.utils.common_utils import load_env
+    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
+
+    load_env()
+
+    embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
+    workspace_id = "async_rag_nodes_index"
+    client = LocalVectorStore(embedding_model=embedding_model, store_dir="./async_file_vector_store")
+
+    # Clean up and create workspace
+    if await client.async_exist_workspace(workspace_id):
+        await client.async_delete_workspace(workspace_id)
+    await client.async_create_workspace(workspace_id)
+
+    sample_nodes = [
+        VectorNode(
+            unique_id="async_local_node1",
+            workspace_id=workspace_id,
+            content="Artificial intelligence is a technology that simulates human intelligence.",
+            metadata={
+                "node_type": "n1",
+            }
+        ),
+        VectorNode(
+            unique_id="async_local_node2",
+            workspace_id=workspace_id,
+            content="AI is the future of mankind.",
+            metadata={
+                "node_type": "n1",
+            }
+        ),
+        VectorNode(
+            unique_id="async_local_node3",
+            workspace_id=workspace_id,
+            content="I want to eat fish!",
+            metadata={
+                "node_type": "n2",
+            }
+        ),
+        VectorNode(
+            unique_id="async_local_node4",
+            workspace_id=workspace_id,
+            content="The bigger the storm, the more expensive the fish.",
+            metadata={
+                "node_type": "n1",
+            }
+        ),
+    ]
+
+    # Test async insert
+    await client.async_insert(sample_nodes, workspace_id)
+
+    logger.info("ASYNC TEST - " + "=" * 20)
+    # Test async search
+    results = await client.async_search("What is AI?", workspace_id=workspace_id, top_k=5)
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Test async update (delete + insert)
+    node2_update = VectorNode(
+        unique_id="async_local_node2",
+        workspace_id=workspace_id,
+        content="AI is the future of humanity and technology.",
+        metadata={
+            "node_type": "n1",
+            "updated": True
+        }
+    )
+    await client.async_delete(node2_update.unique_id, workspace_id=workspace_id)
+    await client.async_insert(node2_update, workspace_id=workspace_id)
+
+    logger.info("ASYNC Updated Result:")
+    results = await client.async_search("fish?", workspace_id=workspace_id, top_k=10)
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Clean up
+    await client.async_dump_workspace(workspace_id)
+    await client.async_delete_workspace(workspace_id)
+
+
 if __name__ == "__main__":
     main()
+
+    # Run async test
+    logger.info("\n" + "=" * 50 + " ASYNC TESTS " + "=" * 50)
+    asyncio.run(async_main())
