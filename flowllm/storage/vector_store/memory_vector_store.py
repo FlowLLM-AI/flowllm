@@ -29,12 +29,6 @@ class MemoryVectorStore(BaseVectorStore):
         # Format: {workspace_id: {node.unique_id: VectorNode}}
         self._memory_store: Dict[str, Dict[str, VectorNode]] = {}
 
-    @model_validator(mode="after")
-    def init_client(self):
-        store_path = Path(self.store_dir)
-        store_path.mkdir(parents=True, exist_ok=True)
-        return self
-
     @property
     def store_path(self) -> Path:
         return Path(self.store_dir)

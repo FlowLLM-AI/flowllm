@@ -123,6 +123,17 @@ class ServiceContext(BaseContext):
             self.flow_dict[tool_flow.name] = tool_flow
             logger.info(f"add expression tool_flow:{tool_flow.name}")
 
+    def stop_by_service_config(self, wait_thread_pool=True, wait_ray: bool = True):
+        self.thread_pool.shutdown(wait=wait_thread_pool)
+        if self.service_config.ray_max_workers > 1:
+            import ray
+            ray.shutdown(_exiting_interpreter=not wait_ray)
+
+        from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
+        for name, vector_store in self.vector_store_dict.items():
+            assert isinstance(vector_store, BaseVectorStore)
+            vector_store.close()
+
     def get_vector_store(self, name: str = "default"):
         return self.vector_store_dict[name]
 

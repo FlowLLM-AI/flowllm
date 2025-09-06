@@ -12,6 +12,7 @@ from flowllm.schema.service_config import ServiceConfig
 from flowllm.schema.tool_call import ParamAttrs
 from flowllm.utils.common_utils import snake_to_camel, print_banner
 
+
 class BaseService(ABC):
     TYPE_MAPPING = {
         "str": str,
@@ -35,7 +36,7 @@ class BaseService(ABC):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        ...
+        C.stop_by_service_config()
 
     @classmethod
     def get_service(cls, *args, parser: type[PydanticConfigParser] = PydanticConfigParser) -> "BaseService":

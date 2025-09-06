@@ -275,33 +275,10 @@ class EsVectorStore(LocalVectorStore):
             await self.async_refresh(workspace_id=workspace_id)
 
     def close(self):
-        """Close the sync Elasticsearch client"""
-        if hasattr(self, '_client'):
-            self._client.close()
+        self._client.close()
 
     async def aclose(self):
-        """Close the async Elasticsearch client"""
-        if hasattr(self, '_async_client'):
-            await self._async_client.close()
-
-    async def __aenter__(self):
-        """Async context manager entry"""
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit - close the async client"""
-        await self.aclose()
-
-    def __del__(self):
-        """Destructor to ensure clients are closed"""
-        try:
-            if hasattr(self, '_client'):
-                self._client.close()
-            # Note: Cannot close async client in __del__ as it requires await
-            # Users should call aclose() explicitly or use async context manager
-        except Exception:
-            pass  # Ignore errors during cleanup
-
+        await self._async_client.close()
 
 def main():
     from flowllm.utils.common_utils import load_env

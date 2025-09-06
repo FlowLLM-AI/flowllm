@@ -65,6 +65,9 @@ class BaseVectorStore(BaseModel, ABC):
     def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
         raise NotImplementedError
 
+    def close(self):
+        ...
+
     # Async versions of all methods
     async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """Async version of exist_workspace"""
@@ -115,3 +118,8 @@ class BaseVectorStore(BaseModel, ABC):
         """Async version of delete"""
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.delete, node_ids, workspace_id, **kwargs))
+
+    async def aclose(self):
+        """Async version of close"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, self.close)
