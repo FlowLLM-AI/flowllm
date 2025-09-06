@@ -74,9 +74,10 @@ class BaseService(ABC):
                 self.integrate_flow(tool_flow)
                 logger.info(f"integrate endpoint={tool_flow_name}")
 
-    def __call__(self):
+    def __call__(self, logo: str = ""):
         self.integrate_flows()
-        print_banner(name="FlowLLM", service_config=self.service_config, width=400)
+        if logo:
+            print_banner(name=logo, service_config=self.service_config, width=400)
         self.execute()
 
     def execute(self):
