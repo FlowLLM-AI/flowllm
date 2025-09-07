@@ -16,7 +16,7 @@ def init_logger():
     log_filepath = os.path.join(log_dir, log_filename)
 
     logger.add(log_filepath,
-               level="DEBUG",
+               level="INFO",
                rotation="00:00",
                retention="7 days",
                compression="zip",

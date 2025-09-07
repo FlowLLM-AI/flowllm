@@ -14,6 +14,10 @@ class BaseRayOp(BaseOp, ABC):
     Inherits from BaseOp and provides methods for submitting and joining Ray tasks.
     """
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ray_task_list = []
+
     def submit_and_join_ray_task(self, fn, parallel_key: str = "", task_desc: str = "",
                                  enable_test: bool = False, **kwargs):
         """
@@ -195,7 +199,7 @@ def run():
     logger.info("=== Testing Ray multiprocessing ===")
 
     # Create test operation
-    ray_op = TestRayOp("ray_test_op")
+    ray_op = TestRayOp(name="ray_test_op")
 
     logger.info("--- Testing submit_ray_task and join_ray_task ---")
 
@@ -227,7 +231,7 @@ def run():
 
     try:
         # Test with ThreadPool
-        thread_op = TestRayOp("thread_test_op")
+        thread_op = TestRayOp(name="thread_test_op")
 
         logger.info(f"Testing ThreadPool with {num_tasks} tasks")
         start_time = time.time()
@@ -242,7 +246,7 @@ def run():
         logger.info(f"ThreadPool completed in {thread_time:.2f}s")
 
         # Test with Ray again for comparison
-        ray_op2 = TestRayOp("ray_test_op2")
+        ray_op2 = TestRayOp(name="ray_test_op2")
 
         logger.info(f"Testing Ray with {num_tasks} tasks")
         start_time = time.time()
@@ -275,7 +279,7 @@ def run():
         return f"Success: {task_id}"
 
     try:
-        error_op = TestRayOp("error_test_op")
+        error_op = TestRayOp(name="error_test_op")
 
         # Submit mix of successful and failing tasks
         error_op.submit_ray_task(failing_task, "success_task_1")
@@ -296,7 +300,7 @@ def run():
         # Temporarily disable Ray in config
         C.service_config.ray_max_workers = 1  # Disable Ray
 
-        config_test_op = TestRayOp("config_test_op")
+        config_test_op = TestRayOp(name="config_test_op")
         config_test_op.submit_ray_task(cpu_intensive_task, 100, "config_test")
 
         logger.error("This should not be reached - Ray should be disabled")

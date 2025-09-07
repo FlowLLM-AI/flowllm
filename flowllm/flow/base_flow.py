@@ -68,9 +68,6 @@ class BaseFlow(ABC):
             if op.sub_op is not None:
                 self._print_operation_tree(op.sub_op, indent + 2)
 
-    def after_flow(self, context):
-        ...
-
     async def __call__(self, **kwargs) -> Union[FlowResponse | FlowStreamChunk | None]:
         context = FlowContext(stream=self.stream, use_async=self.use_async, service_type=self.service_type, **kwargs)
         logger.info(f"request.params={kwargs}")
@@ -88,8 +85,6 @@ class BaseFlow(ABC):
 
             if self.stream:
                 await context.add_stream_done()
-            else:
-                self.after_flow(context)
 
         except Exception as e:
             logger.exception(f"flow_name={self.name} encounter error={e.args}")
@@ -103,3 +98,18 @@ class BaseFlow(ABC):
             return context.stream_queue
         else:
             return context.response
+
+    def sync_call(self, **kwargs) -> FlowResponse:
+        assert self.use_async is False, "sync_call can only be used when use_async is False"
+        context = FlowContext(stream=self.stream, use_async=self.use_async, service_type=self.service_type, **kwargs)
+        logger.info(f"request.params={kwargs}")
+
+        try:
+            flow_op: BaseOp = self.build_flow()
+            flow_op(context=context)
+
+        except Exception as e:
+            logger.exception(f"flow_name={self.name} encounter error={e.args}")
+            context.add_response_error(e)
+
+        return context.response

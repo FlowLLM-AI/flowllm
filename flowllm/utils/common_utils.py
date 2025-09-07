@@ -102,5 +102,5 @@ def print_banner(name: str, service_config, width: int = 200):
         expand=False,
     )
 
-    console = Console(stderr=True)
+    console = Console(stderr=False)
     console.print(Group("\n", panel, "\n"))
