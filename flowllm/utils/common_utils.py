@@ -60,7 +60,7 @@ def load_env(path: str | Path = None):
                 _load_env(path)
                 return
 
-        raise FileNotFoundError(".env not found")
+        logger.warning(".env not found")
 
 
 def print_banner(name: str, service_config, width: int = 200):
