@@ -13,3 +13,4 @@ if __name__ == "__main__":
 
 # python -m build
 # twine upload dist/*
+# python -m build && twine upload dist/*
