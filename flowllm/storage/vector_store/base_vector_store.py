@@ -84,6 +84,11 @@ class BaseVectorStore(BaseModel, ABC):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.create_workspace, workspace_id, **kwargs))
 
+    async def async_iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
+        """Async version of iter_workspace_nodes"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(self.iter_workspace_nodes, workspace_id, **kwargs))
+
     async def async_dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
         """Async version of dump_workspace"""
         loop = asyncio.get_event_loop()
