@@ -22,5 +22,5 @@ from flowllm.context import C
 from flowllm.op import BaseOp, BaseLLMOp, BaseToolOp
 
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 
