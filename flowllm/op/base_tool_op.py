@@ -1,4 +1,6 @@
+import json
 from abc import ABC, abstractmethod
+from typing import List
 
 from loguru import logger
 
@@ -14,15 +16,19 @@ class BaseToolOp(BaseLLMOp, ABC):
                  cache_path: str = "cache",
                  cache_expire_hours: float = 0.1,
                  enable_print_output: bool = True,
+                 tool_index: int = 0,
+                 save_answer: bool = False,
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.enable_cache = enable_cache
+        self.enable_cache: bool = enable_cache
         self.cache_path: str = cache_path
         self.cache_expire_hours: float = cache_expire_hours
         self.enable_print_output: bool = enable_print_output
-        self._cache: DataCache | None = None
+        self.tool_index: int = tool_index
+        self.save_answer: bool = save_answer
 
+        self._cache: DataCache | None = None
         self.tool_call: ToolCall = self.build_tool_call()
         self.input_dict: dict = {}
         self.output_dict: dict = {}
@@ -37,11 +43,60 @@ class BaseToolOp(BaseLLMOp, ABC):
     def build_tool_call(self) -> ToolCall:
         ...
 
+    def default_execute(self):
+        if isinstance(self.output_keys, str):
+            self.output_dict[self.output_keys] = f"{self.name} execution failed!"
+        else:
+            for output_key in self.output_keys:
+                self.output_dict[output_key] = f"{self.name} execution failed!"
+
     def before_execute(self):
-        for key in self.tool_call.input_schema.keys():
-            self.input_dict[key] = self.context.get(key)
+        for name, attrs in self.tool_call.input_schema.items():
+            if name in self.context:
+                self.input_dict[name] = self.context[name]
+            elif attrs.required:
+                raise ValueError(f"{name} is required")
 
     def after_execute(self):
-        self.context.update(self.output_dict)
+        if self.tool_index == 0:
+            self.context.update(self.output_dict)
+        else:
+            self.context.update({f"{k}.{self.tool_index}": v for k, v in self.output_dict.items()})
+
+        if self.save_answer:
+            if isinstance(self.output_keys, str):
+                self.context.response.answer = self.output_dict[self.output_keys]
+            else:
+                self.context.response.answer = json.dumps(self.output_dict, ensure_ascii=False)
+
         if self.enable_print_output:
             logger.info(f"{self.name}.output_dict={self.output_dict}")
+
+    @property
+    def output_keys(self) -> str | List[str]:
+        output_keys = []
+        for name, attrs in self.tool_call.output_schema.items():
+            if name not in output_keys:
+                output_keys.append(name)
+
+        if len(output_keys) == 1:
+            return output_keys[0]
+        else:
+            return output_keys
+
+    def set_result(self, value: str = "", key: str = ""):
+        if isinstance(self.output_keys, str):
+            self.output_dict[self.output_keys] = value
+        else:
+            self.output_dict[key] = value
+
+    def set_results(self, **kwargs):
+        for k, v in kwargs.items():
+            self.set_result(v, k)
+
+    @property
+    def output(self) -> str | dict:
+        if isinstance(self.output_keys, str):
+            return self.output_dict[self.output_keys]
+        else:
+            return {k: self.output_dict[k] for k in self.output_keys if k in self.output_dict}

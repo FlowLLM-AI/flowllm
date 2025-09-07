@@ -79,6 +79,14 @@ class ServiceContext(BaseContext):
         self.sse_mcp_dict = asyncio.run(self.get_sse_mcp_dict(hosts))
         return self
 
+    def filter_flows(self, name: str) -> bool:
+        if self.service_config.enabled_flows:
+            return name in self.service_config.enabled_flows
+        elif self.service_config.disabled_flows:
+            return name not in self.service_config.disabled_flows
+        else:
+            return True
+
     def init_by_service_config(self, service_config: ServiceConfig = None):
         if service_config:
             self.service_config = service_config
@@ -106,7 +114,7 @@ class ServiceContext(BaseContext):
             if not isclass(tool_flow_cls):
                 continue
 
-            if name in self.service_config.disabled_flows:
+            if not self.filter_flows(name):
                 continue
 
             tool_flow: BaseToolFlow = tool_flow_cls()
@@ -115,7 +123,7 @@ class ServiceContext(BaseContext):
 
         # add tool flow config
         for name, flow_config in self.service_config.flow.items():
-            if name in self.service_config.disabled_flows:
+            if not self.filter_flows(name):
                 continue
 
             flow_config.name = name

@@ -37,7 +37,6 @@ class BaseOp(ABC):
 
         self.task_list: List[Future] = []
         self.async_task_list: List = []
-        self.ray_task_list: List = []
         self.timer = Timer(name=self.name)
         self.context: FlowContext | None = None
         self.sub_op: Optional["BaseOp"] = None

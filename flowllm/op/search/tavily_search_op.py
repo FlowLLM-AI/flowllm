@@ -13,9 +13,8 @@ from flowllm.schema.tool_call import ToolCall
 
 @C.register_op()
 class TavilySearchOp(BaseToolOp):
-    def __init__(self, save_answer: bool = False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.save_answer = save_answer
         self._client: TavilyClient | None = None
 
     def build_tool_call(self) -> ToolCall:
@@ -28,6 +27,12 @@ class TavilySearchOp(BaseToolOp):
                     "description": "search keyword",
                     "required": True
                 }
+            },
+            "output_schema": {
+                "tavily_search_result": {
+                    "type": "str",
+                    "description": "web search result",
+                }
             }
         })
 
@@ -36,9 +41,6 @@ class TavilySearchOp(BaseToolOp):
         if self._client is None:
             self._client = TavilyClient(api_key=os.environ["FLOW_TAVILY_API_KEY"])
         return self._client
-
-    def default_execute(self):
-        self.output_dict["tavily_search_result"] = "tavily search failed!"
 
     async def search(self, query: str):
         loop = asyncio.get_event_loop()
@@ -55,10 +57,10 @@ class TavilySearchOp(BaseToolOp):
     async def async_execute(self):
         query: str = self.input_dict["query"]
 
-        if self.enable_cache and self.cache:
+        if self.enable_cache:
             cached_result = self.cache.load(query)
             if cached_result:
-                self.output_dict["tavily_search_result"] = json.dumps(cached_result, ensure_ascii=False, indent=2)
+                self.set_result(json.dumps(cached_result, ensure_ascii=False, indent=2))
                 return
 
         response = await self.search(query=query)
@@ -71,12 +73,10 @@ class TavilySearchOp(BaseToolOp):
             final_result[url] = url_info_dict[url]
             final_result[url]["raw_content"] = item["raw_content"]
 
-        if self.enable_cache and self.cache is not None:
+        if self.enable_cache:
             self.cache.save(query, final_result, expire_hours=self.cache_expire_hours)
 
-        self.output_dict["tavily_search_result"] = json.dumps(final_result, ensure_ascii=False, indent=2)
-        if self.save_answer:
-            self.context.response.answer = self.output_dict["tavily_search_result"]
+        self.set_result(json.dumps(final_result, ensure_ascii=False, indent=2))
 
 async def async_main():
     C.set_service_config().init_by_service_config()

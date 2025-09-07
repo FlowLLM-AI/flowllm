@@ -25,14 +25,12 @@ class DashscopeSearchOp(BaseToolOp):
                  model: str = "qwen-plus",
                  search_strategy: str = "max",
                  enable_role_prompt: bool = True,
-                 save_answer: bool = False,
                  **kwargs):
         super().__init__(**kwargs)
 
         self.model: str = model
         self.search_strategy: str = search_strategy
         self.enable_role_prompt: bool = enable_role_prompt
-        self.save_answer: bool = save_answer
 
         self.api_key = os.getenv("FLOW_DASHSCOPE_API_KEY", "")
 
@@ -46,6 +44,12 @@ class DashscopeSearchOp(BaseToolOp):
                     "description": "search keyword",
                     "required": True
                 }
+            },
+            "output_schema": {
+                "dashscope_search_result": {
+                    "type": "str",
+                    "description": "web search result",
+                }
             }
         })
 
@@ -53,22 +57,18 @@ class DashscopeSearchOp(BaseToolOp):
     def format_search_results(search_results: List[Dict[str, Any]]) -> str:
         """Format search results for display"""
         formatted_results = ["=" * 20 + " Search Results " + "=" * 20]
-
         for web in search_results:
             formatted_results.append(f"[{web['index']}]: [{web['title']}]({web['url']})")
 
         return "\n".join(formatted_results)
 
-    def default_execute(self):
-        self.output_dict["dashscope_search_result"] = "dashscope search failed!"
-
     async def async_execute(self):
         query: str = self.input_dict["query"]
 
-        if self.enable_cache and self.cache:
+        if self.enable_cache:
             cached_result = self.cache.load(query)
             if cached_result:
-                self.output_dict["dashscope_search_result"] = cached_result["response_content"]
+                self.set_result(cached_result["response_content"])
                 return
 
         if self.enable_role_prompt:
@@ -110,12 +110,10 @@ class DashscopeSearchOp(BaseToolOp):
             "search_strategy": self.search_strategy
         }
 
-        if self.enable_cache and self.cache:
+        if self.enable_cache:
             self.cache.save(query, final_result, expire_hours=self.cache_expire_hours)
 
-        self.output_dict["dashscope_search_result"] = final_result["response_content"]
-        if self.save_answer:
-            self.context.response.answer = final_result["response_content"]
+        self.set_result(final_result["response_content"])
 
 
 async def async_main():

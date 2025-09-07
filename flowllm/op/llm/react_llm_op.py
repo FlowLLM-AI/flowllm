@@ -9,7 +9,6 @@ from loguru import logger
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.op import BaseToolOp
-from flowllm.schema.flow_response import FlowResponse
 from flowllm.schema.message import Message, Role
 from flowllm.schema.tool_call import ToolCall
 
@@ -18,8 +17,8 @@ from flowllm.schema.tool_call import ToolCall
 class ReactLLMOp(BaseToolOp):
     file_path: str = __file__
 
-    def __init__(self, llm="qwen3_30b_instruct", **kwargs):
-        super().__init__(llm=llm, **kwargs)
+    def __init__(self, llm: str = "qwen3_30b_instruct", save_answer: bool = True, **kwargs):
+        super().__init__(llm=llm, save_answer=save_answer, **kwargs)
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -31,17 +30,23 @@ class ReactLLMOp(BaseToolOp):
                     "description": "search keyword",
                     "required": True
                 }
+            },
+            "output_schema": {
+                "react_llm_result": {
+                    "type": "str",
+                    "description": "react llm result",
+                }
             }
         })
 
     async def async_execute(self):
-        query: str = self.context.query
+        query: str = self.input_dict["query"]
 
         max_steps: int = int(self.op_params.get("max_steps", 10))
         from flowllm.op import BaseToolOp
         from flowllm.op.search import DashscopeSearchOp
 
-        tools: List[BaseToolOp] = [DashscopeSearchOp(save_answer=True)]
+        tools: List[BaseToolOp] = [DashscopeSearchOp()]
         tool_dict: Dict[str, BaseToolOp] = {x.tool_call.name: x for x in tools}
         for name, tool_call in tool_dict.items():
             logger.info(f"name={name} "
@@ -65,6 +70,7 @@ class ReactLLMOp(BaseToolOp):
             if not assistant_message.tool_calls:
                 break
 
+            op_list: List[BaseToolOp] = []
             for j, tool_call in enumerate(assistant_message.tool_calls):
                 logger.info(f"submit step={i} tool_calls.name={tool_call.name} argument_dict={tool_call.argument_dict}")
 
@@ -72,25 +78,21 @@ class ReactLLMOp(BaseToolOp):
                     logger.warning(f"step={i} no tool_call.name={tool_call.name}")
                     continue
 
-                self.submit_async_task(tool_dict[tool_call.name].copy().async_call,
-                                       context=self.context.copy(**tool_call.argument_dict))
+                op_copy = tool_dict[tool_call.name].copy()
+                op_list.append(op_copy)
+                self.submit_async_task(op_copy.async_call, context=self.context.copy(**tool_call.argument_dict))
                 time.sleep(1)
 
-            task_results = await self.join_async_task()
+            await self.join_async_task()
 
-            for j, tool_result in enumerate(task_results):
-                tool_call = assistant_message.tool_calls[j]
-                logger.info(f"submit step.index={i}.{j} tool_result={tool_result}")
-                if isinstance(tool_result, FlowResponse):
-                    tool_result = tool_result.answer
-                else:
-                    tool_result = str(tool_result)
-                tool_message = Message(role=Role.TOOL, content=tool_result, tool_call_id=tool_call.id)
+            for j, op in enumerate(op_list):
+                logger.info(f"submit step.index={i}.{j} tool_result={op.output}")
+                tool_result = str(op.output)
+                tool_message = Message(role=Role.TOOL, content=tool_result, tool_call_id=op.tool_call.id)
                 messages.append(tool_message)
 
+        self.set_result(messages[-1].content)
         self.context.response.messages = messages
-        self.context.response.answer = messages[-1].content
-
 
 async def main():
     C.set_service_config().init_by_service_config()
@@ -99,6 +101,7 @@ async def main():
     op = ReactLLMOp()
     result = await op.async_call(context=context)
     print(result)
+    print(op.output)
 
 
 if __name__ == "__main__":

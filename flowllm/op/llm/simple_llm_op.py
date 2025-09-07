@@ -23,16 +23,23 @@ class SimpleLLMOp(BaseToolOp):
                     "description": "search keyword",
                     "required": True
                 }
+            },
+            "output_schema": {
+                "simple_llm_result": {
+                    "type": "str",
+                    "description": "simple llm result",
+                }
             }
         })
 
     async def async_execute(self):
         query: str = self.input_dict["query"]
+        self.save_answer = True
         logger.info(f"query={query}")
         messages: List[Message] = [Message(role=Role.USER, content=query)]
 
         assistant_message: Message = await self.llm.achat(messages)
-        self.context.response.answer = assistant_message.content
+        self.set_result(assistant_message.content)
 
 
 async def main():
@@ -41,6 +48,7 @@ async def main():
 
     op = SimpleLLMOp()
     result = await op.async_call(context=context)
+    print(op.output)
     print(result)
 
 

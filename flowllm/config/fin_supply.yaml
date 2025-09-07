@@ -1,13 +1,10 @@
 backend: mcp
 import_config: base
-disabled_flows:
-  - llm_flow
-  - llm_flow_stream
-  - mock_async_tool_flow
-  - mock_tool_flow
-  - react_llm_tool_flow
-  - simple_llm_tool_flow
-  - stream_llm_tool_flow
+enabled_flows:
+  - get_a_stock_infos
+  - get_a_stock_news
+  - ant_search
+  - ant_investment
 
 flow:
   get_a_stock_infos:
