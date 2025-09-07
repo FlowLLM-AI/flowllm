@@ -1,7 +1,7 @@
 import asyncio
 import os
 from functools import partial
-from typing import List, Iterable
+from typing import List, Iterable, Dict, Any, Optional
 
 import chromadb
 from chromadb import Collection
@@ -49,7 +49,8 @@ class ChromaVectorStore(LocalVectorStore):
     def create_workspace(self, workspace_id: str, **kwargs):
         self.collections[workspace_id] = self._client.get_or_create_collection(workspace_id)
 
-    def _iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
+    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
+        """Iterate over all nodes in a workspace."""
         collection: Collection = self._get_collection(workspace_id)
         results = collection.get()
         for i in range(len(results["ids"])):
@@ -57,33 +58,49 @@ class ChromaVectorStore(LocalVectorStore):
                               unique_id=results["ids"][i],
                               content=results["documents"][i],
                               metadata=results["metadatas"][i])
-            yield node
+            if callback_fn:
+                yield callback_fn(node)
+            else:
+                yield node
 
-    def search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+    @staticmethod
+    def _build_chroma_filters(filter_dict: Optional[Dict[str, Any]] = None) -> Optional[Dict]:
+        """Build ChromaDB where clause from filter_dict"""
+        if not filter_dict:
+            return None
+
+        where_conditions = {}
+        for key, filter_value in filter_dict.items():
+            if isinstance(filter_value, dict):
+                # Range filter: {"gte": 1, "lte": 10}
+                range_conditions = {}
+                if "gte" in filter_value:
+                    range_conditions["$gte"] = filter_value["gte"]
+                if "lte" in filter_value:
+                    range_conditions["$lte"] = filter_value["lte"]
+                if "gt" in filter_value:
+                    range_conditions["$gt"] = filter_value["gt"]
+                if "lt" in filter_value:
+                    range_conditions["$lt"] = filter_value["lt"]
+                if range_conditions:
+                    where_conditions[key] = range_conditions
+            else:
+                # Term filter: direct value comparison
+                where_conditions[key] = filter_value
+
+        return where_conditions if where_conditions else None
+
+    def search(self, query: str, workspace_id: str, top_k: int = 1, filter_dict: Optional[Dict[str, Any]] = None,
+               **kwargs) -> List[VectorNode]:
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return []
 
         collection: Collection = self._get_collection(workspace_id)
         query_vector = self.embedding_model.get_embeddings(query)
-        
-        # Build where clause from filters
-        where_clause = None
-        if self.retrieve_filters:
-            where_conditions = {}
-            for filter_item in self.retrieve_filters:
-                key = filter_item["key"]
-                if filter_item["type"] == "term":
-                    where_conditions[key] = filter_item["value"]
-                elif filter_item["type"] == "range":
-                    range_conditions = {}
-                    if "gte" in filter_item:
-                        range_conditions["$gte"] = filter_item["gte"]
-                    if "lte" in filter_item:
-                        range_conditions["$lte"] = filter_item["lte"]
-                    if range_conditions:
-                        where_conditions[key] = range_conditions
-            where_clause = where_conditions if where_conditions else None
+
+        # Build where clause from filter_dict
+        where_clause = self._build_chroma_filters(filter_dict)
         
         results = collection.query(
             query_embeddings=[query_vector], 
@@ -97,9 +114,13 @@ class ChromaVectorStore(LocalVectorStore):
                               unique_id=results["ids"][0][i],
                               content=results["documents"][0][i],
                               metadata=results["metadatas"][0][i])
+            # ChromaDB returns distances, convert to similarity score
+            if results.get("distances") and len(results["distances"][0]) > i:
+                distance = results["distances"][0][i]
+                # Convert distance to similarity (assuming cosine distance)
+                node.metadata["score"] = 1.0 - distance
             nodes.append(node)
         
-        self.retrieve_filters.clear()
         return nodes
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -131,25 +152,9 @@ class ChromaVectorStore(LocalVectorStore):
         collection: Collection = self._get_collection(workspace_id)
         collection.delete(ids=node_ids)
 
-    def add_term_filter(self, key: str, value):
-        """Add a term filter for ChromaDB queries"""
-        if key:
-            self.retrieve_filters.append({"key": key, "value": value, "type": "term"})
-        return self
 
-    def add_range_filter(self, key: str, gte=None, lte=None):
-        """Add a range filter for ChromaDB queries"""
-        if key:
-            filter_item = {"key": key, "type": "range"}
-            if gte is not None:
-                filter_item["gte"] = gte
-            if lte is not None:
-                filter_item["lte"] = lte
-            self.retrieve_filters.append(filter_item)
-        return self
-
-    # Async methods using run_in_executor (ChromaDB doesn't have native async support)
-    async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+    async def async_search(self, query: str, workspace_id: str, top_k: int = 1,
+                           filter_dict: Optional[Dict[str, Any]] = None, **kwargs) -> List[VectorNode]:
         """Async version of search using async embedding and run_in_executor for ChromaDB operations"""
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
@@ -158,23 +163,8 @@ class ChromaVectorStore(LocalVectorStore):
         # Use async embedding
         query_vector = await self.embedding_model.get_embeddings_async(query)
 
-        # Build where clause from filters
-        where_clause = None
-        if self.retrieve_filters:
-            where_conditions = {}
-            for filter_item in self.retrieve_filters:
-                key = filter_item["key"]
-                if filter_item["type"] == "term":
-                    where_conditions[key] = filter_item["value"]
-                elif filter_item["type"] == "range":
-                    range_conditions = {}
-                    if "gte" in filter_item:
-                        range_conditions["$gte"] = filter_item["gte"]
-                    if "lte" in filter_item:
-                        range_conditions["$lte"] = filter_item["lte"]
-                    if range_conditions:
-                        where_conditions[key] = range_conditions
-            where_clause = where_conditions if where_conditions else None
+        # Build where clause from filter_dict
+        where_clause = self._build_chroma_filters(filter_dict)
 
         # Execute ChromaDB query in thread pool
         loop = asyncio.get_event_loop()
@@ -190,9 +180,13 @@ class ChromaVectorStore(LocalVectorStore):
                               unique_id=results["ids"][0][i],
                               content=results["documents"][0][i],
                               metadata=results["metadatas"][0][i])
+            # ChromaDB returns distances, convert to similarity score
+            if results.get("distances") and len(results["distances"][0]) > i:
+                distance = results["distances"][0][i]
+                # Convert distance to similarity (assuming cosine distance)
+                node.metadata["score"] = 1.0 - distance
             nodes.append(node)
         
-        self.retrieve_filters.clear()
         return nodes
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -303,9 +297,10 @@ def main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
-    # Test add_term_filter
+    # Test filter_dict
     logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
-    results = chroma_store.add_term_filter("node_type", "n1").search("What is AI?", top_k=5, workspace_id=workspace_id)
+    filter_dict = {"node_type": "n1"}
+    results = chroma_store.search("What is AI?", top_k=5, workspace_id=workspace_id, filter_dict=filter_dict)
     logger.info(f"Filtered results (node_type=n1): {len(results)} results")
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
@@ -429,9 +424,8 @@ async def async_main():
 
 
 if __name__ == "__main__":
-    # main()
+    main()
 
     # Run async test
     logger.info("\n" + "=" * 50 + " ASYNC TESTS " + "=" * 50)
-    asyncio.run(async_main())
-    # launch with: python -m flowllm.storage.chroma_vector_store
+    # asyncio.run(async_main())

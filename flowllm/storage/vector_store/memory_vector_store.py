@@ -1,21 +1,18 @@
 import asyncio
-import json
-import math
 from functools import partial
 from pathlib import Path
-from typing import List, Iterable, Dict
+from typing import List, Dict, Optional, Any
 
 from loguru import logger
-from pydantic import Field, model_validator
-from tqdm import tqdm
+from pydantic import Field
 
 from flowllm.context.service_context import C
 from flowllm.schema.vector_node import VectorNode
-from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
+from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
 
 
 @C.register_vector_store("memory")
-class MemoryVectorStore(BaseVectorStore):
+class MemoryVectorStore(LocalVectorStore):
     """
     In-memory vector store that keeps all data in memory for fast access.
     Only saves to disk when dump_workspace is called.
@@ -25,69 +22,45 @@ class MemoryVectorStore(BaseVectorStore):
     
     def __init__(self, **data):
         super().__init__(**data)
-        # Dictionary to store all workspaces in memory
-        # Format: {workspace_id: {node.unique_id: VectorNode}}
         self._memory_store: Dict[str, Dict[str, VectorNode]] = {}
 
-    @property
-    def store_path(self) -> Path:
-        return Path(self.store_dir)
-
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
-        """Check if workspace exists in memory"""
         return workspace_id in self._memory_store
 
     def delete_workspace(self, workspace_id: str, **kwargs):
-        """Delete workspace from memory"""
         if workspace_id in self._memory_store:
             del self._memory_store[workspace_id]
             logger.info(f"Deleted workspace_id={workspace_id} from memory")
 
     def create_workspace(self, workspace_id: str, **kwargs):
-        """Create empty workspace in memory"""
         if workspace_id not in self._memory_store:
             self._memory_store[workspace_id] = {}
             logger.info(f"Created workspace_id={workspace_id} in memory")
 
-    def _iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
-        """Iterate over all nodes in a workspace"""
+    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs):
         if workspace_id in self._memory_store:
             for node in self._memory_store[workspace_id].values():
-                yield node
+                if callback_fn:
+                    yield callback_fn(node)
+                else:
+                    yield node
 
     def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
-        """Save workspace from memory to disk"""
         if workspace_id not in self._memory_store:
             logger.warning(f"workspace_id={workspace_id} not found in memory!")
             return {}
 
-        # Use provided path or default store path
         dump_path = Path(path) if path else self.store_path
-        dump_path.mkdir(parents=True, exist_ok=True)
-        dump_file = dump_path / f"{workspace_id}.jsonl"
-
         nodes = list(self._memory_store[workspace_id].values())
-        count = 0
-        
-        with dump_file.open("w") as f:
-            for node in tqdm(nodes, desc="dump to disk"):
-                node.workspace_id = workspace_id
-                if callback_fn:
-                    node_dict = callback_fn(node)
-                else:
-                    node_dict = node.model_dump()
-                assert isinstance(node_dict, dict)
-                f.write(json.dumps(node_dict, ensure_ascii=False, **kwargs))
-                f.write("\n")
-                count += 1
 
-        logger.info(f"Dumped workspace_id={workspace_id} with {count} nodes to {dump_file}")
-        return {"size": count}
+        return self._dump_to_path(nodes=nodes,
+                                  workspace_id=workspace_id,
+                                  path=dump_path,
+                                  callback_fn=callback_fn,
+                                  **kwargs)
 
-    def load_workspace(self, workspace_id: str, path: str | Path = "", nodes: List[VectorNode] = None, callback_fn=None,
-                       **kwargs):
-        """Load workspace from disk to memory"""
-        # Clear existing workspace in memory
+    def load_workspace(self, workspace_id: str, path: str | Path = "", nodes: Optional[List[VectorNode]] = None,
+                       callback_fn=None, **kwargs):
         if workspace_id in self._memory_store:
             del self._memory_store[workspace_id]
             logger.info(f"Cleared existing workspace_id={workspace_id} from memory")
@@ -95,31 +68,14 @@ class MemoryVectorStore(BaseVectorStore):
         self.create_workspace(workspace_id=workspace_id, **kwargs)
 
         all_nodes: List[VectorNode] = []
-        
-        # Add provided nodes
+
         if nodes:
             all_nodes.extend(nodes)
 
-        # Load from file if path provided
         if path:
-            load_path = Path(path)
-            load_file = load_path / f"{workspace_id}.jsonl"
-            
-            if load_file.exists():
-                with load_file.open() as f:
-                    for line in tqdm(f, desc="load from disk"):
-                        if line.strip():
-                            node_dict = json.loads(line.strip())
-                            if callback_fn:
-                                node = callback_fn(node_dict)
-                            else:
-                                node = VectorNode(**node_dict, **kwargs)
-                            node.workspace_id = workspace_id
-                            all_nodes.append(node)
-            else:
-                logger.warning(f"Load file {load_file} does not exist!")
+            for node in self._load_from_path(path=path, workspace_id=workspace_id, callback_fn=callback_fn, **kwargs):
+                all_nodes.append(node)
 
-        # Insert all nodes into memory
         if all_nodes:
             self.insert(nodes=all_nodes, workspace_id=workspace_id, **kwargs)
         
@@ -127,7 +83,6 @@ class MemoryVectorStore(BaseVectorStore):
         return {"size": len(all_nodes)}
 
     def copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):
-        """Copy workspace within memory"""
         if src_workspace_id not in self._memory_store:
             logger.warning(f"src_workspace_id={src_workspace_id} not found in memory!")
             return {}
@@ -135,14 +90,11 @@ class MemoryVectorStore(BaseVectorStore):
         if dest_workspace_id not in self._memory_store:
             self.create_workspace(workspace_id=dest_workspace_id, **kwargs)
 
-        # Copy all nodes
         src_nodes = list(self._memory_store[src_workspace_id].values())
         node_size = len(src_nodes)
         
-        # Process in batches
         for i in range(0, node_size, self.batch_size):
             batch_nodes = src_nodes[i:i + self.batch_size]
-            # Create new nodes with updated workspace_id
             new_nodes = []
             for node in batch_nodes:
                 new_node = VectorNode(**node.model_dump())
@@ -154,66 +106,8 @@ class MemoryVectorStore(BaseVectorStore):
         logger.info(f"Copied {node_size} nodes from {src_workspace_id} to {dest_workspace_id}")
         return {"size": node_size}
 
-    def add_term_filter(self, key: str, value):
-        """Add a term filter for memory vector store queries"""
-        if key:
-            self.retrieve_filters.append({"key": key, "value": value, "type": "term"})
-        return self
-
-    def add_range_filter(self, key: str, gte=None, lte=None):
-        """Add a range filter for memory vector store queries"""
-        if key:
-            filter_item = {"key": key, "type": "range"}
-            if gte is not None:
-                filter_item["gte"] = gte
-            if lte is not None:
-                filter_item["lte"] = lte
-            self.retrieve_filters.append(filter_item)
-        return self
-
-    def _matches_filters(self, node: VectorNode) -> bool:
-        """Check if a node matches all current filters"""
-        if not self.retrieve_filters:
-            return True
-        
-        for filter_item in self.retrieve_filters:
-            key = filter_item["key"]
-            filter_type = filter_item["type"]
-            
-            # Navigate nested keys (e.g., "metadata.node_type")
-            value = node.metadata
-            for key_part in key.split('.'):
-                if isinstance(value, dict) and key_part in value:
-                    value = value[key_part]
-                else:
-                    return False  # Key not found
-            
-            if filter_type == "term":
-                if value != filter_item["value"]:
-                    return False
-            elif filter_type == "range":
-                if "gte" in filter_item and value < filter_item["gte"]:
-                    return False
-                if "lte" in filter_item and value > filter_item["lte"]:
-                    return False
-        
-        return True
-
-    @staticmethod
-    def calculate_similarity(query_vector: List[float], node_vector: List[float]):
-        """Calculate cosine similarity between two vectors"""
-        assert query_vector, f"query_vector is empty!"
-        assert node_vector, f"node_vector is empty!"
-        assert len(query_vector) == len(node_vector), \
-            f"query_vector.size={len(query_vector)} node_vector.size={len(node_vector)}"
-
-        dot_product = sum(x * y for x, y in zip(query_vector, node_vector))
-        norm_v1 = math.sqrt(sum(x ** 2 for x in query_vector))
-        norm_v2 = math.sqrt(sum(y ** 2 for y in node_vector))
-        return dot_product / (norm_v1 * norm_v2)
-
-    def search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
-        """Search for similar nodes in memory"""
+    def search(self, query: str, workspace_id: str, top_k: int = 1, filter_dict: Optional[Dict[str, Any]] = None,
+               **kwargs) -> List[VectorNode]:
         if workspace_id not in self._memory_store:
             logger.warning(f"workspace_id={workspace_id} not found in memory!")
             return []
@@ -222,27 +116,22 @@ class MemoryVectorStore(BaseVectorStore):
         nodes: List[VectorNode] = []
         
         for node in self._memory_store[workspace_id].values():
-            if node.vector and self._matches_filters(node):  # Apply filters and only consider nodes with vectors
+            if node.vector and self._matches_filters(node, filter_dict):
                 score = self.calculate_similarity(query_vector, node.vector)
-                # Create a copy to avoid modifying original
                 result_node = VectorNode(**node.model_dump())
                 result_node.metadata["score"] = score
                 nodes.append(result_node)
 
         nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
-        self.retrieve_filters.clear()
         return nodes[:top_k]
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
-        """Insert nodes into memory"""
         if isinstance(nodes, VectorNode):
             nodes = [nodes]
 
-        # Ensure workspace exists
         if workspace_id not in self._memory_store:
             self.create_workspace(workspace_id=workspace_id, **kwargs)
 
-        # Generate embeddings for nodes
         nodes: List[VectorNode] = self.embedding_model.get_node_embeddings(nodes)
         
         update_cnt = 0
@@ -258,7 +147,6 @@ class MemoryVectorStore(BaseVectorStore):
                    f"total.size={total_nodes} update_cnt={update_cnt}")
 
     def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
-        """Delete nodes from memory"""
         if workspace_id not in self._memory_store:
             logger.warning(f"workspace_id={workspace_id} not found in memory!")
             return
@@ -278,8 +166,8 @@ class MemoryVectorStore(BaseVectorStore):
         logger.info(f"Deleted from workspace_id={workspace_id} before_size={before_size} "
                    f"after_size={after_size} deleted_cnt={deleted_cnt}")
 
-    # Override async methods for better performance
-    async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+    async def async_search(self, query: str, workspace_id: str, top_k: int = 1,
+                           filter_dict: Optional[Dict[str, Any]] = None, **kwargs) -> List[VectorNode]:
         """Async version of search using embedding model async capabilities"""
         if workspace_id not in self._memory_store:
             logger.warning(f"workspace_id={workspace_id} not found in memory!")
@@ -289,7 +177,8 @@ class MemoryVectorStore(BaseVectorStore):
         nodes: List[VectorNode] = []
         
         for node in self._memory_store[workspace_id].values():
-            if node.vector and self._matches_filters(node):  # Apply filters and only consider nodes with vectors
+            # Apply filters and only consider nodes with vectors
+            if node.vector and self._matches_filters(node, filter_dict):
                 score = self.calculate_similarity(query_vector, node.vector)
                 # Create a copy to avoid modifying original
                 result_node = VectorNode(**node.model_dump())
@@ -297,7 +186,6 @@ class MemoryVectorStore(BaseVectorStore):
                 nodes.append(result_node)
 
         nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
-        self.retrieve_filters.clear()
         return nodes[:top_k]
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -426,10 +314,12 @@ def main():
     results = client.search("What is artificial intelligence?", workspace_id=workspace_id, top_k=3)
     for i, r in enumerate(results, 1):
         logger.info(f"Result {i}: {r.model_dump(exclude={'vector'})}")
-    
-    # Test add_term_filter
+
+    # Test filter_dict
     logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
-    results = client.add_term_filter("node_type", "tech").search("What is artificial intelligence?", workspace_id=workspace_id, top_k=5)
+    filter_dict = {"node_type": "tech"}
+    results = client.search("What is artificial intelligence?", workspace_id=workspace_id, top_k=5,
+                            filter_dict=filter_dict)
     logger.info(f"Filtered results (node_type=tech): {len(results)} results")
     for i, r in enumerate(results, 1):
         logger.info(f"Filtered Result {i}: {r.model_dump(exclude={'vector'})}")

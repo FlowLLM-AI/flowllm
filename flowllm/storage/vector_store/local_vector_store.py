@@ -4,7 +4,7 @@ import json
 import math
 from functools import partial
 from pathlib import Path
-from typing import List, Iterable
+from typing import List, Iterable, Optional, Dict, Any
 
 from loguru import logger
 from pydantic import Field, model_validator
@@ -17,7 +17,7 @@ from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
 
 @C.register_vector_store("local")
 class LocalVectorStore(BaseVectorStore):
-    store_dir: str = Field(default="./file_vector_store")
+    store_dir: str = Field(default="./local_vector_store")
 
     @model_validator(mode="after")
     def init_client(self):
@@ -90,8 +90,9 @@ class LocalVectorStore(BaseVectorStore):
     def create_workspace(self, workspace_id: str, **kwargs):
         self._dump_to_path(nodes=[], workspace_id=workspace_id, path=self.store_path, **kwargs)
 
-    def _iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
-        for i, node in enumerate(self._load_from_path(path=self.store_path, workspace_id=workspace_id, **kwargs)):
+    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs):
+        for node in self._load_from_path(path=self.store_path, workspace_id=workspace_id, callback_fn=callback_fn,
+                                         **kwargs):
             yield node
 
     def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
@@ -99,7 +100,8 @@ class LocalVectorStore(BaseVectorStore):
             logger.warning(f"workspace_id={workspace_id} is not exist!")
             return {}
 
-        return self._dump_to_path(nodes=self._iter_workspace_nodes(workspace_id=workspace_id, **kwargs),
+        return self._dump_to_path(
+            nodes=self.iter_workspace_nodes(workspace_id=workspace_id, callback_fn=callback_fn, **kwargs),
                                   workspace_id=workspace_id,
                                   path=path,
                                   callback_fn=callback_fn,
@@ -131,7 +133,7 @@ class LocalVectorStore(BaseVectorStore):
 
         nodes = []
         node_size = 0
-        for node in self._iter_workspace_nodes(workspace_id=src_workspace_id, **kwargs):
+        for node in self.iter_workspace_nodes(workspace_id=src_workspace_id, **kwargs):
             nodes.append(node)
             node_size += 1
             if len(nodes) >= self.batch_size:
@@ -142,32 +144,13 @@ class LocalVectorStore(BaseVectorStore):
             self.insert(nodes=nodes, workspace_id=dest_workspace_id, **kwargs)
         return {"size": node_size}
 
-    def add_term_filter(self, key: str, value):
-        """Add a term filter for local vector store queries"""
-        if key:
-            self.retrieve_filters.append({"key": key, "value": value, "type": "term"})
-        return self
-
-    def add_range_filter(self, key: str, gte=None, lte=None):
-        """Add a range filter for local vector store queries"""
-        if key:
-            filter_item = {"key": key, "type": "range"}
-            if gte is not None:
-                filter_item["gte"] = gte
-            if lte is not None:
-                filter_item["lte"] = lte
-            self.retrieve_filters.append(filter_item)
-        return self
-
-    def _matches_filters(self, node: VectorNode) -> bool:
-        """Check if a node matches all current filters"""
-        if not self.retrieve_filters:
+    @staticmethod
+    def _matches_filters(node: VectorNode, filter_dict: dict = None) -> bool:
+        """Check if a node matches all filters in filter_dict"""
+        if not filter_dict:
             return True
-        
-        for filter_item in self.retrieve_filters:
-            key = filter_item["key"]
-            filter_type = filter_item["type"]
-            
+
+        for key, filter_value in filter_dict.items():
             # Navigate nested keys (e.g., "metadata.node_type")
             value = node.metadata
             for key_part in key.split('.'):
@@ -175,14 +158,21 @@ class LocalVectorStore(BaseVectorStore):
                     value = value[key_part]
                 else:
                     return False  # Key not found
-            
-            if filter_type == "term":
-                if value != filter_item["value"]:
+
+            # Handle different filter types
+            if isinstance(filter_value, dict):
+                # Range filter: {"gte": 1, "lte": 10}
+                if "gte" in filter_value and value < filter_value["gte"]:
                     return False
-            elif filter_type == "range":
-                if "gte" in filter_item and value < filter_item["gte"]:
+                if "lte" in filter_value and value > filter_value["lte"]:
                     return False
-                if "lte" in filter_item and value > filter_item["lte"]:
+                if "gt" in filter_value and value <= filter_value["gt"]:
+                    return False
+                if "lt" in filter_value and value >= filter_value["lt"]:
+                    return False
+            else:
+                # Term filter: direct value comparison
+                if value != filter_value:
                     return False
         
         return True
@@ -199,17 +189,17 @@ class LocalVectorStore(BaseVectorStore):
         norm_v2 = math.sqrt(sum(y ** 2 for y in node_vector))
         return dot_product / (norm_v1 * norm_v2)
 
-    def search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+    def search(self, query: str, workspace_id: str, top_k: int = 1, filter_dict: Optional[Dict[str, Any]] = None,
+               **kwargs) -> List[VectorNode]:
         query_vector = self.embedding_model.get_embeddings(query)
         nodes: List[VectorNode] = []
         for node in self._load_from_path(path=self.store_path, workspace_id=workspace_id, **kwargs):
             # Apply filters
-            if self._matches_filters(node):
+            if self._matches_filters(node, filter_dict):
                 node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
                 nodes.append(node)
 
         nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
-        self.retrieve_filters.clear()
         return nodes[:top_k]
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -254,7 +244,8 @@ class LocalVectorStore(BaseVectorStore):
         logger.info(f"delete workspace_id={workspace_id} before_size={before_size} after_size={after_size}")
 
     # Override async methods for better performance with file I/O
-    async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+    async def async_search(self, query: str, workspace_id: str, top_k: int = 1,
+                           filter_dict: Optional[Dict[str, Any]] = None, **kwargs) -> List[VectorNode]:
         """Async version of search using embedding model async capabilities"""
         query_vector = await self.embedding_model.get_embeddings_async(query)
 
@@ -268,12 +259,11 @@ class LocalVectorStore(BaseVectorStore):
         nodes: List[VectorNode] = []
         for node in nodes_iter:
             # Apply filters
-            if self._matches_filters(node):
+            if self._matches_filters(node, filter_dict):
                 node.metadata["score"] = self.calculate_similarity(query_vector, node.vector)
                 nodes.append(node)
 
         nodes = sorted(nodes, key=lambda x: x.metadata["score"], reverse=True)
-        self.retrieve_filters.clear()
         return nodes[:top_k]
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
@@ -364,9 +354,10 @@ def main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
-    # Test add_term_filter
+    # Test filter_dict
     logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
-    results = client.add_term_filter("node_type", "n1").search("What is AI?", workspace_id=workspace_id, top_k=5)
+    filter_dict = {"node_type": "n1"}
+    results = client.search("What is AI?", workspace_id=workspace_id, top_k=5, filter_dict=filter_dict)
     logger.info(f"Filtered results (node_type=n1): {len(results)} results")
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))

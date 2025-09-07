@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import List, Tuple, Iterable
+from typing import List, Tuple, Iterable, Dict, Any, Optional
 
 from elasticsearch import Elasticsearch, AsyncElasticsearch
 from elasticsearch.helpers import bulk, async_bulk
@@ -50,10 +50,16 @@ class EsVectorStore(LocalVectorStore):
         }
         return self._client.indices.create(index=workspace_id, body=body)
 
-    def _iter_workspace_nodes(self, workspace_id: str, max_size: int = 10000, **kwargs) -> Iterable[VectorNode]:
+    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, max_size: int = 10000, **kwargs) -> Iterable[
+        VectorNode]:
+        """Iterate over all nodes in a workspace."""
         response = self._client.search(index=workspace_id, body={"query": {"match_all": {}}, "size": max_size})
         for doc in response['hits']['hits']:
-            yield self.doc2node(doc, workspace_id)
+            node = self.doc2node(doc, workspace_id)
+            if callback_fn:
+                yield callback_fn(node)
+            else:
+                yield node
 
     def refresh(self, workspace_id: str):
         self._client.indices.refresh(index=workspace_id)
@@ -67,31 +73,51 @@ class EsVectorStore(LocalVectorStore):
             node.metadata["score"] = doc["_score"] - 1
         return node
 
-    def add_term_filter(self, key: str, value):
-        if key:
-            self.retrieve_filters.append({"term": {key: value}})
-        return self
+    @staticmethod
+    def _build_es_filters(filter_dict: Optional[Dict[str, Any]] = None) -> List[Dict]:
+        """Build Elasticsearch filter clauses from filter_dict"""
+        if not filter_dict:
+            return []
 
-    def add_range_filter(self, key: str, gte=None, lte=None):
-        if key:
-            if gte is not None and lte is not None:
-                self.retrieve_filters.append({"range": {key: {"gte": gte, "lte": lte}}})
-            elif gte is not None:
-                self.retrieve_filters.append({"range": {key: {"gte": gte}}})
-            elif lte is not None:
-                self.retrieve_filters.append({"range": {key: {"lte": lte}}})
-        return self
+        filters = []
+        for key, filter_value in filter_dict.items():
+            # Handle nested keys by prefixing with metadata.
+            es_key = f"metadata.{key}" if not key.startswith("metadata.") else key
 
-    def search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+            if isinstance(filter_value, dict):
+                # Range filter: {"gte": 1, "lte": 10}
+                range_conditions = {}
+                if "gte" in filter_value:
+                    range_conditions["gte"] = filter_value["gte"]
+                if "lte" in filter_value:
+                    range_conditions["lte"] = filter_value["lte"]
+                if "gt" in filter_value:
+                    range_conditions["gt"] = filter_value["gt"]
+                if "lt" in filter_value:
+                    range_conditions["lt"] = filter_value["lt"]
+                if range_conditions:
+                    filters.append({"range": {es_key: range_conditions}})
+            else:
+                # Term filter: direct value comparison
+                filters.append({"term": {es_key: filter_value}})
+
+        return filters
+
+    def search(self, query: str, workspace_id: str, top_k: int = 1, filter_dict: Optional[Dict[str, Any]] = None,
+               **kwargs) -> List[VectorNode]:
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return []
 
         query_vector = self.embedding_model.get_embeddings(query)
+
+        # Build filters from filter_dict
+        es_filters = self._build_es_filters(filter_dict)
+
         body = {
             "query": {
                 "script_score": {
-                    "query": {"bool": {"must": self.retrieve_filters}},
+                    "query": {"bool": {"must": es_filters}} if es_filters else {"match_all": {}},
                     "script": {
                         "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
                         "params": {"query_vector": query_vector},
@@ -104,9 +130,10 @@ class EsVectorStore(LocalVectorStore):
 
         nodes: List[VectorNode] = []
         for doc in response['hits']['hits']:
-            nodes.append(self.doc2node(doc, workspace_id))
+            node = self.doc2node(doc, workspace_id)
+            node.metadata["score"] = doc["_score"] - 1  # Adjust score since we added 1.0
+            nodes.append(node)
 
-        self.retrieve_filters.clear()
         return nodes
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, refresh: bool = True, **kwargs):
@@ -158,6 +185,7 @@ class EsVectorStore(LocalVectorStore):
         if refresh:
             self.refresh(workspace_id=workspace_id)
 
+
     # Async methods using native Elasticsearch async APIs
     async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """Async version of exist_workspace using native ES async client"""
@@ -188,7 +216,8 @@ class EsVectorStore(LocalVectorStore):
         """Async version of refresh using native ES async client"""
         await self._async_client.indices.refresh(index=workspace_id)
 
-    async def async_search(self, query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]:
+    async def async_search(self, query: str, workspace_id: str, top_k: int = 1,
+                           filter_dict: Optional[Dict[str, Any]] = None, **kwargs) -> List[VectorNode]:
         """Async version of search using native ES async client and async embedding"""
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
@@ -197,10 +226,13 @@ class EsVectorStore(LocalVectorStore):
         # Use async embedding
         query_vector = await self.embedding_model.get_embeddings_async(query)
 
+        # Build filters from filter_dict
+        es_filters = self._build_es_filters(filter_dict)
+
         body = {
             "query": {
                 "script_score": {
-                    "query": {"bool": {"must": self.retrieve_filters}},
+                    "query": {"bool": {"must": es_filters}} if es_filters else {"match_all": {}},
                     "script": {
                         "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
                         "params": {"query_vector": query_vector},
@@ -213,9 +245,10 @@ class EsVectorStore(LocalVectorStore):
 
         nodes: List[VectorNode] = []
         for doc in response['hits']['hits']:
-            nodes.append(self.doc2node(doc, workspace_id))
+            node = self.doc2node(doc, workspace_id)
+            node.metadata["score"] = doc["_score"] - 1  # Adjust score since we added 1.0
+            nodes.append(node)
 
-        self.retrieve_filters.clear()
         return nodes
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, refresh: bool = True,
@@ -277,7 +310,7 @@ class EsVectorStore(LocalVectorStore):
     def close(self):
         self._client.close()
 
-    async def aclose(self):
+    async def async_close(self):
         await self._async_client.close()
 
 def main():
@@ -328,9 +361,9 @@ def main():
     es.insert(sample_nodes, workspace_id=workspace_id, refresh=True)
 
     logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
-    results = es.add_term_filter(key="metadata.node_type", value="n1") \
-        .search("What is AI?", top_k=5, workspace_id=workspace_id)
-    logger.info(f"Filtered results (metadata.node_type=n1): {len(results)} results")
+    filter_dict = {"node_type": "n1"}
+    results = es.search("What is AI?", top_k=5, workspace_id=workspace_id, filter_dict=filter_dict)
+    logger.info(f"Filtered results (node_type=n1): {len(results)} results")
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
@@ -344,6 +377,7 @@ def main():
     es.dump_workspace(workspace_id=workspace_id)
     es.delete_workspace(workspace_id=workspace_id)
 
+    es.close()
 
 async def async_main():
     from flowllm.utils.common_utils import load_env
@@ -356,88 +390,89 @@ async def async_main():
     hosts = "http://11.160.132.46:8200"
 
     # Use async context manager to ensure proper cleanup
-    async with EsVectorStore(hosts=hosts, embedding_model=embedding_model) as es:
-        # Clean up and create workspace
-        if await es.async_exist_workspace(workspace_id=workspace_id):
-            await es.async_delete_workspace(workspace_id=workspace_id)
-        await es.async_create_workspace(workspace_id=workspace_id)
+    es = EsVectorStore(hosts=hosts, embedding_model=embedding_model)
+    # Clean up and create workspace
+    if await es.async_exist_workspace(workspace_id=workspace_id):
+        await es.async_delete_workspace(workspace_id=workspace_id)
+    await es.async_create_workspace(workspace_id=workspace_id)
 
-        sample_nodes = [
-            VectorNode(
-                unique_id="async_es_node1",
-                workspace_id=workspace_id,
-                content="Artificial intelligence is a technology that simulates human intelligence.",
-                metadata={
-                    "node_type": "n1",
-                }
-            ),
-            VectorNode(
-                unique_id="async_es_node2",
-                workspace_id=workspace_id,
-                content="AI is the future of mankind.",
-                metadata={
-                    "node_type": "n1",
-                }
-            ),
-            VectorNode(
-                unique_id="async_es_node3",
-                workspace_id=workspace_id,
-                content="I want to eat fish!",
-                metadata={
-                    "node_type": "n2",
-                }
-            ),
-            VectorNode(
-                unique_id="async_es_node4",
-                workspace_id=workspace_id,
-                content="The bigger the storm, the more expensive the fish.",
-                metadata={
-                    "node_type": "n1",
-                }
-            ),
-        ]
-
-        # Test async insert
-        await es.async_insert(sample_nodes, workspace_id=workspace_id, refresh=True)
-
-        logger.info("ASYNC TEST - " + "=" * 20)
-        # Test async search with filter
-        es.add_term_filter(key="metadata.node_type", value="n1")
-        results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
-        for r in results:
-            logger.info(r.model_dump(exclude={"vector"}))
-        logger.info("=" * 20)
-
-        # Test async search without filter
-        logger.info("ASYNC TEST WITHOUT FILTER - " + "=" * 20)
-        results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
-        for r in results:
-            logger.info(r.model_dump(exclude={"vector"}))
-        logger.info("=" * 20)
-
-        # Test async update (delete + insert)
-        node2_update = VectorNode(
-            unique_id="async_es_node2",
+    sample_nodes = [
+        VectorNode(
+            unique_id="async_es_node1",
             workspace_id=workspace_id,
-            content="AI is the future of humanity and technology.",
+            content="Artificial intelligence is a technology that simulates human intelligence.",
             metadata={
                 "node_type": "n1",
-                "updated": True
             }
-        )
-        await es.async_delete(node2_update.unique_id, workspace_id=workspace_id, refresh=True)
-        await es.async_insert(node2_update, workspace_id=workspace_id, refresh=True)
+        ),
+        VectorNode(
+            unique_id="async_es_node2",
+            workspace_id=workspace_id,
+            content="AI is the future of mankind.",
+            metadata={
+                "node_type": "n1",
+            }
+        ),
+        VectorNode(
+            unique_id="async_es_node3",
+            workspace_id=workspace_id,
+            content="I want to eat fish!",
+            metadata={
+                "node_type": "n2",
+            }
+        ),
+        VectorNode(
+            unique_id="async_es_node4",
+            workspace_id=workspace_id,
+            content="The bigger the storm, the more expensive the fish.",
+            metadata={
+                "node_type": "n1",
+            }
+        ),
+    ]
 
-        logger.info("ASYNC Updated Result:")
-        results = await es.async_search("fish?", workspace_id=workspace_id, top_k=10)
-        for r in results:
-            logger.info(r.model_dump(exclude={"vector"}))
-        logger.info("=" * 20)
+    # Test async insert
+    await es.async_insert(sample_nodes, workspace_id=workspace_id, refresh=True)
 
-        # Clean up
-        await es.async_dump_workspace(workspace_id=workspace_id)
-        await es.async_delete_workspace(workspace_id=workspace_id)
-    # Async client will be automatically closed when exiting the context manager
+    logger.info("ASYNC TEST - " + "=" * 20)
+    # Test async search with filter
+    filter_dict = {"node_type": "n1"}
+    results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id, filter_dict=filter_dict)
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Test async search without filter
+    logger.info("ASYNC TEST WITHOUT FILTER - " + "=" * 20)
+    results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Test async update (delete + insert)
+    node2_update = VectorNode(
+        unique_id="async_es_node2",
+        workspace_id=workspace_id,
+        content="AI is the future of humanity and technology.",
+        metadata={
+            "node_type": "n1",
+            "updated": True
+        }
+    )
+    await es.async_delete(node2_update.unique_id, workspace_id=workspace_id, refresh=True)
+    await es.async_insert(node2_update, workspace_id=workspace_id, refresh=True)
+
+    logger.info("ASYNC Updated Result:")
+    results = await es.async_search("fish?", workspace_id=workspace_id, top_k=10)
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Clean up
+    await es.async_dump_workspace(workspace_id=workspace_id)
+    await es.async_delete_workspace(workspace_id=workspace_id)
+
+    await es.async_close()
 
 
 if __name__ == "__main__":
