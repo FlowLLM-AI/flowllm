@@ -23,5 +23,5 @@ from flowllm.op import BaseOp, BaseLLMOp, BaseToolOp
 from flowllm.op.ray import BaseRayOp
 
 
-__version__ = "0.1.7"
+__version__ = "0.1.8"
 

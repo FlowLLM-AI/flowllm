@@ -18,7 +18,8 @@ git clone git@gitlab.alibaba-inc.com:OpenRepo/flowllm.git
 - **dashscope_search_tool_flow**: 代码注册
 
 ## 安装flowllm
-要求py>=3.11
+
+要求py>=3.12
 ```shell
 pip install -e .
 ```
@@ -36,6 +37,25 @@ flowllm --config=fin_supply
 2025-09-08 14:19:12 | INFO | integrate endpoint=get_a_stock_infos
 2025-09-08 14:19:12 | INFO | integrate endpoint=get_a_stock_news
 2025-09-08 14:19:12 | INFO | integrate endpoint=tavily_search_tool_flow
+```
+
+## mcp server
+
+```json
+{
+  "mcpServers": {
+    "asio-fin-supply-server": {
+      "command": "flowllm",
+      "args": [
+        "--config=fin_supply"
+      ],
+      "env": {
+        "FLOW_EMBEDDING_API_KEY": "sk-xxxx",
+        "FLOW_EMBEDDING_BASE_URL": "xxxx"
+      }
+    }
+  }
+}
 ```
 
 ## 使用mcp服务

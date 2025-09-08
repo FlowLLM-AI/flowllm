@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flowllm"
-version = "0.1.7"
+version = "0.1.8"
 description = "A flexible framework for building LLM-powered flows and mcp services"
 authors = [
     { name = "jinli.yl", email = "jinli.yl@alibaba-inc.com" },
@@ -12,7 +12,7 @@ authors = [
 license = {file = "LICENSE"}
 readme = "README.md"
 keywords = ["llm", "ai", "flow", "framework", "openai", "chatgpt", "language-model", "mcp", "http"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 
 classifiers = [
     "Development Status :: 3 - Alpha",
