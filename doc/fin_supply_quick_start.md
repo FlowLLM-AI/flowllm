@@ -39,7 +39,7 @@ flowllm --config=fin_supply
 2025-09-08 14:19:12 | INFO | integrate endpoint=tavily_search_tool_flow
 ```
 
-## mcp server
+## mcp server config json
 
 ```json
 {
