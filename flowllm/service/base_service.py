@@ -15,14 +15,12 @@ from flowllm.utils.common_utils import snake_to_camel, print_banner
 
 class BaseService(ABC):
     TYPE_MAPPING = {
-        "str": str,
         "string": str,
-        "int": int,
+        "array": list,
         "integer": int,
-        "float": float,
-        "bool": bool,
-        "list": list,
-        "dict": dict,
+        "number": float,
+        "boolean": bool,
+        "object": dict,
     }
 
     def __init__(self, service_config: ServiceConfig):
@@ -49,7 +47,9 @@ class BaseService(ABC):
         fields = {}
 
         for param_name, param_config in input_schema.items():
-            field_type = self.TYPE_MAPPING.get(param_config.type, str)
+            assert param_config.type in self.TYPE_MAPPING, \
+                f"Invalid type: {param_config.type}! supported={sorted(self.TYPE_MAPPING.keys())}"
+            field_type = self.TYPE_MAPPING[param_config.type]
 
             if not param_config.required:
                 fields[param_name] = (Optional[field_type], Field(default=None, description=param_config.description))

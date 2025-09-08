@@ -29,7 +29,7 @@ class MockToolFlow(BaseToolFlow):
             "description": "A mock tool that processes data through multiple operations and returns structured results",
             "input_schema": {
                 "a": ParamAttrs(
-                    type="str",
+                    type="string",
                     description="The input data to be processed",
                     required=True
                 ),

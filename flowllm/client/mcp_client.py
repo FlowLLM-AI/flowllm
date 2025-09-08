@@ -4,6 +4,8 @@ from fastmcp import Client
 from loguru import logger
 from mcp.types import CallToolResult, Tool
 
+from flowllm.schema.tool_call import ToolCall
+
 
 class MCPClient:
     """Client for interacting with FlowLLM MCP service"""
@@ -88,6 +90,10 @@ class MCPClient:
         tools = await self.client.list_tools()
         logger.info(f"Found {len(tools)} available tools")
         return tools
+
+    async def list_tool_calls(self) -> List[dict]:
+        tools = await self.list_tools()
+        return [ToolCall.from_mcp_tool(t).simple_input_dump() for t in tools]
 
     async def get_tool(self, tool_name: str) -> Optional[Tool]:
         """

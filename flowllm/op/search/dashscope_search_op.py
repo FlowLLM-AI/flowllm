@@ -40,14 +40,14 @@ class DashscopeSearchOp(BaseToolOp):
             "description": "Use search keywords to retrieve relevant information from the internet. If there are multiple search keywords, please use each keyword separately to call this tool.",
             "input_schema": {
                 "query": {
-                    "type": "str",
+                    "type": "string",
                     "description": "search keyword",
                     "required": True
                 }
             },
             "output_schema": {
                 "dashscope_search_result": {
-                    "type": "str",
+                    "type": "string",
                     "description": "web search result",
                 }
             }

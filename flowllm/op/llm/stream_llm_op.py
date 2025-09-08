@@ -20,7 +20,7 @@ class StreamLLMOp(BaseToolOp):
             "description": "use this query to query an LLM",
             "input_schema": {
                 "query": {
-                    "type": "str",
+                    "type": "string",
                     "description": "search keyword",
                     "required": True
                 }

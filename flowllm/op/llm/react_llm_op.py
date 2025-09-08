@@ -26,14 +26,14 @@ class ReactLLMOp(BaseToolOp):
             "description": "use this query to query an LLM",
             "input_schema": {
                 "query": {
-                    "type": "str",
+                    "type": "string",
                     "description": "search keyword",
                     "required": True
                 }
             },
             "output_schema": {
                 "react_llm_result": {
-                    "type": "str",
+                    "type": "string",
                     "description": "react llm result",
                 }
             }

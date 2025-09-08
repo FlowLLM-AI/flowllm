@@ -23,7 +23,7 @@ flow:
     description: "llm_flow"
     input_schema:
       query:
-        type: "str"
+        type: string
         description: "user query"
         required: true
 
@@ -35,7 +35,7 @@ flow:
     description: "llm_flow"
     input_schema:
       query:
-        type: "str"
+        type: string
         description: "user query"
         required: true
 

@@ -5,6 +5,8 @@ enabled_flows:
   - get_a_stock_news
   - ant_search
   - ant_investment
+  - tavily_search_tool_flow
+  - dashscope_search_tool_flow
 
 flow:
   get_a_stock_infos:
@@ -15,7 +17,7 @@ flow:
     description: "Retrieve the A-share stock codes from the query, and fetch information about these stocks, including company basic information, current stock price and its change percentage, capital inflow and outflow data for the most recent day, and financial information from the latest quarter."
     input_schema:
       query:
-        type: "str"
+        type: string
         description: "user question"
 
   get_a_stock_news:
@@ -26,7 +28,7 @@ flow:
     description: "Retrieve the A-share stock codes from the query, and obtain the latest news information about these stocks."
     input_schema:
       query:
-        type: "str"
+        type: string
         description: "user question"
 
   ant_search:

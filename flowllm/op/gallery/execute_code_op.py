@@ -19,14 +19,14 @@ class ExecuteCodeOp(BaseToolOp):
             "description": "Execute python code can be used in scenarios such as analysis or calculation, and the final result can be printed using the `print` function.",
             "input_schema": {
                 "code": {
-                    "type": "str",
+                    "type": "string",
                     "description": "code to be executed. Please do not execute any matplotlib code here.",
                     "required": True
                 }
             },
             "output_schema": {
                 "code_result": {
-                    "type": "str",
+                    "type": "string",
                     "description": "code execution result",
                 }
             }

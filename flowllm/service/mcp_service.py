@@ -24,10 +24,12 @@ class MCPService(BaseService):
             return response.answer
 
         # tool_flow.tool_call.name
+        tool_call_schema = tool_flow.tool_call.simple_input_dump()
+        parameters = tool_call_schema[tool_call_schema["type"]]["parameters"]
         tool = FunctionTool(name=tool_flow.name,  # noqa
                             description=tool_flow.tool_call.description,  # noqa
                             fn=execute_tool,
-                            parameters=tool_flow.tool_call.input_schema)
+                            parameters=parameters)
         self.mcp.add_tool(tool)
 
     def execute(self):
