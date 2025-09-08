@@ -20,7 +20,8 @@ async def main():
             print(f"Failed to get tools: {e}")
 
         query1 = "阿里巴巴怎么样？"
-        query2 = "寒武纪还可以买吗？"
+        # query2 = "寒武纪还可以买吗？"
+        query2 = "寒武纪"
 
         test_cases = [
             # ("ant_search", {"query": "阿里巴巴怎么样？", "entity": "阿里巴巴"}),

@@ -91,12 +91,12 @@ class GetAkACodeOp(BaseLLMOp):
     def execute(self):
         name_code_dict = self.get_name_code_dict()
         stock_names = list(name_code_dict.keys())
-        for p_stock_names in self.split_list(stock_names, n=2):
+        for p_stock_names in self.split_list(stock_names, n=1):
             self.submit_task(self.find_stock_codes, stock_names=p_stock_names)
-            time.sleep(1)
+            # time.sleep(1)
 
         stock_names = sorted(set(self.join_task()))
-        self.context.code_infos = {name_code_dict[n]: {"股票名称": n} for n in stock_names}
+        self.context.code_infos = {name_code_dict[n]: {"股票名称": n} for n in stock_names if n in name_code_dict}
         logger.info(f"code_infos={self.context.code_infos}")
 
 
