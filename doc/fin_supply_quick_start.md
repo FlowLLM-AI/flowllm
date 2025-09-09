@@ -47,7 +47,8 @@ flowllm --config=fin_supply
     "asio-fin-supply-server": {
       "command": "flowllm",
       "args": [
-        "--config=fin_supply"
+        "--config=fin_supply",
+        "--mcp.transport=stdio"
       ],
       "env": {
         "FLOW_EMBEDDING_API_KEY": "sk-xxxx",
