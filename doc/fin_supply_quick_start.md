@@ -24,7 +24,7 @@ git clone git@gitlab.alibaba-inc.com:OpenRepo/flowllm.git
 pip install -e .
 ```
 
-## 启动flowllm
+## 启动flowllm(sse)
 ```shell
 flowllm --config=fin_supply
 ```
@@ -39,7 +39,7 @@ flowllm --config=fin_supply
 2025-09-08 14:19:12 | INFO | integrate endpoint=tavily_search_tool_flow
 ```
 
-## mcp server config json
+## mcp server config(stdio)
 
 ```json
 {
