@@ -71,9 +71,25 @@ class ToolCall(BaseModel):
         tool_type = data.get("type", "")
         tool_type_dict = data.get(tool_type, {})
 
-        for key in ["name", "arguments"]:
-            if key not in data:
-                data[key] = tool_type_dict.get(key, "")
+        if "name" in tool_type_dict:
+            data["name"] = tool_type_dict["name"]
+
+        if "arguments" in tool_type_dict:
+            data["arguments"] = tool_type_dict["arguments"]
+
+        if "description" in tool_type_dict:
+            data["description"] = tool_type_dict["description"]
+
+        if "parameters" in tool_type_dict:
+            tool_params = tool_type_dict["parameters"]
+            properties: dict = tool_params.get("properties", {})
+            required: list = tool_params.get("required", [])
+            data["input_schema"] = {}
+            for name, param_attrs in properties.items():
+                tool_param = ParamAttrs(**param_attrs)
+                tool_param.required = name in required
+                data["input_schema"][name] = tool_param
+
         return data
 
     @property
@@ -115,24 +131,6 @@ class ToolCall(BaseModel):
         else:
             raise NotImplementedError(f"version {version} not supported")
 
-    def update_by_output(self, data: dict, version: str = "v1"):
-        if version == "v1":
-            self.index = data.get("index", 0)
-            self.id = data.get("id", "")
-            tool_type = data.get("type", "")
-            tool_type_dict = data.get(tool_type, {})
-            if tool_type_dict:
-                name = tool_type_dict.get("name", "")
-                arguments = tool_type_dict.get("arguments", "")
-                if name:
-                    self.name = name
-                if arguments:
-                    self.arguments = arguments
-        else:
-            raise NotImplementedError(f"version {version} not supported")
-
-        return self
-
     @classmethod
     def from_mcp_tool(cls, tool: Tool) -> "ToolCall":
         input_schema = {}
@@ -154,8 +152,8 @@ class ToolCall(BaseModel):
                    input_schema=input_schema)
 
 
-if __name__ == "__main__":
-    tool_call = ToolCall(**{
+def main():
+    data = {
         "id": "call_0fb6077ad56f4647b0b04a",
         "function": {
             "arguments": "{\"symbol\": \"ZETA\"}",
@@ -163,5 +161,33 @@ if __name__ == "__main__":
         },
         "type": "function",
         "index": 0
-    })
-    print(tool_call.simple_output_dump())
+    }
+    tool_call = ToolCall(**data)
+    output_data = tool_call.simple_output_dump()
+    assert output_data == data
+    print(json.dumps(output_data, ensure_ascii=False))
+
+    data = {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "It is very useful when you want to check the weather of a specified city.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "Cities or counties, such as Beijing, Hangzhou, Yuhang District, etc.",
+                    }
+                },
+                "required": ["location"]
+            }
+        }
+    }
+    tool_call = ToolCall(**data)
+    input_data = tool_call.simple_input_dump()
+    assert input_data == data
+    print(json.dumps(input_data, ensure_ascii=False))
+
+if __name__ == "__main__":
+    main()
