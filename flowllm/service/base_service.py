@@ -48,7 +48,7 @@ class BaseService(ABC):
 
         for param_name, param_config in input_schema.items():
             assert param_config.type in self.TYPE_MAPPING, \
-                f"Invalid type: {param_config.type}! supported={sorted(self.TYPE_MAPPING.keys())}"
+                f"flow_name={flow_name} had invalid type: {param_config.type}! supported={sorted(self.TYPE_MAPPING.keys())}"
             field_type = self.TYPE_MAPPING[param_config.type]
 
             if not param_config.required:

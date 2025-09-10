@@ -98,6 +98,7 @@ class BaseOp(ABC):
                         self.before_execute()
                         await self.async_execute()
                         self.after_execute()
+                        break
 
                     except Exception as e:
                         logger.exception(f"op={self.name} async execute failed, error={e.args}")
