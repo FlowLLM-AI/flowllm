@@ -38,7 +38,11 @@ class FlowContext(BaseContext):
         await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.THINK, chunk=chunk)
         return self
 
-    async def add_stream_error(self, e: Exception):
+    async def add_stream_tool(self, chunk: str):
+        await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.TOOL, chunk=chunk)
+        return self
+
+    async def add_stream_error(self, e: Exception | str):
         await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.ERROR, chunk=str(e))
         return self
 

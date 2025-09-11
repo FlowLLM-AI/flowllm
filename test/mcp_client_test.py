@@ -25,10 +25,10 @@ async def main():
 
         test_cases = [
             # ("ant_search", {"query": "阿里巴巴怎么样？", "entity": "阿里巴巴"}),
-            # ("ant_investment", {"entity": "阿里巴巴", "analysis_category": "股票"}),
+            ("ant_investment", {"entity": "阿里巴巴", "analysis_category": "股票"}),
             # ("dashscope_search_tool_flow", {"query": "阿里巴巴怎么样？"}),
             # ("get_a_stock_infos", {"query": query2}),
-            ("get_a_stock_news", {"query": query2}),
+            # ("get_a_stock_news", {"query": query2}),
             # ("tavily_search_tool_flow", {"query": query2}),
 
             # ("mock_tool_flow", {"a": query2}),

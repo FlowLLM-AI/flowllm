@@ -151,7 +151,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                 if i == self.max_retries - 1 and self.raise_exception:
                     raise e
                 else:
-                    yield e.args, ChunkEnum.ERROR
+                    yield str(e), ChunkEnum.ERROR
 
     async def astream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
         """
@@ -254,7 +254,7 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                 if i == self.max_retries - 1 and self.raise_exception:
                     raise e
                 else:
-                    yield e.args, ChunkEnum.ERROR
+                    yield str(e), ChunkEnum.ERROR
 
     def _chat(self, messages: List[Message], tools: List[ToolCall] = None, enable_stream_print: bool = False,
               **kwargs) -> Message:
