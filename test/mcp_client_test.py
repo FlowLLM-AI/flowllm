@@ -13,7 +13,7 @@ async def main():
             tool_calls = await client.list_tool_calls()
             if tool_calls:
                 for tool_call in tool_calls:
-                    print(json.dumps(tool_call, ensure_ascii=False))
+                    print(tool_call.model_dump_json())
             else:
                 print("No tools found or failed to retrieve tools")
         except Exception as e:
@@ -25,13 +25,15 @@ async def main():
         test_cases = [
             # ("ant_search", {"query": "阿里巴巴怎么样？", "entity": "阿里巴巴"}),
             # ("ant_investment", {"entity": "阿里巴巴", "analysis_category": "股票"}),
-            # ("dashscope_search_tool_flow", {"query": "阿里巴巴怎么样？"}),
+            # ("dashscope_search", {"query": "阿里巴巴怎么样？"}),
             # ("get_a_stock_infos", {"query": query2}),
             # ("get_a_stock_news", {"query": query2}),
-            # ("tavily_search_tool_flow", {"query": query2}),
+            ("tavily_search", {"query": query2}),
 
-            ("mock_tool_flow", {"a": query2}),
-            ("mock_async_tool_flow", {"a": query2}),
+            # ("mock_tool_flow", {"a": query2}),
+            # ("mock_async_tool_flow", {"a": query2}),
+            # ("tdx_wenda_quotes", {"question": "半导体行业PE中位数"}),
+            # ("tdx_market_quotes", {"code": "000001", "setcode": "1"}),
         ]
 
         for tool_name, arguments in test_cases:

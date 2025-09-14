@@ -41,11 +41,11 @@ async def main():
         # response = await client.execute_flow("mock_async_tool_flow", a=query2)
         # print(f"result: {response.answer}")
 
-        response = await client.execute_flow("ant_search", query="阿里巴巴怎么样？", entity="阿里巴巴")
-        print(f"result: {response.answer}")
-
-        response = await client.execute_flow("ant_investment", entity="阿里巴巴", analysis_category="股票")
-        print(f"result: {response.answer}")
+        # response = await client.execute_flow("ant_search", query="阿里巴巴怎么样？", entity="阿里巴巴")
+        # print(f"result: {response.answer}")
+        #
+        # response = await client.execute_flow("ant_investment", entity="阿里巴巴", analysis_category="股票")
+        # print(f"result: {response.answer}")
 
         # response = await client.execute_flow("dashscope_search_tool_flow", query="阿里巴巴怎么样？")
         # print(f"result: {response.answer}")

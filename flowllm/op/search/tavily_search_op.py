@@ -19,8 +19,9 @@ class TavilySearchOp(BaseAsyncToolOp):
                  raise_exception: bool = False,
                  item_max_count: int = 20000,
                  all_max_count: int = 50000,
+                 save_answer: bool = True,
                  **kwargs):
-        super().__init__(max_retries=max_retries, raise_exception=raise_exception, **kwargs)
+        super().__init__(max_retries=max_retries, raise_exception=raise_exception, save_answer=save_answer, **kwargs)
 
         self._client: TavilyClient | None = None
         self.item_max_count: int = item_max_count

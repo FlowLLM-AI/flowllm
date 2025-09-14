@@ -5,6 +5,8 @@ enabled_flows:
   #  - get_a_stock_news
   - ant_search
   - ant_investment
+  - tdx_wenda_quotes
+  - tdx_market_quotes
   - tavily_search
   - dashscope_search
 
@@ -33,15 +35,25 @@ flow:
   ant_investment:
     flow_content: mcp@ant_supply@investment_analysis
 
+  tdx_wenda_quotes:
+    flow_content: mcp@tendency_software@tdx_wenda_quotes
+
+  tdx_market_quotes:
+    flow_content: mcp@tendency_software@tdx_PBHQInfo_quotes
+
   tavily_search:
     flow_content: tavily_search_op
+
+  dashscope_search:
+    flow_content: dashscope_search_op
+
 
 external_mcp:
   ant_supply:
     type: sse,
     url: "http://11.160.132.45:8010/sse"
-  tongxinda:
+  tendency_software:
     type: sse
     url: "https://dashscope.aliyuncs.com/api/v1/mcps/tendency-software/sse"
     headers:
-      Authorization: "Bearer {FLOW_DASHSCOPE_API_KEY}"
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

@@ -2,7 +2,7 @@ import asyncio
 import os
 import shutil
 from contextlib import AsyncExitStack
-from typing import Any, List
+from typing import List
 
 import mcp.types
 from loguru import logger
@@ -16,10 +16,17 @@ from flowllm.schema.tool_call import ToolCall
 
 class McpClient:
 
-    def __init__(self, name: str, config: dict[str, Any], append_env: bool = False) -> None:
+    def __init__(self,
+                 name: str,
+                 config: dict,
+                 append_env: bool = False,
+                 max_retries: int = 3):
+
         self.name: str = name
-        self.config: dict[str, Any] = config
+        self.config: dict = config
         self.append_env: bool = append_env
+        self.max_retries: int = max_retries
+
         self.session: ClientSession | None = None
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
@@ -68,8 +75,21 @@ class McpClient:
         if not self.session:
             raise RuntimeError(f"Server {self.name} not initialized")
 
-        tools_response = await self.session.list_tools()
-        tools = [tool for item in tools_response if isinstance(item, tuple) and item[0] == "tools" for tool in item[1]]
+        tools = []
+        for i in range(self.max_retries):
+            try:
+                tools_response = await self.session.list_tools()
+                tools = [tool for item in tools_response \
+                         if isinstance(item, tuple) and item[0] == "tools" for tool in item[1]]
+                break
+
+            except Exception as e:
+                logger.warning(f"{self.name} list tools failed. Retry {i}/{self.max_retries} in {1 + i}s...")
+                await asyncio.sleep(1 + i)
+
+                if i == self.max_retries - 1:
+                    raise e
+
         return tools
 
     async def list_tool_calls(self) -> List[ToolCall]:
@@ -83,18 +103,20 @@ class McpClient:
         if not self.session:
             raise RuntimeError(f"Server {self.name} not initialized")
 
-        attempt = 0
+        result = None
+        for i in range(self.max_retries):
+            try:
+                result = await self.session.call_tool(tool_name, arguments)
+                break
 
-        while attempt < retries:
-            result = await self.session.call_tool(tool_name, arguments)
-            if result:
-                return result
+            except Exception as e:
+                logger.warning(f"{self.name}.{tool_name} call_tool failed. Retry {attempt}/{retries} in {delay}s...")
+                await asyncio.sleep(1 + i)
 
-            attempt += 1
-            if attempt < retries:
-                logger.warning(f"Tool={tool_name} execution failed. Retry {attempt}/{retries} in {delay}s...")
-                await asyncio.sleep(delay)
-        return None
+                if i == self.max_retries - 1:
+                    raise e
+
+        return result
 
 
 async def main():
@@ -108,6 +130,8 @@ async def main():
         for tool_call in tool_calls:
             print(tool_call.model_dump_json())
 
+        result = await client.call_tool("search", arguments={"query": "半导体行业PE中位数", "entity": "半导体"})
+        print(result)
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -40,7 +40,7 @@ class PromptHandler(BaseContext):
 
                 else:
                     self._data[key] = value
-                    logger.info(f"add prompt_dict key={key}")
+                    logger.debug(f"add prompt_dict key={key}")
         return self
 
     def get_prompt(self, prompt_name: str):

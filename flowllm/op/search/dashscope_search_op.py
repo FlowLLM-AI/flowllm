@@ -18,8 +18,9 @@ class DashscopeSearchOp(BaseAsyncToolOp):
                  model: str = "qwen-plus",
                  search_strategy: str = "max",
                  enable_role_prompt: bool = True,
+                 save_answer: bool = True,
                  **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(save_answer=save_answer, **kwargs)
 
         self.model: str = model
         self.search_strategy: str = search_strategy
