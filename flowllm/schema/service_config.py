@@ -59,14 +59,13 @@ class VectorStoreConfig(BaseModel):
 
 
 class ServiceConfig(BaseModel):
-    app_name: str = Field(default="")
     backend: str = Field(default="")
     enable_logo: bool = Field(default=True)
     language: str = Field(default="")
     thread_pool_max_workers: int = Field(default=16)
     ray_max_workers: int = Field(default=-1)
     import_config: str = Field(default="", description="Import the configuration in the same path as the base")
-    enable_logfile: bool = Field(default=True)
+    init_logger: bool = Field(default=True)
     disabled_flows: List[str] = Field(default_factory=list)
     enabled_flows: List[str] = Field(default_factory=list)
 

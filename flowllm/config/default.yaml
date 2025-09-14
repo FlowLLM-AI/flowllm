@@ -1,7 +1,6 @@
+app_name: FlowLLM
 backend: http
-language: ""
-thread_pool_max_workers: 64
-ray_max_workers: 1
+thread_pool_max_workers: 128
 
 mcp:
   transport: sse
@@ -11,39 +10,16 @@ mcp:
 http:
   host: "0.0.0.0"
   port: 8001
-  timeout_keep_alive: 600
-  limit_concurrency: 64
 
-flow:
-  llm_flow:
-    flow_content: simple_llm_op
-    stream: false
-    use_async: true
-    service_type: http
-    description: "llm_flow"
-    input_schema:
-      query:
-        type: string
-        description: "user query"
-        required: true
-
-  llm_flow_stream:
-    flow_content: stream_llm_op
-    stream: true
-    use_async: true
-    service_type: http
-    description: "llm_flow"
-    input_schema:
-      query:
-        type: string
-        description: "user query"
-        required: true
-
-op:
-  mock1_op:
-    backend: mock1_op
-    llm: default
-    vector_store: default
+#flow:
+#  llm_flow:
+#    flow_content: simple_llm_op
+#    stream: false
+#
+#  llm_flow_stream:
+#    flow_content: stream_llm_op
+#    stream: true
+#    use_async: true
 
 llm:
   default:

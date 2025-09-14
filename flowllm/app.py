@@ -5,15 +5,20 @@ from typing import List
 
 from loguru import logger
 
+from flowllm.utils.common_utils import load_env
+
+load_env()
+
 from flowllm.client.mcp_client import McpClient
 from flowllm.config.pydantic_config_parser import PydanticConfigParser
 from flowllm.context import C
 from flowllm.enumeration.registry_enum import RegistryEnum
-from flowllm.flow import BaseFlow
+from flowllm.flow.base_flow import BaseFlow
 from flowllm.flow.expression_tool_flow import ExpressionToolFlow
 from flowllm.schema.flow_stream_chunk import FlowStreamChunk
 from flowllm.schema.service_config import EmbeddingModelConfig, ServiceConfig
 from flowllm.service.base_service import BaseService
+from flowllm.utils.logger_utils import init_logger
 
 
 class FlowLLMApp:
@@ -38,6 +43,9 @@ class FlowLLMApp:
                 args = []
 
             self.service_config = parser(ServiceConfig).parse_args(*args)
+
+        if self.service_config.init_logger:
+            init_logger()
 
     async def __aenter__(self):
         await self.async_start()
@@ -76,7 +84,8 @@ class FlowLLMApp:
             for mcp_server_info in await asyncio.gather(*coro_list):
                 C.external_mcp_tool_call_dict[mcp_server_info["name"]] = mcp_server_info["tool_calls"]
 
-        # add language & thread_pool & ray
+        # add service_config & language & thread_pool & ray
+        C.service_config = self.service_config
         C.language = self.service_config.language
         C.thread_pool = ThreadPoolExecutor(max_workers=self.service_config.thread_pool_max_workers)
         if self.service_config.ray_max_workers > 1:
@@ -100,7 +109,6 @@ class FlowLLMApp:
 
             flow: BaseFlow = flow_cls()
             C.flow_dict[flow.name] = flow
-            logger.info(f"add cls flow: {flow.name}")
 
         # add expression flow
         for name, flow_config in self.service_config.flow.items():
@@ -110,7 +118,6 @@ class FlowLLMApp:
             flow_config.name = name
             flow: BaseFlow = ExpressionToolFlow(flow_config=flow_config)
             C.flow_dict[name] = flow
-            logger.info(f"add expression flow: {name}")
 
     async def async_stop(self, wait_thread_pool=True, wait_ray: bool = True):
         C.thread_pool.shutdown(wait=wait_thread_pool)

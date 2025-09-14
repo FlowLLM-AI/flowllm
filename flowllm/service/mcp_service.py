@@ -1,3 +1,5 @@
+import os
+
 from fastmcp import FastMCP
 from fastmcp.tools import FunctionTool
 
@@ -12,7 +14,7 @@ class MCPService(BaseService):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.mcp = FastMCP(name=self.service_config.app_name)
+        self.mcp = FastMCP(name=os.environ["FLOW_APP_NAME"])
 
     def integrate_tool_flow(self, flow: BaseToolFlow) -> bool:
         request_model = create_pydantic_model(flow.name, flow.tool_call.input_schema)
@@ -24,8 +26,8 @@ class MCPService(BaseService):
         # add tool
         tool_call_schema = flow.tool_call.simple_input_dump()
         parameters = tool_call_schema[tool_call_schema["type"]]["parameters"]
-        tool = FunctionTool(name=tool_flow.name,  # noqa
-                            description=tool_flow.tool_call.description,  # noqa
+        tool = FunctionTool(name=flow.name,  # noqa
+                            description=flow.tool_call.description,  # noqa
                             fn=execute_tool,
                             parameters=parameters)
 

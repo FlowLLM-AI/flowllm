@@ -1,3 +1,5 @@
+import os
+
 from pyfiglet import Figlet
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -10,7 +12,7 @@ def print_logo(service_config, width: int = 400):
     assert isinstance(service_config, ServiceConfig)
 
     f = Figlet(font="slant", width=width)
-    logo: str = f.renderText(service_config.app_name)
+    logo: str = f.renderText(os.environ["FLOW_APP_NAME"])
     logo_text = Text(logo, style="bold green")
 
     info_table = Table.grid(padding=(0, 1))
@@ -31,13 +33,18 @@ def print_logo(service_config, width: int = 400):
     info_table.add_row("", "", "")
     import flowllm
     info_table.add_row("🚀", "FlowLLM version:", Text(flowllm.__version__, style="dim white", no_wrap=True))
-    import fastmcp
-    info_table.add_row("📚", "FastMCP version:", Text(fastmcp.__version__, style="dim white", no_wrap=True))
+
+    if service_config.backend == "http":
+        import fastapi
+        info_table.add_row("📚", "FastAPI version:", Text(fastapi.__version__, style="dim white", no_wrap=True))
+    elif service_config.backend == "mcp":
+        import fastmcp
+        info_table.add_row("📚", "FastMCP version:", Text(fastmcp.__version__, style="dim white", no_wrap=True))
     panel_content = Group(logo_text, "", info_table)
 
     panel = Panel(
         panel_content,
-        title=service_config.app_name,
+        title=os.environ["FLOW_APP_NAME"],
         title_align="left",
         border_style="dim",
         padding=(1, 4),

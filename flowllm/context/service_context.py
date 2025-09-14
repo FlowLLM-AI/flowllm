@@ -1,3 +1,4 @@
+import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
@@ -30,7 +31,7 @@ class ServiceContext(BaseContext):
 
     def register(self, name: str, register_type: RegistryEnum, register_app: str = ""):
         if register_app:
-            add_cls = register_app == self.service_config.app_name
+            add_cls = register_app == os.environ["FLOW_APP_NAME"]
         else:
             add_cls: bool = True
         return self.registry_dict[register_type].register(name=name, add_cls=add_cls)

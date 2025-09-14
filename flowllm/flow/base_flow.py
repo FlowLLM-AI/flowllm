@@ -72,9 +72,10 @@ class BaseFlow(ABC):
 
         else:
             logger.info(f"{prefix}Operation: {op.name}")
-            for i, sub_op in enumerate(op.ops):
-                logger.info(f"{prefix} Sub {i + 1}:")
-                self._print_operation_tree(sub_op, indent + 2)
+            if op.ops:
+                for i, sub_op in enumerate(op.ops):
+                    logger.info(f"{prefix} Sub {i + 1}:")
+                    self._print_operation_tree(sub_op, indent + 2)
 
     async def async_call(self, **kwargs) -> Union[FlowResponse | FlowStreamChunk | None]:
         self.print_flow()

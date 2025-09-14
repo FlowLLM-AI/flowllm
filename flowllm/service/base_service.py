@@ -41,4 +41,7 @@ class BaseService(ABC):
         if self.enable_logo:
             print_logo(service_config=self.service_config)
 
+        import warnings
+
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
         ...

@@ -4,7 +4,7 @@ from flowllm.op.mock_op import Mock1Op, Mock2Op, Mock3Op, Mock4Op, Mock5Op, Mock
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
 
 
-@C.register_flow()
+@C.register_flow(register_app="FlowLLM")
 class MockToolFlow(BaseToolFlow):
 
     def __init__(self, stream: bool = False, **kwargs):
@@ -36,7 +36,7 @@ class MockToolFlow(BaseToolFlow):
         })
 
 
-@C.register_flow()
+@C.register_flow(register_app="FlowLLM")
 class MockAsyncToolFlow(BaseToolFlow):
 
     def __init__(self, stream: bool = False, **kwargs):

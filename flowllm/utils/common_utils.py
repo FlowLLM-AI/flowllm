@@ -51,7 +51,7 @@ def load_env(path: str | Path = None):
         for i in range(5):
             path = Path("../" * i + ".env")
             if path.exists():
-                logger.info(f"using path={path}")
+                logger.info(f"load env_path={path}")
                 _load_env(path)
                 return
 

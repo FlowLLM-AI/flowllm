@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import AsyncGenerator
 
 import uvicorn
@@ -20,7 +21,7 @@ class HttpService(BaseService):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.app = FastAPI(title=self.service_config.app_name)
+        self.app = FastAPI(title=os.environ["FLOW_APP_NAME"])
         self.app.add_middleware(CORSMiddleware,
                                 allow_origins=["*"],
                                 allow_credentials=True,
