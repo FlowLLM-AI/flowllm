@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import uuid
 from datetime import datetime
@@ -6,8 +7,15 @@ from datetime import datetime
 import requests
 import streamlit as st
 
+from flowllm.utils.common_utils import load_env
+
+if not os.getenv("FLOW_APP_NAME"):
+    load_env()
+
+APP_NAME: str = os.environ["FLOW_APP_NAME"]
+
 st.set_page_config(
-    page_title="FlowLLM Chat",
+    page_title=f"{APP_NAME} Chat",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -383,7 +391,7 @@ with st.sidebar:
             st.caption(f"Created: {conv_data['created_at'].strftime('%m-%d %H:%M')}")
             st.markdown("---")
 
-st.markdown('<h1 class="main-header">FlowLLM Chat</h1>', unsafe_allow_html=True)
+st.markdown(f'<h1 class="main-header">{APP_NAME} Chat</h1>', unsafe_allow_html=True)
 
 if not st.session_state.current_conversation_id:
     create_new_conversation()

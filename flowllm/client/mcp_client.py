@@ -37,20 +37,23 @@ class McpClient:
             streams = await self._exit_stack.enter_async_context(stdio_client(server_params))
 
         else:
-            if self.config.get("type") in ["streamable_http", "streamableHttp"]:
-                streams = await self._exit_stack.enter_async_context(streamablehttp_client(
-                    url=self.config["url"],
-                    headers=self.config.get("headers"),
-                    timeout=self.config.get("timeout", 30),
-                    sse_read_timeout=self.config.get("sse_read_timeout", 300)))
-                streams = (streams[0], streams[1])
+            kwargs = {"url": self.config["url"]}
+            if self.config.get("headers"):
+                headers = self.config.get("headers")
+                if headers.get("Authorization"):
+                    assert isinstance(headers["Authorization"], str)
+                    headers["Authorization"] = headers["Authorization"].format(**os.environ)
+                kwargs["headers"] = headers
+            if "timeout" in self.config:
+                kwargs["timeout"] = self.config["timeout"]
+            if "sse_read_timeout" in self.config:
+                kwargs["sse_read_timeout"] = self.config["sse_read_timeout"]
 
+            if self.config.get("type") in ["streamable_http", "streamableHttp"]:
+                streams = await self._exit_stack.enter_async_context(streamablehttp_client(**kwargs))
+                streams = (streams[0], streams[1])
             else:
-                streams = await self._exit_stack.enter_async_context(sse_client(
-                    url=self.config["url"],
-                    headers=self.config.get("headers"),
-                    timeout=self.config.get("timeout", 30),
-                    sse_read_timeout=self.config.get("sse_read_timeout", 300)))
+                streams = await self._exit_stack.enter_async_context(sse_client(**kwargs))
 
         session = await self._exit_stack.enter_async_context(ClientSession(*streams))
         await session.initialize()
@@ -97,22 +100,13 @@ class McpClient:
 async def main():
     config = {
         "type": "sse",
-        # "url": "https://dashscope.aliyuncs.com/api/v1/mcps/finance-spirit/sse",
-        "url": "https://dashscope.aliyuncs.com/api/v1/mcps/Gfsecurities-lhb/sse",
-        "headers": {
-            "Authorization": "Bearer sk-36ab308b8d2e4699b04af3a97cd1d5e6"
-        }
+        "url": "http://11.160.132.45:8010/sse",
+        "headers": {}
     }
-    # config = {
-    #     "type": "sse",
-    #     "url": "http://11.160.132.45:8010/sse",
-    #     "headers": {}
-    # }
     async with McpClient("mcp", config) as client:
         tool_calls = await client.list_tool_calls()
         for tool_call in tool_calls:
             print(tool_call.model_dump_json())
-        # result = await client.call_tool()
 
 
 if __name__ == "__main__":

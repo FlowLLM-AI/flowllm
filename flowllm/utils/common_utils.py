@@ -56,6 +56,3 @@ def load_env(path: str | Path = None):
                 return
 
         logger.warning(".env not found")
-
-
-

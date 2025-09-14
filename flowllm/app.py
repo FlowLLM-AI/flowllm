@@ -5,10 +5,6 @@ from typing import List
 
 from loguru import logger
 
-from flowllm.utils.common_utils import load_env
-
-load_env()
-
 from flowllm.client.mcp_client import McpClient
 from flowllm.config.pydantic_config_parser import PydanticConfigParser
 from flowllm.context import C
@@ -182,7 +178,7 @@ class FlowLLMApp:
 
 
 def main():
-    with FlowLLMApp(*sys.argv[1:]) as app:
+    with FlowLLMApp(args=sys.argv[1:]) as app:
         app.run_service()
 
 

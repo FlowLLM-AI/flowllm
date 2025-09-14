@@ -1,6 +1,6 @@
 from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.op.mock_op import Mock1Op, Mock2Op, Mock3Op, Mock4Op, Mock5Op, Mock6Op
+from flowllm.op.gallery.mock_op import Mock1Op, Mock2Op, Mock3Op, Mock4Op, Mock5Op, Mock6Op
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
 
 

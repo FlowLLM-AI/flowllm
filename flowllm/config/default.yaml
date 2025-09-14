@@ -11,15 +11,14 @@ http:
   host: "0.0.0.0"
   port: 8001
 
-#flow:
-#  llm_flow:
-#    flow_content: simple_llm_op
-#    stream: false
-#
-#  llm_flow_stream:
-#    flow_content: stream_llm_op
-#    stream: true
-#    use_async: true
+flow:
+  llm_flow:
+    flow_content: simple_llm_op
+    stream: false
+
+  llm_flow_stream:
+    flow_content: stream_llm_op
+    stream: true
 
 llm:
   default:

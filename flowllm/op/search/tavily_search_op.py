@@ -4,16 +4,16 @@ import os
 from functools import partial
 from typing import Union, List
 
-from flowllm.op.base_tool_op import BaseToolOp
 from loguru import logger
 from tavily import TavilyClient
 
 from flowllm.context import FlowContext, C
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.tool_call import ToolCall
 
 
 @C.register_op()
-class TavilySearchOp(BaseToolOp):
+class TavilySearchOp(BaseAsyncToolOp):
     def __init__(self,
                  max_retries: int = 3,
                  raise_exception: bool = False,
@@ -104,8 +104,6 @@ class TavilySearchOp(BaseToolOp):
         self.set_result(json.dumps(final_result, ensure_ascii=False, indent=2))
 
 async def async_main():
-    C.set_service_config().init_by_service_config()
-
     op = TavilySearchOp()
     context = FlowContext(query="紫金怎么样？雪球")
     await op.async_call(context=context)

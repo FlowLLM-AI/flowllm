@@ -2,16 +2,16 @@ import asyncio
 import sys
 from io import StringIO
 
-from flowllm.op.base_tool_op import BaseToolOp
 from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.tool_call import ToolCall
 
 
-@C.register_op()
-class ExecuteCodeOp(BaseToolOp):
+@C.register_op(register_app="FlowLLM")
+class ExecuteCodeOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -37,28 +37,8 @@ class ExecuteCodeOp(BaseToolOp):
         redirected_output = sys.stdout = StringIO()
 
         try:
-            code_key: str = self.op_params.get("code_key", "code")
-            code_str: str = self.context[code_key]
-            exec(code_str)
-            code_result = redirected_output.getvalue()
-
-        except Exception as e:
-            logger.info(f"{self.name} encounter exception! error={e.args}")
-            code_result = str(e)
-
-        sys.stdout = old_stdout
-        self.output_dict[self.output_keys] = code_result
-
-    async def async_execute(self):
-        old_stdout = sys.stdout
-        redirected_output = sys.stdout = StringIO()
-
-        try:
-            code_key: str = self.op_params.get("code_key", "code")
-            code_str: str = self.context[code_key]
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(C.thread_pool, lambda: exec(code_str))  # noqa
-
+            code: str = self.input_dict["code"]
+            exec(code)
             code_result = redirected_output.getvalue()
 
         except Exception as e:
@@ -68,9 +48,13 @@ class ExecuteCodeOp(BaseToolOp):
         sys.stdout = old_stdout
         self.set_result(code_result)
 
+    async def async_execute(self):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(C.thread_pool, lambda: self.execute())
+
+
 
 async def async_main():
-    C.set_service_config().init_by_service_config()
     op = ExecuteCodeOp()
 
     context = FlowContext(code="print('Hello World')")
