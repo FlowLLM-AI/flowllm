@@ -12,7 +12,7 @@ from flowllm.flow.gallery.streaming_example_flow import StreamingExampleFlow
 def test_streaming_example():
     """测试流式输出示例"""
     # 注册流式输出示例流程
-    C.register_tool_flow("streaming_example")(StreamingExampleFlow())
+    C.register_flow("streaming_example")(StreamingExampleFlow())
     
     # 在单独的线程中启动HTTP服务
     service = BaseService.get_service("config=default")

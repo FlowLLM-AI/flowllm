@@ -12,7 +12,7 @@ T = TypeVar('T', bound=BaseModel)
 
 class PydanticConfigParser(Generic[T]):
     current_file: str = __file__
-    default_config_name: str = ""
+    default_config_name: str = "default"
 
     """
     Pydantic Configuration Parser
@@ -202,7 +202,7 @@ class PydanticConfigParser(Generic[T]):
         config_path = Path(self.current_file).parent / config
         if not config_path.exists():
             config_path = Path(config)
-        logger.info(f"flowllm using config={config_path}")
+        logger.info(f"load config={config_path}")
 
         yaml_config = self.load_from_yaml(config_path)
 

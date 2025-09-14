@@ -31,12 +31,11 @@ class BaseContext:
         return f"{self.__class__.__name__}({self._data!r})"
 
     def dump(self) -> dict:
-        return self._data
+        return {**self._data}
 
     def get(self, key: str, default=None):
         return self._data.get(key, default)
 
-    @property
     def keys(self):
         return self._data.keys()
 
@@ -63,7 +62,7 @@ if __name__ == "__main__":
     ctx["email"] = "alice@example.com"
     print(ctx.email)
 
-    print(ctx.keys)
+    print(ctx.keys())
     print(ctx)
 
     # print(ctx.city2)

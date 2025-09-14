@@ -1,12 +1,21 @@
-import streamlit as st
-import requests
 import json
+import os
+import time
 import uuid
 from datetime import datetime
-import time
+
+import requests
+import streamlit as st
+
+from flowllm.utils.common_utils import load_env
+
+if not os.getenv("FLOW_APP_NAME"):
+    load_env()
+
+APP_NAME: str = os.environ["FLOW_APP_NAME"]
 
 st.set_page_config(
-    page_title="FlowLLM Chat",
+    page_title=f"{APP_NAME} Chat",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -236,7 +245,7 @@ def get_conversation_title(messages):
     return "New Conversation"
 
 
-def render_chunk_content(chunk_type, content, chunk_id=None, is_collapsible=True):
+def render_chunk_content(chunk_type, content, is_collapsible=True):
     """Render different chunk types with appropriate styling using Streamlit components"""
     
     chunk_icons = {
@@ -382,7 +391,7 @@ with st.sidebar:
             st.caption(f"Created: {conv_data['created_at'].strftime('%m-%d %H:%M')}")
             st.markdown("---")
 
-st.markdown('<h1 class="main-header">FlowLLM Chat</h1>', unsafe_allow_html=True)
+st.markdown(f'<h1 class="main-header">{APP_NAME} Chat</h1>', unsafe_allow_html=True)
 
 if not st.session_state.current_conversation_id:
     create_new_conversation()
@@ -428,7 +437,6 @@ with chat_container:
                             render_chunk_content(
                                 chunk.get('type', 'answer'), 
                                 chunk.get('content', ''),
-                                chunk_id,
                                 is_collapsible=True
                             )
                     
@@ -511,9 +519,8 @@ if user_input and user_input.strip():
                         if current_chunks[c_type].strip():
                             chunk_id = f"streaming_{len(current_conv['messages'])}_{c_type}"
                             render_chunk_content(
-                                c_type, 
-                                current_chunks[c_type], 
-                                chunk_id,
+                                c_type,
+                                current_chunks[c_type],
                                 is_collapsible=False  # Don't make collapsible during streaming
                             )
                 

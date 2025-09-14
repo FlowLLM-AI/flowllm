@@ -10,6 +10,7 @@ from flowllm.schema.service_config import OpConfig
 class ExpressionParser:
     SEQ_SYMBOL = ">>"
     PARALLEL_SYMBOL = "|"
+    # TODO add <<
 
     """
     Simple flow implementation that supports parsing operation expressions.
@@ -139,36 +140,42 @@ class ExpressionParser:
 
     @staticmethod
     def _create_op(op_name: str) -> BaseOp:
-        if op_name in C.service_config.op:
-            op_config: OpConfig = C.service_config.op[op_name]
-        else:
-            op_config: OpConfig = OpConfig()
-
-        if op_config.backend in C.registry_dict["op"]:
-            op_cls = C.resolve_op(op_config.backend)
-
-        elif op_name in C.registry_dict["op"]:
-            op_cls = C.resolve_op(op_name)
+        if op_name.startswith("mcp@"):
+            _, mcp_name, tool_name = op_name.split("@")
+            from flowllm.op.base_mcp_op import BaseMcpOp
+            return BaseMcpOp(mcp_name=mcp_name.strip(), tool_name=tool_name.strip())
 
         else:
-            raise ValueError(f"op='{op_name}' is not registered!")
+            if op_name in C.service_config.op:
+                op_config: OpConfig = C.service_config.op[op_name]
+            else:
+                op_config: OpConfig = OpConfig()
 
-        kwargs = {
-            "name": op_name,
-            "max_retries": op_config.max_retries,
-            "raise_exception": op_config.raise_exception,
-            **op_config.params
-        }
+            if op_config.backend in C.registry_dict["op"]:
+                op_cls = C.get_op_class(op_config.backend)
 
-        if op_config.language:
-            kwargs["language"] = op_config.language
-        if op_config.prompt_path:
-            kwargs["prompt_path"] = op_config.prompt_path
-        if op_config.llm:
-            kwargs["llm"] = op_config.llm
-        if op_config.embedding_model:
-            kwargs["embedding_model"] = op_config.embedding_model
-        if op_config.vector_store:
-            kwargs["vector_store"] = op_config.vector_store
+            elif op_name in C.registry_dict["op"]:
+                op_cls = C.get_op_class(op_name)
 
-        return op_cls(**kwargs)
+            else:
+                raise ValueError(f"op='{op_name}' is not registered!")
+
+            kwargs = {
+                "name": op_name,
+                "max_retries": op_config.max_retries,
+                "raise_exception": op_config.raise_exception,
+                **op_config.params
+            }
+
+            if op_config.language:
+                kwargs["language"] = op_config.language
+            if op_config.prompt_path:
+                kwargs["prompt_path"] = op_config.prompt_path
+            if op_config.llm:
+                kwargs["llm"] = op_config.llm
+            if op_config.embedding_model:
+                kwargs["embedding_model"] = op_config.embedding_model
+            if op_config.vector_store:
+                kwargs["vector_store"] = op_config.vector_store
+
+            return op_cls(**kwargs)

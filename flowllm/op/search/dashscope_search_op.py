@@ -6,20 +6,13 @@ import dashscope
 from loguru import logger
 
 from flowllm.context import FlowContext, C
-from flowllm.op.base_tool_op import BaseToolOp
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.tool_call import ToolCall
 
 
 @C.register_op()
-class DashscopeSearchOp(BaseToolOp):
+class DashscopeSearchOp(BaseAsyncToolOp):
     file_path: str = __file__
-
-    """
-    Dashscope search operation using Alibaba's Qwen model with search capabilities.
-
-    This operation performs web search using Dashscope's Generation API with search enabled.
-    It extracts search results and provides formatted responses with citations.
-    """
 
     def __init__(self,
                  model: str = "qwen-plus",
@@ -117,8 +110,6 @@ class DashscopeSearchOp(BaseToolOp):
 
 
 async def async_main():
-    C.set_service_config().init_by_service_config()
-
     op = DashscopeSearchOp()
     context = FlowContext(query="what is AI?")
     await op.async_call(context=context)

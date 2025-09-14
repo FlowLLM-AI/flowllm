@@ -1,38 +1,47 @@
 backend: mcp
-import_config: base
+import_config: default
 enabled_flows:
-  - get_a_stock_infos
-  - get_a_stock_news
+  #  - get_a_stock_infos
+  #  - get_a_stock_news
   - ant_search
   - ant_investment
-  - tavily_search_tool_flow
-  - dashscope_search_tool_flow
+  - tavily_search
+  - dashscope_search
 
 flow:
-  get_a_stock_infos:
-    flow_content: get_ak_a_code_op >> get_ak_a_info_op >> get_ak_a_spot_op >> get_ak_a_money_flow_op >> get_ak_a_financial_info_op >> merge_ak_a_info_op
-    stream: false
-    use_async: false
-    service_type: http+mcp
-    description: "Retrieve the A-share stock codes from the query, and fetch information about these stocks, including company basic information, current stock price and its change percentage, capital inflow and outflow data for the most recent day, and financial information from the latest quarter."
-    input_schema:
-      query:
-        type: string
-        description: "user question"
+  #  get_a_stock_infos:
+  #    flow_content: get_ak_a_code_op >> get_ak_a_info_op >> get_ak_a_spot_op >> get_ak_a_money_flow_op >> get_ak_a_financial_info_op >> merge_ak_a_info_op
+  #    stream: false
+  #    description: "Retrieve the A-share stock codes from the query, and fetch information about these stocks, including company basic information, current stock price and its change percentage, capital inflow and outflow data for the most recent day, and financial information from the latest quarter."
+  #    input_schema:
+  #      query:
+  #        type: string
+  #        description: "user question"
 
-  get_a_stock_news:
-    flow_content: get_ak_a_code_op >> get_ak_a_news_op >> merge_ak_a_info_op
-    stream: false
-    use_async: false
-    service_type: http+mcp
-    description: "Retrieve the A-share stock codes from the query, and obtain the latest news information about these stocks."
-    input_schema:
-      query:
-        type: string
-        description: "user question"
+  #  get_a_stock_news:
+  #    flow_content: get_ak_a_code_op >> get_ak_a_news_op >> merge_ak_a_info_op
+  #    stream: false
+  #    description: "Retrieve the A-share stock codes from the query, and obtain the latest news information about these stocks."
+  #    input_schema:
+  #      query:
+  #        type: string
+  #        description: "user question"
 
   ant_search:
-    flow_content: ant_search_op
+    flow_content: mcp@ant_supply@search
 
   ant_investment:
-    flow_content: ant_investment_op
+    flow_content: mcp@ant_supply@investment_analysis
+
+  tavily_search:
+    flow_content: tavily_search_op
+
+external_mcp:
+  ant_supply:
+    type: sse,
+    url: "http://11.160.132.45:8010/sse"
+  tongxinda:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/tendency-software/sse"
+    headers:
+      Authorization: "Bearer {FLOW_DASHSCOPE_API_KEY}"

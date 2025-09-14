@@ -5,22 +5,12 @@ from mcp.types import Tool
 from pydantic import BaseModel, Field, model_validator
 
 
-class ParamAttrs(BaseModel):
+class ParamAttrs(BaseModel, extra="allow"):
     type: str = Field(default="str", description="tool parameter type")
     description: str = Field(default="", description="tool parameter description")
     required: bool = Field(default=True, description="tool parameter required")
     enum: List[str] | None = Field(default=None, description="tool parameter enum")
 
-    def simple_dump(self) -> dict:
-        result: dict = {
-            "type": self.type,
-            "description": self.description,
-        }
-
-        if self.enum:
-            result["enum"] = self.enum
-
-        return result
 
 class ToolCall(BaseModel):
     """
@@ -96,10 +86,11 @@ class ToolCall(BaseModel):
     def argument_dict(self) -> dict:
         return json.loads(self.arguments)
 
-    def simple_input_dump(self, version: str = "v1") -> dict:
-        if version == "v1":
+    def simple_input_dump(self, version: str = "default") -> dict:
+        if version == "default":
             required_list = [name for name, tool_param in self.input_schema.items() if tool_param.required]
-            properties = {name: tool_param.simple_dump() for name, tool_param in self.input_schema.items()}
+            properties = {name: tool_param.model_dump(exclude={"required"}, exclude_none=True) \
+                          for name, tool_param in self.input_schema.items()}
 
             return {
                 "type": self.type,
@@ -117,8 +108,8 @@ class ToolCall(BaseModel):
         else:
             raise NotImplementedError(f"version {version} not supported")
 
-    def simple_output_dump(self, version: str = "v1") -> dict:
-        if version == "v1":
+    def simple_output_dump(self, version: str = "default") -> dict:
+        if version == "default":
             return {
                 "index": self.index,
                 "id": self.id,
@@ -135,7 +126,7 @@ class ToolCall(BaseModel):
     def from_mcp_tool(cls, tool: Tool) -> "ToolCall":
         input_schema = {}
         properties = tool.inputSchema["properties"]
-        required = tool.inputSchema["required"]
+        required = tool.inputSchema.get("required", [])
         for name, attr_dict in properties.items():
             param_attrs = ParamAttrs()
 
@@ -151,6 +142,8 @@ class ToolCall(BaseModel):
                    description=tool.description,
                    input_schema=input_schema)
 
+    def to_mcp_tool(self) -> Tool:
+        raise NotImplementedError
 
 def main():
     data = {

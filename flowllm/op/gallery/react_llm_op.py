@@ -8,13 +8,13 @@ from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
-from flowllm.op import BaseToolOp
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.message import Message, Role
 from flowllm.schema.tool_call import ToolCall
 
 
-@C.register_op(name="react_llm_op")
-class ReactLLMOp(BaseToolOp):
+@C.register_op(register_app="FlowLLM")
+class ReactLLMOp(BaseAsyncToolOp):
     file_path: str = __file__
 
     def __init__(self, llm: str = "qwen3_30b_instruct", save_answer: bool = True, **kwargs):
@@ -43,11 +43,10 @@ class ReactLLMOp(BaseToolOp):
         query: str = self.input_dict["query"]
 
         max_steps: int = int(self.op_params.get("max_steps", 10))
-        from flowllm.op import BaseToolOp
         from flowllm.op.search import DashscopeSearchOp
 
-        tools: List[BaseToolOp] = [DashscopeSearchOp()]
-        tool_dict: Dict[str, BaseToolOp] = {x.tool_call.name: x for x in tools}
+        tools: List[BaseAsyncToolOp] = [DashscopeSearchOp()]
+        tool_dict: Dict[str, BaseAsyncToolOp] = {x.tool_call.name: x for x in tools}
         for name, tool_call in tool_dict.items():
             logger.info(f"name={name} "
                         f"tool_call={json.dumps(tool_call.tool_call.simple_input_dump(), ensure_ascii=False)}")
@@ -70,7 +69,7 @@ class ReactLLMOp(BaseToolOp):
             if not assistant_message.tool_calls:
                 break
 
-            op_list: List[BaseToolOp] = []
+            op_list: List[BaseAsyncToolOp] = []
             for j, tool_call in enumerate(assistant_message.tool_calls):
                 logger.info(f"submit step={i} tool_calls.name={tool_call.name} argument_dict={tool_call.argument_dict}")
 
@@ -95,13 +94,14 @@ class ReactLLMOp(BaseToolOp):
         self.context.response.messages = messages
 
 async def main():
-    C.set_service_config().init_by_service_config()
-    context = FlowContext(query="茅台和五粮现在股价多少？")
+    from flowllm.app import FlowLLMApp
+    async with FlowLLMApp(load_default_config=True):
+        context = FlowContext(query="茅台和五粮现在股价多少？")
 
-    op = ReactLLMOp()
-    result = await op.async_call(context=context)
-    print(result)
-    print(op.output)
+        op = ReactLLMOp()
+        result = await op.async_call(context=context)
+        print(result)
+        print(op.output)
 
 
 if __name__ == "__main__":

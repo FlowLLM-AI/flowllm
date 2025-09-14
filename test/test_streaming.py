@@ -13,7 +13,7 @@ def test_streaming_response():
     """Test streaming response from HTTP service"""
     # Register streaming mock tool flow
     mock_flow = StreamingMockFlow()
-    C.register_tool_flow("streaming_mock")(mock_flow)
+    C.register_flow("streaming_mock")(mock_flow)
     
     # Start HTTP service in a separate thread
     import threading

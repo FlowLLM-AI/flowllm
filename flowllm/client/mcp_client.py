@@ -1,139 +1,113 @@
-from typing import Dict, Any, List, Optional
+import asyncio
+import os
+import shutil
+from contextlib import AsyncExitStack
+from typing import Any, List
 
-from fastmcp import Client
+import mcp.types
 from loguru import logger
-from mcp.types import CallToolResult, Tool
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.sse import sse_client
+from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 
 from flowllm.schema.tool_call import ToolCall
 
 
-class MCPClient:
-    """Client for interacting with FlowLLM MCP service"""
+class McpClient:
 
-    def __init__(self, transport: str = "sse", host: str = "0.0.0.0", port: int = 8001):
-        """
-        Initialize MCP client
-        
-        Args:
-            transport: Transport type ("sse" or "stdio")
-            host: Host address for SSE transport
-            port: Port number for SSE transport
-        """
-        self.transport = transport
-        self.host = host
-        self.port = port
+    def __init__(self, name: str, config: dict[str, Any], append_env: bool = False) -> None:
+        self.name: str = name
+        self.config: dict[str, Any] = config
+        self.append_env: bool = append_env
+        self.session: ClientSession | None = None
+        self._exit_stack: AsyncExitStack = AsyncExitStack()
 
-        # Configure connection URL based on transport type
-        if transport == "sse":
-            # Server-Sent Events transport over HTTP
-            self.connection_url = f"http://{host}:{port}/sse/"
-        elif transport == "stdio":
-            # Standard input/output transport for local processes
-            self.connection_url = "stdio"
+    async def __aenter__(self) -> "McpClient":
+        command = shutil.which("npx") if self.config.get("command") == "npx" else self.config.get("command")
+
+        if command:
+            env_params: dict = {}
+            if self.append_env:
+                env_params.update(os.environ)
+            if self.config.get("env"):
+                env_params.update(self.config["env"])
+
+            server_params = StdioServerParameters(command=command, args=self.config.get("args", []), env=env_params)
+            streams = await self._exit_stack.enter_async_context(stdio_client(server_params))
+
         else:
-            raise ValueError(f"Unsupported transport: {transport}")
+            kwargs = {"url": self.config["url"]}
+            if self.config.get("headers"):
+                headers = self.config.get("headers")
+                if headers.get("Authorization"):
+                    assert isinstance(headers["Authorization"], str)
+                    headers["Authorization"] = headers["Authorization"].format(**os.environ)
+                kwargs["headers"] = headers
+            if "timeout" in self.config:
+                kwargs["timeout"] = self.config["timeout"]
+            if "sse_read_timeout" in self.config:
+                kwargs["sse_read_timeout"] = self.config["sse_read_timeout"]
 
-        self.client: Client | None = None  # MCP client instance, initialized on connect
+            if self.config.get("type") in ["streamable_http", "streamableHttp"]:
+                streams = await self._exit_stack.enter_async_context(streamablehttp_client(**kwargs))
+                streams = (streams[0], streams[1])
+            else:
+                streams = await self._exit_stack.enter_async_context(sse_client(**kwargs))
 
-    async def __aenter__(self):
-        """Async context manager entry - automatically connects to MCP service"""
-        await self.connect()
+        session = await self._exit_stack.enter_async_context(ClientSession(*streams))
+        await session.initialize()
+        self.session = session
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit - ensures proper cleanup and disconnection"""
-        await self.disconnect()
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await self._exit_stack.aclose()
+        self.session = None
 
-    async def connect(self):
-        """
-        Establish connection to the MCP service
-        
-        Creates and initializes the MCP client based on the configured transport type.
-        For stdio transport, connects to a local process. For SSE transport, connects
-        to the HTTP endpoint.
-        
-        Raises:
-            ConnectionError: If unable to connect to the MCP service
-        """
-        if self.transport == "stdio":
-            self.client = Client("stdio")  # Connect to stdio-based MCP server
-        else:
-            self.client = Client(self.connection_url)  # Connect to HTTP-based MCP server
+    async def list_tools(self) -> List[mcp.types.Tool]:
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
 
-        await self.client.__aenter__()  # Initialize the client connection
-        logger.info(f"Connected to MCP service at {self.connection_url}")
-
-    async def disconnect(self):
-        """
-        Disconnect from the MCP service and clean up resources
-        
-        Safely closes the MCP client connection and resets the client instance.
-        """
-        if self.client:
-            await self.client.__aexit__(None, None, None)  # Properly close the client connection
-            self.client = None  # Reset client reference
-
-    async def list_tools(self) -> List[Tool]:
-        """
-        Retrieve list of available tools from the MCP service
-        
-        Returns:
-            List of Tool objects representing available MCP tools
-            
-        Raises:
-            RuntimeError: If client is not connected
-            ConnectionError: If communication with MCP service fails
-        """
-        if not self.client:
-            raise RuntimeError("Client not connected. Call connect() first or use context manager.")
-        
-        tools = await self.client.list_tools()
-        logger.info(f"Found {len(tools)} available tools")
+        tools_response = await self.session.list_tools()
+        tools = [tool for item in tools_response if isinstance(item, tuple) and item[0] == "tools" for tool in item[1]]
         return tools
 
-    async def list_tool_calls(self) -> List[dict]:
+    async def list_tool_calls(self) -> List[ToolCall]:
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
+
         tools = await self.list_tools()
-        return [ToolCall.from_mcp_tool(t).simple_input_dump() for t in tools]
+        return [ToolCall.from_mcp_tool(t) for t in tools]
 
-    async def get_tool(self, tool_name: str) -> Optional[Tool]:
-        """
-        Get a specific tool by name from the MCP service
-        
-        Args:
-            tool_name: Name of the tool to retrieve
-            
-        Returns:
-            Tool object if found, None otherwise
-            
-        Raises:
-            RuntimeError: If client is not connected
-            ConnectionError: If communication with MCP service fails
-        """
-        tools = await self.list_tools()  # Get all available tools
-        
-        # Search for the requested tool by name
-        for tool in tools:
-            if tool.name == tool_name:
-                return tool
-        return None  # Tool not found
+    async def call_tool(self, tool_name: str, arguments: dict, retries: int = 3, delay: float = 0.1):
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> CallToolResult:
-        """
-        Execute a tool on the MCP service with the provided arguments
-        
-        Args:
-            tool_name: Name of the tool to execute
-            arguments: Dictionary of arguments to pass to the tool
-            
-        Returns:
-            CallToolResult containing the tool execution results
-            
-        Raises:
-            RuntimeError: If client is not connected
-            ValueError: If tool_name is invalid or arguments are malformed
-            ConnectionError: If communication with MCP service fails
-        """
-        if not self.client:
-            raise RuntimeError("Client not connected. Call connect() first or use context manager.")
-            
-        return await self.client.call_tool(tool_name, arguments=arguments)
+        attempt = 0
+
+        while attempt < retries:
+            result = await self.session.call_tool(tool_name, arguments)
+            if result:
+                return result
+
+            attempt += 1
+            if attempt < retries:
+                logger.warning(f"Tool={tool_name} execution failed. Retry {attempt}/{retries} in {delay}s...")
+                await asyncio.sleep(delay)
+        return None
+
+
+async def main():
+    config = {
+        "type": "sse",
+        "url": "http://11.160.132.45:8010/sse",
+        "headers": {}
+    }
+    async with McpClient("mcp", config) as client:
+        tool_calls = await client.list_tool_calls()
+        for tool_call in tool_calls:
+            print(tool_call.model_dump_json())
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

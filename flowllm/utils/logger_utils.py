@@ -3,7 +3,7 @@ import sys
 from datetime import datetime
 
 
-def init_logger():
+def init_logger(level="INFO"):
     from loguru import logger
     logger.remove()
 
@@ -16,13 +16,13 @@ def init_logger():
     log_filepath = os.path.join(log_dir, log_filename)
 
     logger.add(log_filepath,
-               level="INFO",
+               level=level,
                rotation="00:00",
                retention="7 days",
                compression="zip",
                encoding="utf-8")
 
     logger.add(sink=sys.stdout,
-               level="INFO",
+               level=level,
                format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
                colorize=True)
