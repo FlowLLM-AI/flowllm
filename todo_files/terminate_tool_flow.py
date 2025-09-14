@@ -6,7 +6,7 @@ from flowllm.flow.base_tool_flow import BaseToolFlow
 from flowllm.schema.tool_call import ToolCall
 
 
-@C.register_tool_flow()
+@C.register_flow()
 class TerminateToolFlow(BaseToolFlow):
 
     def build_flow(self):

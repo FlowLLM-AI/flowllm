@@ -30,22 +30,6 @@ class FlowContext(BaseContext):
         await self.stream_queue.put(FlowStreamChunk(flow_id=self.flow_id, chunk_type=chunk_type, chunk=chunk))
         return self
 
-    async def add_stream_answer(self, chunk: str):
-        await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.ANSWER, chunk=chunk)
-        return self
-
-    async def add_stream_think(self, chunk: str):
-        await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.THINK, chunk=chunk)
-        return self
-
-    async def add_stream_tool(self, chunk: str):
-        await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.TOOL, chunk=chunk)
-        return self
-
-    async def add_stream_error(self, e: Exception | str):
-        await self.add_stream_chunk_and_type(chunk_type=ChunkEnum.ERROR, chunk=str(e))
-        return self
-
     async def add_stream_done(self):
         done_chunk = FlowStreamChunk(flow_id=self.flow_id, chunk_type=ChunkEnum.DONE, chunk="", done=True)
         await self.stream_queue.put(done_chunk)

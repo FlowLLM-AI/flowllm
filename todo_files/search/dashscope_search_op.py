@@ -3,10 +3,10 @@ import os
 from typing import Dict, Any, List
 
 import dashscope
+from flowllm.op.base_tool_op import BaseToolOp
 from loguru import logger
 
 from flowllm.context import FlowContext, C
-from flowllm.op.base_tool_op import BaseToolOp
 from flowllm.schema.tool_call import ToolCall
 
 

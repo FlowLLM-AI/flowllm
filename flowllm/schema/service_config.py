@@ -15,7 +15,7 @@ class HttpConfig(BaseModel):
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8001)
     timeout_keep_alive: int = Field(default=3600)
-    limit_concurrency: int = Field(default=64)
+    limit_concurrency: int = Field(default=1000)
 
 
 class CmdConfig(BaseModel):
@@ -25,9 +25,8 @@ class CmdConfig(BaseModel):
 
 class FlowConfig(ToolCall):
     flow_content: str = Field(default="")
-    use_async: bool = Field(default=True)
-    service_type: str = Field(default="http+mcp", description="http+mcp/http/mcp")
     stream: bool = Field(default=False)
+
 
 class OpConfig(BaseModel):
     backend: str = Field(default="")
@@ -60,16 +59,20 @@ class VectorStoreConfig(BaseModel):
 
 
 class ServiceConfig(BaseModel):
+    app_name: str = Field(default="")
     backend: str = Field(default="")
+    enable_logo: bool = Field(default=True)
     language: str = Field(default="")
     thread_pool_max_workers: int = Field(default=16)
-    ray_max_workers: int = Field(default=1)
+    ray_max_workers: int = Field(default=-1)
     import_config: str = Field(default="", description="Import the configuration in the same path as the base")
+    enable_logfile: bool = Field(default=True)
     disabled_flows: List[str] = Field(default_factory=list)
     enabled_flows: List[str] = Field(default_factory=list)
 
     cmd: CmdConfig = Field(default_factory=CmdConfig)
     mcp: MCPConfig = Field(default_factory=MCPConfig)
+    external_mcp: Dict[str, dict] = Field(default_factory=dict, description="External MCP Server config")
     http: HttpConfig = Field(default_factory=HttpConfig)
     flow: Dict[str, FlowConfig] = Field(default_factory=dict)
     op: Dict[str, OpConfig] = Field(default_factory=dict)

@@ -1,26 +1,20 @@
 from flowllm.context.service_context import C
 from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.op.gallery import Mock1Op, Mock2Op, Mock3Op, Mock4Op, Mock5Op, Mock6Op
+from flowllm.op.mock_op import Mock1Op, Mock2Op, Mock3Op, Mock4Op, Mock5Op, Mock6Op
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
 
 
-@C.register_tool_flow()
+@C.register_flow()
 class MockToolFlow(BaseToolFlow):
 
-    def __init__(self,
-                 use_async: bool = False,
-                 stream: bool = False,
-                 service_type: str = "http+mcp",
-                 **kwargs):
-        super().__init__(use_async=use_async, stream=stream, service_type=service_type, **kwargs)
+    def __init__(self, stream: bool = False, **kwargs):
+        super().__init__(stream=stream, **kwargs)
 
     def build_flow(self):
         mock1_op = Mock1Op()
         mock2_op = Mock2Op()
         mock3_op = Mock3Op()
-
-        op = mock1_op >> ((mock2_op >> mock3_op) | mock1_op) >> (mock2_op | mock3_op)
-        return op
+        return mock1_op >> ((mock2_op >> mock3_op) | mock1_op) >> (mock2_op | mock3_op)
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -42,23 +36,17 @@ class MockToolFlow(BaseToolFlow):
         })
 
 
-@C.register_tool_flow()
+@C.register_flow()
 class MockAsyncToolFlow(BaseToolFlow):
 
-    def __init__(self,
-                 use_async: bool = True,
-                 stream: bool = False,
-                 service_type: str = "http+mcp",
-                 **kwargs):
-        super().__init__(use_async=use_async, stream=stream, service_type=service_type, **kwargs)
+    def __init__(self, stream: bool = False, **kwargs):
+        super().__init__(stream=stream, **kwargs)
 
     def build_flow(self):
         mock4_op = Mock4Op()
         mock5_op = Mock5Op()
         mock6_op = Mock6Op()
-
-        op = mock4_op >> ((mock5_op >> mock6_op) | mock4_op) >> (mock5_op | mock6_op)
-        return op
+        return mock4_op >> ((mock5_op >> mock6_op) | mock4_op) >> (mock5_op | mock6_op)
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{

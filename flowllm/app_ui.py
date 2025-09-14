@@ -1,9 +1,10 @@
-import streamlit as st
-import requests
 import json
+import time
 import uuid
 from datetime import datetime
-import time
+
+import requests
+import streamlit as st
 
 st.set_page_config(
     page_title="FlowLLM Chat",
@@ -236,7 +237,7 @@ def get_conversation_title(messages):
     return "New Conversation"
 
 
-def render_chunk_content(chunk_type, content, chunk_id=None, is_collapsible=True):
+def render_chunk_content(chunk_type, content, is_collapsible=True):
     """Render different chunk types with appropriate styling using Streamlit components"""
     
     chunk_icons = {
@@ -428,7 +429,6 @@ with chat_container:
                             render_chunk_content(
                                 chunk.get('type', 'answer'), 
                                 chunk.get('content', ''),
-                                chunk_id,
                                 is_collapsible=True
                             )
                     
@@ -511,9 +511,8 @@ if user_input and user_input.strip():
                         if current_chunks[c_type].strip():
                             chunk_id = f"streaming_{len(current_conv['messages'])}_{c_type}"
                             render_chunk_content(
-                                c_type, 
-                                current_chunks[c_type], 
-                                chunk_id,
+                                c_type,
+                                current_chunks[c_type],
                                 is_collapsible=False  # Don't make collapsible during streaming
                             )
                 
