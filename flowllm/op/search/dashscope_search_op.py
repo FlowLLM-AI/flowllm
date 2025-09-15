@@ -10,7 +10,7 @@ from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.tool_call import ToolCall
 
 
-@C.register_op()
+@C.register_op(register_app="FlowLLM")
 class DashscopeSearchOp(BaseAsyncToolOp):
     file_path: str = __file__
 
@@ -18,9 +18,8 @@ class DashscopeSearchOp(BaseAsyncToolOp):
                  model: str = "qwen-plus",
                  search_strategy: str = "max",
                  enable_role_prompt: bool = True,
-                 save_answer: bool = True,
                  **kwargs):
-        super().__init__(save_answer=save_answer, **kwargs)
+        super().__init__(**kwargs)
 
         self.model: str = model
         self.search_strategy: str = search_strategy

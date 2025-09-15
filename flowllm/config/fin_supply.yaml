@@ -30,22 +30,62 @@ flow:
   #        description: "user question"
 
   ant_search:
-    flow_content: mcp@ant_supply@search
+    flow_content: ant_search_op
 
   ant_investment:
-    flow_content: mcp@ant_supply@investment_analysis
+    flow_content: ant_investment_op
 
   tdx_wenda_quotes:
-    flow_content: mcp@tendency_software@tdx_wenda_quotes
+    flow_content: tdx_wenda_quotes_op
 
   tdx_market_quotes:
-    flow_content: mcp@tendency_software@tdx_PBHQInfo_quotes
+    flow_content: tdx_market_quotes_op
 
   tavily_search:
     flow_content: tavily_search_op
 
   dashscope_search:
     flow_content: dashscope_search_op
+
+
+op:
+  tavily_search_op:
+    backend: tavily_search_op
+    params:
+      save_answer: true
+
+  dashscope_search_op:
+    backend: dashscope_search_op
+    params:
+      save_answer: true
+
+  ant_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: ant_supply
+      tool_name: search
+      clear_required: false
+
+  ant_investment_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: ant_supply
+      tool_name: investment_analysis
+      clear_required: false
+
+  tdx_wenda_quotes_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tendency_software
+      tool_name: tdx_wenda_quotes
+      clear_required: true
+
+  tdx_market_quotes_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tendency_software
+      tool_name: tdx_PBHQInfo_quotes
+      clear_required: true
 
 
 external_mcp:

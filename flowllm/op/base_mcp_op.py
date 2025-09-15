@@ -7,13 +7,14 @@ from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
 
 
+@C.register_op(register_app="FlowLLM")
 class BaseMcpOp(BaseAsyncToolOp):
 
     def __init__(self,
                  mcp_name: str = "",
                  tool_name: str = "",
                  save_answer: bool = True,
-                 clear_required: bool = True,
+                 clear_required: bool = False,
                  **kwargs):
 
         self.mcp_name: str = mcp_name
