@@ -20,8 +20,8 @@ from flowllm.utils.logger_utils import init_logger
 class FlowLLMApp:
 
     def __init__(self,
-                 args: List[str] = None,
                  service_config: ServiceConfig = None,
+                 args: List[str] = None,
                  parser: type[PydanticConfigParser] = None,
                  load_default_config: bool = False):
         if service_config is not None:
@@ -116,12 +116,12 @@ class FlowLLMApp:
             C.flow_dict[name] = flow
 
     async def async_stop(self, wait_thread_pool=True, wait_ray: bool = True):
+        for name, vector_store in C.vector_store_dict.items():
+            await vector_store.async_close()
         C.thread_pool.shutdown(wait=wait_thread_pool)
         if self.service_config.ray_max_workers > 1:
             import ray
             ray.shutdown(_exiting_interpreter=not wait_ray)
-        for name, vector_store in C.vector_store_dict.items():
-            await vector_store.async_close()
 
     def __enter__(self):
         self.start()
@@ -135,12 +135,12 @@ class FlowLLMApp:
         asyncio.run(self.async_start())
 
     def stop(self, wait_thread_pool=True, wait_ray: bool = True):
+        for name, vector_store in C.vector_store_dict.items():
+            vector_store.close()
         C.thread_pool.shutdown(wait=wait_thread_pool)
         if self.service_config.ray_max_workers > 1:
             import ray
             ray.shutdown(_exiting_interpreter=not wait_ray)
-        for name, vector_store in C.vector_store_dict.items():
-            vector_store.close()
 
     @staticmethod
     def execute_flow(name: str, **kwargs):
