@@ -24,7 +24,6 @@ flow:
     stream: true
 
 
-
 op:
   bailian_web_search:
     backend: base_mcp_op
