@@ -56,7 +56,7 @@ class FlowLLMApp:
         async with McpClient(name=name, config=mcp_server_config) as client:
             tool_calls = await client.list_tool_calls()
             for tool_call in tool_calls:
-                logger.info(f"find mcp@{name}@{tool_call.name} {str(tool_call.model_dump_json())[:100]}...")
+                logger.info(f"find mcp@{name}@{tool_call.name} {str(tool_call.model_dump_json())[:200]}...")
 
             return {
                 "name": name,

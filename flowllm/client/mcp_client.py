@@ -84,7 +84,7 @@ class McpClient:
                 break
 
             except Exception as e:
-                logger.warning(f"{self.name} list tools failed. Retry {i}/{self.max_retries} in {1 + i}s...")
+                logger.warning(f"{self.name} list tools failed. Retry {i + 1}/{self.max_retries} in {1 + i}s...")
                 await asyncio.sleep(1 + i)
 
                 if i == self.max_retries - 1:
@@ -99,7 +99,7 @@ class McpClient:
         tools = await self.list_tools()
         return [ToolCall.from_mcp_tool(t) for t in tools]
 
-    async def call_tool(self, tool_name: str, arguments: dict, retries: int = 3, delay: float = 0.1):
+    async def call_tool(self, tool_name: str, arguments: dict):
         if not self.session:
             raise RuntimeError(f"Server {self.name} not initialized")
 
@@ -110,7 +110,8 @@ class McpClient:
                 break
 
             except Exception as e:
-                logger.warning(f"{self.name}.{tool_name} call_tool failed. Retry {attempt}/{retries} in {delay}s...")
+                logger.warning(
+                    f"{self.name}.{tool_name} call_tool failed. Retry {i + 1}/{self.max_retries} in {1 + i}s...")
                 await asyncio.sleep(1 + i)
 
                 if i == self.max_retries - 1:
@@ -125,13 +126,14 @@ async def main():
         "url": "http://11.160.132.45:8010/sse",
         "headers": {}
     }
+
     async with McpClient("mcp", config) as client:
         tool_calls = await client.list_tool_calls()
         for tool_call in tool_calls:
             print(tool_call.model_dump_json())
 
-        result = await client.call_tool("search", arguments={"query": "半导体行业PE中位数", "entity": "半导体"})
-        print(result)
+        # result = await client.call_tool("search", arguments={"query": "半导体行业PE中位数", "entity": "半导体"})
+        # print(result)
 
 if __name__ == "__main__":
     asyncio.run(main())

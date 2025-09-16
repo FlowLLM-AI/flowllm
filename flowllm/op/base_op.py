@@ -139,6 +139,7 @@ class BaseOp(ABC):
     def __lshift__(self, op: "BaseOp"):
         self.check_async(op)
         self.ops = [op]
+        return self
 
     def __rshift__(self, op: "BaseOp"):
         self.check_async(op)

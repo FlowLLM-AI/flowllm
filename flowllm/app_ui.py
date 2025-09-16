@@ -10,7 +10,7 @@ import streamlit as st
 from flowllm.utils.common_utils import load_env
 
 if not os.getenv("FLOW_APP_NAME"):
-    load_env()
+    load_env(enable_log=False)
 
 APP_NAME: str = os.environ["FLOW_APP_NAME"]
 
@@ -265,13 +265,16 @@ def render_chunk_content(chunk_type, content, is_collapsible=True):
     icon = chunk_icons.get(chunk_type, '💬')
     label = chunk_labels.get(chunk_type, 'Response')
     
+    # Convert newlines to HTML line breaks for proper display
+    formatted_content = content.replace('\n', '<br>')
+    
     # Use Streamlit expander for collapsible types (think, error, tool)
     if chunk_type in ['think', 'error', 'tool'] and is_collapsible:
         # Set different default expanded states
         expanded_default = chunk_type == 'error'  # Error expanded by default, others collapsed
         
         with st.expander(f"{icon} {label}", expanded=expanded_default):
-            st.markdown(f'<div class="chunk-content">{content}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="chunk-content">{formatted_content}</div>', unsafe_allow_html=True)
     else:
         # For non-collapsible types (answer) or during streaming - render as HTML
         st.markdown(f"""
@@ -280,7 +283,7 @@ def render_chunk_content(chunk_type, content, is_collapsible=True):
                 <span>{icon} {label}</span>
             </div>
             <div class="chunk-content">
-                {content}
+                {formatted_content}
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -336,6 +339,7 @@ with st.sidebar:
     st.markdown("**🤖 Model Selection**")
     available_models = [
         'llm_flow_stream',
+        'dashscope_deep_research',
         # Add more models here in the future
     ]
     

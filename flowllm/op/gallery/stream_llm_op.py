@@ -63,7 +63,7 @@ async def main():
     from flowllm.app import FlowLLMApp
     async with FlowLLMApp(load_default_config=True):
 
-        context = FlowContext(query="hello, introduce yourself.", stream_queue=asyncio.Queue())
+        context = FlowContext(query="what is ai?", stream_queue=asyncio.Queue())
         op = StreamLLMOp()
         task = asyncio.create_task(op.async_call(context=context))
 

@@ -41,7 +41,7 @@ def _load_env(path: Path):
                 os.environ[key] = value
 
 
-def load_env(path: str | Path = None):
+def load_env(path: str | Path = None, enable_log: bool = True):
     if path is not None:
         path = Path(path)
         if path.exists():
@@ -51,7 +51,8 @@ def load_env(path: str | Path = None):
         for i in range(5):
             path = Path("../" * i + ".env")
             if path.exists():
-                logger.info(f"load env_path={path}")
+                if enable_log:
+                    logger.info(f"load env_path={path}")
                 _load_env(path)
                 return
 
