@@ -56,7 +56,8 @@ class FlowLLMApp:
         async with McpClient(name=name, config=mcp_server_config) as client:
             tool_calls = await client.list_tool_calls()
             for tool_call in tool_calls:
-                logger.info(f"find mcp@{name}@{tool_call.name} {str(tool_call.model_dump_json())[:200]}...")
+                # str(tool_call.model_dump_json())[:200]...
+                logger.info(f"find mcp@{name}@{tool_call.name} {tool_call.model_dump_json()}")
 
             return {
                 "name": name,
@@ -77,7 +78,9 @@ class FlowLLMApp:
         for name, mcp_server_config in self.service_config.external_mcp.items():
             coro_list.append(self.get_mcp_tools(name, mcp_server_config))
         if coro_list:
-            for mcp_server_info in await asyncio.gather(*coro_list):
+            # for mcp_server_info in await asyncio.gather(*coro_list):
+            for coro in coro_list:
+                mcp_server_info = await coro
                 C.external_mcp_tool_call_dict[mcp_server_info["name"]] = mcp_server_info["tool_calls"]
 
         # add service_config & language & thread_pool & ray

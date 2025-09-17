@@ -1,45 +1,18 @@
-backend: mcp
 import_config: default
-enabled_flows:
-  #  - get_a_stock_infos
-  #  - get_a_stock_news
-  - ant_search
-  - ant_investment
-  - tdx_wenda_quotes
-  - tdx_market_quotes
-  - tavily_search
-  - dashscope_search
+
+backend: mcp
+disabled_flows:
+  - llm_flow
+  - llm_flow_stream
+  - mock_tool_flow
+  - mock_async_tool_flow
 
 flow:
-  #  get_a_stock_infos:
-  #    flow_content: get_ak_a_code_op >> get_ak_a_info_op >> get_ak_a_spot_op >> get_ak_a_money_flow_op >> get_ak_a_financial_info_op >> merge_ak_a_info_op
-  #    stream: false
-  #    description: "Retrieve the A-share stock codes from the query, and fetch information about these stocks, including company basic information, current stock price and its change percentage, capital inflow and outflow data for the most recent day, and financial information from the latest quarter."
-  #    input_schema:
-  #      query:
-  #        type: string
-  #        description: "user question"
-
-  #  get_a_stock_news:
-  #    flow_content: get_ak_a_code_op >> get_ak_a_news_op >> merge_ak_a_info_op
-  #    stream: false
-  #    description: "Retrieve the A-share stock codes from the query, and obtain the latest news information about these stocks."
-  #    input_schema:
-  #      query:
-  #        type: string
-  #        description: "user question"
-
   ant_search:
     flow_content: ant_search_op
 
   ant_investment:
     flow_content: ant_investment_op
-
-  tdx_wenda_quotes:
-    flow_content: tdx_wenda_quotes_op
-
-  tdx_market_quotes:
-    flow_content: tdx_market_quotes_op
 
   tavily_search:
     flow_content: tavily_search_op
@@ -47,8 +20,26 @@ flow:
   dashscope_search:
     flow_content: dashscope_search_op
 
+  bailian_web_search:
+    flow_content: bailian_web_search_op
+
+  bocha_web_search:
+    flow_content: bocha_web_search_op
+
 
 op:
+  ant_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: ant_supply
+      tool_name: search
+
+  ant_investment_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: ant_supply
+      tool_name: investment_analysis
+
   tavily_search_op:
     backend: tavily_search_op
     params:
@@ -59,41 +50,39 @@ op:
     params:
       save_answer: true
 
-  ant_search_op:
+  bailian_web_search_op:
     backend: base_mcp_op
     params:
-      mcp_name: ant_supply
-      tool_name: search
-      clear_required: false
+      mcp_name: tongyi_search
+      tool_name: bailian_web_search
+      save_answer: true
+      input_schema_optional:
+        - count
+      input_schema_deleted:
+        - ctx
 
-  ant_investment_op:
+  bocha_web_search_op:
     backend: base_mcp_op
     params:
-      mcp_name: ant_supply
-      tool_name: investment_analysis
-      clear_required: false
+      mcp_name: bochaai_search
+      tool_name: bocha_web_search
+      save_answer: true
+      input_schema_optional:
+        - freshness
+        - count
 
-  tdx_wenda_quotes_op:
-    backend: base_mcp_op
-    params:
-      mcp_name: tendency_software
-      tool_name: tdx_wenda_quotes
-      clear_required: true
-
-  tdx_market_quotes_op:
-    backend: base_mcp_op
-    params:
-      mcp_name: tendency_software
-      tool_name: tdx_PBHQInfo_quotes
-      clear_required: true
-
-
+# https://bailian.console.aliyun.com/?tab=mcp#/mcp-market
 external_mcp:
   ant_supply:
     type: sse,
     url: "http://11.160.132.45:8010/sse"
-  tendency_software:
+  tongyi_search:
     type: sse
-    url: "https://dashscope.aliyuncs.com/api/v1/mcps/tendency-software/sse"
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  bochaai_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
     headers:
       Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

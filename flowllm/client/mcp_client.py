@@ -30,7 +30,7 @@ class McpClient:
         self.session: ClientSession | None = None
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
-    async def __aenter__(self) -> "McpClient":
+    async def start(self):
         command = shutil.which("npx") if self.config.get("command") == "npx" else self.config.get("command")
 
         if command:
@@ -65,6 +65,19 @@ class McpClient:
         session = await self._exit_stack.enter_async_context(ClientSession(*streams))
         await session.initialize()
         self.session = session
+
+    async def __aenter__(self) -> "McpClient":
+        for i in range(self.max_retries):
+            try:
+                await self.start()
+
+            except Exception as e:
+                logger.exception(f"{self.name} start failed with {e}. "
+                                 f"Retry {i + 1}/{self.max_retries} in {1 + i}s...")
+                await asyncio.sleep(1 + i)
+
+                if i == self.max_retries - 1:
+                    return self
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -84,7 +97,8 @@ class McpClient:
                 break
 
             except Exception as e:
-                logger.warning(f"{self.name} list tools failed. Retry {i + 1}/{self.max_retries} in {1 + i}s...")
+                logger.exception(f"{self.name} list tools failed with {e}. "
+                                 f"Retry {i + 1}/{self.max_retries} in {1 + i}s...")
                 await asyncio.sleep(1 + i)
 
                 if i == self.max_retries - 1:
@@ -110,8 +124,8 @@ class McpClient:
                 break
 
             except Exception as e:
-                logger.warning(
-                    f"{self.name}.{tool_name} call_tool failed. Retry {i + 1}/{self.max_retries} in {1 + i}s...")
+                logger.exception(f"{self.name}.{tool_name} call_tool failed with {e}. "
+                                 f"Retry {i + 1}/{self.max_retries} in {1 + i}s...")
                 await asyncio.sleep(1 + i)
 
                 if i == self.max_retries - 1:

@@ -8,7 +8,8 @@ mcp:
 
 http:
   host: "0.0.0.0"
-  port: 8001
+  port: 8010
+
 
 flow:
   llm_flow:
@@ -18,21 +19,6 @@ flow:
   llm_flow_stream:
     flow_content: stream_llm_op
     stream: true
-
-  dashscope_deep_research:
-    flow_content: dashscope_deep_research_op
-    stream: true
-
-
-op:
-  bailian_web_search:
-    backend: base_mcp_op
-    params:
-      mcp_name: tongyi_search
-      tool_name: bailian_web_search
-      clear_required: false
-
-
 
 llm:
   default:
@@ -62,20 +48,3 @@ vector_store:
     embedding_model: default
 #    params:
 #      hosts: "http://localhost:9200"
-
-external_mcp:
-  tongyi_search:
-    type: sse
-    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
-    headers:
-      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
-  tongyi_web_parser:
-    type: sse
-    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse"
-    headers:
-      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
-  bochaai_search:
-    type: sse
-    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
-    headers:
-      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

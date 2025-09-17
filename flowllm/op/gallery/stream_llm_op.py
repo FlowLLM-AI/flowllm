@@ -20,7 +20,6 @@ class StreamLLMOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "query_llm",
             "description": "use this query to query an LLM",
             "input_schema": {
                 "query": {

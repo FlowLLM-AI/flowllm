@@ -61,6 +61,10 @@ class BaseOp(ABC):
         self.context: FlowContext | None = None
         self.ops: List["BaseOp"] = ops
 
+    @property
+    def short_name(self) -> str:
+        return self.name.replace("_op", "")
+
     def before_execute(self):
         ...
 
@@ -138,7 +142,7 @@ class BaseOp(ABC):
 
     def __lshift__(self, op: "BaseOp"):
         self.check_async(op)
-        self.ops = [op]
+        self.ops.append(op)
         return self
 
     def __rshift__(self, op: "BaseOp"):

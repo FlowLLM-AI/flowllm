@@ -5,7 +5,7 @@ from typing import List
 from loguru import logger
 
 from flowllm.op.base_async_op import BaseAsyncOp
-from flowllm.schema.tool_call import ToolCall
+from flowllm.schema.tool_call import ToolCall, ParamAttrs
 from flowllm.storage.cache import DataCache
 
 
@@ -46,6 +46,13 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
     def tool_call(self):
         if self._tool_call is None:
             self._tool_call = self.build_tool_call()
+            self._tool_call.name = self.short_name
+            if not self._tool_call.output_schema:
+                self._tool_call.output_schema = {
+                    f"{self.short_name}_result": ParamAttrs(
+                        type="str",
+                        description=f"The execution result of the {self.short_name}")
+                }
         return self._tool_call
 
     @property
@@ -80,7 +87,10 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
     async def async_before_execute(self):
         for name, attrs in self.tool_call.input_schema.items():
             if name in self.context:
-                self.input_dict[name] = self.context[name]
+                if self.tool_index == 0:
+                    self.input_dict[name] = self.context[name]
+                else:
+                    self.input_dict[name] = self.context[f"{name}.{self.tool_index}"]
             elif attrs.required:
                 raise ValueError(f"{name} is required")
 

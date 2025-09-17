@@ -20,7 +20,6 @@ class DashscopeDeepResearchOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "deep_research",
             "description": "Use Dashscope deep research to conduct comprehensive research on a topic",
             "input_schema": {
                 "query": {
