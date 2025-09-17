@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, Union, Type
 
 import pandas as pd
 
-from flowllm.storage.cache.cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
+from .cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
 
 
 class DataCache:

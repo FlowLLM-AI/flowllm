@@ -6,8 +6,10 @@
    2. bailian_web_search
    3. bocha_web_search_op
    4. dashscope_search
-3. akshare
-   1. current
 4. ths:
-   1. 
-5. mcp
+   1. 基本信息
+   2. 行情
+   3. 财务信息
+   4. 财务信息
+   5. 新闻
+6. mcp

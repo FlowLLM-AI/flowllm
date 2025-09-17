@@ -16,8 +16,8 @@ import pytest
 # Add project root directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from flowllm.storage.cache.data_cache import DataCache
-from flowllm.storage.cache.cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
+from flowllm.storage.cache_handler.data_cache import DataCache
+from flowllm.storage.cache_handler.cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
 
 
 class CustomHandler(CacheDataHandler):

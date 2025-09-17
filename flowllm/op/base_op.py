@@ -59,7 +59,7 @@ class BaseOp(ABC):
         self.task_list: list = []
         self.timer = Timer(name=self.name)
         self.context: FlowContext | None = None
-        self.ops: List["BaseOp"] = ops
+        self.ops: List["BaseOp"] = ops if ops else []
 
     @property
     def short_name(self) -> str:

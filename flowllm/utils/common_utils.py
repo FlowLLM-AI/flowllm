@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from pathlib import Path
@@ -57,3 +58,17 @@ def load_env(path: str | Path = None, enable_log: bool = True):
                 return
 
         logger.warning(".env not found")
+
+
+def extract_json(text: str) -> dict | None:
+    match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
+
+    if match:
+        json_content = match.group(1).strip()
+        try:
+            return json.loads(json_content)
+        except json.JSONDecodeError as e:
+            return None
+
+    else:
+        return None

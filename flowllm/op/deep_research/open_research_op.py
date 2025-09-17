@@ -7,10 +7,10 @@ from flowllm.schema.tool_call import ToolCall
 
 
 class OpenResearchOp(BaseAsyncToolOp):
+    file_path: str = __file__
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "research_topic",
             "description": "Conduct logical and in-depth research based on the research_topic, and finally provide a detailed conclusion on the research_topic.",
             "input_schema": {
                 "research_topic": {

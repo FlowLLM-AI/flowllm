@@ -6,7 +6,7 @@ from loguru import logger
 
 from flowllm.op.base_async_op import BaseAsyncOp
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
-from flowllm.storage.cache import DataCache
+from flowllm.storage.cache_handler import DataCache
 
 
 class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):

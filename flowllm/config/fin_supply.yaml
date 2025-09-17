@@ -71,6 +71,11 @@ op:
         - freshness
         - count
 
+  extract_entities_code_op:
+    backend: extract_entities_code_op
+    params:
+      save_answer: true
+
 # https://bailian.console.aliyun.com/?tab=mcp#/mcp-market
 external_mcp:
   ant_supply:
