@@ -1,5 +1,5 @@
 tool_description: |
-  There is historical stock price data available for a given A-share stock code, with the following schema:
+  对于给定的A股股票代码，有现成的历史股价数据，其数据结构如下：
   ```
   名称	类型	描述
   日期	object	交易日
@@ -15,9 +15,9 @@ tool_description: |
   涨跌额	float64	注意单位: 元
   换手率	float64	注意单位: %
   ```
-  You need to input the stock code you want to analyze along with your question. This tool will generate and execute the corresponding code for you and return the result.
-  Note: You do NOT need to write any code — just ask your question, for example: "How much has it risen in the past week?", "Recent market trend", "has the MACD formed a golden cross?".
-  Please be aware that the tool can only answer questions based on data within the above schema. Do not ask questions that require data beyond this schema.
+  你需要输入你想分析的股票代码以及你的问题。该工具将为你生成并执行相应的代码，并返回结果。
+  注意：1. 你无需编写任何代码——只需直接提问即可，例如：“过去一周涨了多少？”、“近期市场趋势如何？”、“MACD是否形成了金叉？”。
+  2. 该工具只能基于上述数据结构中的数据回答问题，请勿提出需要超出该数据范围信息的问题。
   
 akshare_code_prompt: |
   你是一个专业的金融数据分析助手。

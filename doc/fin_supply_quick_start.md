@@ -9,14 +9,14 @@
 ### 1. Ant
 
 ```bash
-curl -X POST http://11.164.204.33:8010/ant_search \
+curl -X POST http://11.164.204.33:8002/ant_search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金怎么样？雪球",
     "entity": "紫金"
   }'
 
-curl -X POST http://11.164.204.33:8010/ant_investment \
+curl -X POST http://11.164.204.33:8002/ant_investment \
   -H "Content-Type: application/json" \
   -d '{
     "entity": "阿里巴巴",
@@ -28,35 +28,35 @@ curl -X POST http://11.164.204.33:8010/ant_investment \
 
 ```bash
 # tavily_search - Tavily搜索
-curl -X POST http://11.164.204.33:8010/tavily_search \
+curl -X POST http://11.164.204.33:8002/tavily_search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金怎么样？雪球"
   }'
 
 # dashscope_search - DashScope搜索
-curl -X POST http://11.164.204.33:8010/dashscope_search \
+curl -X POST http://11.164.204.33:8002/dashscope_search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金怎么样？雪球"
   }'
 
 # brave_web_search - Brave网页搜索
-curl -X POST http://11.164.204.33:8010/brave_web_search \
+curl -X POST http://11.164.204.33:8002/brave_web_search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金怎么样？雪球"
   }'
 
 # bailian_web_search - 百炼网页搜索
-curl -X POST http://11.164.204.33:8010/bailian_web_search \
+curl -X POST http://11.164.204.33:8002/bailian_web_search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金怎么样？雪球"
   }'
 
 # bocha_web_search - 博茶网页搜索
-curl -X POST http://11.164.204.33:8010/bocha_web_search \
+curl -X POST http://11.164.204.33:8002/bocha_web_search \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金怎么样？雪球"
@@ -67,14 +67,14 @@ curl -X POST http://11.164.204.33:8010/bocha_web_search \
 
 ```bash
 # bailian_web_parser - 百炼网页解析
-curl -X POST http://11.164.204.33:8010/bailian_web_parser \
+curl -X POST http://11.164.204.33:8002/bailian_web_parser \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://basic.10jqka.com.cn/601899/field.html"
   }'
 
 # 解析公司信息页面
-curl -X POST http://11.164.204.33:8010/bailian_web_parser \
+curl -X POST http://11.164.204.33:8002/bailian_web_parser \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://basic.10jqka.com.cn/601899/company.html"
@@ -85,7 +85,7 @@ curl -X POST http://11.164.204.33:8010/bailian_web_parser \
 
 ```bash
 # extract_entities_code - 实体代码提取
-curl -X POST http://11.164.204.33:8010/extract_entities_code \
+curl -X POST http://11.164.204.33:8002/extract_entities_code \
   -H "Content-Type: application/json" \
   -d '{
     "query": "阿里和腾讯哪个更好？和茅台比呢？"
@@ -96,14 +96,14 @@ curl -X POST http://11.164.204.33:8010/extract_entities_code \
 
 ```bash
 # akshare_market - AKShare市场数据
-curl -X POST http://11.164.204.33:8010/akshare_market \
+curl -X POST http://11.164.204.33:8002/akshare_market \
   -H "Content-Type: application/json" \
   -d '{
     "code": "000001"
   }'
 
 # akshare_calculate - AKShare计算分析
-curl -X POST http://11.164.204.33:8010/akshare_calculate \
+curl -X POST http://11.164.204.33:8002/akshare_calculate \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行最近行情走势",
@@ -115,21 +115,21 @@ curl -X POST http://11.164.204.33:8010/akshare_calculate \
 
 ```bash
 # qtf_brief_mcp - QTF简要信息
-curl -X POST http://11.164.204.33:8010/qtf_brief_mcp \
+curl -X POST http://11.164.204.33:8002/qtf_brief_mcp \
   -H "Content-Type: application/json" \
   -d '{
     "symbol": "SZ000001"
   }'
 
 # qtf_medium_mcp - QTF中等详细信息
-curl -X POST http://11.164.204.33:8010/qtf_medium_mcp \
+curl -X POST http://11.164.204.33:8002/qtf_medium_mcp \
   -H "Content-Type: application/json" \
   -d '{
     "symbol": "SZ000001"
   }'
 
 # qtf_full_mcp - QTF完整信息
-curl -X POST http://11.164.204.33:8010/qtf_full_mcp \
+curl -X POST http://11.164.204.33:8002/qtf_full_mcp \
   -H "Content-Type: application/json" \
   -d '{
     "symbol": "SZ000001"
@@ -140,7 +140,7 @@ curl -X POST http://11.164.204.33:8010/qtf_full_mcp \
 
 ```bash
 # crawl_ths_company - 爬取公司基本信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_company \
+curl -X POST http://11.164.204.33:8002/crawl_ths_company \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的公司情况如何？",
@@ -148,7 +148,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_company \
   }'
 
 # crawl_ths_holder - 爬取股东结构信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_holder \
+curl -X POST http://11.164.204.33:8002/crawl_ths_holder \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的股东结构如何？",
@@ -156,7 +156,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_holder \
   }'
 
 # crawl_ths_operate - 爬取主营业务信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_operate \
+curl -X POST http://11.164.204.33:8002/crawl_ths_operate \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的主营业务是什么？",
@@ -164,7 +164,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_operate \
   }'
 
 # crawl_ths_equity - 爬取股本结构信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_equity \
+curl -X POST http://11.164.204.33:8002/crawl_ths_equity \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的股本结构如何？",
@@ -172,7 +172,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_equity \
   }'
 
 # crawl_ths_capital - 爬取资本运作信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_capital \
+curl -X POST http://11.164.204.33:8002/crawl_ths_capital \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行有哪些资本运作？",
@@ -180,7 +180,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_capital \
   }'
 
 # crawl_ths_worth - 爬取业绩预测信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_worth \
+curl -X POST http://11.164.204.33:8002/crawl_ths_worth \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的业绩预测如何？",
@@ -188,7 +188,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_worth \
   }'
 
 # crawl_ths_news - 爬取最新新闻
-curl -X POST http://11.164.204.33:8010/crawl_ths_news \
+curl -X POST http://11.164.204.33:8002/crawl_ths_news \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行最近有什么新闻？",
@@ -196,7 +196,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_news \
   }'
 
 # crawl_ths_concept - 爬取概念题材信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_concept \
+curl -X POST http://11.164.204.33:8002/crawl_ths_concept \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行涉及哪些概念题材？",
@@ -204,7 +204,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_concept \
   }'
 
 # crawl_ths_position - 爬取机构持仓信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_position \
+curl -X POST http://11.164.204.33:8002/crawl_ths_position \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的机构持仓情况如何？",
@@ -212,7 +212,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_position \
   }'
 
 # crawl_ths_finance - 爬取财务状况信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_finance \
+curl -X POST http://11.164.204.33:8002/crawl_ths_finance \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的财务状况如何？",
@@ -220,7 +220,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_finance \
   }'
 
 # crawl_ths_bonus - 爬取分红情况信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_bonus \
+curl -X POST http://11.164.204.33:8002/crawl_ths_bonus \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行的分红情况如何？",
@@ -228,7 +228,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_bonus \
   }'
 
 # crawl_ths_event - 爬取重大事件信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_event \
+curl -X POST http://11.164.204.33:8002/crawl_ths_event \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行最近有什么重大事件？",
@@ -236,7 +236,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_event \
   }'
 
 # crawl_ths_field - 爬取行业地位信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_field \
+curl -X POST http://11.164.204.33:8002/crawl_ths_field \
   -H "Content-Type: application/json" \
   -d '{
     "query": "平安银行在行业中的地位如何？",
@@ -248,7 +248,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_field \
 
 ```bash
 # 紫金矿业公司信息
-curl -X POST http://11.164.204.33:8010/crawl_ths_company \
+curl -X POST http://11.164.204.33:8002/crawl_ths_company \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金矿业的公司情况如何？",
@@ -256,7 +256,7 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_company \
   }'
 
 # 紫金矿业财务指标
-curl -X POST http://11.164.204.33:8010/crawl_ths_finance \
+curl -X POST http://11.164.204.33:8002/crawl_ths_finance \
   -H "Content-Type: application/json" \
   -d '{
     "query": "紫金矿业的财务指标怎么样？",
