@@ -35,7 +35,7 @@ flowllm --config=fin_supply
   "mcpServers": {
     "asio-fin-supply-server": {
       "type": "sse",
-      "url": "http://11.164.204.33:8001/sse"
+      "url": "http://11.160.132.45:8001/sse"
     }
   }
 }
