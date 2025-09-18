@@ -204,7 +204,7 @@ class PydanticConfigParser(Generic[T]):
             
             # Check for circular dependency
             if str(abs_config_path) in visited_configs:
-                logger.warning(f"Circular import detected for config: {abs_config_path}")
+                # logger.warning(f"Circular import detected for config: {abs_config_path}")
                 continue
                 
             logger.info(f"flowllm using import_config_path={import_config_path}")

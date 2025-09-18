@@ -6,10 +6,9 @@
 
 以下是每个MCP工具对应的curl命令示例，用于HTTP API测试：
 
-### 1. 蚂蚁集团搜索工具
+### 1. Ant
 
 ```bash
-# ant_search - 蚂蚁集团搜索
 curl -X POST http://11.164.204.33:8010/ant_search \
   -H "Content-Type: application/json" \
   -d '{
@@ -17,7 +16,6 @@ curl -X POST http://11.164.204.33:8010/ant_search \
     "entity": "紫金"
   }'
 
-# ant_investment - 蚂蚁集团投资分析
 curl -X POST http://11.164.204.33:8010/ant_investment \
   -H "Content-Type: application/json" \
   -d '{
@@ -265,16 +263,4 @@ curl -X POST http://11.164.204.33:8010/crawl_ths_finance \
     "code": "601899"
   }'
 ```
-
-### 使用说明
-
-1. **服务地址**: 默认服务运行在 `http://11.164.204.33:8010`，请根据实际部署情况调整
-2. **请求格式**: 所有请求都使用 POST 方法，Content-Type 为 `application/json`
-3. **参数说明**: 
-   - `query`: 查询问题或描述
-   - `code`: 股票代码（如 000001 表示平安银行）
-   - `symbol`: 股票符号（如 SZ000001 表示深圳平安银行）
-   - `entity`: 实体名称
-   - `url`: 网页链接
-4. **响应格式**: 返回JSON格式的响应，包含查询结果
 
