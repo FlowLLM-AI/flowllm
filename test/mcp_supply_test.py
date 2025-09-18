@@ -19,7 +19,7 @@ async def main():
         except Exception as e:
             print(f"Failed to get tools: {e}")
 
-        query1 = "阿里巴巴怎么样？"
+        query1 = "紫金怎么样？雪球"
 
         test_cases = [
             # ("ant_search", {"query": query1, "entity": "阿里巴巴"}),
@@ -36,6 +36,10 @@ async def main():
             # ("extract_entities_code", {"query": "阿里和腾讯哪个更好？和茅台比呢？"}),
             # ("akshare_market", {"code": "000001"}),
             # ("akshare_calculate", {"query": "平安银行最近行情走势", "code": "000001"}),
+
+            # ("qtf_brief_mcp", {"symbol": "SZ000001"}),
+            # ("qtf_medium_mcp", {"symbol": "SZ000001"}),
+            ("qtf_full_mcp", {"symbol": "SZ000001"}),
 
             # THS公司各类信息爬取测试
             # ("crawl_ths_company", {"query": "平安银行的公司情况如何？", "code": "000001"}),

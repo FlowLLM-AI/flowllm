@@ -1,11 +1,5 @@
 import_config: default
 backend: mcp
-disabled_flows:
-  - llm_flow
-  - llm_flow_stream
-  - mock_tool_flow
-  - mock_async_tool_flow
-
 
 flow:
   extract_entities_code:
