@@ -1,0 +1,7 @@
+import_config: default, fin_ant, fin_basic, fin_mcp, fin_search, fin_ths
+backend: http
+disabled_flows:
+  - llm_flow
+  - llm_flow_stream
+  - mock_tool_flow
+  - mock_async_tool_flow
