@@ -15,19 +15,12 @@ class ExecuteCodeOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "python_execute",
             "description": "Execute python code can be used in scenarios such as analysis or calculation, and the final result can be printed using the `print` function.",
             "input_schema": {
                 "code": {
                     "type": "string",
                     "description": "code to be executed. Please do not execute any matplotlib code here.",
                     "required": True
-                }
-            },
-            "output_schema": {
-                "code_result": {
-                    "type": "string",
-                    "description": "code execution result",
                 }
             }
         })
@@ -56,6 +49,9 @@ class ExecuteCodeOp(BaseAsyncToolOp):
 
 async def async_main():
     op = ExecuteCodeOp()
+    print(op.tool_call.model_dump_json(exclude_none=True))
+    print(op.tool_call.simple_input_dump())
+    print(op.tool_call.simple_output_dump())
 
     context = FlowContext(code="print('Hello World')")
     await op.async_call(context=context)

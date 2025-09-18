@@ -58,7 +58,7 @@ dependencies = [
 
 dist = ["ray>=2.6.0", "scikit-learn>=1.3.0"]
 
-fin = ["akshare>=1.9.0"]
+fin = ["akshare>=1.9.0", "crawl4ai>=0.7.4"]
 
 all = ["flowllm[dist]", "flowllm[fin]"]
 

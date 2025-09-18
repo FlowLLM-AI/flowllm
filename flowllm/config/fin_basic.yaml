@@ -1,0 +1,54 @@
+import_config: default
+backend: mcp
+
+flow:
+  extract_entities_code:
+    flow_content: extract_entities_code_op << bailian_web_search_op
+    description: |
+      Extract financial entities from the query, including types such as "stock", "bond", "fund", "cryptocurrency", "index", "commodity", "etf", etc. 
+      For entities like stocks or ETF funds, search for their corresponding codes. Finally, return the financial entities appearing in the query, including their types and codes.
+    input_schema:
+      query:
+        type: string
+        description: "user query"
+        required: true
+
+  akshare_market:
+    flow_content: akshare_market_op
+
+  akshare_calculate:
+    flow_content: akshare_calculate_op
+
+op:
+  extract_entities_code_op:
+    backend: extract_entities_code_op
+    params:
+      save_answer: true
+
+  bailian_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tongyi_search
+      tool_name: bailian_web_search
+      save_answer: true
+      input_schema_optional:
+        - count
+      input_schema_deleted:
+        - ctx
+
+  akshare_market_op:
+    backend: akshare_market_op
+    params:
+      save_answer: true
+
+  akshare_calculate_op:
+    backend: akshare_calculate_op
+    params:
+      save_answer: true
+
+external_mcp:
+  tongyi_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

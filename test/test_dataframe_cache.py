@@ -12,7 +12,7 @@ import pandas as pd
 # Add project root directory to Python path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from flowllm.storage.cache.dataframe_cache import DataFrameCache, save_dataframe, load_dataframe
+from flowllm.storage.cache_handler.dataframe_cache import DataFrameCache, save_dataframe, load_dataframe
 
 
 def create_sample_dataframe(rows: int = 100) -> pd.DataFrame:

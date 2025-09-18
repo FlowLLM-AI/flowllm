@@ -10,7 +10,7 @@ from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
 from flowllm.schema.message import Message
-from flowllm.storage.cache.data_cache import DataCache
+from flowllm.storage.cache_handler.data_cache import DataCache
 from flowllm.utils.timer import timer
 
 

@@ -1,0 +1,107 @@
+import_config: default
+backend: mcp
+
+flow:
+  tavily_search:
+    flow_content: tavily_search_op >> extract_long_text_op
+    description: "Use search keywords to retrieve relevant information from the internet. If there are multiple search keywords, please use each keyword separately to call this tool."
+    input_schema:
+      query:
+        type: string
+        description: "user query"
+        required: true
+
+  dashscope_search:
+    flow_content: dashscope_search_op
+
+  bailian_web_search:
+    flow_content: bailian_web_search_op
+
+  bocha_web_search:
+    flow_content: bocha_web_search_op
+
+  brave_web_search:
+    flow_content: brave_web_search_op
+
+  bailian_web_parser:
+    flow_content: bailian_web_parser_op
+
+op:
+  tavily_search_op:
+    backend: tavily_search_op
+    params:
+      save_answer: false
+      output_schema_mapping:
+        tavily_search_result: long_text
+
+  dashscope_search_op:
+    backend: dashscope_search_op
+    params:
+      save_answer: true
+
+  bailian_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tongyi_search
+      tool_name: bailian_web_search
+      save_answer: true
+      input_schema_optional:
+        - count
+      input_schema_deleted:
+        - ctx
+
+  bocha_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: bochaai_search
+      tool_name: bocha_web_search
+      save_answer: true
+      input_schema_optional:
+        - freshness
+        - count
+
+  brave_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: brave_search
+      tool_name: brave_web_search
+      save_answer: true
+      input_schema_optional:
+        - offset
+        - count
+
+  bailian_web_parser_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tongyi_web_parser
+      tool_name: bailian_web_parser
+      save_answer: true
+      input_schema_optional:
+        - format
+
+  extract_long_text_op:
+    backend: extract_long_text_op
+    params:
+      save_answer: true
+
+external_mcp:
+  tongyi_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  tongyi_web_parser:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  bochaai_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  brave_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/Brave_Search/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

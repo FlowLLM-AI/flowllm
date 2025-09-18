@@ -25,3 +25,6 @@ class ParallelOp(BaseAsyncOp):
         else:
             self.ops.append(op)
         return self
+
+    def __lshift__(self, op: "BaseOp"):
+        raise RuntimeError(f"`<<` is not supported in {self.name}")

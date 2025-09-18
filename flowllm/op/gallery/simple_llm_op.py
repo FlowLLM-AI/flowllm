@@ -18,7 +18,6 @@ class SimpleLLMOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "query_llm",
             "description": "use this query to query an LLM",
             "input_schema": {
                 "query": {
@@ -27,12 +26,6 @@ class SimpleLLMOp(BaseAsyncToolOp):
                     "required": True
                 }
             },
-            "output_schema": {
-                "simple_llm_result": {
-                    "type": "string",
-                    "description": "simple llm result",
-                }
-            }
         })
 
     async def async_execute(self):

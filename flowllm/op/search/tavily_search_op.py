@@ -28,19 +28,12 @@ class TavilySearchOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "web_search",
             "description": "Use search keywords to retrieve relevant information from the internet. If there are multiple search keywords, please use each keyword separately to call this tool.",
             "input_schema": {
                 "query": {
                     "type": "string",
                     "description": "search keyword",
                     "required": True
-                }
-            },
-            "output_schema": {
-                "tavily_search_result": {
-                    "type": "string",
-                    "description": "web search result",
                 }
             }
         })

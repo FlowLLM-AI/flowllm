@@ -22,19 +22,12 @@ class ReactLLMOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "name": "query_llm",
             "description": "use this query to query an LLM",
             "input_schema": {
                 "query": {
                     "type": "string",
-                    "description": "search keyword",
+                    "description": "query",
                     "required": True
-                }
-            },
-            "output_schema": {
-                "react_llm_result": {
-                    "type": "string",
-                    "description": "react llm result",
                 }
             }
         })

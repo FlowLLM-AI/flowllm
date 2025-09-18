@@ -1,0 +1,43 @@
+import_config: default
+backend: mcp
+
+flow:
+  qtf_brief_mcp:
+    flow_content: qtf_brief_mcp_op
+
+  qtf_medium_mcp:
+    flow_content: qtf_medium_mcp_op
+
+  qtf_full_mcp:
+    flow_content: qtf_full_mcp_op
+
+op:
+  qtf_brief_mcp_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: qtf_mcp
+      tool_name: brief
+      save_answer: true
+
+  qtf_medium_mcp_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: qtf_mcp
+      tool_name: medium
+      save_answer: true
+
+  qtf_full_mcp_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: qtf_mcp
+      tool_name: full
+      save_answer: true
+
+# https://bailian.console.aliyun.com/?tab=mcp#/mcp-market
+external_mcp:
+  qtf_mcp:
+    # https://bailian.console.aliyun.com/?tab=mcp#/mcp-market/detail/qtf_mcp
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/qtf_mcp/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

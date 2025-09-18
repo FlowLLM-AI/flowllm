@@ -5,8 +5,8 @@ from typing import List
 from loguru import logger
 
 from flowllm.op.base_async_op import BaseAsyncOp
-from flowllm.schema.tool_call import ToolCall
-from flowllm.storage.cache import DataCache
+from flowllm.schema.tool_call import ToolCall, ParamAttrs
+from flowllm.storage.cache_handler import DataCache
 
 
 class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
@@ -18,6 +18,8 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
                  enable_print_output: bool = True,
                  tool_index: int = 0,
                  save_answer: bool = False,
+                 input_schema_mapping: dict = None,
+                 output_schema_mapping: dict = None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -27,6 +29,8 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         self.enable_print_output: bool = enable_print_output
         self.tool_index: int = tool_index
         self.save_answer: bool = save_answer
+        self.input_schema_mapping: dict | None = input_schema_mapping  # map key to context
+        self.output_schema_mapping: dict | None = output_schema_mapping  # map key to context
 
         self._cache: DataCache | None = None
         self._tool_call: ToolCall | None = None
@@ -46,6 +50,15 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
     def tool_call(self):
         if self._tool_call is None:
             self._tool_call = self.build_tool_call()
+            self._tool_call.name = self.short_name
+
+            if not self._tool_call.output_schema:
+                self._tool_call.output_schema = {
+                    f"{self.short_name}_result": ParamAttrs(
+                        type="str",
+                        description=f"The execution result of the {self.short_name}")
+                }
+
         return self._tool_call
 
     @property
@@ -79,16 +92,27 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
     async def async_before_execute(self):
         for name, attrs in self.tool_call.input_schema.items():
-            if name in self.context:
-                self.input_dict[name] = self.context[name]
+            context_key = name
+            if self.input_schema_mapping and name in self.input_schema_mapping:
+                context_key = self.input_schema_mapping[name]
+            if self.tool_index != 0:
+                context_key += f".{self.tool_index}"
+
+            if context_key in self.context:
+                self.input_dict[name] = self.context[context_key]
             elif attrs.required:
-                raise ValueError(f"{name} is required")
+                raise ValueError(f"{self.name}: {name} is required")
 
     async def async_after_execute(self):
-        if self.tool_index == 0:
-            self.context.update(self.output_dict)
-        else:
-            self.context.update({f"{k}.{self.tool_index}": v for k, v in self.output_dict.items()})
+        for name, value in self.output_dict.items():
+            context_key = name
+            if self.output_schema_mapping and name in self.output_schema_mapping:
+                context_key = self.output_schema_mapping[name]
+            if self.tool_index != 0:
+                context_key += f".{self.tool_index}"
+
+            logger.info(f"{self.name} set context key={context_key}")
+            self.context[context_key] = value
 
         if self.save_answer:
             if isinstance(self.output_keys, str):
