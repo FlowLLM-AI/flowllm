@@ -19,9 +19,13 @@ class PydanticConfigParser(Generic[T]):
     
     Supported configuration sources (priority from low to high):
     1. Default configuration (Pydantic model default values)
-    2. YAML configuration file
+    2. YAML configuration file (supports import_config for importing multiple files)
     3. Command line arguments (dot notation format)
     4. Runtime parameters
+    
+    The import_config field supports importing multiple configuration files
+    by separating them with commas. Example:
+    import_config: "base.yaml, auth.yaml, database.yaml"
     """
 
     def __init__(self, config_class: Type[T]):
@@ -164,6 +168,9 @@ class PydanticConfigParser(Generic[T]):
         """
         Recursively load import_config configurations with cycle detection
         
+        Supports importing multiple config files by separating them with commas.
+        Example: import_config: "base.yaml, auth.yaml, database.yaml"
+        
         Args:
             config_dict: Current configuration dictionary
             visited_configs: Set of already visited config file paths to detect cycles
@@ -175,38 +182,48 @@ class PydanticConfigParser(Generic[T]):
         if not import_config:
             return []
         
-        # Normalize config path
-        if not import_config.endswith(".yaml"):
-            import_config += ".yaml"
-            
-        # Resolve config file path
-        import_config_path = Path(self.current_file).parent / import_config
-        if not import_config_path.exists():
-            import_config_path = Path(import_config)
-            
-        # Convert to absolute path for cycle detection
-        abs_config_path = import_config_path.resolve()
-        
-        # Check for circular dependency
-        if str(abs_config_path) in visited_configs:
-            logger.warning(f"Circular import detected for config: {abs_config_path}")
+        # Support comma-separated config files
+        import_config_list = [config.strip() for config in import_config.split(",") if config.strip()]
+        if not import_config_list:
             return []
             
-        logger.info(f"flowllm using import_config_path={import_config_path}")
+        all_imported_configs = []
         
-        # Add current config to visited set
-        visited_configs.add(str(abs_config_path))
+        for single_import_config in import_config_list:
+            # Normalize config path
+            if not single_import_config.endswith(".yaml"):
+                single_import_config += ".yaml"
+                
+            # Resolve config file path
+            import_config_path = Path(self.current_file).parent / single_import_config
+            if not import_config_path.exists():
+                import_config_path = Path(single_import_config)
+                
+            # Convert to absolute path for cycle detection
+            abs_config_path = import_config_path.resolve()
+            
+            # Check for circular dependency
+            if str(abs_config_path) in visited_configs:
+                logger.warning(f"Circular import detected for config: {abs_config_path}")
+                continue
+                
+            logger.info(f"flowllm using import_config_path={import_config_path}")
+            
+            # Add current config to visited set
+            visited_configs.add(str(abs_config_path))
 
-        # Load the import config
-        import_yaml_config = self.load_from_yaml(import_config_path)
+            # Load the import config
+            import_yaml_config = self.load_from_yaml(import_config_path)
 
-        # Recursively load imports from the imported config
-        nested_imports = self._load_import_configs_recursive(import_yaml_config, visited_configs.copy())
+            # Recursively load imports from the imported config
+            nested_imports = self._load_import_configs_recursive(import_yaml_config, visited_configs.copy())
 
-        # Return configs in correct order: deeper imports first, then current import
-        # This ensures that configs closer to the root have higher priority
-        result = nested_imports + [import_yaml_config]
-        return result
+            # Add configs in correct order: deeper imports first, then current import
+            # This ensures that configs closer to the root have higher priority
+            all_imported_configs.extend(nested_imports)
+            all_imported_configs.append(import_yaml_config)
+        
+        return all_imported_configs
 
     def parse_args(self, *args) -> T:
         """

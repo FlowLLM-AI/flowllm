@@ -8,11 +8,6 @@ disabled_flows:
   - mock_async_tool_flow
 
 flow:
-  ant_search:
-    flow_content: ant_search_op
-
-  ant_investment:
-    flow_content: ant_investment_op
 
   tavily_search:
     flow_content: tavily_search_op
@@ -25,6 +20,25 @@ flow:
 
   bocha_web_search:
     flow_content: bocha_web_search_op
+
+  brave_web_search:
+    flow_content: brave_web_search_op
+
+  bailian_web_parser:
+    flow_content: bailian_web_parser_op
+
+
+
+  asset_company:
+    flow_content: crawl_ths_company_op >> extract_content_op
+    description: "通过股票代码获取公司资料信息，例如：详细情况，高管介绍，发行相关，参控股公司。"
+    input_schema:
+      code:
+
+      query:
+        type: string
+        description: "user query"
+        required: true
 
 
 op:
@@ -71,6 +85,8 @@ op:
         - freshness
         - count
 
+
+
   extract_entities_code_op:
     backend: extract_entities_code_op
     params:
@@ -81,13 +97,29 @@ external_mcp:
   ant_supply:
     type: sse,
     url: "http://11.160.132.45:8010/sse"
+
+
+
   tongyi_search:
     type: sse
     url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
     headers:
       Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+
   bochaai_search:
     type: sse
     url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+
+  brave_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/Brave_Search/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+
+  qtf_mcp:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/qtf_mcp/sse"
     headers:
       Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

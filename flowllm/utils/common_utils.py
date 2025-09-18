@@ -1,6 +1,7 @@
 import json
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
@@ -72,3 +73,18 @@ def extract_json(text: str) -> dict | None:
 
     else:
         return None
+
+
+def extract_python(text: str) -> str:
+    match = re.search(r'```python\s*(.*?)\s*```', text, re.DOTALL)
+
+    if match:
+        return match.group(1).strip()
+    else:
+        return ""
+
+
+def get_datetime():
+    now = datetime.now()
+    formatted_time = now.strftime("%Y年%m月%d日 %H:%M:%S")
+    return formatted_time

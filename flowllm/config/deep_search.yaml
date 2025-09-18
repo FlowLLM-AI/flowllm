@@ -1,0 +1,55 @@
+import_config: default
+
+flow:
+  dashscope_deep_research:
+    flow_content: dashscope_deep_research_op
+    stream: true
+
+  open_deep_research:
+    flow_content: leader_researcher_op << (leader_researcher_op << bailian_web_search_op)
+    stream: true
+
+op:
+  bailian_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tongyi_search
+      tool_name: bailian_web_search
+      clear_required: false
+      save_answer: true
+
+  bocha_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: bochaai_search
+      tool_name: bocha_web_search
+      clear_required: false
+      save_answer: true
+
+  tavily_search_op:
+    backend: tavily_search_op
+    params:
+      save_answer: true
+
+  # deprecated
+  dashscope_search_op:
+    backend: dashscope_search_op
+    params:
+      save_answer: true
+
+external_mcp:
+  tongyi_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  tongyi_web_parser:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  bochaai_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

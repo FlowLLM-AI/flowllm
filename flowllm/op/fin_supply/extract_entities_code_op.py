@@ -3,7 +3,7 @@ import json
 
 from loguru import logger
 
-from flowllm.context import FlowContext
+from flowllm.context import FlowContext, C
 from flowllm.enumeration.role import Role
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.op.search import DashscopeSearchOp
@@ -12,6 +12,7 @@ from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.common_utils import extract_json
 
 
+@C.register_op(register_app="FlowLLM")
 class ExtractEntitiesCodeOp(BaseAsyncToolOp):
     file_path: str = __file__
 
@@ -35,7 +36,7 @@ For entities like stocks or ETF funds, search for their corresponding codes. Fin
 
     async def get_entity_code(self, entity: str, entity_type: str):
         query = f"the {entity_type} code of {entity}"
-        search_op = self.ops[0]
+        search_op = self.ops[0].copy()
         assert isinstance(search_op, BaseAsyncToolOp)
         await search_op.async_call(context=FlowContext(query=query))
 

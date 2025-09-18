@@ -2,14 +2,16 @@ import json
 from typing import Dict, List
 
 from mcp.types import Tool
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ConfigDict
 
 
-class ParamAttrs(BaseModel, extra="allow"):
+class ParamAttrs(BaseModel):
     type: str = Field(default="str", description="tool parameter type")
     description: str = Field(default="", description="tool parameter description")
     required: bool = Field(default=True, description="tool parameter required")
     enum: List[str] | None = Field(default=None, description="tool parameter enum")
+
+    model_config = ConfigDict(extra="allow")
 
 
 class ToolCall(BaseModel):

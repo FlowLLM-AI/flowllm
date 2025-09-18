@@ -1,0 +1,90 @@
+tool_description: |
+  There is historical stock price data available for a given A-share stock code, with the following schema:
+  ```
+  名称	类型	描述
+  日期	object	交易日
+  股票代码	object	不带市场标识的股票代码
+  开盘	float64	开盘价
+  收盘	float64	收盘价
+  最高	float64	最高价
+  最低	float64	最低价
+  成交量	int64	注意单位: 手
+  成交额	float64	注意单位: 元
+  振幅	float64	注意单位: %
+  涨跌幅	float64	注意单位: %
+  涨跌额	float64	注意单位: 元
+  换手率	float64	注意单位: %
+  ```
+  You need to input the stock code you want to analyze along with your question. This tool will generate and execute the corresponding code for you and return the result.
+  Note: You do NOT need to write any code — just ask your question, for example: "How much has it risen in the past week?", "Recent market trend", "has the MACD formed a golden cross?".
+  Please be aware that the tool can only answer questions based on data within the above schema. Do not ask questions that require data beyond this schema.
+  
+akshare_code_prompt: |
+  你是一个专业的金融数据分析助手。
+  
+  # A股股票代码
+  {code}
+
+  # 用户问题
+  {query}
+
+  # 当前时间
+  {current_date}
+  
+  # 你的任务：写代码回答用户问题
+  1. **通过A股股票代码和akshare工具获取数据**，该数据包含股票每日行情（字段包括：日期、开盘、收盘、最高、最低、成交量、成交额、振幅、涨跌幅、涨跌额、换手率）。
+  2. **根据用户问题编写后续数据处理或分析代码**，使用 pandas 或其他必要库进行计算、筛选、统计等操作。
+  3. **必须通过 `print(...)` 输出一个清晰、简洁、直接回答用户问题的结论**。输出内容应为人类可读的自然语言句子，不能仅输出DataFrame或原始数据。
+  
+  # akshare dataframe 数据格式
+  ```
+  名称	类型	描述
+  日期	object	交易日
+  股票代码	object	不带市场标识的股票代码
+  开盘	float64	开盘价
+  收盘	float64	收盘价
+  最高	float64	最高价
+  最低	float64	最低价
+  成交量	int64	注意单位: 手
+  成交额	float64	注意单位: 元
+  振幅	float64	注意单位: %
+  涨跌幅	float64	注意单位: %
+  涨跌额	float64	注意单位: 元
+  换手率	float64	注意单位: %
+  ```
+  
+  # 注意事项
+  - 请使用akshare工具填入code等参数获取数据；
+  - 所有代码必须可直接运行（请导入所需库）；
+  - 结论必须通过 `print()` 输出；
+  - 请考虑提供的当前日期，如需计算“最近N天”或“今年以来”等时间范围，请以该日期为基准；
+  - 请确保逻辑严谨、计算准确。
+  - 如果不是A股股票，print 无法计算非A股股票的数据。
+    
+  # 示例
+  A股股票代码: 000001
+  用户问题: 这只股票最近30个交易日的平均收盘价是多少？
+  
+  {example}
+
+akshare_code_example: |
+  ```python
+  import akshare as ak
+  import pandas as pd
+  
+  # 获取数据：其中symbol代表股票代码，period是日频数据，adjust参数是前复权，都不需要改。
+  stock_zh_a_hist_df = ak.stock_zh_a_hist(symbol="000001", period="daily", adjust="qfq")
+  
+  # 转换日期列并排序
+  stock_zh_a_hist_df['日期'] = pd.to_datetime(stock_zh_a_hist_df['日期'])
+  stock_zh_a_hist_df = stock_zh_a_hist_df.sort_values('日期').reset_index(drop=True)
+  
+  # 获取最近30个交易日（截至2025年9月18日）
+  recent_30 = stock_zh_a_hist_df[stock_zh_a_hist_df['日期'] <= '2025-09-18'].tail(30)
+  
+  # 计算平均收盘价
+  avg_close = recent_30['收盘'].mean()
+  
+  # 输出结论
+  print(f"截至2025年9月18日，该股票最近30个交易日的平均收盘价为：{avg_close:.2f} 元")
+  ```

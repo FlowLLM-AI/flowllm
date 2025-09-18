@@ -1,0 +1,34 @@
+import_config: default
+backend: mcp
+disabled_flows:
+  - llm_flow
+  - llm_flow_stream
+  - mock_tool_flow
+  - mock_async_tool_flow
+
+
+flow:
+  ant_search:
+    flow_content: ant_search_op
+
+  ant_investment:
+    flow_content: ant_investment_op
+
+op:
+  ant_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: ant_supply
+      tool_name: search
+
+  ant_investment_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: ant_supply
+      tool_name: investment_analysis
+
+
+external_mcp:
+  ant_supply:
+    type: sse,
+    url: "http://11.160.132.45:8010/sse"

@@ -70,6 +70,7 @@ class McpClient:
         for i in range(self.max_retries):
             try:
                 await self.start()
+                return self
 
             except Exception as e:
                 logger.exception(f"{self.name} start failed with {e}. "

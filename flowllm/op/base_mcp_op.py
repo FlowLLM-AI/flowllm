@@ -1,6 +1,5 @@
 from typing import List
 
-from loguru import logger
 from mcp.types import CallToolResult
 
 from flowllm.client.mcp_client import McpClient
@@ -51,5 +50,4 @@ class BaseMcpOp(BaseAsyncToolOp):
         mcp_server_config = C.service_config.external_mcp[self.mcp_name]
         async with McpClient(name=self.mcp_name, config=mcp_server_config) as client:
             result: CallToolResult = await client.call_tool(self.tool_name, arguments=self.input_dict)
-            logger.info(f"{self.mcp_name}@{self.tool_name} result: {result}")
             self.set_result(result.content[0].text)
