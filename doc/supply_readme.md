@@ -333,42 +333,10 @@ if __name__ == "__main__":
 
 ## ant supply
 
-Ant供给提供了基于蚂蚁金服的专业搜索和投资分析能力：
-
-| MCP Flow名称     | 能力描述   | Pipeline          | 输入示例                                            | 输出示例                  |
-|----------------|--------|-------------------|-------------------------------------------------|-----------------------|
-| ant_search     | 蚂蚁专业搜索 | ant_search_op     | `{"query": "平安银行最新财报分析"}`                       | `平安银行2024年Q3财报显示：...` |
-| ant_investment | 蚂蚁投资分析 | ant_investment_op | `{"entity": "阿里巴巴", "analysis_category": "股票"}` | `阿里巴巴投资分析：...`        |
-
-### 代码示例
-
-```python
-import asyncio
-from flowllm.client.fastmcp_client import FastmcpClient
-
-
-async def ant_supply_example():
-    """Ant supply使用示例"""
-    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
-        # 1. 蚂蚁专业搜索
-        print("=== 蚂蚁专业搜索 ===")
-        result = await client.call_tool("ant_search", {
-            "query": "平安银行最新财报分析"
-        })
-        print(f"搜索结果: {result.content[0].text}")
-
-        # 2. 蚂蚁投资分析
-        print("\n=== 蚂蚁投资分析 ===")
-        result = await client.call_tool("ant_investment", {
-            "entity": "阿里巴巴",
-            "analysis_category": "股票"
-        })
-        print(f"投资分析: {result.content[0].text}")
-
-
-if __name__ == "__main__":
-    asyncio.run(ant_supply_example())
-```
+| MCP Flow名称     | Pipeline          | 输入示例                                            | 输出示例                  |
+|----------------|-------------------|-------------------------------------------------|-----------------------|
+| ant_search     | ant_search_op     | `{"query": "平安银行最新财报分析"}`                       | `平安银行2024年Q3财报显示：...` |
+| ant_investment | ant_investment_op | `{"entity": "阿里巴巴", "analysis_category": "股票"}` | `阿里巴巴投资分析：...`        |
 
 ### 配置地址
 
