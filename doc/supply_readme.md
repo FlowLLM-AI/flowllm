@@ -1,4 +1,85 @@
-## background
+## 快速开始
+
+### 环境准备
+
+#### 1. 克隆项目
+```shell
+git clone git@gitlab.alibaba-inc.com:OpenRepo/flowllm.git
+```
+
+#### 2. 准备环境变量
+从 `example.env` 复制一份为 `.env`，填入自己的API密钥和URL：
+```shell
+cp example.env .env
+# 编辑.env文件，填入相关配置
+```
+
+#### 3. 安装依赖
+要求 Python >= 3.12
+```shell
+pip install -e .
+```
+
+### 启动服务
+
+#### SSE模式启动
+```shell
+flowllm --config=fin_supply
+```
+
+#### MCP Server配置（SSE模式）
+
+配置文件示例：
+```json
+{
+  "mcpServers": {
+    "asio-fin-supply-server": {
+      "type": "sse",
+      "url": "http://11.164.204.33:8001/sse"
+    }
+  }
+}
+```
+
+### 使用示例
+
+标准的MCP服务使用方法，参考 [mcp_client_test.py](../test/mcp_client_test.py)
+
+## 背景
+
+### 系统架构
+
+采用分层架构设计：
+
+1. **操作层（Operation Layer）**：提供原子化的数据操作能力，每个Op（操作）负责特定的数据获取或处理任务
+2. **流程层（Flow Layer）**：通过Pipeline将多个Op组合成复杂的业务流程，支持串行（>>）和并行（|）执行和子Op（<<）
+3. **服务层（Service Layer）**：基于MCP（Model Context Protocol）协议提供标准化的API接口
+
+### 核心特性
+
+- **模块化设计**：每个供给模块独立可配置，支持按需组合和扩展
+- **统一接口**：基于MCP协议提供标准化的工具调用接口，便于集成
+- **智能缓存**：支持多级缓存机制，提高数据获取效率和降低成本
+- **灵活配置**：通过YAML配置文件管理流程参数，支持环境隔离和版本管理
+
+### 供给模块
+
+系统目前提供以下金融供给模块：
+
+| 供给类型              | Flow数量 | 核心能力           | 主要特点                                                                                |
+|-------------------|--------|----------------|-------------------------------------------------------------------------------------|
+| **basic supply**  | 3个     | 实时行情、技术分析、实体识别 | • 智能识别金融实体并获取交易代码<br>• 提供A股实时价格和成交数据<br>• 基于历史数据进行技术指标计算                            |
+| **ths supply**    | 13个    | 同花顺全维度数据爬取     | • 公司基本资料、股东研究、经营分析<br>• 股本结构、资本运作、盈利预测<br>• 新闻公告、概念题材、主力持仓<br>• 财务分析、分红融资、公司大事、行业对比 |
+| **mcp supply**    | 3个     | 量化投资分析服务       | • brief模式：基础信息和简要分析<br>• medium模式：中等深度的多维分析<br>• full模式：全面深度投资分析报告                  |
+| **search supply** | 6个     | 多引擎网络搜索和解析     | • 集成Tavily、通义、百炼、Bocha、Brave搜索<br>• 支持网页内容解析和长文本提取<br>• 提供时效性和数量控制参数                |
+| **ant supply**    | 2个     | 内部搜索           | • 专业搜索能力                                                                            |
+
+### 技术优势
+
+- **高性能**：支持异步处理和并行执行，可处理大规模数据请求
+- **高可用**：内置重试机制和异常处理，确保服务稳定性
+- **易扩展**：基于插件化架构，可快速添加新的数据源和分析能力
+- **标准化**：遵循MCP协议标准，与主流AI平台和工具无缝集成
 
 ## basic supply
 
@@ -9,6 +90,43 @@
 | extract_entities_code | 从查询中提取金融实体并获取对应代码 | extract_entities_code_op << bailian_web_search_op | `{"query": "阿里和腾讯哪个更好？和茅台比呢？"}`                            | `[{"entity": "阿里巴巴", "type": "stock", "codes": ["BABA", "09988.HK"]}, {"entity": "腾讯", "type": "stock", "codes": ["00700.HK"]}, {"entity": "茅台", "type": "stock", "codes": ["600519"]}]` |
 | akshare_market        | 获取A股股票实时行情数据      | akshare_market_op                                 | `{"code": "000001"}`                                       | `000001的实时行情: {"代码": "000001", "名称": "平安银行", "最新价": 15.23, "涨跌幅": 2.35, "涨跌额": 0.35, "成交量": 123456, "成交额": 1876543210, "振幅": 3.45, "最高": 15.45, "最低": 14.98, "今开": 15.12, "昨收": 14.88}`  |
 | akshare_calculate     | 基于历史数据进行股票技术分析计算  | akshare_calculate_op                              | `{"code": "000001", "query": "最近五日成交量有放量吗？最近五日macd有金叉吗？"}` | `根据分析，该股票最近五日成交量相比前期有明显放量，平均成交量增长35%。MACD指标在最近五日出现金叉信号，DIF线上穿DEA线，显示短期趋势向好。`                                                                                                             |
+
+### 代码示例
+
+```python
+import asyncio
+from flowllm.client.fastmcp_client import FastmcpClient
+
+
+async def basic_supply_example():
+    """Basic supply使用示例"""
+    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+        # 1. 提取金融实体代码
+        print("=== 提取金融实体代码 ===")
+        result = await client.call_tool("extract_entities_code", {
+            "query": "阿里和腾讯哪个更好？和茅台比呢？"
+        })
+        print(f"提取结果: {result.content[0].text}")
+
+        # 2. 获取实时行情
+        print("\n=== 获取实时行情 ===")
+        result = await client.call_tool("akshare_market", {
+            "code": "000001"
+        })
+        print(f"行情数据: {result.content[0].text}")
+
+        # 3. 技术分析计算
+        print("\n=== 技术分析计算 ===")
+        result = await client.call_tool("akshare_calculate", {
+            "code": "000001",
+            "query": "最近五日成交量有放量吗？最近五日macd有金叉吗？"
+        })
+        print(f"分析结果: {result.content[0].text}")
+
+
+if __name__ == "__main__":
+    asyncio.run(basic_supply_example())
+```
 
 ### 主要特点
 
@@ -46,17 +164,9 @@
 | crawl_ths_event    | 获取公司大事信息   | ths_event_op >> bailian_web_parser_op >> extract_long_text_op    | `{"query": "高管变动", "code": "000001"}`   | `平安银行高管变动: 近期董事会决议任命新任副行长，具有20年银行从业经验...`                      |
 | crawl_ths_field    | 获取行业对比信息   | ths_field_op >> bailian_web_parser_op >> extract_long_text_op    | `{"query": "行业地位", "code": "000001"}`   | `平安银行行业地位: 在股份制银行中排名第3位，资产规模4.9万亿元，市场份额约2.8%...`               |
 
-### 主要特点
-
-- **全面覆盖**：涵盖公司基本面、财务、股东、经营等13个维度的深度信息
-- **实时爬取**：直接从同花顺官网获取最新数据，确保信息时效性
-- **智能解析**：使用百炼网页解析器提取结构化信息
-- **缓存优化**：支持数据缓存机制，提高查询效率
-- **灵活查询**：支持针对性查询，根据用户问题返回相关信息
-
 ### 数据来源
 
-- 来源地址: https://basic.10jqka.com.cn/300033/
+- [来源地址](https://basic.10jqka.com.cn/300033/)
 - 同花顺基本面数据
 - 公司资料、股东信息、经营分析
 - 股本结构、资本运作、盈利预测
@@ -64,12 +174,279 @@
 - 财务分析、分红融资、公司大事
 - 行业对比等全方位数据
 
+### 代码示例
+
+```python
+import asyncio
+from flowllm.client.fastmcp_client import FastmcpClient
+
+
+async def ths_supply_example():
+    """THS supply使用示例"""
+    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+
+        # 示例股票代码
+        stock_code = "000001"  # 平安银行
+
+        # 1. 获取公司基本资料信息
+        print("=== 公司基本资料 ===")
+        result = await client.call_tool("crawl_ths_company", {
+            "query": "平安银行的公司情况如何？",
+            "code": stock_code
+        })
+        print(f"公司信息: {result.content[0].text}")
+
+        # 2. 获取股东研究信息
+        print("\n=== 股东研究 ===")
+        result = await client.call_tool("crawl_ths_holder", {
+            "query": "平安银行的股东结构如何？",
+            "code": stock_code
+        })
+        print(f"股东信息: {result.content[0].text}")
+
+        # 3. 获取经营分析信息
+        print("\n=== 经营分析 ===")
+        result = await client.call_tool("crawl_ths_operate", {
+            "query": "平安银行的主营业务是什么？",
+            "code": stock_code
+        })
+        print(f"经营信息: {result.content[0].text}")
+
+        # 4. 获取财务分析信息
+        print("\n=== 财务分析 ===")
+        result = await client.call_tool("crawl_ths_finance", {
+            "query": "平安银行的财务状况如何？",
+            "code": stock_code
+        })
+        print(f"财务信息: {result.content[0].text}")
+
+        # 5. 获取新闻公告信息
+        print("\n=== 新闻公告 ===")
+        result = await client.call_tool("crawl_ths_news", {
+            "query": "平安银行最近有什么新闻？",
+            "code": stock_code
+        })
+        print(f"新闻信息: {result.content[0].text}")
+
+        # 6. 获取概念题材信息
+        print("\n=== 概念题材 ===")
+        result = await client.call_tool("crawl_ths_concept", {
+            "query": "平安银行涉及哪些概念题材？",
+            "code": stock_code
+        })
+        print(f"概念信息: {result.content[0].text}")
+
+        # 7. 获取主力持仓信息
+        print("\n=== 主力持仓 ===")
+        result = await client.call_tool("crawl_ths_position", {
+            "query": "平安银行的机构持仓情况如何？",
+            "code": stock_code
+        })
+        print(f"持仓信息: {result.content[0].text}")
+
+        # 8. 其他维度信息示例
+        other_examples = [
+            ("crawl_ths_equity", {"query": "股本结构如何？", "code": stock_code}),
+            ("crawl_ths_capital", {"query": "有哪些资本运作？", "code": stock_code}),
+            ("crawl_ths_worth", {"query": "业绩预测如何？", "code": stock_code}),
+            ("crawl_ths_bonus", {"query": "分红情况如何？", "code": stock_code}),
+            ("crawl_ths_event", {"query": "最近有什么重大事件？", "code": stock_code}),
+            ("crawl_ths_field", {"query": "在行业中的地位如何？", "code": stock_code})
+        ]
+
+        for tool_name, params in other_examples:
+            print(f"\n=== {tool_name} ===")
+            try:
+                result = await client.call_tool(tool_name, params)
+                print(f"结果: {result.content[0].text[:200]}...")
+            except Exception as e:
+                print(f"调用失败: {e}")
+
+
+if __name__ == "__main__":
+    asyncio.run(ths_supply_example())
+```
+
 ### 配置地址
 
 - [fin_ths.yaml](../flowllm/config/fin_ths.yaml)
 
 ## mcp supply
 
+MCP供给提供了基于阿里云百炼平台的量化投资分析能力，通过qtf_mcp工具提供不同深度的股票分析服务：
+
+| MCP Flow名称     | 能力描述       | Pipeline          | 输入示例                     | 输出示例                                                                                                                                                         |
+|----------------|------------|-------------------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| qtf_brief_mcp  | 提供股票基础分析摘要 | qtf_brief_mcp_op  | `{"symbol": "SZ000001"}` | `平安银行(000001)简要分析: 当前股价15.23元，涨幅2.35%。基本面良好，ROE 11.1%，市盈率8.5倍。技术面显示短期趋势向好，建议关注。`                                                                             |
+| qtf_medium_mcp | 提供股票中等深度分析 | qtf_medium_mcp_op | `{"symbol": "SZ000001"}` | `平安银行(000001)中等分析: 基本面分析-资产质量稳定，不良率1.02%；盈利能力强，ROE持续改善。技术面分析-MACD金叉，成交量放大，短期支撑位14.8元。估值合理，目标价16.5元。风险提示：银行业监管政策变化。`                                          |
+| qtf_full_mcp   | 提供股票全面深度分析 | qtf_full_mcp_op   | `{"symbol": "SZ000001"}` | `平安银行(000001)全面分析报告: 1.基本面：资产规模4.9万亿，净利润增长6.8%，ROE 11.1%，资本充足率13.85%。2.技术面：多项指标显示买入信号，支撑阻力位明确。3.估值：PB 0.85倍，PE 8.5倍，相对估值偏低。4.投资建议：买入，目标价16.5-17元，持有期6-12个月。` |
+
+### 代码示例
+
+```python
+import asyncio
+from flowllm.client.fastmcp_client import FastmcpClient
+
+
+async def mcp_supply_example():
+    """MCP supply使用示例"""
+    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+        # 1. 简要分析
+        print("=== 股票简要分析 ===")
+        result = await client.call_tool("qtf_brief_mcp", {
+            "symbol": "SZ000001"
+        })
+        print(f"简要分析: {result.content[0].text}")
+
+        # 2. 中等深度分析
+        print("\n=== 股票中等深度分析 ===")
+        result = await client.call_tool("qtf_medium_mcp", {
+            "symbol": "SZ000001"
+        })
+        print(f"中等分析: {result.content[0].text}")
+
+        # 3. 全面深度分析
+        print("\n=== 股票全面深度分析 ===")
+        result = await client.call_tool("qtf_full_mcp", {
+            "symbol": "SZ000001"
+        })
+        print(f"全面分析: {result.content[0].text}")
+
+
+if __name__ == "__main__":
+    asyncio.run(mcp_supply_example())
+```
+
+### 主要特点
+
+- **brief模式**：提供股票的基础信息和简要分析结论，适合快速了解
+- **medium模式**：包含基本面、技术面和估值的中等深度分析，平衡详细度和效率
+- **full模式**：提供全面深度的投资分析报告，包含详细的投资建议和风险提示
+
+### 数据来源
+
+- [阿里云百炼MCP市场](https://bailian.console.aliyun.com/pre-publish?tab=mcp#/mcp-market/detail/qtf_mcp)
+
+### 配置地址
+
+- [fin_mcp.yaml](../flowllm/config/fin_mcp.yaml)
+
 ## ant supply
 
+Ant供给提供了基于蚂蚁金服的专业搜索和投资分析能力：
+
+| MCP Flow名称     | 能力描述   | Pipeline          | 输入示例                                            | 输出示例                  |
+|----------------|--------|-------------------|-------------------------------------------------|-----------------------|
+| ant_search     | 蚂蚁专业搜索 | ant_search_op     | `{"query": "平安银行最新财报分析"}`                       | `平安银行2024年Q3财报显示：...` |
+| ant_investment | 蚂蚁投资分析 | ant_investment_op | `{"entity": "阿里巴巴", "analysis_category": "股票"}` | `阿里巴巴投资分析：...`        |
+
+### 代码示例
+
+```python
+import asyncio
+from flowllm.client.fastmcp_client import FastmcpClient
+
+
+async def ant_supply_example():
+    """Ant supply使用示例"""
+    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+        # 1. 蚂蚁专业搜索
+        print("=== 蚂蚁专业搜索 ===")
+        result = await client.call_tool("ant_search", {
+            "query": "平安银行最新财报分析"
+        })
+        print(f"搜索结果: {result.content[0].text}")
+
+        # 2. 蚂蚁投资分析
+        print("\n=== 蚂蚁投资分析 ===")
+        result = await client.call_tool("ant_investment", {
+            "entity": "阿里巴巴",
+            "analysis_category": "股票"
+        })
+        print(f"投资分析: {result.content[0].text}")
+
+
+if __name__ == "__main__":
+    asyncio.run(ant_supply_example())
+```
+
+### 配置地址
+
+- [fin_ant.yaml](../flowllm/config/fin_ant.yaml)
+
 ## search supply
+
+搜索供给提供了多样化的网络搜索和内容解析能力，集成了多个优质搜索引擎和解析工具：
+
+| MCP Flow名称         | Pipeline                                 | 输入示例                                   | 输出示例                                                        |
+|--------------------|------------------------------------------|----------------------------------------|-------------------------------------------------------------|
+| tavily_search      | tavily_search_op >> extract_long_text_op | `{"query": "2024年中国GDP增长情况"}`          | `根据最新数据，2024年中国GDP同比增长5.2%，经济运行总体平稳，消费和投资成为主要增长动力...`       |
+| dashscope_search   | dashscope_search_op                      | `{"query": "人工智能最新发展趋势"}`              | `人工智能领域最新发展包括大语言模型技术突破、多模态AI应用普及、AI+行业深度融合等趋势...`           |
+| bailian_web_search | bailian_web_search_op                    | `{"query": "新能源汽车市场现状", "count": 10}`  | `2024年新能源汽车市场保持高速增长，销量突破800万辆，市场渗透率达到35%，比亚迪、特斯拉领跑市场...`    |
+| bocha_web_search   | bocha_web_search_op                      | `{"query": "区块链技术应用", "freshness": 7}` | `区块链技术在金融、供应链、数字身份等领域应用不断深化，央行数字货币DCEP试点扩大，DeFi生态持续发展...`   |
+| brave_web_search   | brave_web_search_op                      | `{"query": "量子计算突破", "count": 5}`      | `量子计算领域取得重大突破，IBM发布1000+量子比特处理器，Google实现量子纠错里程碑，产业化进程加速...` |
+| bailian_web_parser | bailian_web_parser_op                    | `{"url": "https://example.com"}`       | `解析网页内容：标题、正文、关键信息等结构化数据，支持多种格式输出...`                       |
+
+### 代码示例
+
+```python
+import asyncio
+from flowllm.client.fastmcp_client import FastmcpClient
+
+
+async def search_supply_example():
+    """Search supply使用示例"""
+    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+        # 1. Tavily搜索（带长文本提取）
+        print("=== Tavily搜索 ===")
+        result = await client.call_tool("tavily_search", {
+            "query": "2024年中国GDP增长情况"
+        })
+        print(f"搜索结果: {result.content[0].text}")
+
+        # 2. 通义搜索
+        print("\n=== 通义搜索 ===")
+        result = await client.call_tool("dashscope_search", {
+            "query": "人工智能最新发展趋势"
+        })
+        print(f"搜索结果: {result.content[0].text}")
+
+        # 3. 百炼网络搜索（带数量限制）
+        print("\n=== 百炼网络搜索 ===")
+        result = await client.call_tool("bailian_web_search", {
+            "query": "新能源汽车市场现状",
+            "count": 10
+        })
+        print(f"搜索结果: {result.content[0].text}")
+
+        # 4. Bocha搜索（带时效性）
+        print("\n=== Bocha搜索 ===")
+        result = await client.call_tool("bocha_web_search", {
+            "query": "区块链技术应用",
+            "freshness": 7
+        })
+        print(f"搜索结果: {result.content[0].text}")
+
+        # 5. Brave搜索
+        print("\n=== Brave搜索 ===")
+        result = await client.call_tool("brave_web_search", {
+            "query": "量子计算突破",
+            "count": 5
+        })
+        print(f"搜索结果: {result.content[0].text}")
+
+        # 6. 网页内容解析
+        print("\n=== 网页内容解析 ===")
+        result = await client.call_tool("bailian_web_parser", {
+            "url": "https://basic.10jqka.com.cn/601899/field.html"
+        })
+        print(f"解析结果: {result.content[0].text}")
+
+
+if __name__ == "__main__":
+    asyncio.run(search_supply_example())
+```
+
+### 配置地址
+
+- [fin_search.yaml](../flowllm/config/fin_search.yaml)
