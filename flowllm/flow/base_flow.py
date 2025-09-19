@@ -7,6 +7,7 @@ from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
+from flowllm.enumeration.chunk_enum import ChunkEnum
 from flowllm.op.base_async_op import BaseAsyncOp
 from flowllm.op.base_op import BaseOp
 from flowllm.op.parallel_op import ParallelOp
@@ -104,7 +105,7 @@ class BaseFlow(ABC):
             logger.exception(f"flow_name={self.name} async call encounter error={e.args}")
 
             if self.stream:
-                await context.add_stream_error(e)
+                await context.add_stream_chunk_and_type(str(e), ChunkEnum.ERROR)
             else:
                 context.add_response_error(e)
 

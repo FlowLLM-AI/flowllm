@@ -116,7 +116,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
         if self.save_answer:
             if isinstance(self.output_keys, str):
-                self.context.response.answer = self.output_dict[self.output_keys]
+                self.context.response.answer = self.output_dict.get(self.output_keys, "")
             else:
                 self.context.response.answer = json.dumps(self.output_dict, ensure_ascii=False)
 

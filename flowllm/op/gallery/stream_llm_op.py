@@ -55,9 +55,6 @@ class StreamLLMOp(BaseAsyncToolOp):
                     chunk=json.dumps([x.model_dump() for x in chunk], ensure_ascii=False),
                     chunk_type=ChunkEnum.TOOL)
 
-        await self.context.add_stream_done()
-
-
 async def main():
     from flowllm.app import FlowLLMApp
     async with FlowLLMApp(load_default_config=True):
