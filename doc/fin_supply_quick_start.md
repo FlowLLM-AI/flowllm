@@ -1,10 +1,10 @@
-### 使用示例
+### MCP API调用示例
 
 标准的MCP服务使用方法，参考 [mcp_supply_test.py](../test/mcp_supply_test.py)
 
 ## MCP工具的HTTP API调用示例
 
-以下是每个MCP工具对应的curl命令示例，用于HTTP API测试：
+以下是每个MCP工具对应的curl命令示例，部署在8002端口，用于HTTP API测试：
 
 ### 1. Ant
 
