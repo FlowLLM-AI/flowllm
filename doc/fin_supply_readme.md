@@ -85,7 +85,7 @@ from flowllm.client.fastmcp_client import FastmcpClient
 
 async def basic_supply_example():
     """Basic supply使用示例"""
-    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+    async with FastmcpClient(transport="sse", host="11.164.204.33", port=8001) as client:
         # 1. 提取金融实体代码
         print("=== 提取金融实体代码 ===")
         result = await client.call_tool("extract_entities_code", {
@@ -168,7 +168,7 @@ from flowllm.client.fastmcp_client import FastmcpClient
 
 async def ths_supply_example():
     """THS supply使用示例"""
-    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+    async with FastmcpClient(transport="sse", host="11.164.204.33", port=8001) as client:
 
         # 示例股票代码
         stock_code = "000001"  # 平安银行
@@ -275,7 +275,7 @@ from flowllm.client.fastmcp_client import FastmcpClient
 
 async def mcp_supply_example():
     """MCP supply使用示例"""
-    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+    async with FastmcpClient(transport="sse", host="11.164.204.33", port=8001) as client:
         # 1. 简要分析
         print("=== 股票简要分析 ===")
         result = await client.call_tool("qtf_brief_mcp", {
@@ -349,7 +349,7 @@ from flowllm.client.fastmcp_client import FastmcpClient
 
 async def search_supply_example():
     """Search supply使用示例"""
-    async with FastmcpClient(transport="sse", host="0.0.0.0", port=8001) as client:
+    async with FastmcpClient(transport="sse", host="11.164.204.33", port=8001) as client:
         # 1. Tavily搜索（带长文本提取）
         print("=== Tavily搜索 ===")
         result = await client.call_tool("tavily_search", {
