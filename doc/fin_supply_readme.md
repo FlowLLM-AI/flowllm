@@ -17,15 +17,47 @@
 
 ### 供给模块
 
-系统目前提供以下金融供给模块：
+系统目前提供以下金融供给模块，共计28个Flow：
+
+| MCP Flow名称                | 核心能力               |
+|---------------------------|--------------------|
+| **ant_search**            | 内部专业搜索             |
+| **ant_investment**        | 投资分析服务             |
+| **extract_entities_code** | 金融实体识别和code提取      |
+| **akshare_market**        | A股实时行情数据           |
+| **akshare_calculate**     | 股票技术分析计算           |
+| **qtf_brief_mcp**         | 股票基础分析摘要           |
+| **qtf_medium_mcp**        | 股票中等深度分析           |
+| **qtf_full_mcp**          | 股票全面深度分析           |
+| **tavily_search**         | tavily_search      |
+| **dashscope_search**      | dashscope大模型强制开启搜索 |
+| **bailian_web_search**    | bailian_search     |
+| **bocha_web_search**      | bocha search       |
+| **brave_web_search**      | brave search       |
+| **bailian_web_parser**    | bailian 网页解析       |
+| **crawl_ths_company**     | 同花顺公司基本资料          |
+| **crawl_ths_holder**      | 同花顺股东研究信息          |
+| **crawl_ths_operate**     | 同花顺经营分析信息          |
+| **crawl_ths_equity**      | 同花顺股本结构信息          |
+| **crawl_ths_capital**     | 同花顺资本运作信息          |
+| **crawl_ths_worth**       | 同花顺盈利预测信息          |
+| **crawl_ths_news**        | 同花顺新闻公告信息          |
+| **crawl_ths_concept**     | 同花顺概念题材信息          |
+| **crawl_ths_position**    | 同花顺主力持仓信息          |
+| **crawl_ths_finance**     | 同花顺财务分析信息          |
+| **crawl_ths_bonus**       | 同花顺分红融资信息          |
+| **crawl_ths_event**       | 同花顺公司大事信息          |
+| **crawl_ths_field**       | 同花顺行业对比信息          |
+
+### 供给类型统计
 
 | 供给类型              | Flow数量 | 核心能力           | 主要特点                                                                                |
 |-------------------|--------|----------------|-------------------------------------------------------------------------------------|
+| **ant supply**    | 2个     | 内部专业搜索         | • 专业搜索能力<br>• 投资分析服务                                                                |
 | **basic supply**  | 3个     | 实时行情、技术分析、实体识别 | • 智能识别金融实体并获取交易代码<br>• 提供A股实时价格和成交数据<br>• 基于历史数据进行技术指标计算                            |
-| **ths supply**    | 13个    | 同花顺全维度数据爬取     | • 公司基本资料、股东研究、经营分析<br>• 股本结构、资本运作、盈利预测<br>• 新闻公告、概念题材、主力持仓<br>• 财务分析、分红融资、公司大事、行业对比 |
 | **mcp supply**    | 3个     | 量化投资分析服务       | • brief模式：基础信息和简要分析<br>• medium模式：中等深度的多维分析<br>• full模式：全面深度投资分析报告                  |
 | **search supply** | 6个     | 多引擎网络搜索和解析     | • 集成Tavily、通义、百炼、Bocha、Brave搜索<br>• 支持网页内容解析和长文本提取<br>• 提供时效性和数量控制参数                |
-| **ant supply**    | 2个     | 内部搜索           | • 专业搜索能力                                                                            |
+| **ths supply**    | 13个    | 同花顺全维度数据爬取     | • 公司基本资料、股东研究、经营分析<br>• 股本结构、资本运作、盈利预测<br>• 新闻公告、概念题材、主力持仓<br>• 财务分析、分红融资、公司大事、行业对比 |
 
 ### 技术优势
 
