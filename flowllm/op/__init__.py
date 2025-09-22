@@ -1,4 +1,5 @@
 from . import crawl
+from . import deep_research
 from . import fin_supply
 from . import gallery
 from . import search

@@ -1,6 +1,6 @@
 import json
 from abc import ABCMeta
-from typing import List
+from typing import List, Any
 
 from loguru import logger
 
@@ -74,13 +74,13 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             return output_keys
 
     @property
-    def output(self) -> str | dict:
+    def output(self) -> str:
         if isinstance(self.output_keys, str):
             return self.output_dict[self.output_keys]
         else:
-            return {k: self.output_dict[k] for k in self.output_keys if k in self.output_dict}
+            raise NotImplementedError("use `output_dict` to get result")
 
-    def set_result(self, value: str = "", key: str = ""):
+    def set_result(self, value = "", key: str = ""):
         if isinstance(self.output_keys, str):
             self.output_dict[self.output_keys] = value
         else:

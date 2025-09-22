@@ -5,37 +5,76 @@ flow:
     flow_content: dashscope_deep_research_op
     stream: true
 
-  open_deep_research:
-    flow_content: leader_researcher_op << (leader_researcher_op << bailian_web_search_op)
+  open_research:
+    flow_content: (open_research_op << bailian_web_search_op << think_tool_op << research_complete_op) >> open_compress_op
     stream: true
 
+#  open_deep_research:
+#    flow_content: leader_researcher_op << (leader_researcher_op << bailian_web_search_op)
+#    stream: true
+
 op:
+  tavily_search_op:
+    backend: tavily_search_op
+    params:
+      save_answer: false
+      output_schema_mapping:
+        tavily_search_result: long_text
+
+  dashscope_search_op:
+    backend: dashscope_search_op
+    params:
+      save_answer: true
+
   bailian_web_search_op:
     backend: base_mcp_op
     params:
       mcp_name: tongyi_search
       tool_name: bailian_web_search
-      clear_required: false
       save_answer: true
+      input_schema_optional:
+        - count
+      input_schema_deleted:
+        - ctx
 
   bocha_web_search_op:
     backend: base_mcp_op
     params:
       mcp_name: bochaai_search
       tool_name: bocha_web_search
-      clear_required: false
       save_answer: true
+      input_schema_optional:
+        - freshness
+        - count
 
-  tavily_search_op:
-    backend: tavily_search_op
+  brave_web_search_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: brave_search
+      tool_name: brave_web_search
+      save_answer: true
+      input_schema_optional:
+        - offset
+        - count
+
+  bailian_web_parser_op:
+    backend: base_mcp_op
+    params:
+      mcp_name: tongyi_web_parser
+      tool_name: bailian_web_parser
+      save_answer: true
+      input_schema_optional:
+        - format
+
+  extract_long_text_op:
+    backend: extract_long_text_op
     params:
       save_answer: true
 
-  # deprecated
-  dashscope_search_op:
-    backend: dashscope_search_op
+  open_compress_op:
+    backend: open_compress_op
     params:
-      save_answer: true
+      return_answer: true
 
 external_mcp:
   tongyi_search:
@@ -46,10 +85,5 @@ external_mcp:
   tongyi_web_parser:
     type: sse
     url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse"
-    headers:
-      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
-  bochaai_search:
-    type: sse
-    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
     headers:
       Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

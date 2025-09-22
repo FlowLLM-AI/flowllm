@@ -1,13 +1,33 @@
-from datetime import datetime
+import asyncio
+import json
+from typing import Dict, List
 
+from loguru import logger
+
+from flowllm.context import FlowContext, C
+from flowllm.enumeration.chunk_enum import ChunkEnum
 from flowllm.enumeration.role import Role
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
+from flowllm.op.gallery.research_complete_op import ResearchCompleteOp
+from flowllm.op.gallery.think_op import ThinkToolOp
+from flowllm.op.search import DashscopeSearchOp
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
+from flowllm.utils.common_utils import get_datetime
 
 
+@C.register_op(register_app="FlowLLM")
 class OpenResearchOp(BaseAsyncToolOp):
     file_path: str = __file__
+
+    def __init__(self,
+                 max_react_tool_calls: int = 5,
+                 max_content_len: int = 20000,
+                 llm: str = "qwen3_30b_instruct",
+                 **kwargs):
+        super().__init__(llm=llm, **kwargs)
+        self.max_react_tool_calls: int = max_react_tool_calls
+        self.max_content_len: int = max_content_len
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -16,38 +36,115 @@ class OpenResearchOp(BaseAsyncToolOp):
                 "research_topic": {
                     "type": "string",
                     "description": "research topic",
-                    "required": True
+                    "required": False
                 },
+                "messages": {
+                    "type": "array",
+                    "description": "messages",
+                    "required": False
+                }
             }
         })
 
-    @staticmethod
-    def get_today_str() -> str:
-        """Get current date formatted for display in prompts and outputs.
-
-        Returns:
-            Human-readable date string in format like 'Mon Jan 15, 2024'
-        """
-        now = datetime.now()
-        return f"{now:%a} {now:%b} {now.day}, {now:%Y}"
-
     async def async_execute(self):
-        research_topic: str = self.input_dict["research_topic"]
-
         assert self.ops, "OpenResearchOp requires a search tool"
+        logger.info(f"find {len(self.ops)} ops: {','.join([x.name for x in self.ops])}")
         search_op = self.ops[0]
         assert isinstance(search_op, BaseAsyncToolOp)
         research_system_prompt = self.prompt_format(prompt_name="research_system_prompt",
-                                                    date=self.get_today_str(),
+                                                    date=get_datetime(),
                                                     mcp_prompt="",
                                                     search_tool=search_op.tool_call.name)
 
-        messages = [
-            Message(role=Role.SYSTEM, content=research_system_prompt),
-            Message(role=Role.USER, content=research_topic),
-        ]
+        if self.input_dict.get("research_topic"):
+            messages: List[Message] = [Message(role=Role.USER, content=self.input_dict.get("research_topic"))]
+        elif self.input_dict.get("messages"):
+            messages: List[Message] = [Message(**x) for x in self.input_dict.get("messages")]
+        else:
+            raise RuntimeError("query or messages is required")
 
-        tools = [
+        logger.info(f"messages={messages}")
 
-        ]
-        assistant_message = await self.llm.achat(messages)
+        messages = [Message(role=Role.SYSTEM, content=research_system_prompt)] + messages
+
+        tool_dict: Dict[str, BaseAsyncToolOp] = {}
+        for op in self.ops:
+            assert isinstance(op, BaseAsyncToolOp)
+            assert op.tool_call.name not in tool_dict, f"Duplicate tool name={op.tool_call.name}"
+            tool_dict[op.tool_call.name] = op
+
+        for i in range(self.max_react_tool_calls):
+            assistant_message = await self.llm.achat(messages=messages,
+                                                     tools=[x.tool_call for x in tool_dict.values()])
+            messages.append(assistant_message)
+
+            assistant_content = f"[{self.name}.{self.tool_index}.{i}]"
+            if assistant_message.content:
+                assistant_content += f" content={assistant_message.content}"
+            if assistant_message.reasoning_content:
+                assistant_content += f" reasoning={assistant_message.reasoning_content}"
+            if assistant_message.tool_calls:
+                tool_call_str = " | ".join([json.dumps(t.simple_output_dump(), ensure_ascii=False) \
+                                            for t in assistant_message.tool_calls])
+                assistant_content += f" tool_calls={tool_call_str}"
+            assistant_content += "\n\n"
+            logger.info(assistant_content)
+            await self.context.add_stream_chunk_and_type(assistant_content, ChunkEnum.THINK)
+
+            if not assistant_message.tool_calls:
+                break
+
+            ops: List[BaseAsyncToolOp] = []
+            for tool in assistant_message.tool_calls:
+                op = tool_dict[tool.name].copy()
+                op.tool_call.id = tool.id
+                ops.append(op)
+                self.submit_async_task(op.async_call, **tool.argument_dict)
+
+            await self.join_async_task()
+
+            done: bool = False
+            for op in ops:
+                messages.append(Message(role=Role.TOOL,
+                                        content=op.output[:self.max_content_len],
+                                        tool_call_id=op.tool_call.id))
+                tool_content = f"[{self.name}.{self.tool_index}.{i}.{op.name}] {op.output[:200]}...\n\n"
+                logger.info(tool_content)
+                await self.context.add_stream_chunk_and_type(tool_content, ChunkEnum.TOOL)
+                if op.tool_call.name == "research_complete":
+                    done = True
+
+            if done:
+                break
+
+        self.set_result([x for x in messages if x.role != Role.SYSTEM])
+
+
+async def main():
+    from flowllm.app import FlowLLMApp
+    async with FlowLLMApp(load_default_config=True):
+
+        context = FlowContext(research_topic="茅台公司未来业绩", stream_queue=asyncio.Queue())
+        op = OpenResearchOp() << DashscopeSearchOp() << ThinkToolOp() << ResearchCompleteOp()
+
+        async def async_call():
+            await op.async_call(context=context)
+            await context.add_stream_done()
+
+        task = asyncio.create_task(async_call())
+
+        while True:
+            stream_chunk = await context.stream_queue.get()
+            if stream_chunk.done:
+                print("\nend")
+                await task
+                break
+
+            else:
+                print(stream_chunk.chunk, end="")
+
+        await task
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

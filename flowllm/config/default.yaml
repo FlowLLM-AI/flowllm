@@ -35,6 +35,14 @@ llm:
     backend: openai_compatible
     model_name: qwen3-30b-a3b-thinking-2507
 
+  qwen3_235b_instruct:
+    backend: openai_compatible
+    model_name: qwen3-235b-a22b-instruct-2507
+
+  qwen3_235b_thinking:
+    backend: openai_compatible
+    model_name: qwen3-235b-a22b-thinking-2507
+
   qwen3_80b_instruct:
     backend: openai_compatible
     model_name: qwen3-next-80b-a3b-instruct

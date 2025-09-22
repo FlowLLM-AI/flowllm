@@ -72,7 +72,7 @@ class ReactLLMOp(BaseAsyncToolOp):
 
                 op_copy = tool_dict[tool_call.name].copy()
                 op_list.append(op_copy)
-                self.submit_async_task(op_copy.async_call, context=self.context.copy(**tool_call.argument_dict))
+                self.submit_async_task(op_copy.async_call, **tool_call.argument_dict)
                 time.sleep(1)
 
             await self.join_async_task()

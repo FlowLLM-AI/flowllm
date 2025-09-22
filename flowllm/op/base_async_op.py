@@ -27,8 +27,8 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
     async def async_default_execute(self):
         ...
 
-    async def async_call(self, context: FlowContext = None) -> Any:
-        self.context = context
+    async def async_call(self, context: FlowContext = None, **kwargs) -> Any:
+        self.context = self.build_context(context, **kwargs)
         with self.timer:
             if self.max_retries == 1 and self.raise_exception:
                 await self.async_before_execute()

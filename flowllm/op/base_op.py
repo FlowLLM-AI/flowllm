@@ -77,8 +77,16 @@ class BaseOp(ABC):
     def default_execute(self):
         ...
 
-    def call(self, context: FlowContext = None):
-        self.context = context
+    @staticmethod
+    def build_context(context: FlowContext = None, **kwargs):
+        if not context:
+            context = FlowContext()
+        if kwargs:
+            context.update(kwargs)
+        return context
+
+    def call(self, context: FlowContext = None, **kwargs):
+        self.context = self.build_context(context, **kwargs)
         with self.timer:
             if self.max_retries == 1 and self.raise_exception:
                 self.before_execute()
@@ -171,7 +179,12 @@ class BaseOp(ABC):
         return parallel_op
 
     def copy(self) -> "BaseOp":
-        return self.__class__(*self._init_args, **self._init_kwargs)
+        copy_op = self.__class__(*self._init_args, **self._init_kwargs)
+        if self.ops:
+            copy_op.ops.clear()
+            for op in self.ops:
+                copy_op.ops.append(op.copy())
+        return copy_op
 
     @property
     def llm(self) -> BaseLLM:

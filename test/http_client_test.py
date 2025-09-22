@@ -5,7 +5,7 @@ from flowllm.client import AsyncHttpClient
 
 
 async def main():
-    async with AsyncHttpClient("http://0.0.0.0:8001") as client:
+    async with AsyncHttpClient("http://0.0.0.0:8002") as client:
 
         # Test 1: Health check
         print("=" * 50)
@@ -66,7 +66,7 @@ async def main():
         # print(f"result: {response.answer}")
 
         """
-        curl -X POST http://0.0.0.0:8001/llm_flow_stream -H "Content-Type: application/json" -d '{"query": "what is AI?"}'
+        curl -X POST http://0.0.0.0:8002/llm_flow_stream -H "Content-Type: application/json" -d '{"query": "what is AI?"}'
         """
 
 

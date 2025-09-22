@@ -86,5 +86,5 @@ def extract_python(text: str) -> str:
 
 def get_datetime():
     now = datetime.now()
-    formatted_time = now.strftime("%Y年%m月%d日 %H:%M:%S")
+    formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
     return formatted_time

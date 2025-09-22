@@ -79,13 +79,13 @@ class BaseFlow(ABC):
                     self._print_operation_tree(sub_op, indent + 2)
 
     async def async_call(self, **kwargs) -> Union[FlowResponse | FlowStreamChunk | None]:
-        self.print_flow()
-
         kwargs["stream"] = self.stream
         context = FlowContext(**kwargs)
         logger.info(f"request.params={kwargs}")
 
         try:
+            self.print_flow()
+
             # each time rebuilding
             flow_op: BaseOp = self.build_flow()
 
@@ -98,9 +98,6 @@ class BaseFlow(ABC):
                 op_call_fn = partial(flow_op.call, context=context)
                 await loop.run_in_executor(executor=C.thread_pool, func=op_call_fn)  # noqa
 
-            if self.stream:
-                await context.add_stream_done()
-
         except Exception as e:
             logger.exception(f"flow_name={self.name} async call encounter error={e.args}")
 
@@ -110,6 +107,7 @@ class BaseFlow(ABC):
                 context.add_response_error(e)
 
         if self.stream:
+            await context.add_stream_done()
             return context.stream_queue
         else:
             return context.response

@@ -56,14 +56,16 @@ class HttpService(BaseService):
 
         async def execute_stream_endpoint(request: request_model) -> StreamingResponse:
             stream_queue = asyncio.Queue()
-            asyncio.create_task(flow.async_call(stream_queue=stream_queue, **request.model_dump()))
+            task = asyncio.create_task(flow.async_call(stream_queue=stream_queue, **request.model_dump()))
 
             async def generate_stream() -> AsyncGenerator[bytes, None]:
                 while True:
                     stream_chunk: FlowStreamChunk = await stream_queue.get()
                     if stream_chunk.done:
                         yield f"data:[DONE]\n\n".encode('utf-8')
+                        await task
                         break
+
                     else:
                         yield f"data:{stream_chunk.model_dump_json()}\n\n".encode("utf-8")
 

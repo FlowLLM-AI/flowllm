@@ -291,7 +291,7 @@ def render_chunk_content(chunk_type, content, is_collapsible=True):
 
 def stream_llm_response(messages, model_name='llm_flow_stream'):
     try:
-        url = f"http://localhost:8001/{model_name}"
+        url = f"http://localhost:8002/{model_name}"
         headers = {"Content-Type": "application/json"}
         data = {"messages": messages}
 
@@ -340,6 +340,7 @@ with st.sidebar:
     available_models = [
         'llm_flow_stream',
         'dashscope_deep_research',
+        'open_research',
         # Add more models here in the future
     ]
     
