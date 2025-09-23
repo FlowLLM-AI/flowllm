@@ -102,6 +102,11 @@ lead_system_prompt: |
   </Scaling Rules>
 
 final_report_generation_prompt: |
+  Here are the findings from the research that you conducted:
+  <Findings>
+  {findings}
+  </Findings>
+  
   Based on all the research conducted, create a comprehensive, well-structured answer to the overall research brief:
   <Research Brief>
   {research_brief}
@@ -116,11 +121,6 @@ final_report_generation_prompt: |
   This is critical. The user will only understand the answer if it is written in the same language as their input message.
   
   Today's date is {date}.
-  
-  Here are the findings from the research that you conducted:
-  <Findings>
-  {findings}
-  </Findings>
   
   Please create a detailed answer to the overall research brief that:
   1. Is well-organized with proper headings (# for title, ## for sections, ### for subsections)
