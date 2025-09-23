@@ -128,6 +128,7 @@ class ConductResearchOp(BaseAsyncToolOp):
 
         logger.info(f"merge_messages={merge_messages}")
         assistant_message = await self.llm.achat(messages=merge_messages)
+        assistant_message.content = assistant_message.content[:self.max_content_len]
         chunk_type: ChunkEnum = ChunkEnum.ANSWER if self.return_answer else ChunkEnum.THINK
         content = f"{self.name}.{self.tool_index} content={assistant_message.content}"
         await self.context.add_stream_chunk_and_type(content, chunk_type)
