@@ -24,7 +24,7 @@ class ConductResearchOp(BaseAsyncToolOp):
                  max_react_tool_calls: int = 5,
                  max_content_len: int = 20000,
                  return_answer: bool = False,
-                 llm: str = "qwen3_30b_instruct",
+                 llm: str = "qwen3_80b_instruct",
                  language: str = "zh",
                  **kwargs):
         super().__init__(llm=llm, language=language, **kwargs)
@@ -47,6 +47,8 @@ class ConductResearchOp(BaseAsyncToolOp):
     async def async_execute(self):
         assert self.ops, "OpenResearchOp requires a search tool"
         logger.info(f"find {len(self.ops)} ops: {','.join([x.name for x in self.ops])}")
+
+
         search_op = self.ops[0]
         assert isinstance(search_op, BaseAsyncToolOp)
         research_system_prompt = self.prompt_format(prompt_name="research_system_prompt",

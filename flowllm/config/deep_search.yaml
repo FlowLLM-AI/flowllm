@@ -82,3 +82,8 @@ external_mcp:
     url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse"
     headers:
       Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+  bochaai_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

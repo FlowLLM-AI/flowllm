@@ -50,6 +50,8 @@ llm:
   qwen3_80b_thinking:
     backend: openai_compatible
     model_name: qwen3-next-80b-a3b-thinking
+    params:
+      presence_penalty: 2
 
   qwen3_max_instruct:
     backend: openai_compatible
