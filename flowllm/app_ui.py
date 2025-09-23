@@ -13,6 +13,13 @@ if not os.getenv("FLOW_APP_NAME"):
     load_env(enable_log=False)
 
 APP_NAME: str = os.environ["FLOW_APP_NAME"]
+available_models = [
+    'langchain+bailian_search',
+    'langchain+bocha_search',
+    'dashscope_deep_research',
+    'llm_flow_stream',
+    # Add more models here in the future
+]
 
 st.set_page_config(
     page_title=f"{APP_NAME} Chat",
@@ -223,7 +230,7 @@ if 'is_streaming' not in st.session_state:
     st.session_state.is_streaming = False
 
 if 'selected_model' not in st.session_state:
-    st.session_state.selected_model = 'langchain_deep_research'
+    st.session_state.selected_model = available_models[0]
 
 
 def create_new_conversation():
@@ -337,14 +344,7 @@ with st.sidebar:
 
     # Model selection dropdown
     st.markdown("**🤖 Model Selection**")
-    available_models = [
-        'llm_flow_stream',
-        'dashscope_deep_research',
-        'langchain_deep_research',
-        'langchain_deep_research2',
-        # Add more models here in the future
-    ]
-    
+
     selected_model = st.selectbox(
         "Choose model:",
         available_models,

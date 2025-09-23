@@ -5,11 +5,11 @@ flow:
     flow_content: dashscope_deep_research_op
     stream: true
 
-  langchain_deep_research:
+  langchain+bailian_search:
     flow_content: langchain_deep_research_op << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
-  langchain_deep_research2:
+  langchain+bocha_search:
     flow_content: langchain_deep_research_op << (conduct_research_op << bocha_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
