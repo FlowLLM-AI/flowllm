@@ -165,6 +165,7 @@ final_report_generation_prompt: |
   - Do not say what you are doing in the report. Just write the report without any commentary from yourself.
   - Each section should be as long as necessary to deeply answer the question with the information you have gathered. It is expected that sections will be fairly long and verbose. You are writing a deep research report, and users will expect a thorough answer.
   - Use bullet points to list out information when appropriate, but by default, write in paragraph form.
+  - Make good use of tables for comparison, multi-dimensional analysis, or listing numbers.
   
   REMEMBER:
   The brief and research may be in English, but you need to translate this information to the right language when writing the final answer.

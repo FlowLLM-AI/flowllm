@@ -18,10 +18,11 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
     file_path: str = __file__
 
     def __init__(self,
-                 llm: str = "qwen3_max_instruct",
+                 # llm: str = "qwen3_max_instruct",
+                 llm: str = "qwen3_235b_instruct",
                  enable_research_brief: bool = True,
-                 max_concurrent_research_units: int = 5,
-                 max_researcher_iterations: int = 3,
+                 max_concurrent_research_units: int = 3,
+                 max_researcher_iterations: int = 5,
                  **kwargs):
         super().__init__(llm=llm, **kwargs)
         self.enable_research_brief: bool = enable_research_brief
@@ -109,6 +110,11 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
             if not assistant_message.tool_calls:
                 break
 
+            tool_calls_others = [x for x in assistant_message.tool_calls if x.name != "conduct_research"]
+            tool_calls_conduct = [x for x in assistant_message.tool_calls if x.name == "conduct_research"]
+            tool_calls_conduct = tool_calls_conduct[: self.max_concurrent_research_units]
+            assistant_message.tool_calls = tool_calls_others + tool_calls_conduct
+
             ops: List[BaseAsyncToolOp] = []
             for j, tool in enumerate(assistant_message.tool_calls):
                 op = tool_dict[tool.name].copy()
@@ -144,11 +150,10 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
                                                                  date=get_datetime(),
                                                                  findings="\n\n".join(findings))
         report_generation_messages = [Message(role=Role.USER, content=final_report_generation_prompt)]
-        assistant_message = await self.llm.achat(messages=report_generation_messages)
 
-        logger.info(assistant_message.content)
-        await self.context.add_stream_chunk_and_type(assistant_message.content, ChunkEnum.ANSWER)
-        self.set_result(assistant_message.content)
+        async for chunk, chunk_type in self.llm.astream_chat(messages):  # noqa
+            if chunk_type in [ChunkEnum.ANSWER, ChunkEnum.THINK, ChunkEnum.ERROR]:
+                await self.context.add_stream_chunk_and_type(chunk, chunk_type)
 
 
 async def main():
