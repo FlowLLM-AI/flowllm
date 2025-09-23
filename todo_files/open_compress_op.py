@@ -45,7 +45,8 @@ class OpenCompressOp(BaseAsyncToolOp):
         logger.info(f"messages={messages}")
         assistant_message = await self.llm.achat(messages=messages)
         chunk_type: ChunkEnum = ChunkEnum.ANSWER if self.return_answer else ChunkEnum.THINK
-        await self.context.add_stream_chunk_and_type(assistant_message.content, chunk_type)
+        content = f"{self.name}.{self.tool_index} content={assistant_message.content}"
+        await self.context.add_stream_chunk_and_type(content, chunk_type)
         self.set_result(assistant_message.content)
 
 

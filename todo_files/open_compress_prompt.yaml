@@ -16,6 +16,7 @@ compress_system_prompt: |
   4. You should include a "Sources" section at the end of the report that lists all of the sources the researcher found with corresponding citations, cited against statements in the report.
   5. Make sure to include ALL of the sources that the researcher gathered in the report, and how they were used to answer the question!
   6. It's really important not to lose any sources. A later LLM will be used to merge this report with others, so having all of the sources is critical.
+  7. Do not change the language of tool call or web search results; maintain the same language as the original content.
   </Guidelines>
   
   <Output Format>
@@ -38,5 +39,5 @@ compress_system_prompt: |
 
 
 compress_user_prompt: |
-  All above messages are about research conducted by an AI Researcher. Please clean up these findings.
+  All above messages are about research conducted by an AI Researcher. Please clean up these findings, be careful not to include outdated information.
   DO NOT summarize the information. I want the raw information returned, just in a cleaner format. Make sure all relevant information is preserved - you can rewrite findings verbatim.

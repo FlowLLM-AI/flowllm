@@ -178,8 +178,8 @@ class BaseOp(ABC):
 
         return parallel_op
 
-    def copy(self) -> "BaseOp":
-        copy_op = self.__class__(*self._init_args, **self._init_kwargs)
+    def copy(self, **kwargs) -> "BaseOp":
+        copy_op = self.__class__(*self._init_args, **self._init_kwargs, **kwargs)
         if self.ops:
             copy_op.ops.clear()
             for op in self.ops:

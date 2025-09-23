@@ -17,31 +17,28 @@ from flowllm.utils.common_utils import get_datetime
 
 
 @C.register_op(register_app="FlowLLM")
-class OpenResearchOp(BaseAsyncToolOp):
+class ConductResearchOp(BaseAsyncToolOp):
     file_path: str = __file__
 
     def __init__(self,
                  max_react_tool_calls: int = 5,
                  max_content_len: int = 20000,
+                 return_answer: bool = False,
                  llm: str = "qwen3_30b_instruct",
                  **kwargs):
         super().__init__(llm=llm, **kwargs)
         self.max_react_tool_calls: int = max_react_tool_calls
         self.max_content_len: int = max_content_len
+        self.return_answer: bool = return_answer
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "description": "Conduct logical and in-depth research based on the research_topic, and finally provide a detailed conclusion on the research_topic.",
+            "description": "Conduct in-depth research on a single topic. If research on multiple topics is required, please invoke this tool multiple times.",
             "input_schema": {
                 "research_topic": {
                     "type": "string",
-                    "description": "research topic",
-                    "required": False
-                },
-                "messages": {
-                    "type": "array",
-                    "description": "messages",
-                    "required": False
+                    "description": "The topic to research. Should be a single topic, and should be described in high detail (at least a paragraph).",
+                    "required": True
                 }
             }
         })
@@ -61,7 +58,7 @@ class OpenResearchOp(BaseAsyncToolOp):
         elif self.input_dict.get("messages"):
             messages: List[Message] = [Message(**x) for x in self.input_dict.get("messages")]
         else:
-            raise RuntimeError("query or messages is required")
+            raise RuntimeError("research_topic or messages is required")
 
         logger.info(f"messages={messages}")
 
@@ -117,7 +114,21 @@ class OpenResearchOp(BaseAsyncToolOp):
             if done:
                 break
 
-        self.set_result([x for x in messages if x.role != Role.SYSTEM])
+        messages = [x for x in messages if x.role != Role.SYSTEM]
+
+        compress_system_prompt: str = self.prompt_format("compress_system_prompt", date=get_datetime())
+        merge_messages = [
+            Message(role=Role.SYSTEM, content=compress_system_prompt),
+            *messages,
+            Message(role=Role.USER, content=self.get_prompt("compress_user_prompt"))
+        ]
+
+        logger.info(f"merge_messages={merge_messages}")
+        assistant_message = await self.llm.achat(messages=merge_messages)
+        chunk_type: ChunkEnum = ChunkEnum.ANSWER if self.return_answer else ChunkEnum.THINK
+        content = f"{self.name}.{self.tool_index} content={assistant_message.content}"
+        await self.context.add_stream_chunk_and_type(content, chunk_type)
+        self.set_result(assistant_message.content)
 
 
 async def main():
@@ -125,7 +136,7 @@ async def main():
     async with FlowLLMApp(load_default_config=True):
 
         context = FlowContext(research_topic="茅台公司未来业绩", stream_queue=asyncio.Queue())
-        op = OpenResearchOp() << DashscopeSearchOp() << ThinkToolOp() << ResearchCompleteOp()
+        op = ConductResearchOp() << DashscopeSearchOp() << ThinkToolOp() << ResearchCompleteOp()
 
         async def async_call():
             await op.async_call(context=context)

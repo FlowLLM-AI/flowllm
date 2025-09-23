@@ -29,6 +29,9 @@ class Message(BaseModel):
             result["tool_calls"] = [x.simple_output_dump() for x in self.tool_calls]
         return result
 
+    @property
+    def string_buffer(self) -> str:
+        return f"{self.role.value}: {self.content}"
 
 class Trajectory(BaseModel):
     task_id: str = Field(default="")

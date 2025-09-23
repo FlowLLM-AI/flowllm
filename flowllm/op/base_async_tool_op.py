@@ -51,6 +51,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         if self._tool_call is None:
             self._tool_call = self.build_tool_call()
             self._tool_call.name = self.short_name
+            self._tool_call.index = self.tool_index
 
             if not self._tool_call.output_schema:
                 self._tool_call.output_schema = {

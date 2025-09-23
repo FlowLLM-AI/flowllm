@@ -223,7 +223,7 @@ if 'is_streaming' not in st.session_state:
     st.session_state.is_streaming = False
 
 if 'selected_model' not in st.session_state:
-    st.session_state.selected_model = 'llm_flow_stream'
+    st.session_state.selected_model = 'langchain_deep_research'
 
 
 def create_new_conversation():
@@ -340,7 +340,8 @@ with st.sidebar:
     available_models = [
         'llm_flow_stream',
         'dashscope_deep_research',
-        'open_research',
+        'langchain_deep_research',
+        'langchain_deep_research2',
         # Add more models here in the future
     ]
     
