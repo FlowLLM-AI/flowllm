@@ -140,6 +140,9 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                         if tool.name not in tool_dict:
                             continue
 
+                        if not tool.check_argument():
+                            raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
+
                         yield tool, ChunkEnum.TOOL
 
                 return
@@ -242,6 +245,9 @@ class OpenAICompatibleBaseLLM(BaseLLM):
                         # Only yield tool calls that correspond to available tools
                         if tool.name not in tool_dict:
                             continue
+
+                        if not tool.check_argument():
+                            raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
                         yield tool, ChunkEnum.TOOL
 

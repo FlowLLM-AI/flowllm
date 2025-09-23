@@ -168,6 +168,9 @@ class LiteLLMBaseLLM(BaseLLM):
                         if tools and tool.name not in tool_dict:
                             continue
 
+                        if not tool.check_argument():
+                            raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
+
                         yield tool, ChunkEnum.TOOL
 
                 return
@@ -268,6 +271,9 @@ class LiteLLMBaseLLM(BaseLLM):
                         # Only yield tool calls that correspond to available tools
                         if tools and tool.name not in tool_dict:
                             continue
+
+                        if not tool.check_argument():
+                            raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
                         yield tool, ChunkEnum.TOOL
 

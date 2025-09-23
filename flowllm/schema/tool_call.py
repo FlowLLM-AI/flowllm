@@ -88,6 +88,13 @@ class ToolCall(BaseModel):
     def argument_dict(self) -> dict:
         return json.loads(self.arguments)
 
+    def check_argument(self) -> bool:
+        try:
+            _ = self.argument_dict
+            return True
+        except Exception:
+            return False
+
     def simple_input_dump(self, version: str = "default") -> dict:
         if version == "default":
             required_list = [name for name, tool_param in self.input_schema.items() if tool_param.required]
