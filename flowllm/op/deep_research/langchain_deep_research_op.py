@@ -18,7 +18,7 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
     file_path: str = __file__
 
     def __init__(self,
-                 llm: str = "qwen3_80b_instruct",
+                 llm: str = "qwen3_max_instruct",
                  enable_research_brief: bool = True,
                  max_concurrent_research_units: int = 5,
                  max_researcher_iterations: int = 3,
