@@ -14,6 +14,8 @@ if not os.getenv("FLOW_APP_NAME"):
 
 APP_NAME: str = os.environ["FLOW_APP_NAME"]
 available_models = [
+    'langchain+brief+bailian_search',
+    'langchain+brief+bocha_search',
     'langchain+bailian_search',
     'langchain+bocha_search',
     'dashscope_deep_research',

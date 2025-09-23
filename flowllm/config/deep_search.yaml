@@ -6,14 +6,27 @@ flow:
     stream: true
 
   langchain+bailian_search:
-    flow_content: langchain_deep_research_op << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
+    flow_content: langchain_deep_research_op2 << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
   langchain+bocha_search:
+    flow_content: langchain_deep_research_op2 << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
+    stream: true
+
+  langchain+brief+bailian_search:
+    flow_content: langchain_deep_research_op << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
+    stream: true
+
+  langchain+brief+bocha_search:
     flow_content: langchain_deep_research_op << (conduct_research_op << bocha_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
 op:
+  langchain_deep_research_op2:
+    backend: langchain_deep_research_op
+    params:
+      enable_research_brief: false
+
   tavily_search_op:
     backend: tavily_search_op
     params:

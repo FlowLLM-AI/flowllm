@@ -49,6 +49,7 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
         })
 
     async def async_execute(self):
+        await self.context.add_stream_chunk_and_type("开始深度研究", ChunkEnum.THINK)
         if self.input_dict.get("query"):
             query: str = self.input_dict.get("query")
             messages: List[Message] = [Message(role=Role.USER, content=query)]
