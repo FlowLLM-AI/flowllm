@@ -65,7 +65,7 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
 
     async def join_async_task(self):
         result = []
-        for t_result in await asyncio.gather(*self.task_list):
+        for t_result in await asyncio.gather(*self.task_list, return_exceptions=True):
             if t_result:
                 if isinstance(t_result, list):
                     result.extend(t_result)
