@@ -24,8 +24,9 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
                  enable_research_brief: bool = True,
                  max_concurrent_research_units: int = 3,
                  max_researcher_iterations: int = 5,
+                 language: str = "zh",
                  **kwargs):
-        super().__init__(llm=llm, **kwargs)
+        super().__init__(llm=llm, language=language, **kwargs)
         self.enable_research_brief: bool = enable_research_brief
         self.max_concurrent_research_units: int = max_concurrent_research_units
         self.max_researcher_iterations: int = max_researcher_iterations
@@ -153,7 +154,8 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
         report_generation_messages = [Message(role=Role.USER, content=final_report_generation_prompt)]
 
         async for chunk, chunk_type in self.llm.astream_chat(report_generation_messages):  # noqa
-            await self.context.add_stream_chunk_and_type(str(chunk), chunk_type)
+            if chunk_type in [ChunkEnum.ANSWER, ChunkEnum.THINK, ChunkEnum.ERROR]:
+                await self.context.add_stream_chunk_and_type(str(chunk), chunk_type)
 
 
 async def main():

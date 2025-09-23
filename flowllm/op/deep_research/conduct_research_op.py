@@ -25,8 +25,9 @@ class ConductResearchOp(BaseAsyncToolOp):
                  max_content_len: int = 20000,
                  return_answer: bool = False,
                  llm: str = "qwen3_30b_instruct",
+                 language: str = "zh",
                  **kwargs):
-        super().__init__(llm=llm, **kwargs)
+        super().__init__(llm=llm, language=language, **kwargs)
         self.max_react_tool_calls: int = max_react_tool_calls
         self.max_content_len: int = max_content_len
         self.return_answer: bool = return_answer
