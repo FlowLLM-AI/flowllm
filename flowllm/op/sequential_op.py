@@ -1,19 +1,9 @@
 from flowllm.op.base_async_op import BaseAsyncOp
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.op.base_op import BaseOp
-from flowllm.schema.tool_call import ToolCall
 
 
 class SequentialOp(BaseAsyncToolOp):
-
-    @property
-    def short_name(self) -> str:
-        return self.ops[0].short_name
-
-    def build_tool_call(self) -> ToolCall:
-        first_op = self.ops[0]
-        assert isinstance(first_op, BaseAsyncToolOp)
-        return first_op.build_tool_call()
 
     def execute(self):
         for op in self.ops:

@@ -152,9 +152,8 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
                                                                  findings="\n\n".join(findings))
         report_generation_messages = [Message(role=Role.USER, content=final_report_generation_prompt)]
 
-        async for chunk, chunk_type in self.llm.astream_chat(messages):  # noqa
-            if chunk_type in [ChunkEnum.ANSWER, ChunkEnum.THINK, ChunkEnum.ERROR]:
-                await self.context.add_stream_chunk_and_type(chunk, chunk_type)
+        async for chunk, chunk_type in self.llm.astream_chat(report_generation_messages):  # noqa
+            await self.context.add_stream_chunk_and_type(str(chunk), chunk_type)
 
 
 async def main():
