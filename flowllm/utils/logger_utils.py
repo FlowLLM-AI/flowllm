@@ -20,9 +20,10 @@ def init_logger(level="INFO"):
                rotation="00:00",
                retention="7 days",
                compression="zip",
-               encoding="utf-8")
+               encoding="utf-8",
+               format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file}:{line} | {message}")
 
     logger.add(sink=sys.stdout,
                level=level,
-               format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+               format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file}:{line} | {message}",
                colorize=True)
