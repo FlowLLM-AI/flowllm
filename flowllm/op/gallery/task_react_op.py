@@ -441,7 +441,6 @@ class TaskReactOp(BaseAsyncToolOp):
                     chunk=json.dumps({"event": "llm", "content": content}, ensure_ascii=False),
                     chunk_type=ChunkEnum.THINK,
                 )
-            logger.info("content")
             tool_calls = parse_tool_calls(content)
 
             if not tool_calls:

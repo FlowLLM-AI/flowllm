@@ -1,9 +1,8 @@
 from flowllm.op.base_async_op import BaseAsyncOp
-from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.op.base_op import BaseOp
 
 
-class SequentialOp(BaseAsyncToolOp):
+class SequentialOp(BaseAsyncOp):
 
     def execute(self):
         for op in self.ops:
