@@ -24,7 +24,9 @@ class ConductResearchOp(BaseAsyncToolOp):
                  max_react_tool_calls: int = 5,
                  max_content_len: int = 20000,
                  return_answer: bool = False,
-                 llm: str = "qwen3_80b_instruct",
+                 llm: str = "qwen3_max_instruct",
+                 # llm: str = "qwen3_235b_instruct",
+                 # llm: str = "qwen3_80b_instruct",
                  language: str = "zh",
                  **kwargs):
         super().__init__(llm=llm, language=language, **kwargs)
