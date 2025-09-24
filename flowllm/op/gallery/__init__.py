@@ -4,5 +4,6 @@ from .react_llm_op import ReactLLMOp
 from .research_complete_op import ResearchCompleteOp
 from .simple_llm_op import SimpleLLMOp
 from .stream_llm_op import StreamLLMOp
+from .task_react_op import TaskReactOp
 from .terminate_op import TerminateOp
 from .think_op import ThinkToolOp

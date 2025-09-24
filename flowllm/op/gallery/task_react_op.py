@@ -1,40 +1,23 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
-from dataclasses import dataclass
-from typing import List, Any, Optional, Dict
-from datetime import datetime
 from contextlib import suppress
+from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
 
 from loguru import logger
 
+from flowllm.client.fastmcp_client import FastmcpClient as McpClient
 from flowllm.context.flow_context import FlowContext
 from flowllm.context.service_context import C
 from flowllm.enumeration.chunk_enum import ChunkEnum
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
-from flowllm.schema.message import Message, Role
+from flowllm.schema.message import Message
+from flowllm.schema.message import Role
 from flowllm.schema.tool_call import ToolCall
 
-from flowllm.client.fastmcp_client import FastmcpClient as McpClient 
-from flowllm.llm import OpenAICompatibleBaseLLM
-
-# from prompt import TASK_AGENT_PROMPT, FIN_DEEPRESEARCH_DESCRIPTION
-# from utils import (
-#     print_message_list,
-#     tools_schema_to_qwen_prompt,
-#     parse_tool_calls,
-#     parse_final_query_and_type,
-#     serialize_trajectory,
-#     append_jsonl,
-#     load_existing_queries_from_jsonl,
-# )
-
-
-import json
-import os
-from flowllm.schema.message import Message
 
 def tools_schema_to_qwen_prompt(tools_schema: List[ToolCall]):
     """
@@ -82,10 +65,8 @@ def tools_schema_to_qwen_prompt(tools_schema: List[ToolCall]):
 
     return "\n".join(lines)
 
-import re
-import json
-import uuid
-from typing import Any, Union, Dict, List
+
+from typing import Any, Dict, List
 def parse_tool_calls(text: str):
     """
     从包含 <tool_call>...</tool_call> 的文本中解析工具调用信息。
@@ -366,8 +347,8 @@ class BatchItem:
 
 
 # -------------------- Op: TaskReActOP (Agent merged into Op) --------------------
-@C.register_op(register_app="TaskReActOP")
-class TaskReActOP(BaseAsyncToolOp):
+@C.register_op(register_app="TaskReactOp")
+class TaskReactOp(BaseAsyncToolOp):
 
     def __init__(
         self,
@@ -616,9 +597,6 @@ class TaskReActOP(BaseAsyncToolOp):
                         chunk_type=ChunkEnum.ERROR,
                     )
 
-        # finally signal completion
-        await self.context.add_stream_chunk_and_type(chunk="", chunk_type=ChunkEnum.DONE)
-
 
 
 async def main():
@@ -626,7 +604,7 @@ async def main():
     async with FlowLLMApp(load_default_config=True):
 
         context = FlowContext(items=["",""], stream_queue=asyncio.Queue())
-        op = TaskReActOP()
+        op = TaskReactOp()
         async def async_call():
             await op.async_call(context=context)
             await context.add_stream_done()

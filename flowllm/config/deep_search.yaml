@@ -21,6 +21,10 @@ flow:
     flow_content: langchain_deep_research_op << (conduct_research_op << bocha_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
+  task_react:
+    flow_content: task_react_op
+    stream: true
+
 op:
   langchain_deep_research_op2:
     backend: langchain_deep_research_op

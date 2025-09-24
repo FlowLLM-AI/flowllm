@@ -46,8 +46,10 @@ curl -X POST http://11.164.204.33:8002/langchain+bailian_search -H "Content-Type
 curl -X POST http://11.164.204.33:8002/langchain+bocha_search -H "Content-Type: application/json" -d '{"query": "区块链技术的当前趋势是什么？"}'
 ```
 
-**6. 通用示例**
+**6. query合成**
 
 ```bash
-curl -X POST http://11.164.204.33:8002/FLOW_NAME -H "Content-Type: application/json" -d '{"query": "你的研究问题"}'
+curl -X POST http://11.164.204.33:8002/task_react -H "Content-Type: application/json" -d '{"items": ["", ""]}'
 ```
+
+items: list of input_topic(str), e.g. ["", ""] or ["行业研究","行业研究","个股分析"]，不写就是在这几个中随机
