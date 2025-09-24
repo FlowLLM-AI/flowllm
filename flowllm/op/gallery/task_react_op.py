@@ -352,14 +352,11 @@ class TaskReactOp(BaseAsyncToolOp):
 
     def __init__(
         self,
-        model_name: str = "qwen3-max-preview",
-        save_answer: bool = True,
-        *,
+        llm: str = "qwen3_max_instruct",
         system_prompt: Optional[str] = None,
         **kwargs,
     ) -> None:
-        super().__init__(save_answer=save_answer, **kwargs)
-        self.model_name = model_name
+        super().__init__(llm=llm, **kwargs)
         self.system_prompt = system_prompt
 
     def build_tool_call(self) -> ToolCall:
