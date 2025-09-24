@@ -347,7 +347,7 @@ class BatchItem:
 
 
 # -------------------- Op: TaskReActOP (Agent merged into Op) --------------------
-@C.register_op(register_app="TaskReactOp")
+@C.register_op()
 class TaskReactOp(BaseAsyncToolOp):
 
     def __init__(
