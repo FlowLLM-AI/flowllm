@@ -22,8 +22,6 @@ async def main():
         query1 = "紫金怎么样？雪球"
 
         test_cases = [
-            # ("ant_search", {"query": query1, "entity": "阿里巴巴"}),
-            # ("ant_investment", {"entity": "阿里巴巴", "analysis_category": "股票"}),
 
             # ("tavily_search", {"query": query1}),
             # ("dashscope_search", {"query": query1}),

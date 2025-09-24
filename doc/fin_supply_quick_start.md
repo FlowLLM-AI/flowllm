@@ -6,25 +6,7 @@
 
 以下是每个MCP工具对应的curl命令示例，部署在8002端口，用于HTTP API测试：
 
-### 1. Ant
-
-```bash
-curl -X POST http://11.164.204.33:8002/ant_search \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "紫金怎么样？雪球",
-    "entity": "紫金"
-  }'
-
-curl -X POST http://11.164.204.33:8002/ant_investment \
-  -H "Content-Type: application/json" \
-  -d '{
-    "entity": "阿里巴巴",
-    "analysis_category": "股票"
-  }'
-```
-
-### 2. 搜索引擎工具
+### 1. 搜索引擎工具
 
 ```bash
 # tavily_search - Tavily搜索
@@ -63,7 +45,7 @@ curl -X POST http://11.164.204.33:8002/bocha_web_search \
   }'
 ```
 
-### 3. 网页解析工具
+### 2. 网页解析工具
 
 ```bash
 # bailian_web_parser - 百炼网页解析
@@ -81,7 +63,7 @@ curl -X POST http://11.164.204.33:8002/bailian_web_parser \
   }'
 ```
 
-### 4. 实体提取工具
+### 3. 实体提取工具
 
 ```bash
 # extract_entities_code - 实体代码提取
@@ -92,7 +74,7 @@ curl -X POST http://11.164.204.33:8002/extract_entities_code \
   }'
 ```
 
-### 5. AKShare市场数据工具
+### 4. AKShare市场数据工具
 
 ```bash
 # akshare_market - AKShare市场数据
@@ -111,7 +93,7 @@ curl -X POST http://11.164.204.33:8002/akshare_calculate \
   }'
 ```
 
-### 6. QTF量化工具
+### 5. QTF量化工具
 
 ```bash
 # qtf_brief_mcp - QTF简要信息
@@ -136,7 +118,7 @@ curl -X POST http://11.164.204.33:8002/qtf_full_mcp \
   }'
 ```
 
-### 7. 同花顺(THS)数据爬取工具
+### 6. 同花顺(THS)数据爬取工具
 
 ```bash
 # crawl_ths_company - 爬取公司基本信息
@@ -244,7 +226,7 @@ curl -X POST http://11.164.204.33:8002/crawl_ths_field \
   }'
 ```
 
-### 8. 其他股票代码示例
+### 7. 其他股票代码示例
 
 ```bash
 # 紫金矿业公司信息

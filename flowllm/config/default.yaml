@@ -55,7 +55,7 @@ llm:
 
   qwen3_max_instruct:
     backend: openai_compatible
-    model_name: qwen3-max-preview
+    model_name: qwen3-max
 
   qwen25_max_instruct:
     backend: openai_compatible
