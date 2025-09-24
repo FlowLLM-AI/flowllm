@@ -1,4 +1,4 @@
-import_config: default, fin_ant, fin_basic, fin_mcp, fin_search, fin_ths
+import_config: default, fin_basic, fin_mcp, fin_search, fin_ths
 backend: mcp
 disabled_flows:
   - llm_flow
