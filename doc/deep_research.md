@@ -53,3 +53,5 @@ curl -X POST http://11.164.204.33:8002/task_react -H "Content-Type: application/
 ```
 
 items: list of input_topic(str), e.g. ["", ""] or ["行业研究","行业研究","个股分析"]，不写就是在这几个中随机
+
+增加`exist_list`参数告诉模型之前产出了哪些query，避免重复
