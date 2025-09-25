@@ -172,7 +172,10 @@ class DashscopeDeepResearchOp(BaseAsyncToolOp):
                 # Send content as think chunks
                 if content:
                     phase_content += content
-                    await self.context.add_stream_chunk_and_type(content, ChunkEnum.ANSWER)
+                    if "第一步" in step_name:
+                        await self.context.add_stream_chunk_and_type(content, ChunkEnum.THINK)
+                    else:
+                        await self.context.add_stream_chunk_and_type(content, ChunkEnum.ANSWER)
 
                 # Handle status changes
                 if status and status != "typing":
