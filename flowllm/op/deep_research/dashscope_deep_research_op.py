@@ -60,7 +60,7 @@ class DashscopeDeepResearchOp(BaseAsyncToolOp):
                 stream=True)
 
             step1_content = await self._process_responses(responses, "第一步：模型反问确认")
-            await self.context.add_stream_chunk_and_type("\n", ChunkEnum.ANSWER)
+            await self.context.add_stream_chunk_and_type("\n", ChunkEnum.THINK)
             logger.info(f"step1_content={step1_content}")
 
             # Step 2: Deep research with fixed response

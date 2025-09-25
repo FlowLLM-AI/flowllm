@@ -1,0 +1,7 @@
+import_config: default
+
+flow:
+  mock_exception:
+    flow_content: mock_exception_op
+    params:
+      raise_exception: true

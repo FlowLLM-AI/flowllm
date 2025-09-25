@@ -22,9 +22,11 @@ class BaseFlow(ABC):
     def __init__(self,
                  name: str = "",
                  stream: bool = False,
+                 raise_exception: bool = True,
                  **kwargs):
         self.name: str = name or camel_to_snake(self.__class__.__name__)
         self.stream: bool = stream
+        self.raise_exception: bool = raise_exception
         self.flow_params: dict = kwargs
 
         self._flow_op: Optional[BaseOp] = None
@@ -78,33 +80,20 @@ class BaseFlow(ABC):
                     logger.info(f"{prefix} Sub {i + 1}:")
                     self._print_operation_tree(sub_op, indent + 2)
 
-    async def async_call(self, **kwargs) -> Union[FlowResponse | FlowStreamChunk | None]:
-        kwargs["stream"] = self.stream
-        context = FlowContext(**kwargs)
-        logger.info(f"request.params={kwargs}")
+    async def _async_call(self, context: FlowContext) -> Union[FlowResponse | FlowStreamChunk | None]:
+        self.print_flow()
 
-        try:
-            self.print_flow()
+        # each time rebuild flow
+        flow_op: BaseOp = self.build_flow()
 
-            # each time rebuilding
-            flow_op: BaseOp = self.build_flow()
+        if self.async_mode:
+            assert isinstance(flow_op, BaseAsyncOp)
+            await flow_op.async_call(context=context)
 
-            if self.async_mode:
-                assert isinstance(flow_op, BaseAsyncOp)
-                await flow_op.async_call(context=context)
-
-            else:
-                loop = asyncio.get_event_loop()
-                op_call_fn = partial(flow_op.call, context=context)
-                await loop.run_in_executor(executor=C.thread_pool, func=op_call_fn)  # noqa
-
-        except Exception as e:
-            logger.exception(f"flow_name={self.name} async call encounter error={e.args}")
-
-            if self.stream:
-                await context.add_stream_chunk_and_type(str(e), ChunkEnum.ERROR)
-            else:
-                context.add_response_error(e)
+        else:
+            loop = asyncio.get_event_loop()
+            op_call_fn = partial(flow_op.call, context=context)
+            await loop.run_in_executor(executor=C.thread_pool, func=op_call_fn)  # noqa
 
         if self.stream:
             await context.add_stream_done()
@@ -112,26 +101,59 @@ class BaseFlow(ABC):
         else:
             return context.response
 
-    def call(self, **kwargs) -> FlowResponse:
-        self.print_flow()
 
+    async def async_call(self, **kwargs) -> Union[FlowResponse | FlowStreamChunk | None]:
         kwargs["stream"] = self.stream
         context = FlowContext(**kwargs)
         logger.info(f"request.params={kwargs}")
 
-        try:
-            # each time rebuilding
-            flow_op: BaseOp = self.build_flow()
+        if self.raise_exception:
+            return await self._async_call(context=context)
 
-            if self.async_mode:
-                assert isinstance(flow_op, BaseAsyncOp)
-                asyncio.run(flow_op.async_call(context=context))
+        try:
+            return await self._async_call(context=context)
+
+        except Exception as e:
+            logger.exception(f"flow_name={self.name} async call encounter error={e.args}")
+
+            if self.stream:
+                await context.add_stream_chunk_and_type(str(e), ChunkEnum.ERROR)
+                await context.add_stream_done()
+                return context.stream_queue
 
             else:
-                flow_op.call(context=context)
+                context.add_response_error(e)
+                return context.response
+
+    def _call(self, context: FlowContext) -> FlowResponse:
+        self.print_flow()
+
+        # each time rebuild flow
+        flow_op: BaseOp = self.build_flow()
+
+        if self.async_mode:
+            assert isinstance(flow_op, BaseAsyncOp)
+            asyncio.run(flow_op.async_call(context=context))
+
+        else:
+            flow_op.call(context=context)
+
+        return context.response
+
+
+    def call(self, **kwargs) -> FlowResponse:
+        kwargs["stream"] = self.stream
+        context = FlowContext(**kwargs)
+        logger.info(f"request.params={kwargs}")
+
+        if self.raise_exception:
+            return self._call(context=context)
+
+        try:
+            return self._call(context=context)
 
         except Exception as e:
             logger.exception(f"flow_name={self.name} call encounter error={e.args}")
-            context.add_response_error(e)
 
-        return context.response
+            context.add_response_error(e)
+            return context.response

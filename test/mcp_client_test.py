@@ -1,6 +1,8 @@
 import asyncio
 import json
 
+from loguru import logger
+
 from flowllm.client.fastmcp_client import FastmcpClient
 
 
@@ -24,7 +26,7 @@ async def main():
 
         test_cases = [
             # ("ant_search", {"query": "阿里巴巴怎么样？", "entity": "阿里巴巴"}),
-            ("ant_investment", {"entity": "阿里巴巴", "analysis_category": "股票"}),
+            # ("ant_investment", {"entity": "阿里巴巴", "analysis_category": "股票"}),
             # ("dashscope_search", {"query": "阿里巴巴怎么样？"}),
             # ("get_a_stock_infos", {"query": query2}),
             # ("get_a_stock_news", {"query": query2}),
@@ -34,19 +36,25 @@ async def main():
             # ("mock_async_tool_flow", {"a": query2}),
             # ("tdx_wenda_quotes", {"question": "半导体行业PE中位数"}),
             # ("tdx_market_quotes", {"code": "000001", "setcode": "1"}),
+            ("mock_exception", {"query": "run_time"}),
         ]
 
         for tool_name, arguments in test_cases:
             print("=" * 50)
             print(f"Testing tool: {tool_name}")
             try:
-                result = await client.call_tool(tool_name, arguments)
+                # result = await client.call_tool(tool_name, arguments)
+                result = await client.call_tool(tool_name, arguments, raise_on_error=False)
+                print(f"Tool result: {result}")
+
                 if result.content:
                     print(f"Result content: {result.content[0].text}")
                 if hasattr(result, 'structured_content') and result.structured_content:
                     print(f"Structured content: {json.dumps(result.structured_content, indent=2, ensure_ascii=False)}")
                 print("✓ Tool call successful")
+
             except Exception as e:
+                logger.exception(e)
                 print(f"✗ Tool call failed: {e}")
 
 

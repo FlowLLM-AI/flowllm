@@ -63,8 +63,15 @@ class FastmcpClient:
                 return tool
         return None
 
-    async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> CallToolResult:
+    async def call_tool(self,
+                        tool_name: str,
+                        arguments: Dict[str, Any],
+                        timeout: float = None,
+                        raise_on_error: bool = True) -> CallToolResult:
         if not self.client:
             raise RuntimeError("Client not connected. Call connect() first or use context manager.")
 
-        return await self.client.call_tool(tool_name, arguments=arguments)
+        return await self.client.call_tool(tool_name,
+                                           arguments=arguments,
+                                           timeout=timeout,
+                                           raise_on_error=raise_on_error)

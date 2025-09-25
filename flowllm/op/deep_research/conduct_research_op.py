@@ -23,16 +23,15 @@ class ConductResearchOp(BaseAsyncToolOp):
     def __init__(self,
                  max_react_tool_calls: int = 5,
                  max_content_len: int = 20000,
-                 return_answer: bool = False,
+                 save_answer: bool = False,
                  llm: str = "qwen3_max_instruct",
                  # llm: str = "qwen3_235b_instruct",
                  # llm: str = "qwen3_80b_instruct",
                  language: str = "zh",
                  **kwargs):
-        super().__init__(llm=llm, language=language, **kwargs)
+        super().__init__(llm=llm, language=language, save_answer=save_answer, **kwargs)
         self.max_react_tool_calls: int = max_react_tool_calls
         self.max_content_len: int = max_content_len
-        self.return_answer: bool = return_answer
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -131,7 +130,7 @@ class ConductResearchOp(BaseAsyncToolOp):
         logger.info(f"merge_messages={merge_messages}")
         assistant_message = await self.llm.achat(messages=merge_messages)
         assistant_message.content = assistant_message.content[:self.max_content_len]
-        chunk_type: ChunkEnum = ChunkEnum.ANSWER if self.return_answer else ChunkEnum.THINK
+        chunk_type: ChunkEnum = ChunkEnum.ANSWER if self.save_answer else ChunkEnum.THINK
         content = f"{self.name}.{self.tool_index} content={assistant_message.content}"
         await self.context.add_stream_chunk_and_type(content, chunk_type)
         self.set_result(assistant_message.content)
