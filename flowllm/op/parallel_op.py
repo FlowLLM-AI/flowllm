@@ -8,7 +8,7 @@ class ParallelOp(BaseAsyncOp):
         for op in self.ops:
             assert not op.async_mode
             self.submit_task(op.call, context=self.context)
-        self.join_task(task_desc="parallel execution")
+        return self.join_task(task_desc="parallel execution")
 
     async def async_execute(self):
         for op in self.ops:

@@ -1,22 +1,17 @@
-import asyncio
 import json
 from abc import ABCMeta
-from typing import List, Callable
+from typing import List
 
 from loguru import logger
 
-from flowllm.context import C
 from flowllm.op.base_async_op import BaseAsyncOp
 from flowllm.schema.tool_call import ToolCall, ParamAttrs
-from flowllm.storage.cache_handler import DataCache
 
 
 class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
     def __init__(self,
-                 enable_cache: bool = False,
-                 cache_dir: str = "cache",
-                 cache_expire_hours: float = 0.1,
+
                  enable_print_output: bool = True,
                  tool_index: int = 0,
                  save_answer: bool = False,
@@ -25,61 +20,15 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
                  **kwargs):
         super().__init__(**kwargs)
 
-        self.enable_cache: bool = enable_cache
-        self.cache_dir: str = cache_dir
-        self.cache_expire_hours: float = cache_expire_hours
         self.enable_print_output: bool = enable_print_output
         self.tool_index: int = tool_index
         self.save_answer: bool = save_answer
         self.input_schema_mapping: dict | None = input_schema_mapping  # map key to context
         self.output_schema_mapping: dict | None = output_schema_mapping  # map key to context
 
-        self._cache: DataCache | None = None
         self._tool_call: ToolCall | None = None
         self.input_dict: dict = {}
         self.output_dict: dict = {}
-
-    @property
-    def cache(self):
-        if self.enable_cache and self._cache is None:
-            self._cache = DataCache(f"{self.cache_dir}/{self.name}")
-        return self._cache
-
-    def save_load_cache(self, key: str, fn: Callable, **kwargs):
-        if self.enable_cache:
-            result = self.cache.load(key, **kwargs)
-            if result is None:
-                result = fn()
-                self.cache.save(key, result, expire_hours=self.cache_expire_hours)
-            else:
-                logger.info(f"load {key} from cache")
-        else:
-            result = fn()
-
-        return result
-
-    async def async_save_load_cache(self, key: str, fn: Callable, **kwargs):
-        if self.enable_cache:
-            result = self.cache.load(key, **kwargs)
-            if result is None:
-                if asyncio.iscoroutinefunction(fn):
-                    result = await fn()
-                else:
-                    loop = asyncio.get_event_loop()
-                    result = await loop.run_in_executor(C.thread_pool, fn)  # noqa
-
-                self.cache.save(key, result, expire_hours=self.cache_expire_hours)
-            else:
-                logger.info(f"load {key} from cache")
-        else:
-            # Check if fn is an async function
-            if asyncio.iscoroutinefunction(fn):
-                result = await fn()
-            else:
-                loop = asyncio.get_event_loop()
-                result = await loop.run_in_executor(C.thread_pool, fn)  # noqa
-
-        return result
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{

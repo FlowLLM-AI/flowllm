@@ -5,15 +5,19 @@ from flowllm.op.base_op import BaseOp
 class SequentialOp(BaseAsyncOp):
 
     def execute(self):
+        result = None
         for op in self.ops:
             assert op.async_mode is False
-            op.call(context=self.context)
+            result = op.call(context=self.context)
+        return result
 
     async def async_execute(self):
+        result = None
         for op in self.ops:
             assert op.async_mode is True
             assert isinstance(op, BaseAsyncOp)
-            await op.async_call(context=self.context)
+            result = await op.async_call(context=self.context)
+        return result
 
     def __rshift__(self, op: BaseOp):
         if isinstance(op, SequentialOp):
