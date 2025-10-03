@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Union, Type
 
 import pandas as pd
+from loguru import logger
 
 from .cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
 
@@ -149,7 +150,7 @@ class DataCache:
             return True
 
         except Exception as e:
-            print(f"Failed to save data: {e}")
+            logger.exception(f"Failed to save data: {e}")
             return False
 
     def load(self, key: str, auto_clean_expired: bool = True, **handler_kwargs) -> Optional[Any]:
@@ -169,7 +170,6 @@ class DataCache:
             if self._is_expired(key):
                 if auto_clean_expired:
                     self.delete(key)
-                    print(f"Cache '{key}' has expired and was automatically cleaned")
                 return None
 
             file_path = self._get_file_path(key)
@@ -178,7 +178,7 @@ class DataCache:
 
             # Get data type from metadata
             if key not in self.metadata or 'data_type' not in self.metadata[key]:
-                print(f"No data type information found for key '{key}'")
+                logger.info(f"No data type information found for key '{key}'")
                 return None
 
             data_type_name = self.metadata[key]['data_type']
@@ -199,7 +199,7 @@ class DataCache:
                         break
 
                 if data_type is None:
-                    print(f"Unknown data type: {data_type_name}")
+                    logger.info(f"Unknown data type: {data_type_name}")
                     return None
 
             handler = self._get_handler(data_type)
@@ -215,7 +215,7 @@ class DataCache:
             return data
 
         except Exception as e:
-            print(f"Failed to load data: {e}")
+            logger.exception(f"Failed to load data: {e}")
             return None
 
     def exists(self, key: str, check_expired: bool = True) -> bool:
@@ -260,7 +260,7 @@ class DataCache:
             return True
 
         except Exception as e:
-            print(f"Failed to delete cache: {e}")
+            logger.exception(f"Failed to delete cache: {e}")
             return False
 
     def clean_expired(self) -> int:
@@ -371,5 +371,5 @@ class DataCache:
             return True
 
         except Exception as e:
-            print(f"Failed to clear cache: {e}")
+            logger.exception(f"Failed to clear cache: {e}")
             return False
