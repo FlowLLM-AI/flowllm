@@ -1,7 +1,8 @@
+import asyncio
 import copy
 from abc import ABC
 from pathlib import Path
-from typing import List
+from typing import List, Callable
 
 from loguru import logger
 from tqdm import tqdm
@@ -12,6 +13,7 @@ from flowllm.context.service_context import C
 from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
 from flowllm.llm.base_llm import BaseLLM
 from flowllm.schema.service_config import LLMConfig, EmbeddingModelConfig
+from flowllm.storage.cache_handler import DataCache
 from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
 from flowllm.utils.common_utils import camel_to_snake
 from flowllm.utils.timer import Timer
@@ -38,6 +40,9 @@ class BaseOp(ABC):
                  embedding_model: str = "default",
                  vector_store: str = "default",
                  ops: list = None,
+                 enable_cache: bool = False,
+                 cache_path: str = "cache/{op_name}",
+                 cache_expire_hours: float = 0.1,
                  **kwargs):
         super().__init__()
 
@@ -53,17 +58,63 @@ class BaseOp(ABC):
         self._llm: BaseLLM | str = llm
         self._embedding_model: BaseEmbeddingModel | str = embedding_model
         self._vector_store: BaseVectorStore | str = vector_store
-
+        self.ops: List["BaseOp"] = ops if ops else []
         self.op_params: dict = kwargs
+
+        self.enable_cache: bool = enable_cache
+        self.cache_path: str = cache_path
+        self.cache_expire_hours: float = cache_expire_hours
 
         self.task_list: list = []
         self.timer = Timer(name=self.name)
         self.context: FlowContext | None = None
-        self.ops: List["BaseOp"] = ops if ops else []
+        self._cache: DataCache | None = None
 
     @property
     def short_name(self) -> str:
         return self.name.replace("_op", "")
+
+    @property
+    def cache(self):
+        if self.enable_cache and self._cache is None:
+            self._cache = DataCache(self.cache_path.format(op_name=self.short_name))
+        return self._cache
+
+    def save_load_cache(self, key: str, fn: Callable, **kwargs):
+        if self.enable_cache:
+            result = self.cache.load(key, **kwargs)
+            if result is None:
+                result = fn()
+                self.cache.save(key, result, expire_hours=self.cache_expire_hours)
+            else:
+                logger.info(f"load {key} from cache")
+        else:
+            result = fn()
+
+        return result
+
+    async def async_save_load_cache(self, key: str, fn: Callable, **kwargs):
+        if self.enable_cache:
+            result = self.cache.load(key, **kwargs)
+            if result is None:
+                if asyncio.iscoroutinefunction(fn):
+                    result = await fn()
+                else:
+                    loop = asyncio.get_event_loop()
+                    result = await loop.run_in_executor(C.thread_pool, fn)  # noqa
+
+                self.cache.save(key, result, expire_hours=self.cache_expire_hours)
+            else:
+                logger.info(f"load {key} from cache")
+        else:
+            # Check if fn is an async function
+            if asyncio.iscoroutinefunction(fn):
+                result = await fn()
+            else:
+                loop = asyncio.get_event_loop()
+                result = await loop.run_in_executor(C.thread_pool, fn)  # noqa
+
+        return result
 
     def before_execute(self):
         ...
@@ -88,16 +139,17 @@ class BaseOp(ABC):
     def call(self, context: FlowContext = None, **kwargs):
         self.context = self.build_context(context, **kwargs)
         with self.timer:
+            result = None
             if self.max_retries == 1 and self.raise_exception:
                 self.before_execute()
-                self.execute()
+                result = self.execute()
                 self.after_execute()
 
             else:
                 for i in range(self.max_retries):
                     try:
                         self.before_execute()
-                        self.execute()
+                        result = self.execute()
                         self.after_execute()
 
                     except Exception as e:
@@ -109,9 +161,12 @@ class BaseOp(ABC):
                             else:
                                 self.default_execute()
 
-        if self.context is not None and self.context.response is not None:
+        if result is not None:
+            return result
+        elif self.context is not None and self.context.response is not None:
             return self.context.response
-        return None
+        else:
+            return None
 
     def submit_task(self, fn, *args, **kwargs) -> "BaseOp":
         if self.enable_multithread:

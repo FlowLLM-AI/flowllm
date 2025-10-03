@@ -30,16 +30,17 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
     async def async_call(self, context: FlowContext = None, **kwargs) -> Any:
         self.context = self.build_context(context, **kwargs)
         with self.timer:
+            result = None
             if self.max_retries == 1 and self.raise_exception:
                 await self.async_before_execute()
-                await self.async_execute()
+                result = await self.async_execute()
                 await self.async_after_execute()
 
             else:
                 for i in range(self.max_retries):
                     try:
                         await self.async_before_execute()
-                        await self.async_execute()
+                        result = await self.async_execute()
                         await self.async_after_execute()
                         break
 
@@ -52,9 +53,12 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
                             else:
                                 await self.async_default_execute()
 
-        if self.context is not None and self.context.response is not None:
+        if result is not None:
+            return result
+        elif self.context is not None and self.context.response is not None:
             return self.context.response
-        return None
+        else:
+            return None
 
     def submit_async_task(self, fn: Callable, *args, **kwargs):
         loop = asyncio.get_running_loop()
