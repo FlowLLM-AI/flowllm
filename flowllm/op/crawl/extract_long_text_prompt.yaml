@@ -1,8 +1,9 @@
 extract_content_prompt: |
-  From the provided long text (e.g., scraped web content or other documents), **extract and organize** all segments that are directly relevant to the following query:
-  
   # Long Text  
   {long_text}
+  
+  # Task
+  From the provided long text (e.g., scraped web content or other documents), **extract and organize** all segments that are directly relevant to the following query:
   
   # Current Datetime  
   {datetime}
@@ -18,5 +19,4 @@ extract_content_prompt: |
   - Format output in Markdown, using only headings up to level three (###).  
   - Use the same language as the query (e.g., if query is in English, output in English; if in Chinese, output in Chinese).  
   - Clearly separate and label each relevant excerpt if multiple non-contiguous segments are extracted.  
-  - If no relevant content exists (after filtering for recency and relevance), explicitly state:  
-    > No relevant content found matching the query.
+  - If no relevant content exists (after filtering for recency and relevance), explicitly state: No relevant content found matching the query.
