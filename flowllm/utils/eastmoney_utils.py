@@ -1,8 +1,9 @@
 import math
 import os
 
-import requests
+import akshare as ak
 import pandas as pd
+import requests
 
 
 def get_ah_mapping() -> pd.DataFrame:
@@ -264,21 +265,32 @@ def get_forex_df(code: str = "HKDCNYC",
     return forex_df
 
 
+def get_history_dividend_detail(code: str):
+    result = {}
+    df = ak.stock_history_dividend_detail(symbol=code, indicator="分红")
+    if df is not None and len(df) > 0:
+        result["fh_anno"] = [str(x) for x in df.loc[:, "公告日期"].tolist()]
+        result["fh_prog"] = [str(x) for x in df.loc[:, "除权除息日"].tolist()]
+    return result
+
 def main():
-    print(os.getenv("EAST_MONEY_COOKIE"))
+    # print(os.getenv("EAST_MONEY_COOKIE"))
+    #
+    # ah_mapping_df = get_ah_mapping()
+    # print(ah_mapping_df)
+    #
+    # a_stock_df = get_a_stock_df("000001")
+    # print(a_stock_df)
+    #
+    # hk_stock_df = get_hk_stock_df("01810")
+    # print(hk_stock_df)
+    #
+    # forex_hist_em_df = get_forex_df(code="HKDCNYC")
+    # print(forex_hist_em_df)
 
-    ah_mapping_df = get_ah_mapping()
-    print(ah_mapping_df)
-
-    a_stock_df = get_a_stock_df("000001")
-    print(a_stock_df)
-
-    hk_stock_df = get_hk_stock_df("01810")
-    print(hk_stock_df)
-
-    forex_hist_em_df = get_forex_df(code="HKDCNYC")
-    print(forex_hist_em_df)
-
+    # df = get_history_dividend_detail("300750")
+    df = get_history_dividend_detail("000001")
+    print(df)
 
 if __name__ == "__main__":
     from flowllm.utils.common_utils import load_env
