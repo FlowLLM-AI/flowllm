@@ -10,18 +10,19 @@ from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.common_utils import extract_content, get_datetime
 
 
-class CompanyFactorOp(BaseAsyncToolOp):
+class CompanySegmentFactorOp(BaseAsyncToolOp):
     file_path: str = __file__
 
     def __init__(self,
-                 llm: str = "qwen3_30b_instruct",
-                 # llm: str = "qwen3_max_instruct",
+                 llm: str = "qwen25_max_instruct",
                  max_steps: int = 5,
                  max_search_cnt: int = 3,
+                 max_approach_cnt: int = 3,
                  **kwargs):
         super().__init__(llm=llm, **kwargs)
         self.max_steps: int = max_steps
         self.max_search_cnt: int = max_search_cnt
+        self.max_approach_cnt: int = max_approach_cnt
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -32,11 +33,6 @@ class CompanyFactorOp(BaseAsyncToolOp):
                     "description": "公司名称",
                     "required": True
                 },
-                # "code": {
-                #     "type": "string",
-                #     "description": "股票代码",
-                #     "required": True
-                # },
                 "segment": {
                     "type": "string",
                     "description": "板块",
@@ -109,6 +105,7 @@ class CompanyFactorOp(BaseAsyncToolOp):
                 name=name,
                 segment=segment,
                 current_time=get_datetime(time_ft="%Y-%m-%d %H:%M:%S"),
+                max_approach_cnt=self.max_approach_cnt,
                 search_content=search_content,
                 mermaid_graph=mermaid_graph)
             logger.info(f"factor_step2_prompt={factor_step2_prompt}")
@@ -128,9 +125,11 @@ async def main():
     from mcp_search_op import TongyiMcpSearchOp
     async with FlowLLMApp(args=["config=fin_research"]):
         # name, code, segment = "紫金矿业", "601899", "黄金业务"
-        name, code, segment = "紫金矿业", "601899", "铜业务"
-        search_op1 = TongyiMcpSearchOp()
-        op = CompanyFactorOp() << search_op1
+        # name, code, segment = "紫金矿业", "601899", "铜业务"
+        # name, code, segment = "小米", "01810", "小米汽车"
+        name, code, segment = "阿里巴巴", "09988", "AI"
+        search_op = TongyiMcpSearchOp()
+        op = CompanySegmentFactorOp() << search_op
         await op.async_call(name=name, code=code, segment=segment)
         logger.info(op.output)
 

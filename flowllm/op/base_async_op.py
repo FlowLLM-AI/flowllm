@@ -51,7 +51,7 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
                             if self.raise_exception:
                                 raise e
                             else:
-                                await self.async_default_execute()
+                                result = await self.async_default_execute()
 
         if result is not None:
             return result
