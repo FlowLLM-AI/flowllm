@@ -127,7 +127,8 @@ async def main():
     from flowllm.app import FlowLLMApp
     from mcp_search_op import TongyiMcpSearchOp
     async with FlowLLMApp(args=["config=fin_research"]):
-        name, code, segment = "紫金矿业", "601899", "黄金业务"
+        # name, code, segment = "紫金矿业", "601899", "黄金业务"
+        name, code, segment = "紫金矿业", "601899", "铜业务"
         search_op1 = TongyiMcpSearchOp()
         op = CompanyFactorOp() << search_op1
         await op.async_call(name=name, code=code, segment=segment)

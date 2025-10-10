@@ -47,7 +47,7 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
                     except Exception as e:
                         logger.exception(f"op={self.name} async execute failed, error={e.args}")
 
-                        if i == self.max_retries:
+                        if i == self.max_retries - 1:
                             if self.raise_exception:
                                 raise e
                             else:
