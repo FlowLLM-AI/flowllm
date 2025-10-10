@@ -11,7 +11,6 @@ from flowllm.schema.tool_call import ToolCall, ParamAttrs
 class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
     def __init__(self,
-
                  enable_print_output: bool = True,
                  tool_index: int = 0,
                  save_answer: bool = False,

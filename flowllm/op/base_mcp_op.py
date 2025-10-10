@@ -18,6 +18,8 @@ class BaseMcpOp(BaseAsyncToolOp):
                  input_schema_required: List[str] = None,
                  input_schema_optional: List[str] = None,
                  input_schema_deleted: List[str] = None,
+                 max_retries: int = 3,
+                 raise_exception: bool = False,
                  **kwargs):
 
         self.mcp_name: str = mcp_name
@@ -25,7 +27,7 @@ class BaseMcpOp(BaseAsyncToolOp):
         self.input_schema_required: List[str] = input_schema_required
         self.input_schema_optional: List[str] = input_schema_optional
         self.input_schema_deleted: List[str] = input_schema_deleted
-        super().__init__(save_answer=save_answer, **kwargs)
+        super().__init__(save_answer=save_answer, max_retries=max_retries, raise_exception=raise_exception, **kwargs)
         # https://bailian.console.aliyun.com/?tab=mcp#/mcp-market
 
     def build_tool_call(self) -> ToolCall:

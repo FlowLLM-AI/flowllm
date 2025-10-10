@@ -30,7 +30,7 @@ class McpClient:
         self.session: ClientSession | None = None
         self._exit_stack: AsyncExitStack = AsyncExitStack()
 
-    async def start(self):
+    async def astart(self):
         command = shutil.which("npx") if self.config.get("command") == "npx" else self.config.get("command")
 
         if command:
@@ -69,20 +69,41 @@ class McpClient:
     async def __aenter__(self) -> "McpClient":
         for i in range(self.max_retries):
             try:
-                await self.start()
-                return self
+                await self.astart()
+                break
 
             except Exception as e:
                 logger.exception(f"{self.name} start failed with {e}. "
                                  f"Retry {i + 1}/{self.max_retries} in {1 + i}s...")
+                
+                # Clean up the exit stack before retrying
+                try:
+                    await self._exit_stack.aclose()
+                except Exception:
+                    pass
+                self._exit_stack = AsyncExitStack()
+                
                 await asyncio.sleep(1 + i)
 
                 if i == self.max_retries - 1:
-                    return self
+                    break
+
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        await self._exit_stack.aclose()
+        for i in range(self.max_retries):
+            try:
+                await self._exit_stack.aclose()
+                break
+
+            except Exception as e:
+                logger.exception(f"{self.name} close failed with {e}. "
+                                 f"Retry {i + 1}/{self.max_retries} in {1 + i}s...")
+                await asyncio.sleep(1 + i)
+
+                if i == self.max_retries - 1:
+                    break
+
         self.session = None
 
     async def list_tools(self) -> List[mcp.types.Tool]:

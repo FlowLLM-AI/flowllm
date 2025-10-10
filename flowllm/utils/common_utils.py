@@ -68,32 +68,29 @@ def load_env(path: str | Path = None, enable_log: bool = True):
 
         logger.warning(".env not found")
 
-def extract_json(text: str) -> dict | None:
-    match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
+
+def extract_content(text: str, language_tag: str = "json"):
+    pattern = rf'```{re.escape(language_tag)}\s*(.*?)\s*```'
+    match = re.search(pattern, text, re.DOTALL)
 
     if match:
-        json_content = match.group(1).strip()
+        result = match.group(1).strip()
+    else:
+        result = text
+
+    if language_tag == "json":
         try:
-            return json.loads(json_content)
-        except json.JSONDecodeError as _:
-            return None
+            result = json.loads(result)
 
-    else:
-        return None
+        except json.JSONDecodeError:
+            result = None
 
-
-def extract_python(text: str) -> str:
-    match = re.search(r'```python\s*(.*?)\s*```', text, re.DOTALL)
-
-    if match:
-        return match.group(1).strip()
-    else:
-        return ""
+    return result
 
 
-def get_datetime():
+def get_datetime(time_ft: str = "%Y-%m-%d %H:%M:%S"):
     now = datetime.now()
-    formatted_time = now.strftime("%Y-%m-%d %H:%M:%S")
+    formatted_time = now.strftime(time_ft)
     return formatted_time
 
 

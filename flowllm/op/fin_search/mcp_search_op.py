@@ -1,0 +1,42 @@
+import asyncio
+
+from flowllm import BaseMcpOp
+from flowllm.context import FlowContext
+
+
+class TongyiMcpSearchOp(BaseMcpOp):
+
+    def __init__(self, **kwargs):
+        kwargs["mcp_name"] = "tongyi_search"
+        kwargs["tool_name"] = "bailian_web_search"
+        kwargs["save_answer"] = True
+        kwargs["input_schema_optional"] = ["count"]
+        kwargs["input_schema_deleted"] = ["ctx"]
+        super().__init__(**kwargs)
+
+
+class BochaMcpSearchOp(BaseMcpOp):
+
+    def __init__(self, **kwargs):
+        kwargs["mcp_name"] = "bochaai_search"
+        kwargs["tool_name"] = "bocha_web_search"
+        kwargs["save_answer"] = True
+        kwargs["input_schema_optional"] = ["freshness", "count"]
+        kwargs["input_schema_deleted"] = ["ctx"]
+        super().__init__(**kwargs)
+
+
+async def main():
+    from flowllm.app import FlowLLMApp
+    async with FlowLLMApp(args=["config=fin_research"]):
+        op = TongyiMcpSearchOp()
+        await op.async_call(context=FlowContext(query="what is ai?"))
+        print("tongyi:", op.output)
+
+        op = BochaMcpSearchOp()
+        await op.async_call(context=FlowContext(query="what is ai?"))
+        print("bocha:", op.output)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

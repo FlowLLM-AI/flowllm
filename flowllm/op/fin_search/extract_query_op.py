@@ -6,25 +6,24 @@ from loguru import logger
 from flowllm.context import FlowContext, C
 from flowllm.enumeration.role import Role
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
-from flowllm.op.search import DashscopeSearchOp
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.common_utils import extract_content
 
 
 @C.register_op(register_app="FlowLLM")
-class ExtractEntitiesCodeOp(BaseAsyncToolOp):
+class ExtractQueryOp(BaseAsyncToolOp):
     file_path: str = __file__
 
-    def __init__(self, llm: str = "qwen3_30b_instruct", **kwargs):
+    def __init__(self,
+                 llm: str = "qwen3_30b_instruct",
+                 # llm: str = "qwen25_max_instruct",
+                 **kwargs):
         super().__init__(llm=llm, **kwargs)
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
-            "description": """
-Extract financial entities from the query, including types such as "stock", "bond", "fund", "cryptocurrency", "index", "commodity", "etf", etc. 
-For entities like stocks or ETF funds, search for their corresponding codes. Finally, return the financial entities appearing in the query, including their types and codes.
-            """.strip(),
+            "description": "从query中提取金融实体，包括“股票”、“债券”、“基金”、“加密货币”、“指数”、“商品”、“ETF”等类型。对于股票或ETF基金等实体，请查找其对应的代码。最后，返回查询中出现的金融实体，包括其类型和代码。",
             "input_schema": {
                 "query": {
                     "type": "string",
@@ -35,32 +34,43 @@ For entities like stocks or ETF funds, search for their corresponding codes. Fin
         })
 
     async def get_entity_code(self, entity: str, entity_type: str):
-        query = f"the {entity_type} code of {entity}"
+        query = f"{entity}的{entity_type}代码"
         search_op = self.ops[0].copy()
         assert isinstance(search_op, BaseAsyncToolOp)
         await search_op.async_call(context=FlowContext(query=query))
+        logger.info(f"entity={entity} search_op.output={search_op.output}")
 
         extract_code_prompt: str = self.prompt_format(prompt_name="extract_code_prompt",
                                                       entity=entity,
                                                       text=search_op.output)
 
         def callback_fn(message: Message):
-            return extract_content(message.content)
+            logger.info(f"message.content={message.content}")
+            result = extract_content(message.content)
+            if not result:
+                return []
+
+            result = [x for x in result if isinstance(x, str)]
+            return result
 
         assistant_result = await self.llm.achat(messages=[Message(role=Role.USER, content=extract_code_prompt)],
                                                 callback_fn=callback_fn)
-        logger.info(f"entity={entity} response={search_op.output} {json.dumps(assistant_result, ensure_ascii=False)}")
         return {"entity": entity, "codes": assistant_result}
 
     async def async_execute(self):
         query = self.input_dict["query"]
-        extract_entities_prompt: str = self.prompt_format(
-            prompt_name="extract_entities_prompt",
-            example=self.get_prompt(prompt_name="extract_entities_example"),
-            query=query)
+        extract_entities_prompt: str = self.prompt_format(prompt_name="extract_query_prompt", query=query)
+        logger.info(f"extract_entities_prompt={extract_entities_prompt}")
 
         def callback_fn(message: Message):
-            return extract_content(message.content)
+            logger.info(f"message.content={message.content}")
+            result = extract_content(message.content)
+            if not result:
+                return []
+
+            if isinstance(result, dict):
+                result = [result]
+            return result
 
         assistant_result = await self.llm.achat(messages=[Message(role=Role.USER, content=extract_entities_prompt)],
                                                 callback_fn=callback_fn)
@@ -68,7 +78,7 @@ For entities like stocks or ETF funds, search for their corresponding codes. Fin
 
         entity_list = []
         for entity_info in assistant_result:
-            if entity_info["type"] in ["stock", "股票", "etf", "fund"]:
+            if entity_info["type"].lower() in ["stock", "股票", "etf", "基金", "bond", "债券"]:
                 entity_list.append(entity_info["entity"])
                 self.submit_async_task(self.get_entity_code,
                                        entity=entity_info["entity"],
@@ -86,11 +96,12 @@ For entities like stocks or ETF funds, search for their corresponding codes. Fin
 
 async def main():
     from flowllm.app import FlowLLMApp
-    async with FlowLLMApp(load_default_config=True):
-        # query = "茅台和五粮液哪个好？现在适合买入以太坊吗？"
-        query = "中概etf？"
+    from mcp_search_op import TongyiMcpSearchOp
+    async with FlowLLMApp(args=["config=fin_research"]):
+        query = "茅台和五粮液哪个好？现在适合买入以太坊吗？"
+        # query = "中概etf？"
         context = FlowContext(query=query)
-        op = ExtractEntitiesCodeOp() << DashscopeSearchOp()
+        op = ExtractQueryOp() << TongyiMcpSearchOp()
         await op.async_call(context=context)
         logger.info(op.output)
 

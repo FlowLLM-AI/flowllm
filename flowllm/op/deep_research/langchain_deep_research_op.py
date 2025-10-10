@@ -10,7 +10,7 @@ from flowllm.enumeration.role import Role
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
-from flowllm.utils.common_utils import get_datetime, extract_json
+from flowllm.utils.common_utils import get_datetime, extract_content
 
 
 @C.register_op(register_app="FlowLLM")
@@ -66,7 +66,7 @@ class LangchainDeepResearchOp(BaseAsyncToolOp):
                                                                  messages=messages_merge,
                                                                  date=get_datetime())
             def parse_research_brief(message: Message):
-                return extract_json(message.content)["research_brief"]
+                return extract_content(message.content)["research_brief"]
 
             research_brief = await self.llm.achat(
                 messages=[Message(role=Role.USER, content=transform_research_topic_prompt)],

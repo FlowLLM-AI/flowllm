@@ -14,7 +14,7 @@ from flowllm.enumeration.role import Role
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
-from flowllm.utils.common_utils import extract_python, get_datetime
+from flowllm.utils.common_utils import get_datetime, extract_content
 
 
 @C.register_op(register_app="FlowLLM")
@@ -107,7 +107,7 @@ class AkshareCalculateOp(BaseAsyncToolOp):
         for i in range(3):
 
             def get_code(message: Message):
-                return extract_python(message.content)
+                return extract_content(message.content, language_tag="python")
 
             result_code = await self.llm.achat(messages=messages, callback_fn=get_code)
             logger.info(f"i={i} result_code=\n{result_code}")

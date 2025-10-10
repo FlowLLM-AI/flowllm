@@ -1,0 +1,35 @@
+import_config: default
+backend: mcp
+
+#flow:
+
+
+#op:
+#  bailian_web_search_op:
+#    backend: base_mcp_op
+#    params:
+#      mcp_name: tongyi_search
+#      tool_name: bailian_web_search
+#      save_answer: true
+#      input_schema_optional:
+#        - count
+#      input_schema_deleted:
+#        - ctx
+#
+#  bocha_web_search_op:
+#    backend: base_mcp_op
+#    params:
+#      mcp_name: bochaai_search
+#      tool_name: bocha_web_search
+#      save_answer: true
+#      input_schema_optional:
+#        - freshness
+#        - count
+
+external_mcp:
+  tongyi_search:
+    type: sse
+    url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse"
+    headers:
+      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+

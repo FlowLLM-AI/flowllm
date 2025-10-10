@@ -45,11 +45,11 @@ extract_code_prompt: |
   Alibaba
   
   **Text**
-  Alibaba is traded as BABA on the NYSE and as 09988.HK on the Hong Kong Stock Exchange.
+  Alibaba is traded as BABA on the NYSE and as 09988 on the Hong Kong Stock Exchange.
   
   **Output**
   ```json
-  ["BABA", "09988.HK"]
+  ["BABA", "09988"]
   ```
   
   # Your Task

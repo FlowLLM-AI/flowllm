@@ -72,7 +72,7 @@ class BaseOp(ABC):
 
     @property
     def short_name(self) -> str:
-        return self.name.replace("_op", "")
+        return self.name.rstrip("_op")
 
     @property
     def cache(self):
