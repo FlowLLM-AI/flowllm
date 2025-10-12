@@ -2,7 +2,7 @@ import asyncio
 import os
 import shutil
 from contextlib import AsyncExitStack
-from typing import List
+from typing import List, Optional
 
 import mcp.types
 from loguru import logger
@@ -20,12 +20,14 @@ class McpClient:
                  name: str,
                  config: dict,
                  append_env: bool = False,
-                 max_retries: int = 3):
+                 max_retries: int = 3,
+                 timeout: Optional[float] = None):
 
         self.name: str = name
         self.config: dict = config
         self.append_env: bool = append_env
         self.max_retries: int = max_retries
+        self.timeout: Optional[float] = timeout
 
         self.session: ClientSession | None = None
         self._exit_stack: AsyncExitStack = AsyncExitStack()
@@ -69,8 +71,26 @@ class McpClient:
     async def __aenter__(self) -> "McpClient":
         for i in range(self.max_retries):
             try:
-                await self.astart()
+                if self.timeout is not None:
+                    await asyncio.wait_for(self.astart(), timeout=self.timeout)
+                else:
+                    await self.astart()
                 break
+
+            except asyncio.TimeoutError:
+                logger.error(f"{self.name} start timeout after {self.timeout}s")
+                
+                # Clean up the exit stack before retrying
+                try:
+                    await self._exit_stack.aclose()
+                except Exception:
+                    pass
+                self._exit_stack = AsyncExitStack()
+                
+                if i == self.max_retries - 1:
+                    raise TimeoutError(f"{self.name} start timeout after {self.timeout}s")
+                
+                await asyncio.sleep(1 + i)
 
             except Exception as e:
                 logger.exception(f"{self.name} start failed with {e}. "
@@ -113,10 +133,25 @@ class McpClient:
         tools = []
         for i in range(self.max_retries):
             try:
-                tools_response = await self.session.list_tools()
+                if self.timeout is not None:
+                    tools_response = await asyncio.wait_for(
+                        self.session.list_tools(), 
+                        timeout=self.timeout
+                    )
+                else:
+                    tools_response = await self.session.list_tools()
+                    
                 tools = [tool for item in tools_response \
                          if isinstance(item, tuple) and item[0] == "tools" for tool in item[1]]
                 break
+
+            except asyncio.TimeoutError:
+                logger.error(f"{self.name} list tools timeout after {self.timeout}s")
+                
+                if i == self.max_retries - 1:
+                    raise TimeoutError(f"{self.name} list tools timeout after {self.timeout}s")
+                
+                await asyncio.sleep(1 + i)
 
             except Exception as e:
                 logger.exception(f"{self.name} list tools failed with {e}. "
@@ -142,8 +177,22 @@ class McpClient:
         result = None
         for i in range(self.max_retries):
             try:
-                result = await self.session.call_tool(tool_name, arguments)
+                if self.timeout is not None:
+                    result = await asyncio.wait_for(
+                        self.session.call_tool(tool_name, arguments),
+                        timeout=self.timeout
+                    )
+                else:
+                    result = await self.session.call_tool(tool_name, arguments)
                 break
+
+            except asyncio.TimeoutError:
+                logger.error(f"{self.name}.{tool_name} call_tool timeout after {self.timeout}s")
+                
+                if i == self.max_retries - 1:
+                    raise TimeoutError(f"{self.name}.{tool_name} call_tool timeout after {self.timeout}s")
+                
+                await asyncio.sleep(1 + i)
 
             except Exception as e:
                 logger.exception(f"{self.name}.{tool_name} call_tool failed with {e}. "

@@ -96,7 +96,7 @@ class ExtractQueryOp(BaseAsyncToolOp):
 
 async def main():
     from flowllm.app import FlowLLMApp
-    from mcp_search_op import TongyiMcpSearchOp
+    from flowllm.op.search import TongyiMcpSearchOp
     async with FlowLLMApp(args=["config=fin_research"]):
         query = "茅台和五粮液哪个好？现在适合买入以太坊吗？"
         # query = "中概etf？"

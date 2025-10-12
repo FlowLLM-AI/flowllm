@@ -103,8 +103,10 @@ class DashscopeSearchOp(BaseAsyncToolOp):
 
 
 async def async_main():
-    op = DashscopeSearchOp()
-    context = FlowContext(query="what is AI?")
+    # op = DashscopeSearchOp(enable_role_prompt=False)
+    op = DashscopeSearchOp(model="qwen3-max", enable_role_prompt=False)
+    # context = FlowContext(query="what is AI?")
+    context = FlowContext(query="藏格矿业的业务主要有哪几块？营收和利润的角度分析 雪球")
     await op.async_call(context=context)
     print(context.dashscope_search_result)
 

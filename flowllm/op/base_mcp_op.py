@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from mcp.types import CallToolResult
 
@@ -19,6 +19,7 @@ class BaseMcpOp(BaseAsyncToolOp):
                  input_schema_optional: List[str] = None,
                  input_schema_deleted: List[str] = None,
                  max_retries: int = 3,
+                 timeout: Optional[float] = None,
                  raise_exception: bool = False,
                  **kwargs):
 
@@ -27,6 +28,7 @@ class BaseMcpOp(BaseAsyncToolOp):
         self.input_schema_required: List[str] = input_schema_required
         self.input_schema_optional: List[str] = input_schema_optional
         self.input_schema_deleted: List[str] = input_schema_deleted
+        self.timeout: Optional[float] = timeout
         super().__init__(save_answer=save_answer, max_retries=max_retries, raise_exception=raise_exception, **kwargs)
         # https://bailian.console.aliyun.com/?tab=mcp#/mcp-market
 
@@ -50,6 +52,7 @@ class BaseMcpOp(BaseAsyncToolOp):
 
     async def async_execute(self):
         mcp_server_config = C.service_config.external_mcp[self.mcp_name]
-        async with McpClient(name=self.mcp_name, config=mcp_server_config) as client:
+        async with McpClient(name=self.mcp_name, config=mcp_server_config, 
+                            max_retries=self.max_retries, timeout=self.timeout) as client:
             result: CallToolResult = await client.call_tool(self.tool_name, arguments=self.input_dict)
             self.set_result(result.content[0].text)

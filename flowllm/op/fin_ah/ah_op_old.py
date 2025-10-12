@@ -15,7 +15,7 @@ from flowllm.utils.tushare_client import TushareClient
 
 
 @C.register_op(register_app="FlowLLM")
-class AkshareAhOp(BaseRayOp):
+class AhOp(BaseRayOp):
 
     def __init__(self,
                  enable_cache: bool = True,
@@ -188,7 +188,7 @@ class AkshareAhOp(BaseRayOp):
         self.prepare_backtest()
 
 
-class AkshareAhFeatureOp(BaseOp):
+class AhFeatureOp(BaseOp):
 
     def execute(self):
         # actor_index = self.context.actor_index
@@ -309,7 +309,7 @@ class AkshareAhFeatureOp(BaseOp):
         return result
 
 
-class AkshareAhWeeklyFeatureOp(BaseOp):
+class AhWeeklyFeatureOp(BaseOp):
 
     def execute(self):
         # actor_index = self.context.actor_index
@@ -418,7 +418,7 @@ class AkshareAhWeeklyFeatureOp(BaseOp):
         return result
 
 
-class AkshareAhBacktestOp(BaseOp):
+class AhBacktestOp(BaseOp):
 
     def execute(self):
         dt = self.context.dt
@@ -487,8 +487,8 @@ def main():
     with FlowLLMApp(load_default_config=True) as app:
         app.service_config.ray_max_workers = 8
 
-        op = AkshareAhOp()
-        op = op << AkshareAhFeatureOp() << AkshareAhWeeklyFeatureOp() << AkshareAhBacktestOp()
+        op = AhOp()
+        op = op << AhFeatureOp() << AhWeeklyFeatureOp() << AhBacktestOp()
         print(op.call())
 
 

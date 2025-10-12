@@ -63,18 +63,56 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
     def submit_async_task(self, fn: Callable, *args, **kwargs):
         loop = asyncio.get_running_loop()
         if asyncio.iscoroutinefunction(fn):
-            self.task_list.append(loop.create_task(fn(*args, **kwargs)))
+            task = loop.create_task(fn(*args, **kwargs))
+            self.task_list.append(task)
         else:
             logger.warning("submit_async_task failed, fn is not a coroutine function!")
 
-    async def join_async_task(self):
+    async def join_async_task(self, timeout: float = None, return_exceptions: bool = True):
         result = []
-        for t_result in await asyncio.gather(*self.task_list):
-            if t_result:
-                if isinstance(t_result, list):
-                    result.extend(t_result)
-                else:
-                    result.append(t_result)
 
-        self.task_list.clear()
+        if not self.task_list:
+            return result
+
+        try:
+            if timeout is not None:
+                gather_task = asyncio.gather(*self.task_list, return_exceptions=return_exceptions)
+                task_results = await asyncio.wait_for(gather_task, timeout=timeout)
+            else:
+                task_results = await asyncio.gather(*self.task_list, return_exceptions=return_exceptions)
+
+            for t_result in task_results:
+                if return_exceptions and isinstance(t_result, Exception):
+                    logger.exception(f"Task failed with exception", exc_info=t_result)
+                    continue
+
+                if t_result:
+                    if isinstance(t_result, list):
+                        result.extend(t_result)
+                    else:
+                        result.append(t_result)
+
+        except asyncio.TimeoutError as e:
+            logger.exception(f"join_async_task timeout after {timeout}s, cancelling {len(self.task_list)} tasks...")
+            for task in self.task_list:
+                if not task.done():
+                    task.cancel()
+
+            await asyncio.gather(*self.task_list, return_exceptions=True)
+            self.task_list.clear()
+            raise
+
+        except Exception as e:
+            logger.exception(f"join_async_task failed with {type(e).__name__}, cancelling remaining tasks...")
+            for task in self.task_list:
+                if not task.done():
+                    task.cancel()
+
+            await asyncio.gather(*self.task_list, return_exceptions=True)
+            self.task_list.clear()
+            raise
+
+        finally:
+            self.task_list.clear()
+        
         return result
