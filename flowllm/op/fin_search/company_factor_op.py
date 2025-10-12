@@ -163,7 +163,7 @@ class CompanyFactorOp(BaseAsyncToolOp):
                 logger.info(f"板块 {segment_name} 分析成功")
 
             except Exception as e:
-                logger.error(f"板块 {segment_name} 分析失败: {e}")
+                logger.exception(f"板块 {segment_name} 分析失败: {e}")
                 continue
 
         logger.info(f"完成 {len(results)}/{len(segments)} 个板块的分析")

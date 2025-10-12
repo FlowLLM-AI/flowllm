@@ -10,10 +10,11 @@ from loguru import logger
 
 class TushareClient:
 
-    def __init__(self):
+    def __init__(self, enable_cache: bool = False):
         self.token: str = os.getenv("TUSHARE_API_TOKEN")
         self.url: str = "http://api.waditu.com/dataapi"
         self.request_limit_size: int = 10000
+        self.enable_cache: bool = enable_cache
         Path("cache").mkdir(exist_ok=True)
 
     @staticmethod
@@ -30,7 +31,7 @@ class TushareClient:
 
     def request(self, api_name: str = "", fields: List[str] = None, **kwargs):
         key = "_".join([api_name] + list(kwargs.values()))
-        if self.exist_df(key):
+        if self.enable_cache and self.exist_df(key):
             return self.load_df(key)
 
         data_dict: dict = {
@@ -60,13 +61,15 @@ class TushareClient:
 
         elif len(df_list) == 1:
             df = df_list[0]
-            self.save_df(df, key)
+            if self.enable_cache:
+                self.save_df(df, key)
             return df
 
         else:
             logger.info(f"api_name={api_name} concat {len(df_list)} df list")
             df = pd.concat(df_list, axis=0).reset_index(drop=True)
-            self.save_df(df, key)
+            if self.enable_cache:
+                self.save_df(df, key)
             return df
 
     @staticmethod

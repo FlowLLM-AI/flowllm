@@ -15,7 +15,7 @@ from flowllm.schema.tool_call import ToolCall
 
 
 @C.register_llm("openai_compatible")
-class OpenAICompatibleBaseLLM(BaseLLM):
+class OpenAICompatibleLLM(BaseLLM):
     """
     OpenAI-compatible LLM implementation supporting streaming and tool calls.
     
@@ -416,7 +416,7 @@ async def async_main():
 
     # model_name = "qwen-max-2025-01-25"
     model_name = "qwen3-30b-a3b-thinking-2507"
-    llm = OpenAICompatibleBaseLLM(model_name=model_name)
+    llm = OpenAICompatibleLLM(model_name=model_name)
 
     # Test async chat
     message: Message = await llm.achat([Message(role=Role.USER, content="hello")], [],
@@ -430,7 +430,7 @@ def main():
     load_env()
 
     model_name = "qwen-max-2025-01-25"
-    llm = OpenAICompatibleBaseLLM(model_name=model_name)
+    llm = OpenAICompatibleLLM(model_name=model_name)
 
     # Test sync chat
     message: Message = llm.chat([Message(role=Role.USER, content="hello")], [],

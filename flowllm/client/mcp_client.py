@@ -78,7 +78,7 @@ class McpClient:
                 break
 
             except asyncio.TimeoutError:
-                logger.error(f"{self.name} start timeout after {self.timeout}s")
+                logger.exception(f"{self.name} start timeout after {self.timeout}s")
                 
                 # Clean up the exit stack before retrying
                 try:
@@ -146,7 +146,7 @@ class McpClient:
                 break
 
             except asyncio.TimeoutError:
-                logger.error(f"{self.name} list tools timeout after {self.timeout}s")
+                logger.exception(f"{self.name} list tools timeout after {self.timeout}s")
                 
                 if i == self.max_retries - 1:
                     raise TimeoutError(f"{self.name} list tools timeout after {self.timeout}s")
@@ -187,7 +187,7 @@ class McpClient:
                 break
 
             except asyncio.TimeoutError:
-                logger.error(f"{self.name}.{tool_name} call_tool timeout after {self.timeout}s")
+                logger.exception(f"{self.name}.{tool_name} call_tool timeout after {self.timeout}s")
                 
                 if i == self.max_retries - 1:
                     raise TimeoutError(f"{self.name}.{tool_name} call_tool timeout after {self.timeout}s")

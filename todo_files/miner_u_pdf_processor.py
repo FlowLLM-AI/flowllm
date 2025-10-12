@@ -201,9 +201,9 @@ class MinerUPDFProcessor:
                 self.logger.debug(f"MinerU output: {result.stdout}")
 
         except subprocess.CalledProcessError as e:
-            self.logger.error(f"MinerU command execution failed: {e}")
+            self.logger.exception(f"MinerU command execution failed: {e}")
             if e.stderr:
-                self.logger.error(f"Error details: {e.stderr}")
+                self.logger.exception(f"Error details: {e.stderr}")
             raise
         except FileNotFoundError:
             raise RuntimeError(
@@ -378,7 +378,7 @@ class MinerUPDFProcessor:
             return content_list, markdown_content
 
         except Exception as e:
-            self.logger.error(f"Error occurred during PDF processing: {str(e)}")
+            self.logger.exception(f"Error occurred during PDF processing: {str(e)}")
             raise
 
     def save_results(
@@ -437,7 +437,7 @@ class MinerUPDFProcessor:
             return saved_files
 
         except Exception as e:
-            self.logger.error(f"Error occurred while saving files: {e}")
+            self.logger.exception(f"Error occurred while saving files: {e}")
             raise
 
     @staticmethod

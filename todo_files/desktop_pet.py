@@ -17,7 +17,7 @@ from qasync import QEventLoop
 # 添加项目路径以便导入flowllm模块
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flowllm.llm.openai_compatible_llm import OpenAICompatibleBaseLLM
+from flowllm.llm.openai_compatible_llm import OpenAICompatibleLLM
 from flowllm.schema.message import Message
 from loguru import logger
 
@@ -226,7 +226,7 @@ class ChatBubble(QWidget):
     
     closed = pyqtSignal()  # 关闭信号
     
-    def __init__(self, pet_pos: QPoint, llm_client: OpenAICompatibleBaseLLM, pet_widget):
+    def __init__(self, pet_pos: QPoint, llm_client: OpenAICompatibleLLM, pet_widget):
         super().__init__()
         self.llm_client = llm_client
         self.pet_widget = pet_widget
@@ -414,7 +414,7 @@ class ChatBubble(QWidget):
 class DesktopPet(QLabel):
     """桌面宠物类"""
     
-    def __init__(self, llm_client: OpenAICompatibleBaseLLM):
+    def __init__(self, llm_client: OpenAICompatibleLLM):
         super().__init__()
         self.llm_client = llm_client
         self.chat_bubble: Optional[ChatBubble] = None
@@ -957,7 +957,7 @@ def main():
     model = "qwen3-max"
     
     # 初始化LLM客户端
-    llm_client = OpenAICompatibleBaseLLM(
+    llm_client = OpenAICompatibleLLM(
         api_key=api_key,
         base_url=api_base,
         model_name=model

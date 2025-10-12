@@ -14,7 +14,7 @@ from flowllm.schema.tool_call import ToolCall
 
 
 @C.register_llm("litellm")
-class LiteLLMBaseLLM(BaseLLM):
+class LiteLLM(BaseLLM):
     """
     LiteLLM-compatible LLM implementation supporting multiple LLM providers through unified interface.
     
@@ -415,7 +415,7 @@ async def async_main():
 
     # Example with OpenAI model through LiteLLM
     model_name = "qwen-max-2025-01-25"  # LiteLLM will route to OpenAI
-    llm = LiteLLMBaseLLM(model_name=model_name)
+    llm = LiteLLM(model_name=model_name)
 
     # Test async chat
     message: Message = await llm.achat(
@@ -440,7 +440,7 @@ def main():
 
     # Example with OpenAI model through LiteLLM
     model_name = "qwen-max-2025-01-25"  # LiteLLM will route to OpenAI
-    llm = LiteLLMBaseLLM(model_name=model_name)
+    llm = LiteLLM(model_name=model_name)
 
     # Test sync chat
     message: Message = llm.chat(
