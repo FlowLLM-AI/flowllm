@@ -164,7 +164,7 @@ class AhBacktestOp(BaseOp):
             ric, _ = spearmanr(pred, actual)
             return ic, ric
         except Exception as e:
-            logger.warning(f"Failed to calculate IC: {e}")
+            logger.exception(f"Failed to calculate IC: {e}")
             return 0.0, 0.0
 
     @staticmethod

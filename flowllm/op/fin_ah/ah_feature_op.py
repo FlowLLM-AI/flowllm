@@ -102,7 +102,7 @@ class AhFeatureTableOp(BaseRayOp):
                     hk_date_counter[dt] = hk_date_counter.get(dt, 0) + 1
                 
             except Exception as e:
-                logger.warning(f"Failed to load {name} ({ts_code}/{hk_code}): {e}")
+                logger.exception(f"Failed to load {name} ({ts_code}/{hk_code}): {e}")
                 continue
         
         logger.info(f"Loaded {len(stock_dict)} stock pairs")

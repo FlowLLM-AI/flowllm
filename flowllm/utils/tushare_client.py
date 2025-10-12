@@ -49,8 +49,6 @@ class TushareClient:
         has_more = True
         df_list: List[pd.DataFrame] = []
         while has_more:
-            print(data_dict)
-            print(json.dumps(data_dict))
             response = requests.post(json=data_dict, url=self.url, timeout=30)
             df, has_more = self.parse_response(response)
             data_dict["params"]["offset"] += len(df)
@@ -66,7 +64,7 @@ class TushareClient:
             return df
 
         else:
-            logger.info(f"api_name={api_name} concat {len(df_list)} df list")
+            # logger.info(f"api_name={api_name} concat {len(df_list)} df list")
             df = pd.concat(df_list, axis=0).reset_index(drop=True)
             if self.enable_cache:
                 self.save_df(df, key)

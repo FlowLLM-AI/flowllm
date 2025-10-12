@@ -17,7 +17,7 @@ from flowllm.context.service_context import C
 from flowllm.op import BaseOp
 
 FOREX_CODES = ['USDCNH.FXCM', 'USDHKD.FXCM']
-PRICE_COLUMNS = ["close", "open", "high", "low"]
+PRICE_COLUMNS = ["close", "open", "high", "low", "pre_close", "vol", "amount"]
 
 
 @C.register_op(register_app="FlowLLM")
@@ -50,20 +50,18 @@ class AhFixOp(BaseOp):
         df = df.sort_values("trade_date", ascending=False).copy()
         
         # 计算前一天的close值（时间降序，所以是shift(-1)）
-        prev_close = df["close"].shift(-1)
+        df.loc[:, "prev_close"] = df["close"].shift(-1)
         
         # 找出pre_close有问题的行
         need_fix = (df["pre_close"].isna()) | (df["pre_close"] == 0.0)
         
         # 修复pre_close
-        df.loc[need_fix, "pre_close"] = prev_close[need_fix]
+        df.loc[need_fix, "pre_close"] = df.loc[need_fix, "prev_close"]
         
         # 重新计算change和pct_chg
         df.loc[need_fix, "change"] = df.loc[need_fix, "close"] - df.loc[need_fix, "pre_close"]
-        df.loc[need_fix, "pct_chg"] = (
-            (df.loc[need_fix, "close"] / df.loc[need_fix, "pre_close"] - 1) * 100
-        )
-        
+        df.loc[need_fix, "pct_chg"] = (df.loc[need_fix, "close"] / df.loc[need_fix, "pre_close"] - 1) * 100
+
         # 去掉最后一行（没有前一天的close作为参考）
         return df.iloc[:-1].copy()
 
@@ -100,9 +98,9 @@ class AhFixOp(BaseOp):
             input_path = os.path.join(self.input_dir, f"fx_daily_{code}.csv")
             df = pd.read_csv(input_path)
             
-            # 过滤日期并前向填充
+            # 过滤日期并前向填充（按时间升序排序后前向填充）
             df = df.loc[df.trade_date > self.min_date].copy()
-            df = df.sort_values("trade_date").ffill()
+            df = df.sort_values("trade_date", ascending=True).ffill()
             
             # 验证并保存
             if self.validate_df(df, f"fx_{code}"):
@@ -125,7 +123,7 @@ class AhFixOp(BaseOp):
         df_hkd = forex_dict['USDHKD.FXCM'][["trade_date", "bid_close"]].set_index("trade_date")
         df_hkd.columns = ["hkd_close"]
         
-        # 合并并只用前向填充（避免未来数据泄露）
+        # 合并并只用前向填充（避免未来数据泄露） outer填充
         hk_forex_df = df_cnh.join(df_hkd, how='outer').sort_index().ffill()
         
         # 删除开头的NaN（没有历史数据可填充）
@@ -166,7 +164,7 @@ class AhFixOp(BaseOp):
             hk_code, ts_code, name = record["hk_code"], record["ts_code"], record["name"]
             
             try:
-                # 读取A股数据
+                # 读取A股数据，A股数据的成交额需要乘1K
                 a_df = pd.read_csv(os.path.join(self.input_dir, f"daily_{ts_code}.csv"))
                 a_df = a_df.loc[a_df.trade_date > self.min_date].copy()
                 
@@ -197,7 +195,7 @@ class AhFixOp(BaseOp):
                 success_count += 1
                 
             except Exception as e:
-                logger.warning(f"Failed to fix {name} ({ts_code}/{hk_code}): {e}")
+                logger.exception(f"Failed to fix {name} ({ts_code}/{hk_code}): {e}")
                 continue
         
         # 输出统计信息

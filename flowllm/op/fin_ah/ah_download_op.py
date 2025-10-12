@@ -91,7 +91,7 @@ class AhDownloadOp(BaseOp):
                 success_count += 1
                 
             except Exception as e:
-                logger.warning(f"Failed to download {name} ({ts_code}/{hk_code}): {e}")
+                logger.exception(f"Failed to download {name} ({ts_code}/{hk_code}): {e}")
                 continue
         
         logger.info(f"Successfully downloaded {success_count}/{len(ah_df)} stock pairs")
