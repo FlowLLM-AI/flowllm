@@ -1,6 +1,21 @@
 #!/usr/bin/env python3
 """
-macOS 桌面小宠物 - 可拖拽、带动画、置顶显示、AI对话
+macOS 桌面小宠物 - 超可爱版本 🐱✨
+
+特性：
+- 🎨 温暖奶茶色配色，更加可爱
+- ✨ 闪亮的琥珀色大眼睛，带渐变效果
+- 💕 粉嫩鼻子和小嘴，带可爱腮红
+- 🐾 渐变粉色肉垫，更多细节
+- 🌊 轻柔的呼吸动画（透明度变化）
+- 👁️ 自动眨眼动画（每3.5秒）
+- 🎯 尾巴自动摆动动画
+- 🎪 悬停时有反应（显示问号表情）
+- 🦘 点击时弹跳动画
+- 💬 美化的渐变色对话气泡
+- 🏃 双击让猫咪奔跑
+- 🖱️ 拖拽移动、右键菜单
+- 🤖 AI智能对话
 """
 import sys
 import os
@@ -62,9 +77,12 @@ class ResponseBubble(QWidget):
         self.main_widget.setGeometry(10, 10, self.bubble_width, self.bubble_height)
         self.main_widget.setStyleSheet("""
             QWidget {
-                background-color: rgba(232, 245, 233, 250);
-                border: 3px solid #81C784;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(245, 255, 245, 255),
+                    stop:1 rgba(232, 245, 233, 250));
+                border: 3px solid #66BB6A;
                 border-radius: 15px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             }
         """)
         
@@ -74,12 +92,12 @@ class ResponseBubble(QWidget):
         
         # 标题栏（带关闭按钮）
         title_layout = QHBoxLayout()
-        title_label = QLabel("🐾 AI回答")
+        title_label = QLabel("✨ AI小助手")
         title_label.setStyleSheet("""
             QLabel {
                 background-color: transparent;
-                color: #4CAF50;
-                font-size: 13px;
+                color: #2E7D32;
+                font-size: 14px;
                 font-weight: bold;
                 border: none;
             }
@@ -261,9 +279,12 @@ class ChatBubble(QWidget):
         main_widget.setGeometry(10, 10, 380, 180)
         main_widget.setStyleSheet("""
             QWidget {
-                background-color: rgba(255, 245, 247, 250);
-                border: 3px solid #FFB6C1;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(255, 250, 252, 255),
+                    stop:1 rgba(255, 240, 245, 250));
+                border: 3px solid #FF69B4;
                 border-radius: 20px;
+                box-shadow: 0 4px 8px rgba(255, 105, 180, 0.2);
             }
         """)
         
@@ -273,14 +294,15 @@ class ChatBubble(QWidget):
         
         # 标题栏（带关闭按钮）
         title_layout = QHBoxLayout()
-        title_label = QLabel("💬 和我聊天吧~")
+        title_label = QLabel("💕 和我聊天吧~")
         title_label.setStyleSheet("""
             QLabel {
                 background-color: transparent;
-                color: #FF69B4;
+                color: #E91E63;
                 font-size: 16px;
                 font-weight: bold;
                 border: none;
+                text-shadow: 1px 1px 2px rgba(233, 30, 99, 0.2);
             }
         """)
         title_layout.addWidget(title_label)
@@ -361,6 +383,10 @@ class ChatBubble(QWidget):
         self.is_streaming = True
         
         try:
+            # 小猫表情变为思考状态
+            self.pet_widget.current_expression = "(=^･ω･^=)🤔"
+            self.pet_widget.update()
+            
             # 创建回答气泡
             self.response_bubble = ResponseBubble(self.pet_widget.pos(), "")
             self.response_bubble.closed.connect(self.on_response_bubble_closed)
@@ -372,6 +398,10 @@ class ChatBubble(QWidget):
                 Message(role="user", content=user_message)
             ]
             
+            # 小猫表情变为回答状态
+            self.pet_widget.current_expression = "(=^ω^=)💡"
+            self.pet_widget.update()
+            
             # 流式接收并更新回答气泡
             async for chunk_content, chunk_type in self.llm_client.astream_chat(messages):
                 if chunk_content and self.response_bubble:
@@ -380,10 +410,17 @@ class ChatBubble(QWidget):
                     # 让UI有时间更新
                     await asyncio.sleep(0.01)
             
+            # 回答完成，开心表情
+            self.pet_widget.current_expression = "(=^ω^=)✨"
+            self.pet_widget.update()
+            
         except Exception as e:
             logger.exception(f"出错了: {str(e)}")
             if self.response_bubble:
                 self.response_bubble.update_response('error', f"抱歉，出错了: {str(e)}")
+            # 错误表情
+            self.pet_widget.current_expression = "(=ＴェＴ=)"
+            self.pet_widget.update()
         
         finally:
             self.is_streaming = False
@@ -443,6 +480,7 @@ class DesktopPet(QLabel):
             Qt.WindowType.Tool  # 不在任务栏显示
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)  # 透明背景
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover)  # 启用悬停事件
         
         # 宠物大小
         self.pet_size = 150
@@ -456,6 +494,7 @@ class DesktopPet(QLabel):
         self.state = "idle"
         self.expressions = ["(=^･ω･^=)", "(=^‥^=)", "(=^･ｪ･^=)", "(=ＴェＴ=)", "(=^ω^=)"]
         self.current_expression = self.expressions[0]
+        self.is_hovered = False  # 悬停状态
         
     def init_animation(self):
         """初始化动画"""
@@ -477,46 +516,74 @@ class DesktopPet(QLabel):
         # 自动行为开关
         self.auto_behavior_enabled = False
         
+        # 呼吸动画（轻微缩放效果）
+        self.breath_animation = QPropertyAnimation(self, b"windowOpacity")
+        self.breath_animation.setDuration(2000)
+        self.breath_animation.setStartValue(0.95)
+        self.breath_animation.setEndValue(1.0)
+        self.breath_animation.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self.breath_animation.setLoopCount(-1)  # 无限循环
+        self.breath_animation.start()
+        
+        # 眨眼动画计数器
+        self.blink_timer = QTimer(self)
+        self.blink_timer.timeout.connect(self.blink)
+        self.blink_timer.start(3500)  # 每3.5秒眨眼一次
+        self.is_blinking = False
+        
+        # 尾巴摆动动画
+        self.tail_angle = 0
+        self.tail_timer = QTimer(self)
+        self.tail_timer.timeout.connect(self.wag_tail)
+        self.tail_timer.start(50)  # 每50ms更新尾巴角度
+        
     def paintEvent(self, event):
-        """绘制宠物 - 长毛英短形象"""
+        """绘制宠物 - 超可爱长毛英短形象"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         from PyQt6.QtGui import QPolygon, QPainterPath, QPen, QRadialGradient
         from PyQt6.QtCore import QPointF
         
-        # 长毛英短配色 - 奶灰色/蓝灰色
+        # 更温暖可爱的配色 - 奶茶色/米白色
         if not self.dragging:
-            body_base = QColor(180, 190, 200)  # 蓝灰色
-            body_light = QColor(200, 210, 220)  # 浅灰色
-            body_dark = QColor(140, 150, 160)   # 深灰色
+            body_base = QColor(220, 200, 180)  # 奶茶色
+            body_light = QColor(240, 230, 220)  # 米白色
+            body_dark = QColor(180, 160, 140)   # 深奶茶色
         else:
-            body_base = QColor(190, 200, 210)
-            body_light = QColor(210, 220, 230)
-            body_dark = QColor(150, 160, 170)
+            body_base = QColor(230, 210, 190)
+            body_light = QColor(250, 240, 230)
+            body_dark = QColor(190, 170, 150)
         
         # === 绘制阴影 ===
         painter.setBrush(QColor(0, 0, 0, 40))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawEllipse(25, 152, 100, 25)
         
-        # === 绘制蓬松的尾巴（在身体后面，很粗） ===
+        # === 绘制蓬松的摆动尾巴（在身体后面，很粗） ===
+        import math
+        # 根据尾巴角度计算摆动位置
+        tail_offset = math.sin(self.tail_angle) * 8
         tail_path = QPainterPath()
         tail_path.moveTo(QPointF(118, 125))
         tail_path.cubicTo(
-            QPointF(135, 110),
-            QPointF(142, 135),
-            QPointF(130, 155)
+            QPointF(135 + tail_offset, 110),
+            QPointF(142 + tail_offset, 135),
+            QPointF(130 + tail_offset, 155)
         )
-        # 蓬松尾巴 - 画得很粗
+        # 蓬松尾巴 - 画得很粗，带渐变
+        tail_gradient = QRadialGradient(130 + tail_offset, 140, 15)
+        tail_gradient.setColorAt(0, body_light)
+        tail_gradient.setColorAt(1, body_base)
         tail_pen = QPen(body_base, 20, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap)
         painter.setPen(tail_pen)
         painter.drawPath(tail_path)
         
-        # 尾巴尖端毛茸茸效果
+        # 尾巴尖端毛茸茸效果（随尾巴摆动）
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(body_base)
-        painter.drawEllipse(120, 148, 18, 18)
-        painter.drawEllipse(124, 152, 14, 14)
+        painter.setBrush(tail_gradient)
+        painter.drawEllipse(int(120 + tail_offset), 148, 18, 18)
+        painter.setBrush(body_light)
+        painter.drawEllipse(int(124 + tail_offset), 152, 14, 14)
         
         # === 绘制圆润的身体（长毛效果 - 多层） ===
         painter.setPen(Qt.PenStyle.NoPen)
@@ -562,64 +629,84 @@ class DesktopPet(QLabel):
         painter.drawEllipse(37, 35, 14, 16)
         painter.drawEllipse(99, 35, 14, 16)
         
-        # === 绘制大眼睛（英短的圆眼睛） ===
-        # 眼窝阴影
+        # === 绘制超萌大眼睛（闪亮亮的） ===
+        # 眼窝阴影（更柔和）
         painter.setBrush(body_dark)
-        painter.drawEllipse(46, 62, 24, 26)
-        painter.drawEllipse(80, 62, 24, 26)
+        painter.drawEllipse(44, 60, 26, 28)
+        painter.drawEllipse(80, 60, 26, 28)
         
-        # 眼白
-        painter.setBrush(QColor(255, 255, 250))
-        painter.drawEllipse(48, 64, 22, 24)
-        painter.drawEllipse(80, 64, 22, 24)
-        
-        # 眼珠（橙色/铜色 - 英短特征）
-        if not self.dragging:
-            iris_color = QColor(220, 140, 60)  # 铜橙色
+        # 眼白（更大更圆）- 如果眨眼则缩小
+        if self.is_blinking:
+            painter.setBrush(QColor(255, 255, 255))
+            painter.drawEllipse(46, 73, 24, 6)  # 眯眼效果
+            painter.drawEllipse(80, 73, 24, 6)
         else:
-            iris_color = QColor(180, 180, 180)  # 灰色
+            painter.setBrush(QColor(255, 255, 255))
+            painter.drawEllipse(46, 62, 24, 26)
+            painter.drawEllipse(80, 62, 24, 26)
         
-        painter.setBrush(iris_color)
-        painter.drawEllipse(52, 69, 14, 16)
-        painter.drawEllipse(84, 69, 14, 16)
+        # 眼珠（温暖的琥珀色 - 超可爱）- 只在睁眼时显示
+        if not self.is_blinking:
+            if not self.dragging:
+                iris_gradient = QRadialGradient(58, 72, 10)
+                iris_gradient.setColorAt(0, QColor(255, 180, 100))  # 亮琥珀色
+                iris_gradient.setColorAt(1, QColor(200, 130, 60))   # 深琥珀色
+                painter.setBrush(iris_gradient)
+            else:
+                painter.setBrush(QColor(200, 180, 160))  # 温暖灰色
+            
+            painter.drawEllipse(52, 68, 16, 18)
+            painter.drawEllipse(84, 68, 16, 18)
+            
+            # 瞳孔（竖线状 - 猫咪特征）
+            painter.setBrush(QColor(0, 0, 0))
+            painter.drawEllipse(57, 72, 5, 12)
+            painter.drawEllipse(89, 72, 5, 12)
+            
+            # 超闪亮的眼睛高光（多层次）
+            painter.setBrush(QColor(255, 255, 255, 230))
+            painter.drawEllipse(54, 70, 6, 7)  # 主高光
+            painter.drawEllipse(86, 70, 6, 7)
+            painter.setBrush(QColor(255, 255, 255, 150))
+            painter.drawEllipse(60, 77, 3, 4)  # 副高光
+            painter.drawEllipse(92, 77, 3, 4)
         
-        # 瞳孔（细线状 - 猫在明亮环境）
-        painter.setBrush(QColor(0, 0, 0))
-        painter.drawEllipse(57, 73, 4, 10)
-        painter.drawEllipse(89, 73, 4, 10)
-        
-        # 眼睛高光
-        painter.setBrush(QColor(255, 255, 255, 200))
-        painter.drawEllipse(55, 71, 4, 5)
-        painter.drawEllipse(87, 71, 4, 5)
-        painter.drawEllipse(60, 76, 2, 3)
-        painter.drawEllipse(92, 76, 2, 3)
-        
-        # === 绘制小巧的鼻子 ===
-        painter.setBrush(QColor(240, 160, 170))
+        # === 绘制粉嫩小鼻子（超可爱） ===
+        # 鼻子主体（渐变粉色）
+        nose_gradient = QRadialGradient(75, 96, 5)
+        nose_gradient.setColorAt(0, QColor(255, 180, 190))  # 浅粉
+        nose_gradient.setColorAt(1, QColor(240, 140, 160))  # 深粉
+        painter.setBrush(nose_gradient)
+        painter.setPen(Qt.PenStyle.NoPen)
         nose_polygon = QPolygon([
-            QPoint(75, 94),
-            QPoint(71, 98),
-            QPoint(79, 98)
+            QPoint(75, 93),
+            QPoint(70, 98),
+            QPoint(80, 98)
         ])
         painter.drawPolygon(nose_polygon)
         
-        # 鼻子高光
-        painter.setBrush(QColor(255, 200, 210))
-        painter.drawEllipse(74, 95, 2, 2)
+        # 鼻子高光（更闪亮）
+        painter.setBrush(QColor(255, 220, 230, 200))
+        painter.drawEllipse(73, 94, 3, 3)
         
-        # === 绘制嘴巴（英短的小嘴） ===
-        painter.setPen(QColor(120, 120, 120))
+        # === 绘制超萌微笑嘴巴（猫咪式微笑） ===
+        painter.setPen(QPen(QColor(160, 100, 100), 2))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         mouth_path = QPainterPath()
         mouth_path.moveTo(QPointF(75, 98))
-        mouth_path.lineTo(QPointF(75, 102))
-        # 微笑的嘴角
-        mouth_path.moveTo(QPointF(75, 102))
-        mouth_path.quadTo(QPointF(70, 105), QPointF(66, 103))
-        mouth_path.moveTo(QPointF(75, 102))
-        mouth_path.quadTo(QPointF(80, 105), QPointF(84, 103))
+        mouth_path.lineTo(QPointF(75, 103))
+        # 可爱的微笑嘴角（更弯更可爱）
+        mouth_path.moveTo(QPointF(75, 103))
+        mouth_path.quadTo(QPointF(68, 107), QPointF(63, 104))
+        mouth_path.moveTo(QPointF(75, 103))
+        mouth_path.quadTo(QPointF(82, 107), QPointF(87, 104))
         painter.drawPath(mouth_path)
+        
+        # 添加腮红（更可爱）
+        painter.setPen(Qt.PenStyle.NoPen)
+        painter.setBrush(QColor(255, 150, 150, 60))
+        painter.drawEllipse(35, 85, 20, 15)  # 左腮红
+        painter.drawEllipse(95, 85, 20, 15)  # 右腮红
         
         # === 绘制胡须（细而长） ===
         whisker_pen = QPen(QColor(140, 140, 140), 1.5)
@@ -633,27 +720,42 @@ class DesktopPet(QLabel):
         painter.drawLine(105, 92, 140, 92)
         painter.drawLine(105, 96, 138, 102)
         
-        # === 绘制毛茸茸的前爪 ===
+        # === 绘制超可爱毛茸茸前爪 ===
         painter.setPen(Qt.PenStyle.NoPen)
         
-        # 左爪
-        painter.setBrush(body_light)
-        painter.drawEllipse(40, 145, 26, 28)
-        painter.setBrush(body_base)
-        painter.drawEllipse(42, 147, 22, 24)
+        # 左爪（渐变效果）
+        left_paw_gradient = QRadialGradient(52, 159, 15)
+        left_paw_gradient.setColorAt(0, body_light)
+        left_paw_gradient.setColorAt(1, body_base)
+        painter.setBrush(left_paw_gradient)
+        painter.drawEllipse(38, 145, 28, 30)
         
-        # 右爪
-        painter.setBrush(body_light)
-        painter.drawEllipse(84, 145, 26, 28)
-        painter.setBrush(body_base)
-        painter.drawEllipse(86, 147, 22, 24)
+        # 右爪（渐变效果）
+        right_paw_gradient = QRadialGradient(96, 159, 15)
+        right_paw_gradient.setColorAt(0, body_light)
+        right_paw_gradient.setColorAt(1, body_base)
+        painter.setBrush(right_paw_gradient)
+        painter.drawEllipse(84, 145, 28, 30)
         
-        # 肉垫（粉色）
+        # 粉嫩肉垫（渐变粉色，更可爱）
+        paw_gradient = QRadialGradient(52, 162, 6)
+        paw_gradient.setColorAt(0, QColor(255, 200, 210))
+        paw_gradient.setColorAt(1, QColor(255, 160, 180))
+        painter.setBrush(paw_gradient)
+        painter.drawEllipse(47, 159, 10, 8)  # 左爪主肉垫
+        
+        paw_gradient2 = QRadialGradient(96, 162, 6)
+        paw_gradient2.setColorAt(0, QColor(255, 200, 210))
+        paw_gradient2.setColorAt(1, QColor(255, 160, 180))
+        painter.setBrush(paw_gradient2)
+        painter.drawEllipse(91, 159, 10, 8)  # 右爪主肉垫
+        
+        # 小肉垫（脚趾）
         painter.setBrush(QColor(255, 180, 190))
-        # 左爪肉垫
-        painter.drawEllipse(48, 160, 8, 6)
-        # 右爪肉垫
-        painter.drawEllipse(92, 160, 8, 6)
+        painter.drawEllipse(42, 157, 5, 5)  # 左爪小肉垫
+        painter.drawEllipse(58, 157, 5, 5)
+        painter.drawEllipse(86, 157, 5, 5)  # 右爪小肉垫
+        painter.drawEllipse(102, 157, 5, 5)
         
         # === 绘制胸前的白色毛（长毛英短特征） ===
         painter.setBrush(QColor(230, 235, 240, 180))
@@ -666,6 +768,28 @@ class DesktopPet(QLabel):
             painter.setFont(font)
             painter.drawText(self.rect().adjusted(0, -12, 0, 0), 
                            Qt.AlignmentFlag.AlignCenter, "喵~ (=ＴェＴ=)")
+    
+    def blink(self):
+        """眨眼动画"""
+        if not self.dragging and not self.is_running:
+            self.is_blinking = True
+            self.update()
+            # 150毫秒后睁开眼睛
+            QTimer.singleShot(150, self.open_eyes)
+    
+    def open_eyes(self):
+        """睁开眼睛"""
+        self.is_blinking = False
+        self.update()
+    
+    def wag_tail(self):
+        """摆动尾巴"""
+        import math
+        # 平滑的摆动效果
+        self.tail_angle += 0.15
+        if self.tail_angle > 2 * math.pi:
+            self.tail_angle = 0
+        self.update()
     
     def change_expression(self):
         """改变表情"""
@@ -755,6 +879,7 @@ class DesktopPet(QLabel):
         # 点击弹出对话框
         self.show_chat_bubble()
         self.current_expression = "(=^･ω･^=)💬"
+        self.bounce_animation()  # 添加弹跳动画
         self.update()
     
     def handle_double_click(self):
@@ -833,12 +958,21 @@ class DesktopPet(QLabel):
         self.update()
     
     def bounce_animation(self):
-        """弹跳动画"""
-        original_size = self.size()
+        """可爱的弹跳动画"""
+        original_pos = self.pos()
         
-        # 放大
-        self.resize(int(self.pet_size * 1.2), int(self.pet_size * 1.2))
-        QTimer.singleShot(100, lambda: self.resize(original_size))
+        # 向上跳
+        jump_height = 15
+        self.move(original_pos.x(), original_pos.y() - jump_height)
+        
+        # 100毫秒后回到原位
+        QTimer.singleShot(100, lambda: self.move(original_pos))
+        
+        # 改变表情显得更可爱
+        old_expr = self.current_expression
+        self.current_expression = "(=^ω^=)✨"
+        self.update()
+        QTimer.singleShot(200, lambda: setattr(self, 'current_expression', old_expr) or self.update())
     
     def toggle_auto_behavior(self):
         """切换自动行为开关"""
@@ -940,6 +1074,20 @@ class DesktopPet(QLabel):
         self.current_expression = "(=ＴェＴ=)"
         self.update()
         QTimer.singleShot(500, QApplication.quit)
+    
+    def event(self, event):
+        """处理悬停事件"""
+        if event.type() == event.Type.HoverEnter:
+            self.is_hovered = True
+            if not self.dragging and not self.is_running:
+                self.current_expression = "(=^･ω･^=)?"
+                self.update()
+        elif event.type() == event.Type.HoverLeave:
+            self.is_hovered = False
+            if not self.dragging and not self.is_running:
+                self.current_expression = self.expressions[0]
+                self.update()
+        return super().event(event)
 
 
 def main():
