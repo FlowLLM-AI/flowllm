@@ -13,7 +13,7 @@ class TongyiMcpSearchOp(BaseMcpOp):
         kwargs["save_answer"] = True
         kwargs["input_schema_optional"] = ["count"]
         kwargs["input_schema_deleted"] = ["ctx"]
-        kwargs.setdefault("timeout", 10.0)
+        # kwargs.setdefault("timeout", 10.0)
         super().__init__(**kwargs)
 
 
@@ -26,7 +26,7 @@ class BochaMcpSearchOp(BaseMcpOp):
         kwargs["save_answer"] = True
         kwargs["input_schema_optional"] = ["freshness", "count"]
         kwargs["input_schema_deleted"] = ["ctx"]
-        kwargs.setdefault("timeout", 10.0)
+        # kwargs.setdefault("timeout", 10.0)
         super().__init__(**kwargs)
 
 
