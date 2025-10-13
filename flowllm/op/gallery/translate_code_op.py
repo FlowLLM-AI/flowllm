@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 from pathlib import Path
 from typing import List, Dict, Tuple
 
@@ -408,15 +407,16 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
 async def main():
     from flowllm.app import FlowLLMApp
+    from flowllm.context.flow_context import FlowContext
+
     async with FlowLLMApp(load_default_config=True):
         """Test function for TranslateCodeOp"""
         op = TranslateCodeOp()
         context = FlowContext()
-        await op.async_call(context, file_path="/mnt3/jinli/codes/qwen-code")
+        await op.async_call(context, file_path="/Users/yuli/workspace/qwen-code")
         print(f"Result: {op.output}")
 
 
 if __name__ == "__main__":
-    from flowllm.context.flow_context import FlowContext
 
     asyncio.run(main())

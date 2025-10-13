@@ -1,3 +1,5 @@
+import asyncio
+
 from loguru import logger
 
 from flowllm.context.service_context import C
@@ -12,6 +14,10 @@ class CmdService(BaseService):
         super().run()
         cmd_config = self.service_config.cmd
         flow = CmdFlow(flow=cmd_config.flow)
-        response = flow.call(**self.service_config.cmd.params)
+        if flow.async_mode:
+            response = asyncio.run(flow.async_call(**self.service_config.cmd.params))
+        else:
+            response = flow.call(**self.service_config.cmd.params)
+
         if response.answer:
             logger.info(f"response.answer={response.answer}")

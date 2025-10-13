@@ -8,3 +8,4 @@ from .stream_llm_op import StreamLLMOp
 from .task_react_op import TaskReactOp
 from .terminate_op import TerminateOp
 from .think_op import ThinkToolOp
+from .translate_code_op import TranslateCodeOp
