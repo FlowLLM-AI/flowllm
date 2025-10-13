@@ -23,7 +23,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
     """
     file_path: str = __file__
 
-    def __init__(self, llm="qwen3_max_instruct", max_concurrent: int = 4, max_retries: int = 3, skip_existing: bool = True, **kwargs):
+    def __init__(self, llm="qwen3_max_instruct", max_concurrent: int = 6, max_retries: int = 3, skip_existing: bool = True, submit_interval: float = 2.0, **kwargs):
         """
         Initialize TranslateCodeOp
         
@@ -31,11 +31,13 @@ class TranslateCodeOp(BaseAsyncToolOp):
             max_concurrent: Maximum number of concurrent LLM calls (default: 4)
             max_retries: Maximum number of retries for failed translations (default: 3)
             skip_existing: Skip translation if target .py file already exists and is not empty (default: True)
+            submit_interval: Interval in seconds between submitting concurrent tasks (default: 2.0)
         """
         super().__init__(llm=llm, **kwargs)
         self.max_concurrent = max_concurrent
         self.max_retries = max_retries
         self.skip_existing = skip_existing
+        self.submit_interval = submit_interval
         self.semaphore = None  # Will be initialized in async_execute
 
     def build_tool_call(self) -> ToolCall:
@@ -315,7 +317,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
     async def _translate_files_concurrently(self, ts_files: List[str], retry_round: int = 0) -> List[Dict]:
         """
-        Translate TypeScript files to Python concurrently with semaphore control
+        Translate TypeScript files to Python concurrently with semaphore control and submit interval
         
         Args:
             ts_files: List of TypeScript file paths
@@ -324,17 +326,22 @@ class TranslateCodeOp(BaseAsyncToolOp):
         Returns:
             List of translation results
         """
-        # Create safe tasks for all files
-        tasks = []
-        for ts_file in ts_files:
-            task = self._translate_single_file_safe(ts_file)
-            tasks.append(task)
-
         # Progress bar description
         if retry_round > 0:
             desc = f"Retry {retry_round}/{self.max_retries}"
         else:
             desc = "Translating"
+
+        # Create tasks with interval delays between each submission
+        tasks = []
+        for i, ts_file in enumerate(ts_files):
+            # Add delay before each task submission (except the first one)
+            if i > 0:
+                await asyncio.sleep(self.submit_interval)
+                logger.debug(f"Submitted task {i}, waiting {self.submit_interval}s before next task")
+            
+            task = self._translate_single_file_safe(ts_file)
+            tasks.append(task)
 
         # Execute all tasks concurrently with progress bar
         results = await tqdm_asyncio.gather(
