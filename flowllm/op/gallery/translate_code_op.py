@@ -23,7 +23,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
     """
     file_path: str = __file__
 
-    def __init__(self, max_concurrent: int = 4, max_retries: int = 3, skip_existing: bool = True, **kwargs):
+    def __init__(self, llm="qwen3_max_instruct", max_concurrent: int = 4, max_retries: int = 3, skip_existing: bool = True, **kwargs):
         """
         Initialize TranslateCodeOp
         
@@ -32,7 +32,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
             max_retries: Maximum number of retries for failed translations (default: 3)
             skip_existing: Skip translation if target .py file already exists and is not empty (default: True)
         """
-        super().__init__(**kwargs)
+        super().__init__(llm=llm, **kwargs)
         self.max_concurrent = max_concurrent
         self.max_retries = max_retries
         self.skip_existing = skip_existing
