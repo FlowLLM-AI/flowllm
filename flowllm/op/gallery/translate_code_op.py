@@ -332,16 +332,16 @@ class TranslateCodeOp(BaseAsyncToolOp):
         else:
             desc = "Translating"
 
-        # Create tasks with interval delays between each submission
-        tasks = []
-        for i, ts_file in enumerate(ts_files):
-            # Add delay before each task submission (except the first one)
-            if i > 0:
+        # Create a wrapper task that includes delay
+        async def delayed_task(index: int, ts_file: str):
+            # Add delay before each task execution (except the first one)
+            if index > 0:
                 await asyncio.sleep(self.submit_interval)
-                logger.debug(f"Submitted task {i}, waiting {self.submit_interval}s before next task")
-            
-            task = self._translate_single_file_safe(ts_file)
-            tasks.append(task)
+                logger.debug(f"Starting task {index} after {self.submit_interval}s delay")
+            return await self._translate_single_file_safe(ts_file)
+
+        # Create all delayed tasks
+        tasks = [delayed_task(i, ts_file) for i, ts_file in enumerate(ts_files)]
 
         # Execute all tasks concurrently with progress bar
         results = await tqdm_asyncio.gather(
