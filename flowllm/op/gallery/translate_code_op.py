@@ -46,7 +46,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
             "input_schema": {
                 "file_path": ParamAttrs(
                     type="str",
-                    description="The directory path to search for TypeScript files",
+                    description="The directory path(s) to search for TypeScript files. Multiple paths can be separated by semicolons (;)",
                     required=True
                 )
             }
@@ -57,27 +57,46 @@ class TranslateCodeOp(BaseAsyncToolOp):
         Main execution method
         
         Steps:
-        1. Get the input file path from context
-        2. Recursively find all .ts files
+        1. Get the input file path(s) from context (supports multiple paths separated by semicolons)
+        2. Recursively find all .ts files in all paths
         3. Translate each file concurrently with pool size limit
         4. Return translation results
         """
-        # Get input file path
+        # Get input file path(s)
         file_path: str = self.input_dict.get("file_path", "")
         if not file_path:
             raise ValueError("file_path is required")
 
+        # Split paths by semicolon and strip whitespace
+        file_paths = [path.strip() for path in file_path.split(';') if path.strip()]
+        logger.info(f"Processing {len(file_paths)} path(s): {file_paths}")
+
         # Initialize semaphore for concurrent control
         self.semaphore = asyncio.Semaphore(self.max_concurrent)
 
-        # Find all TypeScript files recursively
-        ts_files = self._find_ts_files(file_path)
-        logger.info(f"Found {len(ts_files)} TypeScript files in {file_path}")
+        # Find all TypeScript files recursively from all paths
+        ts_files = []
+        for path in file_paths:
+            files = self._find_ts_files(path)
+            ts_files.extend(files)
+            logger.info(f"Found {len(files)} TypeScript files in {path}")
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_ts_files = []
+        for file in ts_files:
+            if file not in seen:
+                seen.add(file)
+                unique_ts_files.append(file)
+        ts_files = unique_ts_files
+
+        logger.info(f"Total: {len(ts_files)} unique TypeScript files")
 
         if not ts_files:
             result = {
                 "status": "success",
-                "message": f"No TypeScript files found in {file_path}",
+                "message": f"No TypeScript files found in the specified path(s)",
+                "paths": file_paths,
                 "translations": []
             }
             self.set_result(json.dumps(result, ensure_ascii=False, indent=2))
@@ -105,6 +124,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
         result = {
             "status": "success",
+            "paths": file_paths,
             "total_files": len(ts_files),
             "successful_translations": successful_count,
             "skipped_translations": skipped_count,
@@ -374,7 +394,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
                     content = msg.content
                     
                     # Print the full LLM response for debugging
-                    logger.info(f"[LLM Response for {ts_file_path}]:\n{content}")
+                    # logger.info(f"[LLM Response for {ts_file_path}]:\n{content}")
                     
                     # Extract Python code
                     python_code = extract_content(content, language_tag="python")
@@ -385,6 +405,12 @@ class TranslateCodeOp(BaseAsyncToolOp):
                     callback_fn=extract_python_code,
                     enable_stream_print=False
                 )
+
+                # Save Python code to disk
+                python_path = Path(python_file_path)
+                python_path.parent.mkdir(parents=True, exist_ok=True)  # Create parent directories if needed
+                python_path.write_text(python_code, encoding='utf-8')
+                logger.info(f"Saved translated Python code to {python_file_path}")
 
                 result = {
                     "file_path": ts_file_path,
