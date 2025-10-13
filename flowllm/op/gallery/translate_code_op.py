@@ -412,7 +412,7 @@ async def main():
         """Test function for TranslateCodeOp"""
         op = TranslateCodeOp()
         context = FlowContext()
-        await op.async_call(context, file_path="/Users/yuli/workspace/qwen-code")
+        await op.async_call(context, file_path="/mnt3/jinli/codes/qwen-code")
         print(f"Result: {op.output}")
 
 
