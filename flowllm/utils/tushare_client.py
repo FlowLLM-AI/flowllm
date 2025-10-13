@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 from typing import List
@@ -15,7 +14,8 @@ class TushareClient:
         self.url: str = "http://api.waditu.com/dataapi"
         self.request_limit_size: int = 10000
         self.enable_cache: bool = enable_cache
-        Path("cache").mkdir(exist_ok=True)
+        if self.enable_cache:
+            Path("cache").mkdir(exist_ok=True)
 
     @staticmethod
     def save_df(df: pd.DataFrame, name: str):

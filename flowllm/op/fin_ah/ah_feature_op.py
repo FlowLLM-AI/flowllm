@@ -30,14 +30,12 @@ class AhFeatureTableOp(BaseRayOp):
         self,
         input_dir: str = "data/fixed",
         output_dir: str = "data/feature",
-        use_open: bool = True,
         use_weekly: bool = False,
         **kwargs
     ):
         super().__init__(**kwargs)
         self.input_dir = input_dir
         self.output_dir = output_dir
-        self.use_open = use_open
         self.use_weekly = use_weekly
 
     def _ensure_output_dir(self) -> None:
@@ -135,7 +133,6 @@ class AhFeatureTableOp(BaseRayOp):
         self._load_data_from_files()
         
         # 设置参数到context
-        self.context.use_open = self.use_open
         self.context.use_weekly = self.use_weekly
         
         # 选择日频或周频模式
@@ -182,13 +179,15 @@ class AhDailyFeatureOp(BaseOp):
         return hk_forex_df.loc[forex_dt, "close"]
 
     @staticmethod
-    def _calculate_history_features(
-        df: pd.DataFrame,
-        dt_list: List[int],
-        dt_index: int,
-        windows: List[int] = HISTORY_WINDOWS
-    ) -> Dict[str, float]:
+    def _calculate_history_features(df: pd.DataFrame,
+                                    dt_list: List[int],
+                                    dt_index: int,
+                                    windows: List[int] = None) -> Dict[str, float]:
+
         """计算历史涨跌幅特征"""
+        if windows is None:
+            windows = HISTORY_WINDOWS
+
         features = {}
         for window in windows:
             start_idx = max(0, dt_index - (window - 1))
@@ -221,7 +220,6 @@ class AhDailyFeatureOp(BaseOp):
     def execute(self):
         result = []
         dt = self.context.dt
-        use_open = self.context.use_open
         hk_forex_df = self.context.hk_forex_df
         
         # 获取汇率
@@ -255,13 +253,9 @@ class AhDailyFeatureOp(BaseOp):
             current_a_amount = a_df.loc[a_curr_dt, "amount"]
             current_hk_amount = hk_df.loc[hk_curr_dt, "amount"]
 
-            # 计算未来收益标签
-            if use_open:
-                next_a_uplift = self._calculate_future_return_open(a_df, a_dt_list, dt_a_index, days_ahead=2)
-                next_hk_uplift = self._calculate_future_return_open(hk_df, hk_dt_list, dt_hk_index, days_ahead=2)
-            else:
-                next_a_uplift = a_df.loc[a_dt_list[dt_a_index + 1], "pct_chg"] if dt_a_index < len(a_dt_list) - 1 else 0
-                next_hk_uplift = hk_df.loc[hk_dt_list[dt_hk_index + 1], "pct_chg"] if dt_hk_index < len(hk_dt_list) - 1 else 0
+            # 计算未来收益标签（使用开盘价避免look-ahead bias）
+            next_a_uplift = self._calculate_future_return_open(a_df, a_dt_list, dt_a_index, days_ahead=2)
+            next_hk_uplift = self._calculate_future_return_open(hk_df, hk_dt_list, dt_hk_index, days_ahead=2)
 
             # 构建特征字典
             feature = {
@@ -315,11 +309,7 @@ class AhWeeklyFeatureOp(BaseOp):
     def execute(self):
         result = []
         dt = self.context.dt
-        use_open = self.context.use_open
         hk_forex_df = self.context.hk_forex_df
-        
-        if not use_open:
-            raise ValueError("Weekly feature generation requires use_open=True")
         
         # 获取汇率
         hk_forex_ratio = AhDailyFeatureOp._get_forex_ratio(dt, hk_forex_df)
@@ -401,7 +391,7 @@ class AhWeeklyFeatureOp(BaseOp):
         return result
 
 
-def main(use_weekly: bool = False, use_open: bool = True):
+def main(use_weekly: bool = False):
     """生成AH股特征标签"""
     with FlowLLMApp(load_default_config=True) as app:
         app.service_config.ray_max_workers = 8
@@ -410,7 +400,6 @@ def main(use_weekly: bool = False, use_open: bool = True):
             AhFeatureTableOp(
                 input_dir="data/fixed",
                 output_dir="data/feature",
-                use_open=use_open,
                 use_weekly=use_weekly
             )
             << AhDailyFeatureOp()
@@ -421,7 +410,7 @@ def main(use_weekly: bool = False, use_open: bool = True):
 
 if __name__ == "__main__":
     # 生成日频特征
-    # main(use_weekly=False, use_open=True)
+    # main(use_weekly=False)
     
     # 生成周频特征
-    main(use_weekly=True, use_open=True)
+    main(use_weekly=True)

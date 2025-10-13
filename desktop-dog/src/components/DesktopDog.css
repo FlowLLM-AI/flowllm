@@ -1,0 +1,35 @@
+.desktop-dog {
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.1s ease;
+  z-index: 9999;
+}
+
+.desktop-dog.running {
+  animation: bounce 0.3s ease-in-out infinite;
+}
+
+.desktop-dog .drag-text {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: #8B6F47;
+  font-weight: bold;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+

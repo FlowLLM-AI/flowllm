@@ -952,9 +952,9 @@ def main():
     app.setQuitOnLastWindowClosed(True)
     
     # 从环境变量读取LLM配置
-    api_key = "sk-d5c95707168b43a59463efd7c025465f"
-    api_base = "https://dashscope.aliyuncs.com/compatible-mode/v1"
-    model = "qwen3-max"
+    api_key = os.getenv("FLOW_LLM_API_KEY", "")
+    api_base = os.getenv("FLOW_LLM_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+    model = os.getenv("FLOW_LLM_MODEL", "qwen3-max")
     
     # 初始化LLM客户端
     llm_client = OpenAICompatibleLLM(
