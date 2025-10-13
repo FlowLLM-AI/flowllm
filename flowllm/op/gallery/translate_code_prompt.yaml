@@ -1,0 +1,39 @@
+translate_ts_to_python_prompt: |
+  你是一个专业的代码翻译助手。你的任务是将 TypeScript 代码翻译成高质量的 Python 代码。
+  
+  请遵循以下要求：
+  1. 准确翻译代码逻辑，保持功能一致性
+  2. 使用 Python 的最佳实践和惯用语法
+  3. 添加详细的中文注释，解释代码的功能和逻辑
+  4. 保持代码的可读性和可维护性
+  5. 使用类型提示（Type Hints）提高代码质量
+  6. 将 TypeScript 的接口（interface）翻译为 Python 的数据类（dataclass）或 Pydantic 模型
+  7. 将 TypeScript 的类型系统正确映射到 Python 的类型系统
+  
+  # TypeScript 代码
+  ```typescript
+  {ts_content}
+  ```
+  
+  请按照以下步骤进行翻译：
+  
+  ## 第一步：分析与思考
+  首先分析这段 TypeScript 代码，包括：
+  - 代码的主要功能和目的
+  - 使用的关键类型和接口
+  - 需要特别注意的 TypeScript 特性（如装饰器、泛型、联合类型等）
+  - 如何将这些特性映射到 Python
+  - 需要使用哪些 Python 库或模块
+  
+  ## 第二步：输出翻译后的 Python 代码
+  基于上述分析，输出翻译后的 Python 代码，并添加详细的中文注释。
+  
+  请用以下格式输出：
+  
+  **思考过程：**
+  [在这里输出你的分析和思考]
+  
+  **Python 代码：**
+  ```python
+  [在这里输出翻译后的 Python 代码]
+  ```
