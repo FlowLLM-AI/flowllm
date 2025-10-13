@@ -4,13 +4,15 @@ from typing import List
 
 from loguru import logger
 
-from flowllm import BaseAsyncToolOp
+from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.common_utils import extract_content, get_datetime
 
 
+@C.register_op(register_app="FlowLLM")
 class CompanySegmentFactorOp(BaseAsyncToolOp):
     file_path: str = __file__
 

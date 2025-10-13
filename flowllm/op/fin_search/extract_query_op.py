@@ -18,8 +18,9 @@ class ExtractQueryOp(BaseAsyncToolOp):
     def __init__(self,
                  llm: str = "qwen3_30b_instruct",
                  # llm: str = "qwen25_max_instruct",
+                 save_answer: bool = True,
                  **kwargs):
-        super().__init__(llm=llm, **kwargs)
+        super().__init__(llm=llm, save_answer=save_answer, **kwargs)
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{

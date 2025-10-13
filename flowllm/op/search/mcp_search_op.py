@@ -1,9 +1,10 @@
 import asyncio
 
+from flowllm.context import FlowContext, C
 from flowllm.op.base_mcp_op import BaseMcpOp
-from flowllm.context import FlowContext
 
 
+@C.register_op(register_app="FlowLLM")
 class TongyiMcpSearchOp(BaseMcpOp):
 
     def __init__(self, **kwargs):
@@ -16,6 +17,7 @@ class TongyiMcpSearchOp(BaseMcpOp):
         super().__init__(**kwargs)
 
 
+@C.register_op(register_app="FlowLLM")
 class BochaMcpSearchOp(BaseMcpOp):
 
     def __init__(self, **kwargs):

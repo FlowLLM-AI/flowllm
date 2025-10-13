@@ -1,9 +1,10 @@
 from . import crawl
 from . import deep_research
+from . import fin_research_v2
 from . import fin_supply
 from . import gallery
 from . import search
-
+from . import fin_search
 from .base_async_op import BaseAsyncOp
 from .base_async_tool_op import BaseAsyncToolOp
 from .base_mcp_op import BaseMcpOp

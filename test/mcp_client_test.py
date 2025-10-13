@@ -61,12 +61,14 @@ async def main():
 
             # ("crawl_ths_company", {"query": query3, "code": "603699"}),
             # ("crawl_ths_bonus", {"query": query3, "code": "603699"}),
-            ("crawl_ths_operate", {"query": query3, "code": "603699"}),
+            # ("crawl_ths_operate", {"query": query3, "code": "603699"}),
+            # ("extract_query", {"query": "巴巴和小米怎么样"}),
+            ("company_factor", {"name": "紫金矿业", "code": "601899"}),
         ]
 
         for tool_name, arguments in test_cases:
             print("=" * 50)
-            print(f"Testing tool: {tool_name}")
+            print(f"Testing tool: {tool_name} with arguments={arguments}")
             try:
                 # result = await client.call_tool(tool_name, arguments)
                 result = await client.call_tool(tool_name, arguments, raise_on_error=False)

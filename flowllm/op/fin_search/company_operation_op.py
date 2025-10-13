@@ -3,8 +3,9 @@ import json
 
 from loguru import logger
 
-from flowllm import BaseAsyncToolOp
+from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.op.crawl.crawl4ai_op import Crawl4aiOp
 from flowllm.op.search.mcp_search_op import TongyiMcpSearchOp
 from flowllm.schema.message import Message
@@ -12,6 +13,7 @@ from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.common_utils import extract_content
 
 
+@C.register_op(register_app="FlowLLM")
 class CompanyOperationOp(BaseAsyncToolOp):
     file_path: str = __file__
 

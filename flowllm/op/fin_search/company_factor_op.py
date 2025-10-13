@@ -5,13 +5,15 @@ from typing import List, Dict
 
 from loguru import logger
 
-from flowllm import BaseAsyncToolOp
+from flowllm.context.service_context import C
 from flowllm.enumeration.role import Role
+from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.message import Message
 from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.common_utils import extract_content
 
 
+@C.register_op(register_app="FlowLLM")
 class CompanyFactorOp(BaseAsyncToolOp):
     file_path: str = __file__
 
@@ -23,8 +25,9 @@ class CompanyFactorOp(BaseAsyncToolOp):
                  revenue_threshold: float = 0.05,
                  profit_threshold: float = 0.05,
                  max_segments: int = 3,
+                 save_answer: bool = True,
                  **kwargs):
-        super().__init__(llm=llm, **kwargs)
+        super().__init__(llm=llm, save_answer=save_answer, **kwargs)
         self.revenue_threshold: float = revenue_threshold
         self.profit_threshold: float = profit_threshold
         self.max_segments: int = max_segments
@@ -256,9 +259,9 @@ async def main():
 
     async with FlowLLMApp(args=["config=fin_research"]):
         test_cases = [
-            # ("紫金矿业", "601899"),
+            ("紫金矿业", "601899"),
             # ("川投能源", "600674"),
-            ("兴业银锡", "000426"),
+            # ("兴业银锡", "000426"),
             # ("小米集团", "01810"),
             # ("阿里巴巴", "09988"),
         ]
