@@ -16,15 +16,20 @@ from flowllm.utils.common_utils import extract_content
 @C.register_op(register_app="FlowLLM")
 class TranslateCodeOp(BaseAsyncToolOp):
     """
-    TranslateCodeOp - TypeScript/TSX to Python Translation Operator
+    TranslateCodeOp - TypeScript/TSX to Python Translation/Interpretation Operator
     
-    This operator recursively finds all TypeScript (.ts) and TSX (.tsx) files in a given directory and
-    translates them to Python using LLM with concurrent processing (pool size: 6).
+    This operator recursively finds all TypeScript (.ts) and TSX (.tsx) files in a given directory and:
+    - mode=True: Translates them to Python (saved to *_python directory with .py extension)
+    - mode=False: Interprets/explains them as markdown (saved to *_markdown directory with .md extension)
+    
+    Uses LLM with concurrent processing (pool size: 6).
     """
     file_path: str = __file__
 
     def __init__(self,
-                 llm="qwen3_max_instruct",
+                 # llm="qwen3_max_instruct",
+                 llm="qwen3_30b_instruct",
+                 mode: bool = False,
                  max_concurrent: int = 6,
                  max_retries: int = 3,
                  skip_existing: bool = True,
@@ -35,12 +40,14 @@ class TranslateCodeOp(BaseAsyncToolOp):
         Initialize TranslateCodeOp
         
         Args:
-            max_concurrent: Maximum number of concurrent LLM calls (default: 4)
+            mode: True = translate to Python, False = interpret/explain to markdown (default: True)
+            max_concurrent: Maximum number of concurrent LLM calls (default: 6)
             max_retries: Maximum number of retries for failed translations (default: 3)
-            skip_existing: Skip translation if target .py file already exists and is not empty (default: True)
+            skip_existing: Skip if target file already exists and is not empty (default: True)
             submit_interval: Interval in seconds between submitting concurrent tasks (default: 2.0)
         """
         super().__init__(llm=llm, enable_print_output=enable_print_output, **kwargs)
+        self.mode = mode
         self.max_concurrent = max_concurrent
         self.max_retries = max_retries
         self.skip_existing = skip_existing
@@ -51,12 +58,17 @@ class TranslateCodeOp(BaseAsyncToolOp):
         """Build tool call schema for TranslateCodeOp"""
         return ToolCall(**{
             "name": "translate_code",
-            "description": "Recursively find all TypeScript (.ts) and TSX (.tsx) files in a directory and translate them to Python with detailed comments",
+            "description": "Recursively find all TypeScript (.ts) and TSX (.tsx) files in a directory and translate/interpret them",
             "input_schema": {
                 "file_path": ParamAttrs(
                     type="str",
                     description="The directory path(s) to search for TypeScript/TSX files. Multiple paths can be separated by semicolons (;)",
                     required=True
+                ),
+                "mode": ParamAttrs(
+                    type="bool",
+                    description="True = translate to Python (saved to *_python/*.py), False = interpret to markdown (saved to *_markdown/*.md)",
+                    required=False
                 )
             }
         })
@@ -66,18 +78,23 @@ class TranslateCodeOp(BaseAsyncToolOp):
         Main execution method
         
         Steps:
-        1. Get the input file path(s) from context (supports multiple paths separated by semicolons)
+        1. Get the input file path(s) and mode from context (supports multiple paths separated by semicolons)
         2. Recursively find all .ts and .tsx files in all paths
-        3. Translate each file concurrently with pool size limit
+        3. Translate/interpret each file concurrently with pool size limit
         4. Return translation results
         """
         # Get input file path(s)
         file_path: str = self.input_dict.get("file_path", "")
         if not file_path:
             raise ValueError("file_path is required")
+        
+        # Get mode from input_dict, fallback to instance mode
+        mode = self.input_dict.get("mode", self.mode)
 
         # Split paths by semicolon and strip whitespace
         file_paths = [path.strip() for path in file_path.split(';') if path.strip()]
+        mode_str = "Translation" if mode else "Interpretation"
+        logger.info(f"Mode: {mode_str}")
         logger.info(f"Processing {len(file_paths)} path(s): {file_paths}")
 
         # Initialize semaphore for concurrent control
@@ -123,8 +140,16 @@ class TranslateCodeOp(BaseAsyncToolOp):
             logger.info(f"  {i}. {file_path} - {chars:,} chars")
         logger.info(f"{'='*60}\n")
 
-        # Translate files concurrently with retry mechanism
-        translations = await self._translate_files_with_retry(ts_files)
+        # Create a mapping from ts_file to its base_path for output path generation
+        file_to_base_path = {}
+        for ts_file in ts_files:
+            for base_path in file_paths:
+                if ts_file.startswith(base_path) or ts_file.startswith(str(Path(base_path).resolve())):
+                    file_to_base_path[ts_file] = base_path
+                    break
+        
+        # Translate/interpret files concurrently with retry mechanism
+        translations = await self._translate_files_with_retry(ts_files, mode, file_to_base_path)
 
         # Prepare result
         successful_count = len([t for t in translations if t.get("status") == "success"])
@@ -133,6 +158,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
         result = {
             "status": "success",
+            "mode": mode_str,
             "paths": file_paths,
             "total_files": len(ts_files),
             "successful_translations": successful_count,
@@ -143,7 +169,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
         }
 
         logger.info(
-            f"Translation completed: {successful_count} translated, {skipped_count} skipped, {failed_count} failed (total: {len(ts_files)})")
+            f"{mode_str} completed: {successful_count} processed, {skipped_count} skipped, {failed_count} failed (total: {len(ts_files)})")
         self.set_result(json.dumps(result, ensure_ascii=False, indent=2))
 
     @staticmethod
@@ -247,24 +273,53 @@ class TranslateCodeOp(BaseAsyncToolOp):
         }
 
     @staticmethod
-    def _get_python_file_path(ts_file_path: str) -> str:
+    def _get_output_file_path(ts_file_path: str, base_path: str, mode: bool) -> str:
         """
-        Generate corresponding Python file path from TypeScript file path
+        Generate corresponding output file path from TypeScript file path
         
         Args:
-            ts_file_path: Path to the TypeScript file (e.g., 'path/to/file.ts')
+            ts_file_path: Path to the TypeScript file (e.g., 'a/b/c/dir/file.ts')
+            base_path: Base path that was originally searched (e.g., 'a/b/c')
+            mode: True = Python translation, False = Markdown interpretation
             
         Returns:
-            Corresponding Python file path (e.g., 'path/to/file.py')
+            Corresponding output file path:
+            - mode=True: 'a/b/c_python/dir/file.py'
+            - mode=False: 'a/b/c_markdown/dir/file.md'
         """
-        return str(Path(ts_file_path).with_suffix('.py'))
+        ts_path = Path(ts_file_path)
+        base = Path(base_path)
+        
+        # Get the relative path from base to the ts file
+        try:
+            relative_path = ts_path.relative_to(base)
+        except ValueError:
+            # If ts_file_path is not relative to base_path, just use the filename
+            relative_path = ts_path.name
+        
+        # Determine output directory and extension based on mode
+        if mode:
+            # Translation mode: a/b/c -> a/b/c_python
+            output_base = Path(str(base) + "_python")
+            extension = '.py'
+        else:
+            # Interpretation mode: a/b/c -> a/b/c_markdown
+            output_base = Path(str(base) + "_markdown")
+            extension = '.md'
+        
+        # Construct output path with new extension
+        output_path = output_base / relative_path.with_suffix(extension)
+        
+        return str(output_path)
 
-    async def _translate_files_with_retry(self, ts_files: List[str]) -> List[Dict]:
+    async def _translate_files_with_retry(self, ts_files: List[str], mode: bool, file_to_base_path: Dict[str, str]) -> List[Dict]:
         """
-        Translate TypeScript files to Python with retry mechanism for failed cases
+        Translate/interpret TypeScript files with retry mechanism for failed cases
         
         Args:
             ts_files: List of TypeScript file paths
+            mode: True = translate to Python, False = interpret to markdown
+            file_to_base_path: Mapping from ts_file to its base_path
             
         Returns:
             List of translation results
@@ -279,7 +334,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
                     f"Retry attempt {retry_count}/{self.max_retries} for {len(files_to_translate)} failed files...")
 
             # Translate current batch with progress bar
-            translations = await self._translate_files_concurrently(files_to_translate, retry_round=retry_count)
+            translations = await self._translate_files_concurrently(files_to_translate, mode, file_to_base_path, retry_round=retry_count)
 
             # Collect results and identify failed files
             failed_files = []
@@ -313,24 +368,26 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
         return final_results
 
-    async def _translate_single_file_safe(self, ts_file: str):
-        """Wrapper to safely execute translation and catch exceptions"""
+    async def _translate_single_file_safe(self, ts_file: str, mode: bool, base_path: str):
+        """Wrapper to safely execute translation/interpretation and catch exceptions"""
         try:
-            return await self._translate_single_file(ts_file)
+            return await self._translate_single_file(ts_file, mode, base_path)
         except Exception as e:
-            logger.error(f"Translation failed for {ts_file}: {str(e)}")
+            logger.error(f"{'Translation' if mode else 'Interpretation'} failed for {ts_file}: {str(e)}")
             return {
                 "file_path": ts_file,
                 "status": "failed",
                 "error": str(e)
             }
 
-    async def _translate_files_concurrently(self, ts_files: List[str], retry_round: int = 0) -> List[Dict]:
+    async def _translate_files_concurrently(self, ts_files: List[str], mode: bool, file_to_base_path: Dict[str, str], retry_round: int = 0) -> List[Dict]:
         """
-        Translate TypeScript files to Python concurrently with semaphore control and submit interval
+        Translate/interpret TypeScript files concurrently with semaphore control and submit interval
         
         Args:
             ts_files: List of TypeScript file paths
+            mode: True = translate to Python, False = interpret to markdown
+            file_to_base_path: Mapping from ts_file to its base_path
             retry_round: Current retry round number (0 for initial attempt)
             
         Returns:
@@ -340,7 +397,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
         if retry_round > 0:
             desc = f"Retry {retry_round}/{self.max_retries}"
         else:
-            desc = "Translating"
+            desc = "Translating" if mode else "Interpreting"
 
         # Create a wrapper task that includes delay
         async def delayed_task(index: int, ts_file: str):
@@ -348,7 +405,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
             if index > 0:
                 await asyncio.sleep(self.submit_interval)
                 logger.debug(f"Starting task {index} after {self.submit_interval}s delay")
-            return await self._translate_single_file_safe(ts_file)
+            return await self._translate_single_file_safe(ts_file, mode, file_to_base_path.get(ts_file, ts_file))
 
         # Create all delayed tasks
         tasks = [delayed_task(i, ts_file) for i, ts_file in enumerate(ts_files)]
@@ -363,84 +420,97 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
         return results
 
-    async def _translate_single_file(self, ts_file_path: str) -> Dict:
+    async def _translate_single_file(self, ts_file_path: str, mode: bool, base_path: str) -> Dict:
         """
-        Translate a single TypeScript file to Python using LLM with semaphore control
+        Translate/interpret a single TypeScript file using LLM with semaphore control
         
         Args:
             ts_file_path: Path to the TypeScript file
+            mode: True = translate to Python, False = interpret to markdown
+            base_path: Base path for generating output path
             
         Returns:
-            Translation result dictionary
+            Translation/interpretation result dictionary
         """
         async with self.semaphore:
             try:
                 # Read TypeScript file content
                 ts_content = Path(ts_file_path).read_text(encoding='utf-8')
 
-                # Check if target Python file already exists and is not empty
-                python_file_path = self._get_python_file_path(ts_file_path)
-                if self.skip_existing and Path(python_file_path).exists():
+                # Get output file path based on mode
+                output_file_path = self._get_output_file_path(ts_file_path, base_path, mode)
+                
+                # Check if target file already exists and is not empty
+                if self.skip_existing and Path(output_file_path).exists():
                     try:
-                        existing_content = Path(python_file_path).read_text(encoding='utf-8').strip()
+                        existing_content = Path(output_file_path).read_text(encoding='utf-8').strip()
                         if existing_content:
                             logger.info(
-                                f"Skipping {ts_file_path} - target file {python_file_path} already exists with content")
+                                f"Skipping {ts_file_path} - target file {output_file_path} already exists with content")
                             return {
                                 "file_path": ts_file_path,
                                 "status": "skipped",
-                                "message": f"Target file {python_file_path} already exists",
+                                "message": f"Target file {output_file_path} already exists",
                                 "ts_content": ts_content,
-                                "python_code": existing_content,
-                                "python_file_path": python_file_path
+                                "output_code": existing_content,
+                                "output_file_path": output_file_path
                             }
                     except Exception as e:
-                        logger.warning(f"Error reading existing file {python_file_path}: {e}")
+                        logger.warning(f"Error reading existing file {output_file_path}: {e}")
 
-                # Create translation prompt
-                prompt = self.prompt_format(
-                    prompt_name="translate_ts_to_python_prompt",
-                    ts_content=ts_content
-                )
+                # Create prompt based on mode
+                if mode:
+                    # Translation mode: translate to Python
+                    prompt = self.prompt_format(
+                        prompt_name="translate_ts_to_python_prompt",
+                        ts_content=ts_content
+                    )
+                    task_name = "Translating"
+                    language_tag = "python"
+                else:
+                    # Interpretation mode: explain in markdown
+                    prompt = self.prompt_format(
+                        prompt_name="interpret_ts_to_markdown_prompt",
+                        ts_content=ts_content
+                    )
+                    task_name = "Interpreting"
+                    language_tag = "markdown"
 
-                # Call LLM to translate with callback to extract Python code
-                logger.info(f"Translating {ts_file_path}...")
+                # Call LLM with callback to extract code
+                logger.info(f"{task_name} {ts_file_path}...")
                 
-                # Callback function to extract Python code and print full response
-                def extract_python_code(msg):
+                # Callback function to extract code
+                def extract_code(msg):
                     content = msg.content
                     
-                    # Print the full LLM response for debugging
-                    # logger.info(f"[LLM Response for {ts_file_path}]:\n{content}")
-                    
-                    # Extract Python code
-                    python_code = extract_content(content, language_tag="python")
-                    return python_code if python_code else content
+                    # Extract code block
+                    extracted = extract_content(content, language_tag=language_tag)
+                    return extracted if extracted else content
                 
-                python_code = await self.llm.achat(
+                output_code = await self.llm.achat(
                     messages=[Message(role=Role.USER, content=prompt)],
-                    callback_fn=extract_python_code,
+                    callback_fn=extract_code,
                     enable_stream_print=False
                 )
 
-                # Save Python code to disk
-                python_path = Path(python_file_path)
-                python_path.parent.mkdir(parents=True, exist_ok=True)  # Create parent directories if needed
-                python_path.write_text(python_code, encoding='utf-8')
-                logger.info(f"Saved translated Python code to {python_file_path}")
+                # Save output code to disk
+                output_path = Path(output_file_path)
+                output_path.parent.mkdir(parents=True, exist_ok=True)  # Create parent directories if needed
+                output_path.write_text(output_code, encoding='utf-8')
+                logger.info(f"Saved {task_name.lower()} output to {output_file_path}")
 
                 result = {
                     "file_path": ts_file_path,
                     "status": "success",
                     "ts_content": ts_content,
-                    "python_code": python_code,
-                    "python_file_path": python_file_path
+                    "output_code": output_code,
+                    "output_file_path": output_file_path
                 }
 
                 return result
 
             except Exception as e:
-                logger.exception(f"Error translating {ts_file_path}: {e}")
+                logger.exception(f"Error processing {ts_file_path}: {e}")
                 return {
                     "file_path": ts_file_path,
                     "status": "failed",
@@ -449,17 +519,41 @@ class TranslateCodeOp(BaseAsyncToolOp):
 
 
 async def main():
+    """
+    Test function demonstrating both translation and interpretation modes
+    
+    Example usage:
+    - Translation mode (mode=True): Translates TypeScript to Python, saves to *_python/*.py
+    - Interpretation mode (mode=False): Explains TypeScript in Markdown, saves to *_markdown/*.md
+    """
     from flowllm.app import FlowLLMApp
     from flowllm.context.flow_context import FlowContext
 
     async with FlowLLMApp(load_default_config=True):
-        """Test function for TranslateCodeOp"""
-        op = TranslateCodeOp()
-        context = FlowContext()
-        await op.async_call(context, file_path="/Users/yuli/workspace/qwen-code")
-        print(f"Result: {op.output}")
+        # Example: Translation mode (default)
+        print("="*80)
+        print("Example 1: Translation Mode (TypeScript -> Python)")
+        print("="*80)
+        op_translate = TranslateCodeOp(mode=True, max_concurrent=2)
+        context1 = FlowContext()
+        await op_translate.async_call(
+            context1, 
+            file_path="/Users/yuli/workspace/qwen-code"
+        )
+        print(f"Translation Result Summary:\n{op_translate.output}\n")
+        
+        # Example: Interpretation mode
+        print("="*80)
+        print("Example 2: Interpretation Mode (TypeScript -> Markdown)")
+        print("="*80)
+        op_interpret = TranslateCodeOp(mode=False, max_concurrent=2)
+        context2 = FlowContext()
+        await op_interpret.async_call(
+            context2, 
+            file_path="/Users/yuli/workspace/qwen-code"
+        )
+        print(f"Interpretation Result Summary:\n{op_interpret.output}\n")
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
