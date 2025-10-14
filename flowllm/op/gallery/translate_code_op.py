@@ -16,10 +16,10 @@ from flowllm.utils.common_utils import extract_content
 @C.register_op(register_app="FlowLLM")
 class TranslateCodeOp(BaseAsyncToolOp):
     """
-    TranslateCodeOp - TypeScript to Python Translation Operator
+    TranslateCodeOp - TypeScript/TSX to Python Translation Operator
     
-    This operator recursively finds all TypeScript files in a given directory and
-    translates them to Python using LLM with concurrent processing (pool size: 4).
+    This operator recursively finds all TypeScript (.ts) and TSX (.tsx) files in a given directory and
+    translates them to Python using LLM with concurrent processing (pool size: 6).
     """
     file_path: str = __file__
 
@@ -44,11 +44,11 @@ class TranslateCodeOp(BaseAsyncToolOp):
         """Build tool call schema for TranslateCodeOp"""
         return ToolCall(**{
             "name": "translate_code",
-            "description": "Recursively find all TypeScript files in a directory and translate them to Python with detailed comments",
+            "description": "Recursively find all TypeScript (.ts) and TSX (.tsx) files in a directory and translate them to Python with detailed comments",
             "input_schema": {
                 "file_path": ParamAttrs(
                     type="str",
-                    description="The directory path(s) to search for TypeScript files. Multiple paths can be separated by semicolons (;)",
+                    description="The directory path(s) to search for TypeScript/TSX files. Multiple paths can be separated by semicolons (;)",
                     required=True
                 )
             }
@@ -60,7 +60,7 @@ class TranslateCodeOp(BaseAsyncToolOp):
         
         Steps:
         1. Get the input file path(s) from context (supports multiple paths separated by semicolons)
-        2. Recursively find all .ts files in all paths
+        2. Recursively find all .ts and .tsx files in all paths
         3. Translate each file concurrently with pool size limit
         4. Return translation results
         """
@@ -76,12 +76,12 @@ class TranslateCodeOp(BaseAsyncToolOp):
         # Initialize semaphore for concurrent control
         self.semaphore = asyncio.Semaphore(self.max_concurrent)
 
-        # Find all TypeScript files recursively from all paths
+        # Find all TypeScript and TSX files recursively from all paths
         ts_files = []
         for path in file_paths:
             files = self._find_ts_files(path)
             ts_files.extend(files)
-            logger.info(f"Found {len(files)} TypeScript files in {path}")
+            logger.info(f"Found {len(files)} TypeScript/TSX files in {path}")
 
         # Remove duplicates while preserving order
         seen = set()
@@ -92,12 +92,12 @@ class TranslateCodeOp(BaseAsyncToolOp):
                 unique_ts_files.append(file)
         ts_files = unique_ts_files
 
-        logger.info(f"Total: {len(ts_files)} unique TypeScript files")
+        logger.info(f"Total: {len(ts_files)} unique TypeScript/TSX files")
 
         if not ts_files:
             result = {
                 "status": "success",
-                "message": f"No TypeScript files found in the specified path(s)",
+                "message": f"No TypeScript/TSX files found in the specified path(s)",
                 "paths": file_paths,
                 "translations": []
             }
@@ -142,13 +142,13 @@ class TranslateCodeOp(BaseAsyncToolOp):
     @staticmethod
     def _find_ts_files(directory_path: str) -> List[str]:
         """
-        Recursively find all TypeScript (.ts) files in the given directory
+        Recursively find all TypeScript (.ts) and TSX (.tsx) files in the given directory
         
         Args:
             directory_path: Root directory to search
             
         Returns:
-            List of TypeScript file paths
+            List of TypeScript/TSX file paths
         """
         path = Path(directory_path)
 
@@ -157,18 +157,21 @@ class TranslateCodeOp(BaseAsyncToolOp):
             return []
 
         if path.is_file():
-            # If it's a file, check if it's a .ts file
-            if path.suffix == '.ts':
+            # If it's a file, check if it's a .ts or .tsx file
+            if path.suffix in ['.ts', '.tsx']:
                 return [str(path)]
             else:
-                logger.warning(f"Path is not a TypeScript file: {directory_path}")
+                logger.warning(f"Path is not a TypeScript/TSX file: {directory_path}")
                 return []
 
-        # Recursively find all .ts files
+        # Recursively find all .ts and .tsx files
         ts_files = []
         for ts_file in path.rglob("*.ts"):
             if ts_file.is_file():
                 ts_files.append(str(ts_file))
+        for tsx_file in path.rglob("*.tsx"):
+            if tsx_file.is_file():
+                ts_files.append(str(tsx_file))
 
         return sorted(ts_files)
 
