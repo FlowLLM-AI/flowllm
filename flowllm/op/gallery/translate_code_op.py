@@ -479,19 +479,28 @@ class TranslateCodeOp(BaseAsyncToolOp):
                 # Call LLM with callback to extract code
                 logger.info(f"{task_name} {ts_file_path}...")
                 
-                # Callback function to extract code
-                def extract_code(msg):
-                    content = msg.content
+                # Callback function to extract code (only for translation mode)
+                if mode:
+                    # Translation mode: extract Python code block
+                    def extract_code(msg):
+                        content = msg.content
+                        
+                        # Extract code block
+                        extracted = extract_content(content, language_tag=language_tag)
+                        return extracted if extracted else content
                     
-                    # Extract code block
-                    extracted = extract_content(content, language_tag=language_tag)
-                    return extracted if extracted else content
-                
-                output_code = await self.llm.achat(
-                    messages=[Message(role=Role.USER, content=prompt)],
-                    callback_fn=extract_code,
-                    enable_stream_print=False
-                )
+                    output_code = await self.llm.achat(
+                        messages=[Message(role=Role.USER, content=prompt)],
+                        callback_fn=extract_code,
+                        enable_stream_print=False
+                    )
+                else:
+                    # Interpretation mode: keep all content as is (no code extraction)
+                    output_message = await self.llm.achat(
+                        messages=[Message(role=Role.USER, content=prompt)],
+                        enable_stream_print=False
+                    )
+                    output_code = output_message.content
 
                 # Save output code to disk
                 output_path = Path(output_file_path)

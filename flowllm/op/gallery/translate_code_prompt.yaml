@@ -1,25 +1,14 @@
 translate_ts_to_python_prompt: |
-  请将以下 TypeScript 代码翻译成 Python 代码。
-  
-  TypeScript 代码：
   ```typescript
   {ts_content}
   ```
-  
-  请输出翻译后的 Python 代码：
+  请将上面代码翻译成 Python 代码。
   ```python
-  # 你的代码
+  ...
   ```
 
 interpret_ts_to_markdown_prompt: |
-  请用中文详细解读以下 TypeScript/TSX 代码，包括代码功能、实现逻辑、技术要点等。
-  
-  TypeScript/TSX 代码：
   ```typescript
   {ts_content}
   ```
-  
-  请以 Markdown 格式输出代码解读文档：
-  ```markdown
-  # 你的解读文档
-  ```
+  请用中文详细解读代码
