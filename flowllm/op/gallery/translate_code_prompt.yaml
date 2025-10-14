@@ -11,4 +11,4 @@ interpret_ts_to_markdown_prompt: |
   ```typescript
   {ts_content}
   ```
-  请用中文详细解读代码
+  请用中文详细解读代码，要求举例。

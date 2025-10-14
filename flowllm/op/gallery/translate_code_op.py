@@ -29,7 +29,6 @@ class TranslateCodeOp(BaseAsyncToolOp):
     def __init__(self,
                  # llm="qwen3_max_instruct",
                  llm="qwen3_30b_instruct",
-                 mode: bool = False,
                  max_concurrent: int = 6,
                  max_retries: int = 3,
                  skip_existing: bool = True,
@@ -40,14 +39,12 @@ class TranslateCodeOp(BaseAsyncToolOp):
         Initialize TranslateCodeOp
         
         Args:
-            mode: True = translate to Python, False = interpret/explain to markdown (default: True)
             max_concurrent: Maximum number of concurrent LLM calls (default: 6)
             max_retries: Maximum number of retries for failed translations (default: 3)
             skip_existing: Skip if target file already exists and is not empty (default: True)
             submit_interval: Interval in seconds between submitting concurrent tasks (default: 2.0)
         """
         super().__init__(llm=llm, enable_print_output=enable_print_output, **kwargs)
-        self.mode = mode
         self.max_concurrent = max_concurrent
         self.max_retries = max_retries
         self.skip_existing = skip_existing
@@ -88,8 +85,8 @@ class TranslateCodeOp(BaseAsyncToolOp):
         if not file_path:
             raise ValueError("file_path is required")
         
-        # Get mode from input_dict, fallback to instance mode
-        mode = self.input_dict.get("mode", self.mode)
+        # Get mode from input_dict (default: True for translation)
+        mode = self.input_dict.get("mode", True)
 
         # Split paths by semicolon and strip whitespace
         file_paths = [path.strip() for path in file_path.split(';') if path.strip()]
@@ -543,11 +540,12 @@ async def main():
         print("="*80)
         print("Example 1: Translation Mode (TypeScript -> Python)")
         print("="*80)
-        op_translate = TranslateCodeOp(mode=True, max_concurrent=2)
+        op_translate = TranslateCodeOp(max_concurrent=2)
         context1 = FlowContext()
         await op_translate.async_call(
             context1, 
-            file_path="/Users/yuli/workspace/qwen-code"
+            file_path="/Users/yuli/workspace/qwen-code",
+            mode=True
         )
         print(f"Translation Result Summary:\n{op_translate.output}\n")
         
@@ -555,11 +553,12 @@ async def main():
         print("="*80)
         print("Example 2: Interpretation Mode (TypeScript -> Markdown)")
         print("="*80)
-        op_interpret = TranslateCodeOp(mode=False, max_concurrent=2)
+        op_interpret = TranslateCodeOp(max_concurrent=2)
         context2 = FlowContext()
         await op_interpret.async_call(
             context2, 
-            file_path="/Users/yuli/workspace/qwen-code"
+            file_path="/Users/yuli/workspace/qwen-code",
+            mode=False
         )
         print(f"Interpretation Result Summary:\n{op_interpret.output}\n")
 
