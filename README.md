@@ -203,30 +203,6 @@ Response (JSON/MCP result)
 
 ---
 
-## 🤝 Contribution
-
-We welcome contributions! Areas to contribute:
-
-- **Code**: New ops, backend integrations, performance optimizations, bug fixes
-- **Documentation**: Usage examples, tutorials, best practices
-- **Testing**: Unit tests, integration tests, benchmarks
-
-Please follow our coding standards and include tests with contributions.
-
----
-
-## 📄 Citation
-
-```bibtex
-@software{FlowLLM2024,
-  title = {FlowLLM: A Flexible Framework for Building LLM-Powered Flows},
-  author = {Li Yu and contributors},
-  url = {https://github.com/your-org/flowllm},
-  year = {2024}
-}
-```
-
----
 
 ## ⚖️ License
 
