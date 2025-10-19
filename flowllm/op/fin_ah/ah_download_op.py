@@ -73,26 +73,21 @@ class AhDownloadOp(BaseOp):
         for record in tqdm(ah_df.to_dict(orient="records"), desc="Downloading stocks"):
             hk_code, ts_code, name = record["hk_code"], record["ts_code"], record["name"]
             
-            try:
-                # 下载A股数据
-                a_df = self.ts_client.request(api_name="daily", ts_code=ts_code)
-                if a_df.empty:
-                    logger.warning(f"Empty A-share data for {name} ({ts_code})")
-                    continue
-                self._save_dataframe(a_df, f"daily_{ts_code}.csv")
-                
-                # 下载HK股数据
-                hk_df = self.ts_client.request(api_name="hk_daily", ts_code=hk_code)
-                if hk_df.empty:
-                    logger.warning(f"Empty HK data for {name} ({hk_code})")
-                    continue
-                self._save_dataframe(hk_df, f"hk_daily_{hk_code}.csv")
-                
-                success_count += 1
-                
-            except Exception as e:
-                logger.exception(f"Failed to download {name} ({ts_code}/{hk_code}): {e}")
+            # 下载A股数据
+            a_df = self.ts_client.request(api_name="daily", ts_code=ts_code)
+            if a_df.empty:
+                logger.warning(f"Empty A-share data for {name} ({ts_code})")
                 continue
+            self._save_dataframe(a_df, f"daily_{ts_code}.csv")
+
+            # 下载HK股数据
+            hk_df = self.ts_client.request(api_name="hk_daily", ts_code=hk_code)
+            if hk_df.empty:
+                logger.warning(f"Empty HK data for {name} ({hk_code})")
+                continue
+            self._save_dataframe(hk_df, f"hk_daily_{hk_code}.csv")
+
+            success_count += 1
         
         logger.info(f"Successfully downloaded {success_count}/{len(ah_df)} stock pairs")
         return success_count

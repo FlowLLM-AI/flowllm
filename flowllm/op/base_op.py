@@ -151,6 +151,7 @@ class BaseOp(ABC):
                         self.before_execute()
                         result = self.execute()
                         self.after_execute()
+                        break
 
                     except Exception as e:
                         logger.exception(f"op={self.name} execute failed, error={e.args}")

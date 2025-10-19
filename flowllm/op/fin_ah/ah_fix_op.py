@@ -162,49 +162,42 @@ class AhFixOp(BaseOp):
         
         for record in tqdm(ah_df.to_dict(orient="records"), desc="Fixing stocks"):
             hk_code, ts_code, name = record["hk_code"], record["ts_code"], record["name"]
-            
-            try:
-                # 读取A股数据，A股数据的成交额需要乘1K
-                a_df = pd.read_csv(os.path.join(self.input_dir, f"daily_{ts_code}.csv"))
-                a_df = a_df.loc[a_df.trade_date > self.min_date].copy()
-                
-                # 读取并修复HK股数据
-                hk_df = pd.read_csv(os.path.join(self.input_dir, f"hk_daily_{hk_code}.csv"))
-                hk_df = hk_df.loc[hk_df.trade_date > self.min_date].copy()
-                hk_df = self.fix_hk_df(hk_df)
-                
-                # 验证数据有效性
-                if not self.validate_df(a_df, f"{name}.A") or not self.validate_df(hk_df, f"{name}.HK"):
-                    logger.warning(f"Skipping {name} due to invalid data")
-                    continue
-                
-                # 保存修复后的数据
-                self._save_dataframe(a_df, f"daily_{ts_code}.csv")
-                self._save_dataframe(hk_df, f"hk_daily_{hk_code}.csv")
-                
-                # 统计日期覆盖
-                hk_dates = hk_df["trade_date"].unique()
-                min_hk_date = hk_dates.min()
-                a_dates = a_df.loc[a_df.trade_date >= min_hk_date, "trade_date"].unique()
-                
-                for dt in a_dates:
-                    a_date_counter[dt] = a_date_counter.get(dt, 0) + 1
-                for dt in hk_dates:
-                    hk_date_counter[dt] = hk_date_counter.get(dt, 0) + 1
-                
-                success_count += 1
-                
-            except Exception as e:
-                logger.exception(f"Failed to fix {name} ({ts_code}/{hk_code}): {e}")
-                continue
+
+            # 读取A股数据，A股数据的成交额需要乘1K
+            a_df = pd.read_csv(os.path.join(self.input_dir, f"daily_{ts_code}.csv"))
+            a_df = a_df.loc[a_df.trade_date > self.min_date].copy()
+
+            # 读取并修复HK股数据
+            hk_df = pd.read_csv(os.path.join(self.input_dir, f"hk_daily_{hk_code}.csv"))
+            hk_df = hk_df.loc[hk_df.trade_date > self.min_date].copy()
+            hk_df = self.fix_hk_df(hk_df)
+
+            # 验证数据有效性
+            if not self.validate_df(a_df, f"{name}.A") or not self.validate_df(hk_df, f"{name}.HK"):
+                raise RuntimeError(f"Skipping {name} due to invalid data")
+
+            # 保存修复后的数据
+            self._save_dataframe(a_df, f"daily_{ts_code}.csv")
+            self._save_dataframe(hk_df, f"hk_daily_{hk_code}.csv")
+
+            # 统计日期覆盖
+            hk_dates = hk_df["trade_date"].unique()
+            min_hk_date = hk_dates.min()
+            a_dates = a_df.loc[a_df.trade_date >= min_hk_date, "trade_date"].unique()
+
+            for dt in a_dates:
+                a_date_counter[dt] = a_date_counter.get(dt, 0) + 1
+            for dt in hk_dates:
+                hk_date_counter[dt] = hk_date_counter.get(dt, 0) + 1
+
+            success_count += 1
         
         # 输出统计信息
         logger.info(f"Fixed {success_count}/{len(ah_df)} stock pairs")
         if a_date_counter:
-            logger.info(
-                f"A-share: {len(a_date_counter)} trading days "
-                f"({min(a_date_counter.keys())} to {max(a_date_counter.keys())})"
-            )
+            logger.info(f"A-share: {len(a_date_counter)} trading days "
+                        f"({min(a_date_counter.keys())} to {max(a_date_counter.keys())})")
+
         if hk_date_counter:
             logger.info(
                 f"HK: {len(hk_date_counter)} trading days "

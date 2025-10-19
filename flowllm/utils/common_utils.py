@@ -124,7 +124,7 @@ def next_friday_or_same(date_str):
     return next_fri.strftime("%Y%m%d")
 
 
-def find_dt_less_index(dt: str, dt_list: List[str]):
+def find_dt_less_index(dt: str | int, dt_list: List[str | int]):
     """
     Use binary search to find the index of the date that is closest to and less than dt.
     Time complexity: O(log n)
