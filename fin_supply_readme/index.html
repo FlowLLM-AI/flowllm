@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        // for search plugin notably
+        const base_url = "https://github.com/flowllm-ai/flowllm/";
+    </script>
+    <script>
+    const darkTheme = window.matchMedia("(prefers-color-scheme: dark)");
+    darkTheme.onchange = (e) => {
+        if (e.matches) {
+            document.documentElement.classList.add("dark")
+            localStorage.theme = 'dark';
+        } else {
+            document.documentElement.classList.remove("dark")
+            localStorage.removeItem("theme")
+        }
+    };
+
+    // On page load. Priotiry to lcaolStorage
+    if (localStorage.theme === "dark") {
+        document.documentElement.classList.add("dark")
+    } else if (localStorage.theme === "light") {
+        document.documentElement.classList.remove("dark")
+    } else if (darkTheme.matches) {
+        document.documentElement.classList.add("dark")
+    } else {
+        document.documentElement.classList.remove("dark")
+    }
+
+    // set the layout based on localStorage
+    document.documentElement.classList.add(localStorage.getItem("html-layout") || "layout-fixed");
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fin supply readme - FlowLLM</title>
+    
+
+
+<title>Fin supply readme</title>
+
+
+
+
+
+
+
+
+
+<link rel="canonical" href="https://github.com/flowllm-ai/flowllm/fin_supply_readme/">
+
+
+<!-- Open Graph (Facebook, LinkedIn) -->
+
+<meta property="og:title" content="Fin supply readme">
+
+
+
+
+
+<meta property="og:url" content="https://github.com/flowllm-ai/flowllm/fin_supply_readme/">
+
+
+
+
+
+
+<!-- Twitter Card -->
+
+<meta name="twitter:title" content="Fin supply readme">
+
+
+
+
+
+
+<!-- JSON-LD Structured Data -->
+
+
+
+    <link rel="icon" href="../img/favicon.ico">
+
+    <link href="../css/base.css" rel="stylesheet">
+    <link href="../css/geist.css" rel="stylesheet">
+
+    
+    
+
+<link id="pygments-light" rel="stylesheet"
+    href="../css/pygments/shadcn-light.css">
+<link id="pygments-dark" rel="stylesheet"
+    href="../css/pygments/github-dark.css"
+    media="(prefers-color-scheme: dark)">
+
+
+    
+
+    
+
+    <script src="../js/callbacks.js"></script>
+
+    
+    <!-- katex -->
+<link rel="stylesheet" href="../css/katex.min.css">
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="../js/katex.min.js"></script>
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="../js/auto-render.min.js"
+    onload='renderMathInElement(document.body, "{}");'></script>
+    
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.js"></script>
+<script>
+    const rootStyles = getComputedStyle(document.documentElement);
+    const color = ["#8ec5ff", "#2b7fff", "#1d6ed4", "#155ab6", "#0f4c8a"];
+    const waitForECharts = () => {
+        if (typeof echarts !== 'undefined') {
+            console.log('ECharts is loaded');
+            echarts.registerTheme('shadcn', {
+                "seriesCnt": "5",
+                "backgroundColor": "rgba(0,0,0,0)",
+                "titleColor": "#0a0a0a",
+                "subtitleColor": "#737373",
+                "textColorShow": false,
+                "textColor": "#333",
+                "textStyle": {
+                    "fontFamily": "Geist"
+                },
+                "markTextColor": "#ffffff",
+                "color": color,
+                "borderColor": "#e5e5e5",
+                "borderWidth": 0,
+                "visualMapColor": [
+                    "#09090b",
+                    "#18181b",
+                    "#27272a",
+                    "#3f3f46",
+                    "#52525b",
+                    "#71717a",
+                    "#a1a1aa",
+                    "#d4d4d8",
+                    "#e4e4e7",
+                    "#f4f4f5",
+                    "#fafafa"
+                ],
+                "legendTextColor": "#0a0a0a",
+                "kColor": "#eb5454",
+                "kColor0": "#47b262",
+                "kBorderColor": "#eb5454",
+                "kBorderColor0": "#47b262",
+                "kBorderWidth": 1,
+                "lineWidth": 2,
+                "symbolSize": 4,
+                "symbol": "emptyCircle",
+                "symbolBorderWidth": 1,
+                "lineSmooth": true,
+                "graphLineWidth": 1,
+                "graphLineColor": "#aaaaaa",
+                "mapLabelColor": "#000",
+                "mapLabelColorE": "rgb(100,0,0)",
+                "mapBorderColor": "#444",
+                "mapBorderColorE": "#444",
+                "mapBorderWidth": 0.5,
+                "mapBorderWidthE": 1,
+                "mapAreaColor": "#eee",
+                "mapAreaColorE": "rgba(255,215,0,0.8)",
+                "axes": [
+                    {
+                        "type": "all",
+                        "name": "通用坐标轴",
+                        "axisLineShow": true,
+                        "axisLineColor": "#6E7079",
+                        "axisTickShow": true,
+                        "axisTickColor": "#6E7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6E7079",
+                        "splitLineShow": true,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "category",
+                        "name": "类目坐标轴",
+                        "axisLineShow": true,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": true,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": false,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "value",
+                        "name": "数值坐标轴",
+                        "axisLineShow": false,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": false,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": true,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "log",
+                        "name": "对数坐标轴",
+                        "axisLineShow": false,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": false,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": true,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "time",
+                        "name": "时间坐标轴",
+                        "axisLineShow": true,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": true,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": false,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    }
+                ],
+                "axisSeperateSetting": true,
+                "toolboxColor": "#999999",
+                "toolboxEmphasisColor": "#666666",
+                "tooltipAxisColor": "#cccccc",
+                "tooltipAxisWidth": 1,
+                "timelineLineColor": "#e5e5e5",
+                "timelineLineWidth": 2,
+                "timelineItemColor": "#e5e5e5",
+                "timelineItemColorE": "#ffffff",
+                "timelineCheckColor": "#171717",
+                "timelineCheckBorderColor": "#ffffff",
+                "timelineItemBorderWidth": 1,
+                "timelineControlColor": "#737373",
+                "timelineControlBorderColor": "#171717",
+                "timelineControlBorderWidth": "0.0",
+                "timelineLabelColor": "#737373"
+            })
+        } else {
+            setTimeout(waitForECharts, 300);
+        }
+    }
+
+    waitForECharts();
+
+</script>
+    
+
+    
+
+</head>
+
+<body
+    class="text-foreground group/body overscroll-none font-sans antialiased [--footer-height:calc(var(--spacing)*14)] [--header-height:calc(var(--spacing)*14)] xl:[--footer-height:calc(var(--spacing)*24)] theme-default">
+    <div id="inner-body" class="bg-background relative z-10 flex min-h-svh flex-col">
+        <header class="bg-background sticky top-0 z-50 w-full" view-transition-name="header">
+    <div class="container-wrapper 3xl:fixed:px-0 px-6">
+        <div class="3xl:fixed:container flex h-(--header-height) items-center gap-2 **:data-[slot=separator]:!h-4">
+            <button id="menu-button" data-slot="popover-trigger" onclick="onMobileMenuButtonClick(event)"
+                class="group whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:text-accent-foreground px-4 py-2 has-[&gt;svg]:px-3 extend-touch-target h-8 touch-manipulation items-center justify-start gap-2.5 !p-0 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent dark:hover:bg-transparent flex lg:hidden"
+                type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«Rmplb»"
+                data-state="closed">
+                <div class="relative flex h-8 w-4 items-center justify-center">
+                    <div class="relative size-4">
+                        <!-- 16px x 16px -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="0" x2="16" y1="5" y2="5"
+                                class="group-data-[state=open]:translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:rotate-45 transition-all duration-300 origin-center" />
+                            <line x1="0" x2="16" y1="11" y2="11"
+                                class="group-data-[state=open]:-translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:-rotate-45 transition-all duration-300 origin-center" />
+                        </svg>
+                    </div>
+
+                    <span class="sr-only">Toggle Menu</span>
+                </div>
+                <span class="flex h-8 items-center text-lg leading-none font-medium">Menu</span>
+            </button>
+            <a data-slot="button"
+                class="items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 hidden h-8 lg:flex"
+                href="https://github.com/flowllm-ai/flowllm/">
+                <span class="size-8 flex flex-row justify-center items-center">
+                    
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"
+    class="size-5">
+    <rect width="256" height="256" fill="none"></rect>
+    <line x1="208" y1="128" x2="128" y2="208" fill="none" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round" stroke-width="32"></line>
+    <line x1="192" y1="40" x2="40" y2="192" fill="none" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round" stroke-width="32"></line>
+</svg>
+
+
+                </span>
+
+                
+                <h1 class="pr-2">FlowLLM</h1>
+                
+            </a>
+            
+            <div class="ml-auto flex items-center gap-2 md:flex-1 md:justify-end">
+                <div class="hidden w-full flex-1 md:flex md:w-auto md:flex-none">
+                    <button data-slot="dialog-trigger" onclick="onSearchBarClick(event)"
+    class="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-secondary/80 px-4 py-2 has-[&gt;svg]:px-3 bg-surface text-surface-foreground/60 dark:bg-card relative h-8 w-full justify-start pl-2.5 font-normal shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64"
+    type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«R66plb»" data-state="closed">
+    <span class="text-muted-foreground hidden lg:inline-flex">Search documentation...</span>
+    <span class="text-muted-foreground inline-flex lg:hidden">Search...</span>
+    <div class="absolute top-1.5 right-1.5 hidden gap-1 sm:flex">
+        <kbd
+            class="bg-background text-muted-foreground pointer-events-none flex h-5 items-center justify-center gap-1 rounded border px-1 font-sans text-[0.7rem] font-medium select-none [&amp;_svg:not([class*='size-'])]:size-3">Ctrl</kbd><kbd
+            class="bg-background text-muted-foreground pointer-events-none flex h-5 items-center justify-center gap-1 rounded border px-1 font-sans text-[0.7rem] font-medium select-none [&amp;_svg:not([class*='size-'])]:size-3 aspect-square">K</kbd>
+    </div>
+</button>
+<dialog id="search-dialog" onclick="onSearchDialogClick(event)"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background rounded-lg shadow-lg border overflow-hidden p-0">
+    <div class="w-lg gap-4">
+        <div class="flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
+            <div data-slot="command-input-wrapper" class="flex h-9 items-center gap-2 border-b px-3"><svg
+                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-search size-4 shrink-0 opacity-50">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input data-slot="command-input"
+                    class="placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Search documentation..." cmdk-input="" autocomplete="off" autocorrect="off"
+                    spellcheck="false" aria-autocomplete="list" role="combobox" aria-expanded="true"
+                    aria-controls="radix-«r1t6»" aria-labelledby="radix-«r1t7»" id="radix-«r1t8»" type="text" value=""
+                    aria-activedescendant="radix-«r1th»" oninput="onInputHandler(event)">
+            </div>
+        </div>
+        <div id="mkdocs-search-results">
+            <!-- search results go there -->
+        </div>
+    </div>
+</dialog>
+<script>
+    document.removeEventListener("keydown", searchShortcutHandler);
+    document.addEventListener("keydown", searchShortcutHandler);
+</script>
+                </div>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px ml-2 hidden lg:block">
+                </div>
+                <a target="_blank" rel="noreferrer" data-slot="button"
+                    class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 h-8 shadow-none"
+                    href="https://github.com/flowllm-ai/flowllm">
+                    <svg viewBox="0 0 438.549 438.549">
+                        <path fill="currentColor"
+                            d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 01-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z">
+                        </path>
+                    </svg>
+                    
+                    <span id="stargazers" class="text-muted-foreground w-8 text-xs tabular-nums" onload="test()">
+                    </span>
+                    
+                </a>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px 3xl:flex hidden">
+                </div>
+                <button data-slot="button"
+                    class="items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 size-8 3xl:flex hidden"
+                    title="Toggle layout" onclick="toggleLayout(event)">
+                    <span class="sr-only">Toggle layout</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-gallery-horizontal">
+                        <path d="M2 3v18"></path>
+                        <rect width="12" height="18" x="6" y="3" rx="2"></rect>
+                        <path d="M22 3v18"></path>
+                    </svg>
+                </button>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
+                </div>
+                <button data-slot="button"
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 group/toggle extend-touch-target size-8"
+                    title="Toggle theme" onclick="onThemeSwitch(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="size-4.5">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                        <path d="M12 3l0 18"></path>
+                        <path d="M12 9l4.65 -4.65"></path>
+                        <path d="M12 14.3l7.37 -7.37"></path>
+                        <path d="M12 19.6l8.85 -8.85"></path>
+                    </svg>
+                    <span class="sr-only">Toggle theme</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+        <main class="flex flex-1 flex-col">
+            <div class="container-wrapper flex flex-1 flex-col px-2">
+                <div data-slot="sidebar-wrapper" style="--sidebar-width: 16rem; --sidebar-width-icon: 3rem;"
+                    class="group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex w-full 3xl:fixed:container 3xl:fixed:px-3 min-h-min flex-1 items-start px-0 [--sidebar-width:220px] [--top-spacing:0] lg:grid lg:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] lg:[--sidebar-width:240px] lg:[--top-spacing:calc(var(--spacing)*4)]">
+                    <div data-slot="sidebar"
+                        class="text-sidebar-foreground w-(--sidebar-width) flex-col sticky top-[calc(var(--header-height)+1px)] z-30 hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] bg-transparent lg:flex">
+                        <div data-slot="sidebar-content" data-sidebar="content"
+                            class="flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden no-scrollbar px-2 pb-12">
+                            <div class="h-(--top-spacing) shrink-0"></div>
+                            <div view-transition-name="sidebar" data-slot="sidebar-group" data-sidebar="group"
+    class="relative flex w-full min-w-0 flex-col p-2 no-scrollbar">
+    
+
+    
+    
+    
+
+    
+
+    
+    
+
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Home
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/INSTALLATION/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        INSTALLATION
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/QUICKSTART/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        QUICKSTART
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/async_task_handling/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Async task handling
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/company_factor_op_implementation/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Company factor op implementation
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/deep_research/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Deep research
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/fin_supply_deploy/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Fin supply deploy
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/fin_supply_quick_start/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Fin supply quick start
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/fin_supply_readme/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Fin supply readme
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/making_sop_memories/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Making sop memories
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/todo/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Todo
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/vector_store/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Vector store
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+    
+
+    
+
+
+    
+</div>
+                        </div>
+                    </div>
+                    <div class="h-full w-full">
+                        <div data-slot="docs" class="flex items-stretch text-[1.05rem] sm:text-[15px] xl:w-full">
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                <article class="w-full" view-transition-name="page">
+  <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2">
+      <div id="page-header" class="flex items-start justify-between">
+        <h1
+          class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl"
+        >
+          Fin supply readme
+        </h1>
+
+        <div class="flex items-center gap-2 pt-1.5">
+          
+<button onclick="fetch(`https://github.com/flowllm-ai/flowllm/fin_supply_readme.md`).then((r) => r.blob()).then((blob) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]))" 
+        data-slot="button" 
+        class="cursor-pointer inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md gap-1.5 px-3 has-[&>svg]:px-2.5 h-8 shadow-none md:h-7 md:text-[0.8rem]">
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy ">
+    <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"></path><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"></path>
+</svg>
+<span class="max-md:hidden">Copy Page</span>
+</button> 
+          
+          <a
+            data-slot="button"
+            id="previous-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="/flowllm-ai/flowllm/fin_supply_quick_start/"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-left"
+            >
+              <path d="M5 12l14 0"></path>
+              <path d="M5 12l6 6"></path>
+              <path d="M5 12l6 -6"></path>
+            </svg>
+            <span class="sr-only">Previous</span>
+          </a>
+           
+          
+          <a
+            data-slot="button"
+            id="next-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="/flowllm-ai/flowllm/making_sop_memories/"
+          >
+            <span class="sr-only">Next</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-right"
+            >
+              <path d="M5 12l14 0"></path>
+              <path d="M13 18l6 -6"></path>
+              <path d="M13 6l6 6"></path>
+            </svg>
+          </a>
+          
+        </div>
+      </div>
+      
+    </div>
+    <div class="flex justify-end items-center">
+       
+    </div>
+  </div>
+  <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
+    <h2 id="_1">背景</h2>
+<h3 id="_2">系统架构</h3>
+<p>采用分层架构设计：</p>
+<ol>
+<li><strong>操作层（Operation Layer）</strong>：提供原子化的数据操作能力，每个Op（操作）负责特定的数据获取或处理任务</li>
+<li><strong>流程层（Flow Layer）</strong>：通过Pipeline将多个Op组合成复杂的业务流程，支持串行（&gt;&gt;）和并行（|）执行和子Op（&lt;&lt;）</li>
+<li><strong>服务层（Service Layer）</strong>：基于MCP（Model Context Protocol）协议提供标准化的API接口</li>
+</ol>
+<h3 id="_3">核心特性</h3>
+<ul>
+<li><strong>模块化设计</strong>：每个供给模块独立可配置，支持按需组合和扩展</li>
+<li><strong>统一接口</strong>：基于MCP协议提供标准化的工具调用接口，便于集成</li>
+<li><strong>智能缓存</strong>：支持多级缓存机制，提高数据获取效率和降低成本</li>
+<li><strong>灵活配置</strong>：通过YAML配置文件管理流程参数，支持环境隔离和版本管理</li>
+</ul>
+<h3 id="_4">供给模块</h3>
+<p>系统目前提供以下金融供给模块，共计26个Flow：</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>MCP Flow名称</th>
+<th>核心能力</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>extract_entities_code</strong></td>
+<td>金融实体识别和code提取</td>
+</tr>
+<tr>
+<td><strong>akshare_market</strong></td>
+<td>A股实时行情数据</td>
+</tr>
+<tr>
+<td><strong>akshare_calculate</strong></td>
+<td>股票技术分析计算</td>
+</tr>
+<tr>
+<td><strong>qtf_brief_mcp</strong></td>
+<td>股票基础分析摘要</td>
+</tr>
+<tr>
+<td><strong>qtf_medium_mcp</strong></td>
+<td>股票中等深度分析</td>
+</tr>
+<tr>
+<td><strong>qtf_full_mcp</strong></td>
+<td>股票全面深度分析</td>
+</tr>
+<tr>
+<td><strong>tavily_search</strong></td>
+<td>tavily_search</td>
+</tr>
+<tr>
+<td><strong>dashscope_search</strong></td>
+<td>dashscope大模型强制开启搜索</td>
+</tr>
+<tr>
+<td><strong>bailian_web_search</strong></td>
+<td>bailian_search</td>
+</tr>
+<tr>
+<td><strong>bocha_web_search</strong></td>
+<td>bocha search</td>
+</tr>
+<tr>
+<td><strong>brave_web_search</strong></td>
+<td>brave search</td>
+</tr>
+<tr>
+<td><strong>bailian_web_parser</strong></td>
+<td>bailian 网页解析</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_company</strong></td>
+<td>同花顺公司基本资料</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_holder</strong></td>
+<td>同花顺股东研究信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_operate</strong></td>
+<td>同花顺经营分析信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_equity</strong></td>
+<td>同花顺股本结构信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_capital</strong></td>
+<td>同花顺资本运作信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_worth</strong></td>
+<td>同花顺盈利预测信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_news</strong></td>
+<td>同花顺新闻公告信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_concept</strong></td>
+<td>同花顺概念题材信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_position</strong></td>
+<td>同花顺主力持仓信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_finance</strong></td>
+<td>同花顺财务分析信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_bonus</strong></td>
+<td>同花顺分红融资信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_event</strong></td>
+<td>同花顺公司大事信息</td>
+</tr>
+<tr>
+<td><strong>crawl_ths_field</strong></td>
+<td>同花顺行业对比信息</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_5">供给类型统计</h3>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>分类</th>
+<th>供给名称</th>
+<th>输入示例</th>
+<th>输出示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>通用搜索解析</strong></td>
+<td>tavily_search（Tavily搜索）</td>
+<td><code>{"query": "2024年中国GDP增长情况"}</code></td>
+<td><code>根据最新数据，2024年中国GDP同比增长5.2%，经济运行总体平稳，消费和投资成为主要增长动力...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>dashscope_search（dashscope调用enable_search）</td>
+<td><code>{"query": "人工智能最新发展趋势"}</code></td>
+<td><code>人工智能领域最新发展包括大语言模型技术突破、多模态AI应用普及、AI+行业深度融合等趋势...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>bailian_web_search（百炼搜索）  ✅</td>
+<td><code>{"query": "新能源汽车市场现状", "count": 10}</code></td>
+<td><code>2024年新能源汽车市场保持高速增长，销量突破800万辆，市场渗透率达到35%，比亚迪、特斯拉领跑市场...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>bocha_web_search（Bocha搜索）</td>
+<td><code>{"query": "区块链技术应用", "freshness": 7}</code></td>
+<td><code>区块链技术在金融、供应链、数字身份等领域应用不断深化，央行数字货币DCEP试点扩大，DeFi生态持续发展...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>brave_web_search（Brave搜索）</td>
+<td><code>{"query": "量子计算突破", "count": 5}</code></td>
+<td><code>量子计算领域取得重大突破，IBM发布1000+量子比特处理器，Google实现量子纠错里程碑，产业化进程加速...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>bailian_web_parser（网页解析）  ✅</td>
+<td><code>{"url": "https://example.com"}</code></td>
+<td><code>解析网页内容：标题、正文、关键信息等结构化数据，支持多种格式输出...</code></td>
+</tr>
+<tr>
+<td><strong>股票提槽</strong></td>
+<td>extract_entities_code（提取实体&amp;代号）✅</td>
+<td><code>{"query": "阿里和腾讯哪个更好？和茅台比呢？"}</code></td>
+<td><code>[{"entity": "阿里巴巴", "type": "stock", "codes": ["BABA", "09988.HK"]}, {"entity": "腾讯", "type": "stock", "codes": ["00700.HK"]}, {"entity": "茅台", "type": "stock", "codes": ["600519"]}]</code></td>
+</tr>
+<tr>
+<td><strong>股票基本面</strong></td>
+<td>akshare_market（实时行情）</td>
+<td><code>{"code": "000001"}</code></td>
+<td><code>000001的实时行情: {"代码": "000001", "名称": "平安银行", "最新价": 15.23, "涨跌幅": 2.35, "涨跌额": 0.35, "成交量": 123456, "成交额": 1876543210, "振幅": 3.45, "最高": 15.45, "最低": 14.98, "今开": 15.12, "昨收": 14.88}</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_company（公司基本资料）</td>
+<td><code>{"query": "详细情况", "code": "000001"}</code></td>
+<td><code>平安银行详细情况: 公司成立于1987年，注册资本1000亿元，主营业务为商业银行业务...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_holder（股东研究）</td>
+<td><code>{"query": "十大股东", "code": "000001"}</code></td>
+<td><code>平安银行十大股东: 1.中国平安保险(集团)股份有限公司 58.03%, 2.香港中央结算有限公司 8.12%...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_operate（经营分析） ✅</td>
+<td><code>{"query": "主营业务构成", "code": "000001"}</code></td>
+<td><code>平安银行主营业务构成: 利息净收入占比78.5%，手续费及佣金净收入占比15.2%...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_equity（股本结构）</td>
+<td><code>{"query": "股本构成", "code": "000001"}</code></td>
+<td><code>平安银行股本构成: 总股本194.4亿股，其中A股194.4亿股，流通股194.4亿股...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_capital（资本运作）</td>
+<td><code>{"query": "募集资金", "code": "000001"}</code></td>
+<td><code>平安银行募集资金情况: 近期通过定向增发募集资金260亿元，主要用于补充核心一级资本...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_finance（财务分析）✅</td>
+<td><code>{"query": "财务指标", "code": "000001"}</code></td>
+<td><code>平安银行财务指标: ROE 11.1%，ROA 0.89%，资本充足率13.85%，核心一级资本充足率10.15%...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_bonus（分红融资）</td>
+<td><code>{"query": "分红情况", "code": "000001"}</code></td>
+<td><code>平安银行分红情况: 2023年每10股派现2.31元，股息率约1.5%，连续多年稳定分红...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_field（行业对比）  ✅</td>
+<td><code>{"query": "行业地位", "code": "000001"}</code></td>
+<td><code>平安银行行业地位: 在股份制银行中排名第3位，资产规模4.9万亿元，市场份额约2.8%...</code></td>
+</tr>
+<tr>
+<td><strong>股票技术面</strong></td>
+<td>akshare_calculate（技术分析）</td>
+<td><code>{"code": "000001", "query": "最近五日成交量有放量吗？最近五日macd有金叉吗？"}</code></td>
+<td><code>根据分析，该股票最近五日成交量相比前期有明显放量，平均成交量增长35%。MACD指标在最近五日出现金叉信号，DIF线上穿DEA线，显示短期趋势向好。</code></td>
+</tr>
+<tr>
+<td></td>
+<td>qtf_brief_mcp（简要分析）</td>
+<td><code>{"symbol": "SZ000001"}</code></td>
+<td><code>平安银行(000001)简要分析: 当前股价15.23元，涨幅2.35%。基本面良好，ROE 11.1%，市盈率8.5倍。技术面显示短期趋势向好，建议关注。</code></td>
+</tr>
+<tr>
+<td></td>
+<td>qtf_medium_mcp（中等分析）</td>
+<td><code>{"symbol": "SZ000001"}</code></td>
+<td><code>平安银行(000001)中等分析: 基本面分析-资产质量稳定，不良率1.02%；盈利能力强，ROE持续改善。技术面分析-MACD金叉，成交量放大，短期支撑位14.8元。估值合理，目标价16.5元。风险提示：银行业监管政策变化。</code></td>
+</tr>
+<tr>
+<td></td>
+<td>qtf_full_mcp（全面分析）     ✅</td>
+<td><code>{"symbol": "SZ000001"}</code></td>
+<td><code>平安银行(000001)全面分析报告: 1.基本面：资产规模4.9万亿，净利润增长6.8%，ROE 11.1%，资本充足率13.85%。2.技术面：多项指标显示买入信号，支撑阻力位明确。3.估值：PB 0.85倍，PE 8.5倍，相对估值偏低。4.投资建议：买入，目标价16.5-17元，持有期6-12个月。</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_worth（盈利预测）    ✅</td>
+<td><code>{"query": "业绩预测", "code": "000001"}</code></td>
+<td><code>平安银行业绩预测: 2024年预测净利润增长8.5%，ROE预计达到11.2%，机构一致目标价16.5元...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_position（主力持仓）  ✅</td>
+<td><code>{"query": "机构持股", "code": "000001"}</code></td>
+<td><code>平安银行机构持股: 基金持股占比12.5%，QFII持股占比3.2%，社保基金持股占比1.8%...</code></td>
+</tr>
+<tr>
+<td><strong>股票消息面</strong></td>
+<td>crawl_ths_news（新闻公告）  ✅</td>
+<td><code>{"query": "最新公告", "code": "000001"}</code></td>
+<td><code>平安银行最新公告: 发布2024年第三季度业绩报告，净利润同比增长6.8%，不良贷款率1.02%...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_concept（概念题材）   ✅</td>
+<td><code>{"query": "概念板块", "code": "000001"}</code></td>
+<td><code>平安银行概念板块: 银行概念、金融科技、数字货币、区块链、人工智能等概念...</code></td>
+</tr>
+<tr>
+<td></td>
+<td>crawl_ths_event（公司大事）</td>
+<td><code>{"query": "高管变动", "code": "000001"}</code></td>
+<td><code>平安银行高管变动: 近期董事会决议任命新任副行长，具有20年银行从业经验...</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_6">技术优势</h3>
+<ul>
+<li><strong>高性能</strong>：支持异步处理和并行执行，可处理大规模数据请求</li>
+<li><strong>高可用</strong>：内置重试机制和异常处理，确保服务稳定性</li>
+<li><strong>易扩展</strong>：基于插件化架构，可快速添加新的数据源和分析能力</li>
+<li><strong>标准化</strong>：遵循MCP协议标准，与主流AI平台和工具无缝集成</li>
+</ul>
+<h2 id="basic-supply">basic supply</h2>
+<p>基础金融供给提供了核心的金融数据获取和分析能力，主要包含以下流程：</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>MCP Flow名称</th>
+<th>能力描述</th>
+<th>Pipeline</th>
+<th>输入示例</th>
+<th>输出示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>extract_entities_code</td>
+<td>从查询中提取金融实体并获取对应代码</td>
+<td>extract_entities_code_op &lt;&lt; bailian_web_search_op</td>
+<td><code>{"query": "阿里和腾讯哪个更好？和茅台比呢？"}</code></td>
+<td><code>[{"entity": "阿里巴巴", "type": "stock", "codes": ["BABA", "09988.HK"]}, {"entity": "腾讯", "type": "stock", "codes": ["00700.HK"]}, {"entity": "茅台", "type": "stock", "codes": ["600519"]}]</code></td>
+</tr>
+<tr>
+<td>akshare_market</td>
+<td>获取A股股票实时行情数据</td>
+<td>akshare_market_op</td>
+<td><code>{"code": "000001"}</code></td>
+<td><code>000001的实时行情: {"代码": "000001", "名称": "平安银行", "最新价": 15.23, "涨跌幅": 2.35, "涨跌额": 0.35, "成交量": 123456, "成交额": 1876543210, "振幅": 3.45, "最高": 15.45, "最低": 14.98, "今开": 15.12, "昨收": 14.88}</code></td>
+</tr>
+<tr>
+<td>akshare_calculate</td>
+<td>基于历史数据进行股票技术分析计算</td>
+<td>akshare_calculate_op</td>
+<td><code>{"code": "000001", "query": "最近五日成交量有放量吗？最近五日macd有金叉吗？"}</code></td>
+<td><code>根据分析，该股票最近五日成交量相比前期有明显放量，平均成交量增长35%。MACD指标在最近五日出现金叉信号，DIF线上穿DEA线，显示短期趋势向好。</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_7">代码示例</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.client.fastmcp_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastmcpClient</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">basic_supply_example</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Basic supply使用示例&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">FastmcpClient</span><span class="p">(</span><span class="n">transport</span><span class="o">=</span><span class="s2">&quot;sse&quot;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;11.164.204.33&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8001</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="c1"># 1. 提取金融实体代码</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== 提取金融实体代码 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;extract_entities_code&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;阿里和腾讯哪个更好？和茅台比呢？&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;提取结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2. 获取实时行情</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 获取实时行情 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;akshare_market&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="s2">&quot;000001&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;行情数据: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 3. 技术分析计算</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 技术分析计算 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;akshare_calculate&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="s2">&quot;000001&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;最近五日成交量有放量吗？最近五日macd有金叉吗？&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;分析结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">basic_supply_example</span><span class="p">())</span>
+</code></pre></div>
+
+<h3 id="_8">主要特点</h3>
+<ul>
+<li><strong>实体识别</strong>：智能识别查询中的金融实体（股票、基金、ETF等）并自动获取交易代码</li>
+<li><strong>实时行情</strong>：提供A股市场实时价格、成交量等关键指标</li>
+<li><strong>技术分析</strong>：基于历史数据进行各类技术指标计算和趋势分析</li>
+<li><strong>缓存机制</strong>：支持数据缓存以提高查询效率</li>
+<li><strong>多数据源</strong>：集成akshare和网络搜索能力</li>
+</ul>
+<h3 id="_9">参考地址</h3>
+<ul>
+<li><a href="https://github.com/akfamily/akshare">akshare</a></li>
+</ul>
+<h3 id="_10">配置地址</h3>
+<ul>
+<li><a href="../flowllm/config/fin_basic.yaml">fin_basic.yaml</a></li>
+</ul>
+<h2 id="ths-supply">ths supply</h2>
+<p>同花顺供给提供了全面的股票深度分析能力，通过爬取同花顺网站获取详细的公司信息和财务数据：</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>MCP Flow名称</th>
+<th>能力描述</th>
+<th>Pipeline</th>
+<th>输入示例</th>
+<th>输出示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>crawl_ths_company</td>
+<td>获取公司基本资料信息</td>
+<td>ths_company_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "详细情况", "code": "000001"}</code></td>
+<td><code>平安银行详细情况: 公司成立于1987年，注册资本1000亿元，主营业务为商业银行业务...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_holder</td>
+<td>获取股东研究信息</td>
+<td>ths_holder_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "十大股东", "code": "000001"}</code></td>
+<td><code>平安银行十大股东: 1.中国平安保险(集团)股份有限公司 58.03%, 2.香港中央结算有限公司 8.12%...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_operate</td>
+<td>获取经营分析信息</td>
+<td>ths_operate_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "主营业务构成", "code": "000001"}</code></td>
+<td><code>平安银行主营业务构成: 利息净收入占比78.5%，手续费及佣金净收入占比15.2%...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_equity</td>
+<td>获取股本结构信息</td>
+<td>ths_equity_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "股本构成", "code": "000001"}</code></td>
+<td><code>平安银行股本构成: 总股本194.4亿股，其中A股194.4亿股，流通股194.4亿股...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_capital</td>
+<td>获取资本运作信息</td>
+<td>ths_capital_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "募集资金", "code": "000001"}</code></td>
+<td><code>平安银行募集资金情况: 近期通过定向增发募集资金260亿元，主要用于补充核心一级资本...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_worth</td>
+<td>获取盈利预测信息</td>
+<td>ths_worth_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "业绩预测", "code": "000001"}</code></td>
+<td><code>平安银行业绩预测: 2024年预测净利润增长8.5%，ROE预计达到11.2%，机构一致目标价16.5元...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_news</td>
+<td>获取新闻公告信息</td>
+<td>ths_news_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "最新公告", "code": "000001"}</code></td>
+<td><code>平安银行最新公告: 发布2024年第三季度业绩报告，净利润同比增长6.8%，不良贷款率1.02%...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_concept</td>
+<td>获取概念题材信息</td>
+<td>ths_concept_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "概念板块", "code": "000001"}</code></td>
+<td><code>平安银行概念板块: 银行概念、金融科技、数字货币、区块链、人工智能等概念...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_position</td>
+<td>获取主力持仓信息</td>
+<td>ths_position_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "机构持股", "code": "000001"}</code></td>
+<td><code>平安银行机构持股: 基金持股占比12.5%，QFII持股占比3.2%，社保基金持股占比1.8%...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_finance</td>
+<td>获取财务分析信息</td>
+<td>ths_finance_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "财务指标", "code": "000001"}</code></td>
+<td><code>平安银行财务指标: ROE 11.1%，ROA 0.89%，资本充足率13.85%，核心一级资本充足率10.15%...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_bonus</td>
+<td>获取分红融资信息</td>
+<td>ths_bonus_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "分红情况", "code": "000001"}</code></td>
+<td><code>平安银行分红情况: 2023年每10股派现2.31元，股息率约1.5%，连续多年稳定分红...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_event</td>
+<td>获取公司大事信息</td>
+<td>ths_event_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "高管变动", "code": "000001"}</code></td>
+<td><code>平安银行高管变动: 近期董事会决议任命新任副行长，具有20年银行从业经验...</code></td>
+</tr>
+<tr>
+<td>crawl_ths_field</td>
+<td>获取行业对比信息</td>
+<td>ths_field_op &gt;&gt; bailian_web_parser_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "行业地位", "code": "000001"}</code></td>
+<td><code>平安银行行业地位: 在股份制银行中排名第3位，资产规模4.9万亿元，市场份额约2.8%...</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_11">数据来源</h3>
+<ul>
+<li><a href="https://basic.10jqka.com.cn/300033/">来源地址</a></li>
+<li>同花顺基本面数据</li>
+<li>公司资料、股东信息、经营分析</li>
+<li>股本结构、资本运作、盈利预测</li>
+<li>新闻公告、概念题材、主力持仓</li>
+<li>财务分析、分红融资、公司大事</li>
+<li>行业对比等全方位数据</li>
+</ul>
+<h3 id="_12">代码示例</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.client.fastmcp_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastmcpClient</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">ths_supply_example</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;THS supply使用示例&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">FastmcpClient</span><span class="p">(</span><span class="n">transport</span><span class="o">=</span><span class="s2">&quot;sse&quot;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;11.164.204.33&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8001</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+
+        <span class="c1"># 示例股票代码</span>
+        <span class="n">stock_code</span> <span class="o">=</span> <span class="s2">&quot;000001&quot;</span>  <span class="c1"># 平安银行</span>
+
+        <span class="c1"># 1. 获取公司基本资料信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== 公司基本资料 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_company&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行的公司情况如何？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;公司信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2. 获取股东研究信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 股东研究 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_holder&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行的股东结构如何？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;股东信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 3. 获取经营分析信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 经营分析 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_operate&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行的主营业务是什么？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;经营信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 4. 获取财务分析信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 财务分析 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_finance&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行的财务状况如何？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;财务信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 5. 获取新闻公告信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 新闻公告 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_news&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行最近有什么新闻？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;新闻信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 6. 获取概念题材信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 概念题材 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_concept&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行涉及哪些概念题材？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;概念信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 7. 获取主力持仓信息</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 主力持仓 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;crawl_ths_position&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;平安银行的机构持仓情况如何？&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;持仓信息: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 8. 其他维度信息示例</span>
+        <span class="n">other_examples</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;crawl_ths_equity&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;股本结构如何？&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span><span class="p">}),</span>
+            <span class="p">(</span><span class="s2">&quot;crawl_ths_capital&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;有哪些资本运作？&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span><span class="p">}),</span>
+            <span class="p">(</span><span class="s2">&quot;crawl_ths_worth&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;业绩预测如何？&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span><span class="p">}),</span>
+            <span class="p">(</span><span class="s2">&quot;crawl_ths_bonus&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;分红情况如何？&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span><span class="p">}),</span>
+            <span class="p">(</span><span class="s2">&quot;crawl_ths_event&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;最近有什么重大事件？&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span><span class="p">}),</span>
+            <span class="p">(</span><span class="s2">&quot;crawl_ths_field&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;在行业中的地位如何？&quot;</span><span class="p">,</span> <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">stock_code</span><span class="p">})</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">tool_name</span><span class="p">,</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">other_examples</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== </span><span class="si">{</span><span class="n">tool_name</span><span class="si">}</span><span class="s2"> ===&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="n">tool_name</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;调用失败: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ths_supply_example</span><span class="p">())</span>
+</code></pre></div>
+
+<h3 id="_13">配置地址</h3>
+<ul>
+<li><a href="../flowllm/config/fin_ths.yaml">fin_ths.yaml</a></li>
+</ul>
+<h2 id="mcp-supply">mcp supply</h2>
+<p>MCP供给提供了基于阿里云百炼平台的量化投资分析能力，通过qtf_mcp工具提供不同深度的股票分析服务：</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>MCP Flow名称</th>
+<th>能力描述</th>
+<th>Pipeline</th>
+<th>输入示例</th>
+<th>输出示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>qtf_brief_mcp</td>
+<td>提供股票基础分析摘要</td>
+<td>qtf_brief_mcp_op</td>
+<td><code>{"symbol": "SZ000001"}</code></td>
+<td><code>平安银行(000001)简要分析: 当前股价15.23元，涨幅2.35%。基本面良好，ROE 11.1%，市盈率8.5倍。技术面显示短期趋势向好，建议关注。</code></td>
+</tr>
+<tr>
+<td>qtf_medium_mcp</td>
+<td>提供股票中等深度分析</td>
+<td>qtf_medium_mcp_op</td>
+<td><code>{"symbol": "SZ000001"}</code></td>
+<td><code>平安银行(000001)中等分析: 基本面分析-资产质量稳定，不良率1.02%；盈利能力强，ROE持续改善。技术面分析-MACD金叉，成交量放大，短期支撑位14.8元。估值合理，目标价16.5元。风险提示：银行业监管政策变化。</code></td>
+</tr>
+<tr>
+<td>qtf_full_mcp</td>
+<td>提供股票全面深度分析</td>
+<td>qtf_full_mcp_op</td>
+<td><code>{"symbol": "SZ000001"}</code></td>
+<td><code>平安银行(000001)全面分析报告: 1.基本面：资产规模4.9万亿，净利润增长6.8%，ROE 11.1%，资本充足率13.85%。2.技术面：多项指标显示买入信号，支撑阻力位明确。3.估值：PB 0.85倍，PE 8.5倍，相对估值偏低。4.投资建议：买入，目标价16.5-17元，持有期6-12个月。</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_14">代码示例</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.client.fastmcp_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastmcpClient</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">mcp_supply_example</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;MCP supply使用示例&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">FastmcpClient</span><span class="p">(</span><span class="n">transport</span><span class="o">=</span><span class="s2">&quot;sse&quot;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;11.164.204.33&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8001</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="c1"># 1. 简要分析</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== 股票简要分析 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;qtf_brief_mcp&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;SZ000001&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;简要分析: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2. 中等深度分析</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 股票中等深度分析 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;qtf_medium_mcp&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;SZ000001&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;中等分析: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 3. 全面深度分析</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 股票全面深度分析 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;qtf_full_mcp&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;symbol&quot;</span><span class="p">:</span> <span class="s2">&quot;SZ000001&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;全面分析: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">mcp_supply_example</span><span class="p">())</span>
+</code></pre></div>
+
+<h3 id="_15">主要特点</h3>
+<ul>
+<li><strong>brief模式</strong>：提供股票的基础信息和简要分析结论，适合快速了解</li>
+<li><strong>medium模式</strong>：包含基本面、技术面和估值的中等深度分析，平衡详细度和效率</li>
+<li><strong>full模式</strong>：提供全面深度的投资分析报告，包含详细的投资建议和风险提示</li>
+</ul>
+<h3 id="_16">数据来源</h3>
+<ul>
+<li><a href="https://bailian.console.aliyun.com/pre-publish?tab=mcp#/mcp-market/detail/qtf_mcp">阿里云百炼MCP市场</a></li>
+</ul>
+<h3 id="_17">配置地址</h3>
+<ul>
+<li><a href="../flowllm/config/fin_mcp.yaml">fin_mcp.yaml</a></li>
+</ul>
+<h2 id="search-supply">search supply</h2>
+<p>搜索供给提供了多样化的网络搜索和内容解析能力，集成了多个优质搜索引擎和解析工具：</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>MCP Flow名称</th>
+<th>Pipeline</th>
+<th>输入示例</th>
+<th>输出示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tavily_search</td>
+<td>tavily_search_op &gt;&gt; extract_long_text_op</td>
+<td><code>{"query": "2024年中国GDP增长情况"}</code></td>
+<td><code>根据最新数据，2024年中国GDP同比增长5.2%，经济运行总体平稳，消费和投资成为主要增长动力...</code></td>
+</tr>
+<tr>
+<td>dashscope_search</td>
+<td>dashscope_search_op</td>
+<td><code>{"query": "人工智能最新发展趋势"}</code></td>
+<td><code>人工智能领域最新发展包括大语言模型技术突破、多模态AI应用普及、AI+行业深度融合等趋势...</code></td>
+</tr>
+<tr>
+<td>bailian_web_search</td>
+<td>bailian_web_search_op</td>
+<td><code>{"query": "新能源汽车市场现状", "count": 10}</code></td>
+<td><code>2024年新能源汽车市场保持高速增长，销量突破800万辆，市场渗透率达到35%，比亚迪、特斯拉领跑市场...</code></td>
+</tr>
+<tr>
+<td>bocha_web_search</td>
+<td>bocha_web_search_op</td>
+<td><code>{"query": "区块链技术应用", "freshness": 7}</code></td>
+<td><code>区块链技术在金融、供应链、数字身份等领域应用不断深化，央行数字货币DCEP试点扩大，DeFi生态持续发展...</code></td>
+</tr>
+<tr>
+<td>brave_web_search</td>
+<td>brave_web_search_op</td>
+<td><code>{"query": "量子计算突破", "count": 5}</code></td>
+<td><code>量子计算领域取得重大突破，IBM发布1000+量子比特处理器，Google实现量子纠错里程碑，产业化进程加速...</code></td>
+</tr>
+<tr>
+<td>bailian_web_parser</td>
+<td>bailian_web_parser_op</td>
+<td><code>{"url": "https://example.com"}</code></td>
+<td><code>解析网页内容：标题、正文、关键信息等结构化数据，支持多种格式输出...</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="_18">代码示例</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.client.fastmcp_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastmcpClient</span>
+
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">search_supply_example</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Search supply使用示例&quot;&quot;&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">FastmcpClient</span><span class="p">(</span><span class="n">transport</span><span class="o">=</span><span class="s2">&quot;sse&quot;</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;11.164.204.33&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">8001</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>
+        <span class="c1"># 1. Tavily搜索（带长文本提取）</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== Tavily搜索 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;tavily_search&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;2024年中国GDP增长情况&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;搜索结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2. 通义搜索</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 通义搜索 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;dashscope_search&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;人工智能最新发展趋势&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;搜索结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 3. 百炼网络搜索（带数量限制）</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 百炼网络搜索 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;bailian_web_search&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;新能源汽车市场现状&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">10</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;搜索结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 4. Bocha搜索（带时效性）</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== Bocha搜索 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;bocha_web_search&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;区块链技术应用&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;freshness&quot;</span><span class="p">:</span> <span class="mi">7</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;搜索结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 5. Brave搜索</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== Brave搜索 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;brave_web_search&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;query&quot;</span><span class="p">:</span> <span class="s2">&quot;量子计算突破&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">5</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;搜索结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 6. 网页内容解析</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">=== 网页内容解析 ===&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">client</span><span class="o">.</span><span class="n">call_tool</span><span class="p">(</span><span class="s2">&quot;bailian_web_parser&quot;</span><span class="p">,</span> <span class="p">{</span>
+            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://basic.10jqka.com.cn/601899/field.html&quot;</span>
+        <span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;解析结果: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">content</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">search_supply_example</span><span class="p">())</span>
+</code></pre></div>
+
+<h3 id="_19">配置地址</h3>
+<ul>
+<li><a href="../flowllm/config/fin_search.yaml">fin_search.yaml</a></li>
+</ul>
+  </div>
+</article>
+                                <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 shadow-none"
+        href="/flowllm-ai/flowllm/fin_supply_quick_start/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-left ">
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+        </svg>
+        <span class="max-[500px]:hidden">Fin supply quick start</span>
+    </a>
+    
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 ml-auto shadow-none"
+        href="/flowllm-ai/flowllm/making_sop_memories/">
+        <span class="max-[500px]:hidden">Making sop memories</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-right ">
+            <path d="M5 12l14 0"></path>
+            <path d="M13 18l6 -6"></path>
+            <path d="M13 6l6 6"></path>
+        </svg>
+    </a>
+    
+</div>
+                                <dialog id="bottom-sidebar" onclick="onBottomSidebarDialogClick(event)" class="bg-transparent"
+    style="position: fixed; left: 0px; top: 0px; transform: translate(0px, 58px); min-width: max-content; --radix-popper-transform-origin: 0% 0px; will-change: transform; z-index: 50; --radix-popper-available-width: 504px; --radix-popper-available-height: 857px; --radix-popper-anchor-width: 72.94999694824219px; --radix-popper-anchor-height: 32px;">
+    <div data-side="bottom" data-align="start" data-state="open" role="dialog" data-slot="popover-content"
+        class="text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 origin-(--radix-popover-content-transform-origin) border outline-hidden bg-background/90 no-scrollbar h-(--radix-popper-available-height) w-(--radix-popper-available-width) overflow-y-auto rounded-none border-none p-0 shadow-none backdrop-blur duration-100"
+        style="--radix-popover-content-transform-origin: var(--radix-popper-transform-origin); --radix-popover-content-available-width: var(--radix-popper-available-width); --radix-popover-content-available-height: var(--radix-popper-available-height); --radix-popover-trigger-width: var(--radix-popper-anchor-width); --radix-popover-trigger-height: var(--radix-popper-anchor-height);"
+        tabindex="-1">
+        <div class="flex flex-col gap-12 overflow-auto px-6 py-6">
+            
+            
+            
+
+            
+            <div class="flex flex-col gap-4">
+                <div class="text-muted-foreground text-sm font-medium">Menu</div>
+                <div class="flex flex-col gap-3">
+                    
+                    <a class="text-2xl font-medium" href="..">
+                        
+                        Home
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../INSTALLATION/">
+                        
+                        INSTALLATION
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../QUICKSTART/">
+                        
+                        QUICKSTART
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../async_task_handling/">
+                        
+                        Async task handling
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../company_factor_op_implementation/">
+                        
+                        Company factor op implementation
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../deep_research/">
+                        
+                        Deep research
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../fin_supply_deploy/">
+                        
+                        Fin supply deploy
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../fin_supply_quick_start/">
+                        
+                        Fin supply quick start
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="./">
+                        
+                        Fin supply readme
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../making_sop_memories/">
+                        
+                        Making sop memories
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../todo/">
+                        
+                        Todo
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../vector_store/">
+                        
+                        Vector store
+                        
+                    </a>
+                    
+                </div>
+            </div>
+            
+
+            
+            
+
+        </div>
+    </div>
+</dialog>
+                            </div>
+                            <div
+                                class="sticky top-[calc(var(--header-height)+1px)] z-30 ml-auto hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] w-72 flex-col gap-4 overflow-hidden overscroll-none pb-8 xl:flex">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                <div view-transition-name="toc" class="no-scrollbar overflow-y-auto px-8">
+    <div class="flex flex-col gap-2 p-4 pt-0 text-sm">
+        <p class="text-muted-foreground bg-background sticky top-0 h-6 text-xs">On This Page</p>
+        
+        
+        
+        
+        <a href="#_1"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            背景
+        </a>
+        
+        
+        <a href="#_2"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            系统架构
+        </a>
+        
+        <a href="#_3"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            核心特性
+        </a>
+        
+        <a href="#_4"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            供给模块
+        </a>
+        
+        <a href="#_5"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            供给类型统计
+        </a>
+        
+        <a href="#_6"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            技术优势
+        </a>
+        
+        
+
+        
+        <a href="#basic-supply"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            basic supply
+        </a>
+        
+        
+        <a href="#_7"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            代码示例
+        </a>
+        
+        <a href="#_8"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            主要特点
+        </a>
+        
+        <a href="#_9"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            参考地址
+        </a>
+        
+        <a href="#_10"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            配置地址
+        </a>
+        
+        
+
+        
+        <a href="#ths-supply"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            ths supply
+        </a>
+        
+        
+        <a href="#_11"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            数据来源
+        </a>
+        
+        <a href="#_12"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            代码示例
+        </a>
+        
+        <a href="#_13"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            配置地址
+        </a>
+        
+        
+
+        
+        <a href="#mcp-supply"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            mcp supply
+        </a>
+        
+        
+        <a href="#_14"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            代码示例
+        </a>
+        
+        <a href="#_15"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            主要特点
+        </a>
+        
+        <a href="#_16"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            数据来源
+        </a>
+        
+        <a href="#_17"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            配置地址
+        </a>
+        
+        
+
+        
+        <a href="#search-supply"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            search supply
+        </a>
+        
+        
+        <a href="#_18"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            代码示例
+        </a>
+        
+        <a href="#_19"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            配置地址
+        </a>
+        
+        
+
+        
+        
+        
+        
+
+    </div>
+    <div class="h-12"></div>
+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer view-transition-name="footer"
+    class="group-has-[.section-soft]/body:bg-surface/40 3xl:fixed:bg-transparent dark:bg-transparent">
+    <div class="container-wrapper px-4 xl:px-6">
+        <div class="flex h-(--footer-height) items-center justify-between">
+            <div class="text-muted-foreground w-full text-center text-xs leading-loose sm:text-sm">
+                
+                <a href="https://github.com/asiffer/mkdocs-shadcn">shadcn theme</a> provided by
+                <a href="https://github.com/asiffer">@asiffer</a>
+            </div>
+        </div>
+    </div>
+</footer>
+    </div>
+     
+
+<script src="../search/main.js"></script>
+
+
+    
+
+    <script src="../js/copy-button.js"></script>
+    <script>updatePygmentsStylesheet();</script>
+    
+    <script>fetchStargazers("https://github.com/flowllm-ai/flowllm");</script>
+    
+    
+    
+    <script src="../js/socket.io.min.js"></script>
+<script>
+    function randomString(length = 10) {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const array = new Uint32Array(length);
+        crypto.getRandomValues(array);
+        return Array.from(array, x => chars[x % chars.length]).join('');
+    }
+
+    /**
+     * Executes code using Programiz REPL via socket.io
+     * @param {string} lang - Programming language (e.g., "python", "cpp", "javascript")
+     * @param {string} code - Code to execute
+     * @returns {Promise<{output:string,ok:boolean}>} Promise resolving to the output
+     */
+    function runCodexec(code, lang) {
+        console.log(`Running code in ${lang}:`, code);
+        if (!["r", "c", "cpp", "csharp", "java", "python", "javascript", "typescript", "scala", "dart", "ruby", "golang", "php", "swift", "rust"].includes(lang)) {
+            return Promise.reject(new Error(`Unsupported language: ${lang}`));
+        }
+        const sessionId = randomString();
+        const socket = io(`wss://${lang}.repl-web.programiz.com`, {
+            path: "/socket.io",
+            transports: ["websocket"],
+            query: {
+                sessionId,
+                lang,
+                EIO: "3",
+            },
+        });
+
+        const id = `${lang}/${sessionId}`;
+
+
+        return new Promise((resolve, reject) => {
+            let timeout;
+            let result = ""
+            let ok = true;
+
+            socket.on("connect_error", (err) => {
+                console.error(`[${id}] Connection error:`, err);
+                reject(err);
+            });
+
+            socket.on("connect", () => {
+                console.log(`[${id}] Connected`);
+                console.log(`[${id}] Code:\n${code}`);
+                socket.emit("run", { code });
+            });
+
+            socket.on("disconnect", () => {
+                clearTimeout(timeout);
+                // remove bottom marker and trim
+                result = result.replace("=== Code Execution Successful ===", "").trim(); // trim trailing newlines
+                resolve({ output: result, ok });
+                console.log(`[${id}] Disconnected`);
+            });
+
+            socket.on("output", ({ output }) => {
+                console.log(`[${id}] Output received:`, output);
+                if (output.slice(0, 6) === "ERROR!") {
+                    ok = false;
+                    // we try to retrieve the error message in the next message
+                    return
+                }
+                // append output
+                result += output;
+            });
+
+            // safety timeout
+            timeout = setTimeout(() => {
+                reject(new Error(`[${id}] Timeout while waiting for output`));
+                socket.disconnect();
+            }, 10000);
+        });
+    }
+
+</script>
+    
+    <script type="speculationrules">
+{
+  "prerender": [
+    {
+      "where": {
+          "selector_matches": ["#next-button", "#previous-button"],
+      }
+    }
+  ]
+}
+</script>
+</body>
+
+</html>
