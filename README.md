@@ -1,4 +1,8 @@
 <p align="center">
+ <img src="docs/figure/logo.png" alt="FlowLLM Logo" width="50%">
+</p>
+
+<p align="center">
   <strong>FlowLLM: A Flexible Framework for Building LLM-Powered Flows</strong><br>
   <em>Flow with Intelligence, Build with Simplicity.</em>
 </p>
