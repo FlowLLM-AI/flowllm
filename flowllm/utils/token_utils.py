@@ -1,20 +1,46 @@
+from typing import TYPE_CHECKING, Any
+
 from loguru import logger
 
-try:
+if TYPE_CHECKING:
     import tiktoken
-
-    TIKTOKEN_AVAILABLE = True
-except ImportError:
-    TIKTOKEN_AVAILABLE = False
-    logger.exception("tiktoken not installed. OpenAI models will use character-based estimation.")
-
-try:
     from modelscope import AutoTokenizer as ModelScopeTokenizer
 
-    MODELSCOPE_AVAILABLE = True
-except ImportError as e:
-    MODELSCOPE_AVAILABLE = False
-    logger.exception("modelscope not installed. Qwen models will use character-based estimation.")
+# Lazy import flags
+_TIKTOKEN_CHECKED = False
+_TIKTOKEN_AVAILABLE = False
+_MODELSCOPE_CHECKED = False
+_MODELSCOPE_AVAILABLE = False
+
+
+def _check_tiktoken() -> bool:
+    """Lazy check for tiktoken availability."""
+    global _TIKTOKEN_CHECKED, _TIKTOKEN_AVAILABLE
+    if not _TIKTOKEN_CHECKED:
+        try:
+            import tiktoken  # noqa: F401
+
+            _TIKTOKEN_AVAILABLE = True
+        except ImportError:
+            _TIKTOKEN_AVAILABLE = False
+            logger.debug("tiktoken not installed. OpenAI models will use character-based estimation.")
+        _TIKTOKEN_CHECKED = True
+    return _TIKTOKEN_AVAILABLE
+
+
+def _check_modelscope() -> bool:
+    """Lazy check for modelscope availability."""
+    global _MODELSCOPE_CHECKED, _MODELSCOPE_AVAILABLE
+    if not _MODELSCOPE_CHECKED:
+        try:
+            from modelscope import AutoTokenizer  # noqa: F401
+
+            _MODELSCOPE_AVAILABLE = True
+        except ImportError:
+            _MODELSCOPE_AVAILABLE = False
+            logger.debug("modelscope not installed. Qwen models will use character-based estimation.")
+        _MODELSCOPE_CHECKED = True
+    return _MODELSCOPE_AVAILABLE
 
 
 class TokenCounter:
@@ -72,11 +98,13 @@ class TokenCounter:
 
     def _count_with_tiktoken(self, text: str, model_name: str) -> int:
         """Count tokens using tiktoken (for GPT models)."""
-        if not TIKTOKEN_AVAILABLE:
+        if not _check_tiktoken():
             logger.debug(f"tiktoken not available, using fallback for {model_name}")
             return self._estimate_from_chars(text)
 
         try:
+            import tiktoken
+
             # Get encoding for the model
             if model_name.startswith("gpt-4o"):
                 encoding_name = "o200k_base"
@@ -102,11 +130,13 @@ class TokenCounter:
         
         Expects a direct ModelScope path: "qwen/Qwen2.5-72B-Instruct"
         """
-        if not MODELSCOPE_AVAILABLE:
+        if not _check_modelscope():
             logger.debug(f"modelscope not available, using fallback for {model_name}")
             return self._estimate_from_chars(text)
 
         try:
+            from modelscope import AutoTokenizer as ModelScopeTokenizer
+
             # Use model_name directly as ModelScope path
             ms_model = model_name
 
