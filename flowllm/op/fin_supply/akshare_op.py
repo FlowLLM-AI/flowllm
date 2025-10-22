@@ -2,11 +2,13 @@ import asyncio
 import json
 import sys
 from io import StringIO
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-import akshare as ak
 import pandas as pd
 from loguru import logger
+
+if TYPE_CHECKING:
+    import akshare as ak
 
 from flowllm.context import FlowContext
 from flowllm.context.service_context import C
@@ -40,6 +42,7 @@ class AkshareMarketOp(BaseAsyncToolOp):
 
     @staticmethod
     def download_a_stock_df():
+        import akshare as ak
         stock_sh_a_spot_em_df = ak.stock_sh_a_spot_em()
         stock_sz_a_spot_em_df = ak.stock_sz_a_spot_em()
         stock_bj_a_spot_em_df = ak.stock_bj_a_spot_em()

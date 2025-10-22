@@ -1,6 +1,6 @@
 import asyncio
+from typing import TYPE_CHECKING
 
-from crawl4ai import BrowserConfig, CrawlerRunConfig, CacheMode, AsyncWebCrawler
 from loguru import logger
 
 from flowllm.context.flow_context import FlowContext
@@ -8,6 +8,9 @@ from flowllm.context.service_context import C
 from flowllm.op.base_async_tool_op import BaseAsyncToolOp
 from flowllm.schema.tool_call import ToolCall
 from flowllm.utils.web_utils import get_random_user_agent
+
+if TYPE_CHECKING:
+    from crawl4ai import BrowserConfig, CrawlerRunConfig, AsyncWebCrawler
 
 
 @C.register_op(register_app="FlowLLM")
@@ -24,14 +27,8 @@ class Crawl4aiOp(BaseAsyncToolOp):
                          **kwargs)
 
         self.max_content_len: int = max_content_len
-
-        self.browser_config = BrowserConfig(headless=True,
-            java_script_enabled=True,
-            user_agent=get_random_user_agent(),
-            viewport={"width": 1280, "height": 800},
-            verbose=True)
-
-        self.crawler_config = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=True)
+        self.browser_config = None
+        self.crawler_config = None
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(**{
@@ -46,6 +43,9 @@ class Crawl4aiOp(BaseAsyncToolOp):
         })
 
     async def async_execute(self):
+        # Lazy import crawl4ai only when actually needed
+        from crawl4ai import BrowserConfig, CrawlerRunConfig, CacheMode, AsyncWebCrawler
+        
         url: str = self.input_dict["url"]
 
         if self.enable_cache:
@@ -53,6 +53,17 @@ class Crawl4aiOp(BaseAsyncToolOp):
             if cached_result:
                 self.set_result(cached_result["response_content"])
                 return
+
+        # Initialize configs lazily
+        self.browser_config = BrowserConfig(
+            headless=True,
+            java_script_enabled=True,
+            user_agent=get_random_user_agent(),
+            viewport={"width": 1280, "height": 800},
+            verbose=True
+        )
+
+        self.crawler_config = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, verbose=True)
 
         async with AsyncWebCrawler(config=self.browser_config) as crawler:
             result = await crawler.arun(url=url, config=self.crawler_config)
