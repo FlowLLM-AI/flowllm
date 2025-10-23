@@ -1,5 +1,4 @@
 import json
-import os
 import time
 import uuid
 from datetime import datetime
@@ -7,17 +6,12 @@ from datetime import datetime
 import requests
 import streamlit as st
 
-from flowllm.utils.common_utils import load_env
+from flowllm.context import C
 
-if not os.getenv("FLOW_APP_NAME"):
-    load_env(enable_log=False)
-
-APP_NAME: str = os.environ["FLOW_APP_NAME"]
+APP_NAME: str = C.APP_NAME_VALUE
 available_models = [
     'langchain+brief+bailian_search',
-    'langchain+brief+bocha_search',
     'langchain+bailian_search',
-    'langchain+bocha_search',
     'dashscope_deep_research',
     'llm_flow_stream',
     # Add more models here in the future

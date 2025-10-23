@@ -9,17 +9,17 @@ flow:
     flow_content: langchain_deep_research_op2 << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
-  langchain+bocha_search:
-    flow_content: langchain_deep_research_op2 << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
-    stream: true
+  #  langchain+bocha_search:
+  #    flow_content: langchain_deep_research_op2 << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
+  #    stream: true
 
   langchain+brief+bailian_search:
     flow_content: langchain_deep_research_op << (conduct_research_op << bailian_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
     stream: true
 
-  langchain+brief+bocha_search:
-    flow_content: langchain_deep_research_op << (conduct_research_op << bocha_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
-    stream: true
+  #  langchain+brief+bocha_search:
+  #    flow_content: langchain_deep_research_op << (conduct_research_op << bocha_web_search_op << think_tool_op << research_complete_op) << think_tool_op << research_complete_op
+  #    stream: true
 
   task_react:
     flow_content: task_react_op
@@ -54,15 +54,15 @@ op:
       input_schema_deleted:
         - ctx
 
-  bocha_web_search_op:
-    backend: base_mcp_op
-    params:
-      mcp_name: bochaai_search
-      tool_name: bocha_web_search
-      save_answer: true
-      input_schema_optional:
-        - freshness
-        - count
+  #  bocha_web_search_op:
+  #    backend: base_mcp_op
+  #    params:
+  #      mcp_name: bochaai_search
+  #      tool_name: bocha_web_search
+  #      save_answer: true
+  #      input_schema_optional:
+  #        - freshness
+  #        - count
 
   brave_web_search_op:
     backend: base_mcp_op
@@ -99,8 +99,8 @@ external_mcp:
     url: "https://dashscope.aliyuncs.com/api/v1/mcps/WebParser/sse"
     headers:
       Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
-  bochaai_search:
-    type: sse
-    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
-    headers:
-      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"
+#  bochaai_search:
+#    type: sse
+#    url: "https://dashscope.aliyuncs.com/api/v1/mcps/bochaai_search/sse"
+#    headers:
+#      Authorization: "Bearer {FLOW_BAILIAN_API_KEY}"

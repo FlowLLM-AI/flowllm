@@ -293,7 +293,7 @@ class PydanticConfigParser(Generic[T]):
         Update configuration object using keyword arguments
         
         Args:
-            **kwargs: Configuration items to update, supports dot notation, e.g. server__host='localhost'
+            **kwargs: Configuration items to update, supports dot notation, e.g. a.b.c='xxx'
             
         Returns:
             Updated configuration object

@@ -1,5 +1,3 @@
-import os
-
 from pyfiglet import Figlet
 from rich.console import Console, Group
 from rich.panel import Panel
@@ -7,12 +5,12 @@ from rich.table import Table
 from rich.text import Text
 
 
-def print_logo(service_config, width: int = 400):
+def print_logo(service_config, app_name: str, width: int = 400):
     from flowllm.schema.service_config import ServiceConfig
     assert isinstance(service_config, ServiceConfig)
 
     f = Figlet(font="slant", width=width)
-    logo: str = f.renderText(os.environ["FLOW_APP_NAME"])
+    logo: str = f.renderText(app_name)
     logo_text = Text(logo, style="bold green")
 
     info_table = Table.grid(padding=(0, 1))
@@ -44,7 +42,7 @@ def print_logo(service_config, width: int = 400):
 
     panel = Panel(
         panel_content,
-        title=os.environ["FLOW_APP_NAME"],
+        title=app_name,
         title_align="left",
         border_style="dim",
         padding=(1, 4),

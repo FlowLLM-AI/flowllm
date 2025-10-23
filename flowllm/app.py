@@ -1,7 +1,7 @@
 import asyncio
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
 
 from loguru import logger
 
@@ -18,41 +18,138 @@ from flowllm.utils.logger_utils import init_logger
 
 
 class FlowLLMApp:
+    """
+    FlowLLM Application main class for managing flows, services, and configurations.
+    
+    This class provides the entry point for initializing and running FlowLLM applications,
+    managing vector stores, embedding models, and flow execution.
+    """
 
     def __init__(self,
+                 llm_api_key: str = None,
+                 llm_api_base: str = None,
+                 embedding_api_key: str = None,
+                 embedding_api_base: str = None,
                  service_config: ServiceConfig = None,
-                 args: List[str] = None,
                  parser: type[PydanticConfigParser] = None,
-                 load_default_config: bool = False):
+                 config_path: str = None,
+                 load_default_config: bool = False,
+                 *args,
+                 **kwargs):
+        """
+        Initialize FlowLLM application with configuration.
+        
+        Args:
+            llm_api_key: API key for LLM service
+            llm_api_base: Base URL for LLM API
+            embedding_api_key: API key for embedding service
+            embedding_api_base: Base URL for embedding API
+            service_config: Pre-configured ServiceConfig object
+            parser: Custom configuration parser class
+            config_path: Path to custom configuration YAML file. If provided, loads configuration from this file.
+                Example: "path/to/my_config.yaml"
+            load_default_config: Whether to load default configuration (default.yaml). 
+                If True and config_path is not provided, loads the default configuration.
+            *args: Additional arguments passed to parser. Examples:
+                - "llm.default.model_name=qwen3-30b-a3b-thinking-2507"
+                - "llm.default.backend=openai_compatible"
+                - "llm.default.params={'temperature': '0.6'}"
+                - "embedding_model.default.model_name=text-embedding-v4"
+                - "embedding_model.default.backend=openai_compatible"
+                - "embedding_model.default.params={'dimensions': 1024}"
+                - "vector_store.default.backend=memory"
+                - "vector_store.default.embedding_model=default"
+                - "vector_store.default.params={...}"
+            **kwargs: Additional keyword arguments passed to parser. Same format as args but as kwargs.
+        """
+
+        if llm_api_key:
+            os.environ["FLOW_LLM_API_KEY"] = llm_api_key
+
+        if llm_api_base:
+            os.environ["FLOW_LLM_API_BASE"] = llm_api_base
+
+        if embedding_api_key:
+            os.environ["FLOW_EMBEDDING_API_KEY"] = embedding_api_key
+
+        if embedding_api_base:
+            os.environ["FLOW_EMBEDDING_API_BASE"] = embedding_api_base
+
+        # Initialize parser first (needed for update_service_config method)
+        if parser is None:
+            parser = PydanticConfigParser
+        self.parser = parser(ServiceConfig)
+
         if service_config is not None:
             self.service_config: ServiceConfig = service_config
-
         else:
-            if parser is None:
-                parser = PydanticConfigParser
+            input_args = []
+            if config_path:
+                input_args.append(f"config={config_path}")
+            elif load_default_config:
+                input_args.append(f"config={parser.default_config_name}")
 
-            if load_default_config:
-                args = [f"config={parser.default_config_name}"]
-            elif isinstance(args, str):
-                args = [x for x in args.split(" ") if x]
-            elif not args:
-                args = []
+            if args:
+                input_args.extend(args)
 
-            self.service_config = parser(ServiceConfig).parse_args(*args)
+            if kwargs:
+                input_args.extend([f"{k}={v}" for k, v in kwargs.items()])
+
+            self.service_config = self.parser.parse_args(*input_args)
 
         if self.service_config.init_logger:
             init_logger()
 
+    def update_service_config(self, **kwargs):
+        """
+        Update configuration object using keyword arguments
+
+        Args:
+            **kwargs: Configuration items to update, supports dot notation, e.g. a.b.c='xxx'
+
+        Returns:
+            Updated configuration object
+        """
+        self.service_config = self.parser.update_config(**kwargs)
+        return self.service_config
+
     async def __aenter__(self):
+        """
+        Async context manager entry point.
+        
+        Returns:
+            Self instance after starting the application
+        """
         await self.async_start()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """
+        Async context manager exit point.
+        
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+            
+        Returns:
+            False to propagate any exception
+        """
         await self.async_stop()
         return False
 
     @staticmethod
     async def get_mcp_tools(name: str, mcp_server_config: dict) -> dict:
+        """
+        Retrieve available tools from an MCP (Model Context Protocol) server.
+        
+        Args:
+            name: Name identifier for the MCP server
+            mcp_server_config: Configuration dictionary for the MCP server
+            
+        Returns:
+            Dictionary containing server name and available tool calls, or empty dict on error
+        """
         try:
             async with McpClient(name=name, config=mcp_server_config) as client:
                 tool_calls = await client.list_tool_calls()
@@ -70,6 +167,15 @@ class FlowLLMApp:
             return {}
 
     def filter_flows(self, name: str) -> bool:
+        """
+        Determine if a flow should be enabled based on configuration.
+        
+        Args:
+            name: Flow name to check
+            
+        Returns:
+            True if the flow should be enabled, False otherwise
+        """
         if self.service_config.enabled_flows:
             return name in self.service_config.enabled_flows
         elif self.service_config.disabled_flows:
@@ -78,6 +184,12 @@ class FlowLLMApp:
             return True
 
     async def async_start(self):
+        """
+        Asynchronously start the FlowLLM application.
+        
+        Initializes external MCP servers, service configuration, thread pools,
+        vector stores, embedding models, and registers all flows.
+        """
         # add external_mcp
         for name, mcp_server_config in self.service_config.external_mcp.items():
             mcp_server_info = await self.get_mcp_tools(name, mcp_server_config)
@@ -120,6 +232,13 @@ class FlowLLMApp:
             C.flow_dict[name] = flow
 
     async def async_stop(self, wait_thread_pool=True, wait_ray: bool = True):
+        """
+        Asynchronously stop the FlowLLM application and clean up resources.
+        
+        Args:
+            wait_thread_pool: Whether to wait for thread pool tasks to complete
+            wait_ray: Whether to wait for Ray tasks to complete
+        """
         for name, vector_store in C.vector_store_dict.items():
             await vector_store.async_close()
         C.thread_pool.shutdown(wait=wait_thread_pool)
@@ -128,17 +247,46 @@ class FlowLLMApp:
             ray.shutdown(_exiting_interpreter=not wait_ray)
 
     def __enter__(self):
+        """
+        Synchronous context manager entry point.
+        
+        Returns:
+            Self instance after starting the application
+        """
         self.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        Synchronous context manager exit point.
+        
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+            
+        Returns:
+            False to propagate any exception
+        """
         self.stop()
         return False
 
     def start(self):
+        """
+        Synchronously start the FlowLLM application.
+        
+        Wraps async_start() in asyncio.run() for synchronous usage.
+        """
         asyncio.run(self.async_start())
 
     def stop(self, wait_thread_pool=True, wait_ray: bool = True):
+        """
+        Synchronously stop the FlowLLM application and clean up resources.
+        
+        Args:
+            wait_thread_pool: Whether to wait for thread pool tasks to complete
+            wait_ray: Whether to wait for Ray tasks to complete
+        """
         for name, vector_store in C.vector_store_dict.items():
             vector_store.close()
         C.thread_pool.shutdown(wait=wait_thread_pool)
@@ -148,18 +296,57 @@ class FlowLLMApp:
 
     @staticmethod
     def execute_flow(name: str, **kwargs):
+        """
+        Synchronously execute a non-streaming flow by name.
+        
+        Args:
+            name: Name of the flow to execute
+            **kwargs: Additional arguments to pass to the flow
+            
+        Returns:
+            Flow execution result
+            
+        Raises:
+            AssertionError: If the flow is configured for streaming
+        """
         flow: BaseFlow = C.get_flow(name)
-        assert flow.stream is False, "stream is not supported in async_execute_flow!"
+        assert flow.stream is False, "stream is not supported in execute_flow!"
         return flow.call(**kwargs)
 
     @staticmethod
     async def async_execute_flow(name: str, **kwargs):
+        """
+        Asynchronously execute a non-streaming flow by name.
+        
+        Args:
+            name: Name of the flow to execute
+            **kwargs: Additional arguments to pass to the flow
+            
+        Returns:
+            Flow execution result
+            
+        Raises:
+            AssertionError: If the flow is configured for streaming
+        """
         flow: BaseFlow = C.get_flow(name)
         assert flow.stream is False, "stream is not supported in async_execute_flow!"
         return await flow.async_call(**kwargs)
 
     @staticmethod
     async def async_execute_stream_flow(name: str, **kwargs):
+        """
+        Asynchronously execute a streaming flow by name.
+        
+        Args:
+            name: Name of the flow to execute
+            **kwargs: Additional arguments to pass to the flow
+            
+        Yields:
+            Stream chunks in SSE (Server-Sent Events) format
+            
+        Raises:
+            AssertionError: If the flow is not configured for streaming
+        """
         flow: BaseFlow = C.get_flow(name)
         assert flow.stream is True, "non-stream is not supported in async_execute_stream_flow!"
 
@@ -174,6 +361,12 @@ class FlowLLMApp:
                 yield f"data:{stream_chunk.model_dump_json()}\n\n"
 
     def run_service(self):
+        """
+        Start the service based on the configured backend.
+        
+        Initializes and runs the appropriate service implementation
+        (e.g., FastAPI, Flask) according to service configuration.
+        """
         service_cls = C.get_service_class(self.service_config.backend)
         service: BaseService = service_cls(service_config=self.service_config,
                                            enable_logo=self.service_config.enable_logo)
@@ -182,11 +375,14 @@ class FlowLLMApp:
 
 
 def main():
-    with FlowLLMApp(args=sys.argv[1:]) as app:
+    """
+    Entry point for running FlowLLM application from command line.
+    
+    Parses command-line arguments and starts the service.
+    """
+    with FlowLLMApp(*sys.argv[1:]) as app:
         app.run_service()
 
 
 if __name__ == "__main__":
     main()
-
-# python -m build && twine upload dist/*

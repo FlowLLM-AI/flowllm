@@ -39,7 +39,7 @@ class BaseService(ABC):
                     logger.info(f"integrate flow={flow.name}")
 
         if self.enable_logo:
-            print_logo(service_config=self.service_config)
+            print_logo(service_config=self.service_config, app_name=C.APP_NAME_VALUE)
 
         import warnings
 

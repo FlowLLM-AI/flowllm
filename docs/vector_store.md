@@ -9,23 +9,25 @@ flowllm provides multiple vector store backends for different use cases:
 - **LocalVectorStore** (`backend=local`) - 📁 Simple file-based storage for development and small datasets
 - **ChromaVectorStore** (`backend=chroma`) - 🔮 Embedded vector database for moderate scale
 - **EsVectorStore** (`backend=elasticsearch`) - 🔍 Elasticsearch-based storage for production and large scale
+- **QdrantVectorStore** (`backend=qdrant`) - 🎯 High-performance vector database with advanced filtering
 - **MemoryVectorStore** (`backend=memory`) - ⚡ In-memory storage for ultra-fast access and testing
 
 All vector stores implement the `BaseVectorStore` interface, providing a consistent API across implementations.
 
 ## 📊 Comparison Table
 
-| Feature              | LocalVectorStore | ChromaVectorStore | EsVectorStore | MemoryVectorStore |
-|----------------------|------------------|-------------------|---------------|-------------------|
-| **Storage**          | File (JSONL)     | Embedded DB       | Elasticsearch | In-Memory         |
-| **Performance**      | Medium           | Good              | Excellent     | Ultra-Fast        |
-| **Scalability**      | < 10K vectors    | < 1M vectors      | > 1M vectors  | < 1M vectors      |
-| **Persistence**      | ✅ Auto           | ✅ Auto            | ✅ Auto        | ⚠️ Manual         |
-| **Setup Complexity** | 🟢 Simple        | 🟡 Medium         | 🔴 Complex    | 🟢 Simple         |
-| **Dependencies**     | None             | ChromaDB          | Elasticsearch | None              |
-| **Filtering**        | ❌ Basic          | ✅ Metadata        | ✅ Advanced    | ❌ Basic           |
-| **Concurrency**      | ❌ Limited        | ✅ Good            | ✅ Excellent   | ❌ Single Process  |
-| **Best For**         | Development      | Local Apps        | Production    | Testing           |
+| Feature              | LocalVectorStore | ChromaVectorStore | EsVectorStore | QdrantVectorStore | MemoryVectorStore |
+|----------------------|------------------|-------------------|---------------|-------------------|-------------------|
+| **Storage**          | File (JSONL)     | Embedded DB       | Elasticsearch | Qdrant Server     | In-Memory         |
+| **Performance**      | Medium           | Good              | Excellent     | Excellent         | Ultra-Fast        |
+| **Scalability**      | < 10K vectors    | < 1M vectors      | > 1M vectors  | > 10M vectors     | < 1M vectors      |
+| **Persistence**      | ✅ Auto           | ✅ Auto            | ✅ Auto        | ✅ Auto            | ⚠️ Manual         |
+| **Setup Complexity** | 🟢 Simple        | 🟡 Medium         | 🔴 Complex    | 🟡 Medium         | 🟢 Simple         |
+| **Dependencies**     | None             | ChromaDB          | Elasticsearch | Qdrant            | None              |
+| **Filtering**        | ❌ Basic          | ✅ Metadata        | ✅ Advanced    | ✅ Advanced        | ❌ Basic           |
+| **Concurrency**      | ❌ Limited        | ✅ Good            | ✅ Excellent   | ✅ Excellent       | ❌ Single Process  |
+| **Async Support**    | ❌ No             | ❌ No              | ❌ No          | ✅ Native          | ❌ No              |
+| **Best For**         | Development      | Local Apps        | Production    | Production/Cloud  | Testing           |
 
 ## 🔄 Common API Methods
 
@@ -373,7 +375,354 @@ for result in results:
     print(f"Metadata: {result.metadata}")
 ```
 
-### 4. ⚡ MemoryVectorStore (`backend=memory`)
+### 4. 🎯 QdrantVectorStore (`backend=qdrant`)
+
+A high-performance vector database designed for production workloads with native async support and advanced filtering.
+
+#### 💡 When to Use
+- **Production environments** requiring high performance and reliability 🏭
+- **Large-scale applications** (10M+ vectors) with excellent horizontal scaling 🚀
+- **Applications requiring native async operations** for better concurrency ⚡
+- **Complex filtering and metadata queries** on large datasets 🎯
+- **Cloud-native deployments** with Qdrant Cloud support ☁️
+
+#### 🛠️ Setup Qdrant
+
+Before using QdrantVectorStore, set up Qdrant:
+
+##### Option 1: Docker Run (Recommended for Development)
+```bash
+# Pull the latest Qdrant image
+docker pull qdrant/qdrant
+
+# Run Qdrant container
+docker run -p 6333:6333 -p 6334:6334 \
+  -v $(pwd)/qdrant_storage:/qdrant/storage:z \
+  qdrant/qdrant
+```
+
+##### Option 2: Qdrant Cloud
+For production, you can use [Qdrant Cloud](https://cloud.qdrant.io/) for managed hosting.
+
+##### Environment Configuration
+```bash
+# For local setup
+export FLOW_QDRANT_HOST=localhost
+export FLOW_QDRANT_PORT=6333
+
+# For cloud setup (optional)
+export FLOW_QDRANT_API_KEY=your-api-key
+```
+
+#### ⚙️ Configuration
+
+```python
+from flowllm.storage.vector_store import QdrantVectorStore
+from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
+from flowllm.utils.common_utils import load_env
+import os
+
+# Load environment variables
+load_env()
+
+# Initialize embedding model
+embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
+
+# Option 1: Use localhost with environment variables
+vector_store = QdrantVectorStore(
+    embedding_model=embedding_model,
+    host=os.getenv("FLOW_QDRANT_HOST", "localhost"),
+    port=int(os.getenv("FLOW_QDRANT_PORT", "6333")),
+    batch_size=1024
+)
+
+# Option 2: Use URL (for Qdrant Cloud or remote servers)
+vector_store = QdrantVectorStore(
+    embedding_model=embedding_model,
+    url="http://your-qdrant-server:6333",
+    api_key="your-api-key",  # Optional, for cloud
+    batch_size=1024
+)
+
+# Option 3: Specify custom distance metric
+from qdrant_client.http.models import Distance
+
+vector_store = QdrantVectorStore(
+    embedding_model=embedding_model,
+    host="localhost",
+    port=6333,
+    distance=Distance.COSINE,  # or Distance.EUCLIDEAN, Distance.DOT
+    batch_size=1024
+)
+```
+
+#### 🎯 Advanced Filtering
+
+QdrantVectorStore supports advanced filtering capabilities similar to Elasticsearch:
+
+```python
+# Term filters (exact match)
+term_filter = {
+    "category": "AI",
+    "node_type": "research"
+}
+
+# Range filters (numeric)
+range_filter = {
+    "confidence": {"gte": 0.8, "lte": 1.0},  # Between 0.8 and 1.0
+    "score": {"gt": 0.5}  # Greater than 0.5
+}
+
+# Combined filters (all conditions must match - AND logic)
+combined_filter = {
+    "category": "AI",
+    "confidence": {"gte": 0.9},
+    "node_type": "research"
+}
+
+# Search with filters
+results = vector_store.search(
+    query="machine learning",
+    workspace_id=workspace_id,
+    top_k=10,
+    filter_dict=combined_filter
+)
+```
+
+##### Filter Operations Supported:
+- **Exact match**: `{"field": "value"}`
+- **Range queries**:
+  - `gte`: Greater than or equal
+  - `lte`: Less than or equal
+  - `gt`: Greater than
+  - `lt`: Less than
+
+#### ⚡ Async Operations
+
+QdrantVectorStore provides **native async support** for all operations:
+
+```python
+import asyncio
+
+async def main():
+    # All operations have async equivalents
+    
+    # Check if workspace exists
+    exists = await vector_store.async_exist_workspace(workspace_id)
+    
+    # Create workspace
+    if not exists:
+        await vector_store.async_create_workspace(workspace_id)
+    
+    # Insert nodes with async embedding
+    await vector_store.async_insert(nodes, workspace_id)
+    
+    # Search with async embedding
+    results = await vector_store.async_search(
+        query="AI research",
+        workspace_id=workspace_id,
+        top_k=5,
+        filter_dict={"category": "AI"}
+    )
+    
+    # Delete nodes
+    await vector_store.async_delete(node_ids, workspace_id)
+    
+    # Delete workspace
+    await vector_store.async_delete_workspace(workspace_id)
+    
+    # Close client
+    await vector_store.async_close()
+
+# Run async operations
+asyncio.run(main())
+```
+
+#### 💻 Example Usage
+
+```python
+from flowllm.schema.vector_node import VectorNode
+
+workspace_id = "qdrant_workspace"
+
+# Check and create workspace
+if not vector_store.exist_workspace(workspace_id):
+    vector_store.create_workspace(workspace_id)
+
+# Create nodes with rich metadata
+nodes = [
+    VectorNode(
+        unique_id="node1",
+        workspace_id=workspace_id,
+        content="Artificial intelligence is revolutionizing technology",
+        metadata={
+            "category": "AI",
+            "node_type": "research",
+            "confidence": 0.95,
+            "author": "research_team"
+        }
+    ),
+    VectorNode(
+        unique_id="node2",
+        workspace_id=workspace_id,
+        content="Machine learning models require large datasets",
+        metadata={
+            "category": "AI",
+            "node_type": "tutorial",
+            "confidence": 0.85,
+            "author": "education_team"
+        }
+    ),
+    VectorNode(
+        unique_id="node3",
+        workspace_id=workspace_id,
+        content="Deep learning excels at image recognition",
+        metadata={
+            "category": "AI",
+            "node_type": "research",
+            "confidence": 0.92,
+            "author": "research_team"
+        }
+    )
+]
+
+# Insert nodes (upsert - creates or updates)
+vector_store.insert(nodes, workspace_id)
+
+# Simple search
+results = vector_store.search("What is AI?", workspace_id, top_k=3)
+for result in results:
+    print(f"Content: {result.content}")
+    print(f"Score: {result.metadata.get('score', 'N/A')}")
+    print(f"Metadata: {result.metadata}")
+    print("-" * 50)
+
+# Advanced search with filters
+filter_dict = {
+    "node_type": "research",
+    "confidence": {"gte": 0.9}
+}
+
+filtered_results = vector_store.search(
+    query="AI technology",
+    workspace_id=workspace_id,
+    top_k=5,
+    filter_dict=filter_dict
+)
+
+print(f"Found {len(filtered_results)} filtered results")
+for result in filtered_results:
+    print(f"Content: {result.content}")
+    print(f"Metadata: {result.metadata}")
+
+# Iterate through all nodes
+print("\nAll nodes in workspace:")
+for node in vector_store.iter_workspace_nodes(workspace_id, limit=100):
+    print(f"ID: {node.unique_id}, Content: {node.content[:50]}...")
+
+# Update a node (delete + insert)
+updated_node = VectorNode(
+    unique_id="node1",
+    workspace_id=workspace_id,
+    content="Artificial intelligence is transforming industries worldwide",
+    metadata={
+        "category": "AI",
+        "node_type": "research",
+        "confidence": 0.98,
+        "author": "research_team",
+        "updated": True
+    }
+)
+vector_store.delete("node1", workspace_id)
+vector_store.insert(updated_node, workspace_id)
+
+# Export workspace for backup
+vector_store.dump_workspace(workspace_id, path="./qdrant_backup")
+
+# Clean up
+vector_store.close()
+```
+
+#### 🔄 Async Example
+
+```python
+import asyncio
+from flowllm.schema.vector_node import VectorNode
+
+async def async_example():
+    workspace_id = "async_qdrant_workspace"
+    
+    # Create workspace
+    if not await vector_store.async_exist_workspace(workspace_id):
+        await vector_store.async_create_workspace(workspace_id)
+    
+    # Create nodes
+    nodes = [
+        VectorNode(
+            unique_id="async_node1",
+            workspace_id=workspace_id,
+            content="Async operations enable better performance",
+            metadata={"type": "performance", "async": True}
+        ),
+        VectorNode(
+            unique_id="async_node2",
+            workspace_id=workspace_id,
+            content="Concurrent requests improve throughput",
+            metadata={"type": "performance", "async": True}
+        )
+    ]
+    
+    # Insert with async embedding
+    await vector_store.async_insert(nodes, workspace_id)
+    
+    # Search with async embedding
+    results = await vector_store.async_search(
+        query="performance optimization",
+        workspace_id=workspace_id,
+        top_k=2,
+        filter_dict={"async": True}
+    )
+    
+    for result in results:
+        print(f"Score: {result.metadata['score']:.4f}")
+        print(f"Content: {result.content}")
+    
+    # Cleanup
+    await vector_store.async_delete_workspace(workspace_id)
+    await vector_store.async_close()
+
+# Run async example
+asyncio.run(async_example())
+```
+
+#### 🌟 Key Features
+
+- **Native Async Support** - All operations have async equivalents for better concurrency
+- **Upsert Operations** - Insert automatically updates existing nodes with the same ID
+- **Advanced Filtering** - Support for term and range filters on metadata
+- **High Performance** - Optimized for large-scale vector similarity search
+- **Horizontal Scaling** - Supports clustering for distributed deployments
+- **Multiple Distance Metrics** - Cosine, Euclidean, and Dot Product similarity
+- **Persistent Storage** - Data is automatically persisted to disk
+- **Efficient Iteration** - Scroll through large collections with pagination
+
+#### 🚨 Important Notes
+
+- **Collection = Workspace** - Qdrant uses "collections" which map to workspace_id
+- **Automatic Embedding** - Nodes without vectors are automatically embedded
+- **ID-based Upsert** - Using the same unique_id will update existing nodes
+- **Metadata Indexing** - All metadata fields are automatically indexed for filtering
+- **Connection Management** - Call `close()` or `async_close()` to cleanup connections
+
+#### 📊 Performance Tips
+
+1. **Batch Operations** - Insert multiple nodes at once for better performance
+2. **Use Async** - For high-concurrency scenarios, use async methods
+3. **Optimize Filters** - Use indexed metadata fields for faster filtering
+4. **Pagination** - Use `iter_workspace_nodes()` with appropriate `limit` for large collections
+5. **Distance Metric** - Choose appropriate distance metric for your use case (COSINE for normalized vectors)
+
+### 5. ⚡ MemoryVectorStore (`backend=memory`)
 
 An ultra-fast in-memory vector store that keeps all data in RAM for maximum performance.
 
@@ -528,7 +877,7 @@ embedding_model = OpenAICompatibleEmbeddingModel(
 )
 
 # Pass to vector store (example with LocalVectorStore)
-# You can also use: ChromaVectorStore, EsVectorStore, or MemoryVectorStore
+# You can also use: ChromaVectorStore, EsVectorStore, QdrantVectorStore, or MemoryVectorStore
 vector_store = LocalVectorStore(
     embedding_model=embedding_model,
     store_dir="./vector_store"

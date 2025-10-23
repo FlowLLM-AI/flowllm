@@ -7,11 +7,14 @@ from flowllm.context.base_context import BaseContext
 from flowllm.context.registry import Registry
 from flowllm.enumeration.registry_enum import RegistryEnum
 from flowllm.schema.service_config import ServiceConfig
+from flowllm.utils.common_utils import load_env
 from flowllm.utils.singleton import singleton
 
 
 @singleton
 class ServiceContext(BaseContext):
+    APP_NAME_KEY = "FLOW_APP_NAME"
+    APP_NAME_VALUE = "FlowLLM"
 
     def __init__(self, service_id: str = uuid.uuid4().hex, **kwargs):
         super().__init__(**kwargs)
@@ -25,13 +28,22 @@ class ServiceContext(BaseContext):
         self.registry_dict: Dict[str, Registry] = {v: Registry() for v in RegistryEnum.__members__.values()}
         self.flow_dict: dict = {}
 
+        load_env()
+        app_name_value = os.getenv(self.APP_NAME_KEY)
+        if app_name_value:
+            self.APP_NAME_VALUE = app_name_value
+            print(f"set {self.APP_NAME_KEY}={app_name_value}")
+        else:
+            os.environ[self.APP_NAME_KEY] = self.APP_NAME_VALUE
+            print(f"init {self.APP_NAME_KEY}={self.APP_NAME_VALUE}")
+
     """
     register model class
     """
 
     def register(self, name: str, register_type: RegistryEnum, register_app: str = ""):
         if register_app:
-            add_cls = register_app == os.environ.get("FLOW_APP_NAME", "")
+            add_cls = register_app == self.APP_NAME_VALUE
         else:
             add_cls: bool = True
         return self.registry_dict[register_type].register(name=name, add_cls=add_cls)
