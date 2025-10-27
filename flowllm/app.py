@@ -67,13 +67,13 @@ class FlowLLMApp:
             os.environ["FLOW_LLM_API_KEY"] = llm_api_key
 
         if llm_api_base:
-            os.environ["FLOW_LLM_API_BASE"] = llm_api_base
+            os.environ["FLOW_LLM_BASE_URL"] = llm_api_base
 
         if embedding_api_key:
             os.environ["FLOW_EMBEDDING_API_KEY"] = embedding_api_key
 
         if embedding_api_base:
-            os.environ["FLOW_EMBEDDING_API_BASE"] = embedding_api_base
+            os.environ["FLOW_EMBEDDING_BASE_URL"] = embedding_api_base
 
         # Initialize parser first (needed for update_service_config method)
         if parser is None:
