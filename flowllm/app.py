@@ -26,6 +26,7 @@ class FlowLLMApp:
     """
 
     def __init__(self,
+                 *args,
                  llm_api_key: str = None,
                  llm_api_base: str = None,
                  embedding_api_key: str = None,
@@ -34,22 +35,11 @@ class FlowLLMApp:
                  parser: type[PydanticConfigParser] = None,
                  config_path: str = None,
                  load_default_config: bool = False,
-                 *args,
                  **kwargs):
         """
         Initialize FlowLLM application with configuration.
         
         Args:
-            llm_api_key: API key for LLM service
-            llm_api_base: Base URL for LLM API
-            embedding_api_key: API key for embedding service
-            embedding_api_base: Base URL for embedding API
-            service_config: Pre-configured ServiceConfig object
-            parser: Custom configuration parser class
-            config_path: Path to custom configuration YAML file. If provided, loads configuration from this file.
-                Example: "path/to/my_config.yaml"
-            load_default_config: Whether to load default configuration (default.yaml). 
-                If True and config_path is not provided, loads the default configuration.
             *args: Additional arguments passed to parser. Examples:
                 - "llm.default.model_name=qwen3-30b-a3b-thinking-2507"
                 - "llm.default.backend=openai_compatible"
@@ -60,6 +50,16 @@ class FlowLLMApp:
                 - "vector_store.default.backend=memory"
                 - "vector_store.default.embedding_model=default"
                 - "vector_store.default.params={...}"
+            llm_api_key: API key for LLM service
+            llm_api_base: Base URL for LLM API
+            embedding_api_key: API key for embedding service
+            embedding_api_base: Base URL for embedding API
+            service_config: Pre-configured ServiceConfig object
+            parser: Custom configuration parser class
+            config_path: Path to custom configuration YAML file. If provided, loads configuration from this file.
+                Example: "path/to/my_config.yaml"
+            load_default_config: Whether to load default configuration (default.yaml). 
+                If True and config_path is not provided, loads the default configuration.
             **kwargs: Additional keyword arguments passed to parser. Same format as args but as kwargs.
         """
 

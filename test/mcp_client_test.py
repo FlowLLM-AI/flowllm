@@ -7,9 +7,15 @@ from flowllm.client.fastmcp_client import FastmcpClient
 
 
 async def main():
-    host = "11.164.204.33"
-    # host = "0.0.0.0"
-    async with FastmcpClient(transport="sse", host=host, port=8001) as client:
+    # New config-based interface matching McpClient
+    config = {
+        "type": "sse",
+        "url": "http://11.164.204.33:8001/sse",  # or "http://0.0.0.0:8001/sse"
+        "headers": {},
+        "timeout": 30.0
+    }
+    
+    async with FastmcpClient("test_client", config, max_retries=3) as client:
 
         print("=" * 50)
         print("Getting available MCP tools...")
@@ -70,15 +76,18 @@ async def main():
             print("=" * 50)
             print(f"Testing tool: {tool_name} with arguments={arguments}")
             try:
-                # result = await client.call_tool(tool_name, arguments)
-                result = await client.call_tool(tool_name, arguments, raise_on_error=False)
+                # New interface: call_tool(tool_name, arguments) returns CallToolResult
+                result = await client.call_tool(tool_name, arguments)
                 print(f"Tool result: {result}")
 
                 if result.content:
                     print(f"Result content: {result.content[0].text}")
-                if hasattr(result, 'structured_content') and result.structured_content:
+                if result.structured_content:
                     print(f"Structured content: {json.dumps(result.structured_content, indent=2, ensure_ascii=False)}")
-                print("✓ Tool call successful")
+                if result.is_error:
+                    print(f"⚠ Tool returned error: {result.content[0].text if result.content else 'Unknown error'}")
+                else:
+                    print("✓ Tool call successful")
 
             except Exception as e:
                 logger.exception(e)
