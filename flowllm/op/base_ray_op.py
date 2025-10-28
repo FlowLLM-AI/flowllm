@@ -11,15 +11,42 @@ from flowllm.op.base_op import BaseOp
 
 class BaseRayOp(BaseOp, ABC):
     """
-    Base class for Ray-based operations that provides parallel task execution capabilities.
-    Inherits from BaseOp and provides methods for submitting and joining Ray tasks.
+    Base class for Ray-based operations that provides distributed parallel execution.
+    
+    Extends BaseOp to support Ray distributed computing framework.
+    Ray enables scaling operations across multiple CPU cores or even multiple machines.
+    
+    Key features:
+    - Distributed task execution across Ray workers
+    - Automatic data serialization with Ray's object store
+    - Load balancing across available workers
+    - Progress tracking with tqdm
+    
+    Use this when you need:
+    - Heavy parallelism beyond thread pool limits
+    - Processing large datasets in parallel
+    - Distributed computing across multiple machines
     """
 
     def __init__(self, **kwargs):
+        """Initialize Ray operation with empty task list."""
         super().__init__(**kwargs)
         self.ray_task_list = []
 
     def submit_and_join_parallel_op(self, op: BaseOp, **kwargs):
+        """
+        Helper to parallelize an operation over a list parameter.
+        
+        Automatically detects the first list parameter and parallelizes the operation
+        across all values in that list.
+        
+        Args:
+            op: Operation to parallelize
+            **kwargs: Parameters including at least one list to parallelize over
+            
+        Returns:
+            Combined results from all parallel executions
+        """
         parallel_key = None
         for key, value in kwargs.items():
             if isinstance(value, list):
@@ -39,6 +66,24 @@ class BaseRayOp(BaseOp, ABC):
                                  parallel_key: str = "",
                                  task_desc: str = "",
                                  **kwargs):
+        """
+        Parallelize a function across Ray workers with automatic load balancing.
+        
+        This method:
+        1. Auto-detects the list parameter to parallelize over (if not specified)
+        2. Converts large objects (DataFrames, dicts, etc.) to Ray objects for efficiency
+        3. Distributes work across workers using round-robin scheduling
+        4. Collects and combines all results
+        
+        Args:
+            fn: Function to execute in parallel (receives one item from parallel_key list)
+            parallel_key: Name of the list parameter to parallelize over (auto-detected if empty)
+            task_desc: Description for progress bar
+            **kwargs: Parameters for fn, one should be a list to parallelize over
+            
+        Returns:
+            Combined list of results from all workers
+        """
 
         import ray
         max_workers = C.service_config.ray_max_workers
@@ -80,6 +125,27 @@ class BaseRayOp(BaseOp, ABC):
 
     @staticmethod
     def ray_task_loop(parallel_key: str, parallel_list: list, actor_index: int, max_workers: int, internal_fn, **kwargs):
+        """
+        Worker loop that processes a subset of the parallel list.
+        
+        Each worker processes every Nth item (round-robin scheduling) where N = max_workers.
+        For example, with 4 workers:
+        - Worker 0: items 0, 4, 8, 12, ...
+        - Worker 1: items 1, 5, 9, 13, ...
+        - Worker 2: items 2, 6, 10, 14, ...
+        - Worker 3: items 3, 7, 11, 15, ...
+        
+        Args:
+            parallel_key: Name of the list parameter
+            parallel_list: Full list to process
+            actor_index: This worker's index (0 to max_workers-1)
+            max_workers: Total number of workers
+            internal_fn: Function to call for each item
+            **kwargs: Additional parameters for internal_fn
+            
+        Returns:
+            Combined results from all items processed by this worker
+        """
         result = []
         for parallel_value in parallel_list[actor_index::max_workers]:
             kwargs.update({"actor_index": actor_index, parallel_key: parallel_value})

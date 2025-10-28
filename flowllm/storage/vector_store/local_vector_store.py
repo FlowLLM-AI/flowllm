@@ -1,5 +1,4 @@
 import asyncio
-import fcntl
 import json
 import math
 from functools import partial
@@ -13,6 +12,26 @@ from tqdm import tqdm
 from flowllm.context.service_context import C
 from flowllm.schema.vector_node import VectorNode
 from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
+
+# fcntl is Unix/Linux specific, not available on Windows
+try:
+    import fcntl
+    HAS_FCNTL = True
+except ImportError:
+    HAS_FCNTL = False
+    logger.warning("fcntl module not available (Windows system?). File locking will be disabled.")
+
+
+def _acquire_lock(file_obj, lock_type):
+    """Acquire file lock if fcntl is available."""
+    if HAS_FCNTL:
+        fcntl.flock(file_obj, lock_type)
+
+
+def _release_lock(file_obj):
+    """Release file lock if fcntl is available."""
+    if HAS_FCNTL:
+        fcntl.flock(file_obj, fcntl.LOCK_UN)
 
 
 @C.register_vector_store("local")
@@ -33,7 +52,7 @@ class LocalVectorStore(BaseVectorStore):
             return
 
         with workspace_path.open() as f:
-            fcntl.flock(f, fcntl.LOCK_SH)
+            _acquire_lock(f, fcntl.LOCK_SH if HAS_FCNTL else None)
             try:
                 for line in tqdm(f, desc="load from path"):
                     if line.strip():
@@ -46,7 +65,7 @@ class LocalVectorStore(BaseVectorStore):
                         yield node
 
             finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
+                _release_lock(f)
 
     @staticmethod
     def _dump_to_path(nodes: Iterable[VectorNode], workspace_id: str, path: str | Path = "", callback_fn=None,
@@ -57,7 +76,7 @@ class LocalVectorStore(BaseVectorStore):
 
         count = 0
         with dump_file.open("w") as f:
-            fcntl.flock(f, fcntl.LOCK_EX)
+            _acquire_lock(f, fcntl.LOCK_EX if HAS_FCNTL else None)
             try:
                 for node in tqdm(nodes, desc="dump to path"):
                     node.workspace_id = workspace_id
@@ -72,7 +91,7 @@ class LocalVectorStore(BaseVectorStore):
 
                 return {"size": count}
             finally:
-                fcntl.flock(f, fcntl.LOCK_UN)
+                _release_lock(f)
 
     @property
     def store_path(self) -> Path:

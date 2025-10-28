@@ -9,25 +9,58 @@ from flowllm.op.base_op import BaseOp
 
 
 class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
+    """
+    Base class for asynchronous operations.
+    
+    Extends BaseOp with async/await support for non-blocking execution.
+    Provides async versions of all execution hooks and async task management.
+    
+    Key features:
+    - Async execution with retry logic
+    - Non-blocking task submission and gathering
+    - Timeout support for async operations
+    - Automatic task cleanup on errors
+    """
 
     def __init__(self, **kwargs):
+        """Initialize async operation with async_mode=True by default."""
         if "async_mode" not in kwargs:
             kwargs["async_mode"] = True
         super().__init__(**kwargs)
 
     async def async_before_execute(self):
+        """Async hook called before async_execute(). Override to add pre-execution logic."""
         ...
 
     async def async_after_execute(self):
+        """Async hook called after async_execute(). Override to add post-execution logic."""
         ...
 
     async def async_execute(self):
+        """Main async execution logic. Override this method in subclasses."""
         ...
 
     async def async_default_execute(self):
+        """Fallback async execution when all retries fail. Override for default behavior."""
         ...
 
     async def async_call(self, context: FlowContext = None, **kwargs) -> Any:
+        """
+        Execute the operation asynchronously with retry logic and error handling.
+        
+        This is the main entry point for async operations. It:
+        1. Builds/updates the context with provided parameters
+        2. Tracks execution time
+        3. Executes the operation with retry logic
+        4. Returns result, context.response, or None
+        
+        Args:
+            context: Execution context to pass data between operations
+            **kwargs: Additional parameters added to context
+            
+        Returns:
+            Operation result, context.response, or None
+        """
         self.context = self.build_context(context, **kwargs)
         with self.timer:
             result = None
@@ -61,6 +94,17 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
             return None
 
     def submit_async_task(self, fn: Callable, *args, **kwargs):
+        """
+        Submit an async coroutine for concurrent execution.
+        
+        Creates an asyncio task that will run concurrently with other tasks.
+        Only accepts coroutine functions (async def).
+        
+        Args:
+            fn: Async function to execute
+            *args: Positional arguments for function
+            **kwargs: Keyword arguments for function
+        """
         loop = asyncio.get_running_loop()
         if asyncio.iscoroutinefunction(fn):
             task = loop.create_task(fn(*args, **kwargs))
@@ -69,6 +113,25 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
             logger.warning("submit_async_task failed, fn is not a coroutine function!")
 
     async def join_async_task(self, timeout: float = None, return_exceptions: bool = True):
+        """
+        Wait for all submitted async tasks to complete and collect results.
+        
+        Features:
+        - Optional timeout with automatic task cancellation
+        - Exception handling with optional exception collection
+        - Automatic task cleanup on timeout or error
+        
+        Args:
+            timeout: Maximum time to wait in seconds (None for no timeout)
+            return_exceptions: If True, exceptions are returned as results instead of raising
+            
+        Returns:
+            Combined list of all task results (excluding exceptions if return_exceptions=True)
+            
+        Raises:
+            asyncio.TimeoutError: If timeout is exceeded
+            Exception: Any exception from tasks if return_exceptions=False
+        """
         result = []
 
         if not self.task_list:
