@@ -1,6 +1,6 @@
 
 
-__version__ = "0.1.11.5"
+__version__ = "0.1.11.6"
 
 from flowllm.app import FlowLLMApp
 from flowllm.context.service_context import C
