@@ -27,7 +27,8 @@ async def async_main():
     """
 
     # Example with OpenAI model through LiteLLM
-    model_name = "qwen-max-2025-01-25"
+    # model_name = "qwen-max-2025-01-25"
+    model_name = "qwen3-30b-a3b-thinking-2507"
     llm = LiteLLM(model_name=model_name)
 
     # Test async chat
@@ -48,7 +49,8 @@ def main():
     """
 
     # Example with OpenAI model through LiteLLM
-    model_name = "qwen-max-2025-01-25"  # LiteLLM will route to OpenAI
+    # model_name = "qwen-max-2025-01-25"
+    model_name = "qwen3-30b-a3b-thinking-2507"
     llm = LiteLLM(model_name=model_name)
 
     # Test sync chat
@@ -62,6 +64,6 @@ def main():
 
 if __name__ == "__main__":
     # Run async test by default
-    asyncio.run(async_main())
+    # asyncio.run(async_main())
 
     main()
