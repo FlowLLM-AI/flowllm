@@ -56,6 +56,7 @@ repos:
           --disable=W0122,
           --disable=C0103,
           --disable=R0913,
+          --disable=R0917,
           --disable=E0401,
           --disable=E1101,
           --disable=C0415,
@@ -76,6 +77,8 @@ repos:
           --disable=W0632,
           --disable=W0123,
           --disable=C3001,
+          --disable=R1702,
+          --disable=R0912,
           --max-line-length=120,
         ]
   - repo: https://github.com/regebro/pyroma

@@ -34,7 +34,7 @@ dependencies = [
     "fastapi>=0.104.0",
     "fastmcp>=0.1.0",
     "httpx>=0.25.0",
-    "litellm>=1.0.0",
+
     "loguru>=0.7.0",
     "mcp>=0.1.0",
     "numpy>=1.24.0",
@@ -52,6 +52,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+
+full = [
+    "litellm>=1.0.0",
+]
 
 reme = ["elasticsearch>=8.10.0", "chromadb>=0.4.0", "qdrant_client>=1.15.1"]
 

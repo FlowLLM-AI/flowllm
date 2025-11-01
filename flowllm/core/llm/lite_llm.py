@@ -1,19 +1,30 @@
+"""LiteLLM implementation for flowllm.
+
+This module provides an implementation of BaseLLM using the LiteLLM library,
+which enables support for 100+ LLM providers through a unified interface.
+LiteLLM automatically handles provider-specific authentication and request
+formatting, making it easy to switch between different LLM providers without
+code changes.
+"""
+
 import asyncio
 import os
-from typing import List, Dict
+import time
+from typing import List, Dict, Optional, Generator, AsyncGenerator
 
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.service_context import C
-from flowllm.enumeration.chunk_enum import ChunkEnum
-from flowllm.enumeration.role import Role
-from flowllm.llm.base_llm import BaseLLM
-from flowllm.schema.message import Message
-from flowllm.schema.tool_call import ToolCall
+from .base_llm import BaseLLM
+from ..context import C
+from ..enumeration import ChunkEnum
+from ..enumeration import Role
+from ..schema import FlowStreamChunk
+from ..schema import Message
+from ..schema import ToolCall
 
 
-@C.register_llm("litellm")
+@C.register_llm()
 class LiteLLM(BaseLLM):
     """
     LiteLLM-compatible LLM implementation supporting multiple LLM providers through unified interface.
@@ -26,11 +37,17 @@ class LiteLLM(BaseLLM):
     - Robust error handling and retries
 
     LiteLLM automatically handles provider-specific authentication and request formatting.
+    The class follows the BaseLLM interface strictly, implementing all required methods
+    with proper type annotations and error handling consistent with the base class.
+
+    The implementation aggregates streaming chunks internally in _chat() and _achat()
+    methods, which are called by the base class's chat() and achat() methods that add
+    retry logic and error handling.
     """
 
     # API configuration - LiteLLM handles provider-specific settings
     api_key: str = Field(
-        default_factory=lambda: os.getenv("FLOW_LLM_API_KEY"),
+        default_factory=lambda: os.getenv("FLOW_LLM_API_KEY", ""),
         description="API key for authentication",
     )
     base_url: str = Field(
@@ -83,7 +100,12 @@ class LiteLLM(BaseLLM):
 
         return self
 
-    def stream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
+    def stream_chat(
+        self,
+        messages: List[Message],
+        tools: Optional[List[ToolCall]] = None,
+        **kwargs,
+    ) -> Generator[FlowStreamChunk, None, None]:
         """
         Stream chat completions from LiteLLM with support for multiple providers.
 
@@ -99,7 +121,8 @@ class LiteLLM(BaseLLM):
             **kwargs: Additional parameters passed to LiteLLM
 
         Yields:
-            Tuple of (chunk_content, ChunkEnum) for each streaming piece
+            FlowStreamChunk for each streaming piece.
+            FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
         from litellm import completion
 
@@ -112,7 +135,7 @@ class LiteLLM(BaseLLM):
                     {
                         "messages": [x.simple_dump() for x in messages],
                         "stream": True,
-                    }
+                    },
                 )
 
                 # Add tools if provided
@@ -124,6 +147,8 @@ class LiteLLM(BaseLLM):
                 completion_response = completion(**params)
 
                 # Initialize tool call tracking
+                # Tool calls are streamed incrementally across multiple chunks, so we
+                # need to accumulate them until complete before yielding
                 ret_tools: List[ToolCall] = []  # Accumulate tool calls across chunks
 
                 # Process each chunk in the streaming response
@@ -133,21 +158,23 @@ class LiteLLM(BaseLLM):
                         if not hasattr(chunk, "choices") or not chunk.choices:
                             # Check for usage information
                             if hasattr(chunk, "usage") and chunk.usage:
-                                yield chunk.usage, ChunkEnum.USAGE
+                                yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage)
                             continue
 
                         delta = chunk.choices[0].delta
 
                         # Handle regular response content
                         if hasattr(delta, "content") and delta.content is not None:
-                            yield delta.content, ChunkEnum.ANSWER
+                            yield FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content)
 
                         # Handle tool calls (function calling)
                         if hasattr(delta, "tool_calls") and delta.tool_calls is not None:
                             for tool_call in delta.tool_calls:
                                 index = getattr(tool_call, "index", 0)
 
-                                # Ensure we have enough tool call slots
+                                # Ensure we have enough tool call slots for parallel tool calls
+                                #  may be split across multiple chunks, so we accumulate
+                                # the id, name, and arguments incrementally
                                 while len(ret_tools) <= index:
                                     ret_tools.append(ToolCall(index=index))
 
@@ -176,29 +203,45 @@ class LiteLLM(BaseLLM):
                         continue
 
                 # Yield completed tool calls after streaming finishes
+                # Tool calls are only yielded after all chunks are received and validated
                 if ret_tools:
+                    # Create a mapping of available tool names for validation
                     tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
                     for tool in ret_tools:
                         # Only yield tool calls that correspond to available tools
                         if tools and tool.name not in tool_dict:
                             continue
 
+                        # Validate tool call arguments before yielding
                         if not tool.check_argument():
                             raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
-                        yield tool, ChunkEnum.TOOL
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
 
                 return
 
             except Exception as e:
                 logger.exception(f"stream chat with LiteLLM model={self.model_name} encounter error: {e}")
 
-                if i == self.max_retries - 1 and self.raise_exception:
-                    raise e
-                else:
-                    yield str(e), ChunkEnum.ERROR
+                # If this is the last retry attempt, handle final failure
+                if i == self.max_retries - 1:
+                    if self.raise_exception:
+                        raise e
+                    # If raise_exception=False, yield error and stop retrying
+                    yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
+                    return
 
-    async def astream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
+                # Exponential backoff: wait before next retry attempt
+                # Note: For streaming, we yield error and continue retrying
+                yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
+                time.sleep(1 + i)  # Wait before next retry
+
+    async def astream_chat(
+        self,
+        messages: List[Message],
+        tools: Optional[List[ToolCall]] = None,
+        **kwargs,
+    ) -> AsyncGenerator[FlowStreamChunk, None]:
         """
         Async stream chat completions from LiteLLM with support for multiple providers.
 
@@ -214,7 +257,8 @@ class LiteLLM(BaseLLM):
             **kwargs: Additional parameters passed to LiteLLM
 
         Yields:
-            Tuple of (chunk_content, ChunkEnum) for each streaming piece
+            FlowStreamChunk for each streaming piece.
+            FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
         from litellm import acompletion
 
@@ -227,7 +271,7 @@ class LiteLLM(BaseLLM):
                     {
                         "messages": [x.simple_dump() for x in messages],
                         "stream": True,
-                    }
+                    },
                 )
 
                 # Add tools if provided
@@ -239,6 +283,8 @@ class LiteLLM(BaseLLM):
                 completion_response = await acompletion(**params)
 
                 # Initialize tool call tracking
+                # Tool calls are streamed incrementally across multiple chunks, so we
+                # need to accumulate them until complete before yielding
                 ret_tools: List[ToolCall] = []  # Accumulate tool calls across chunks
 
                 # Process each chunk in the async streaming response
@@ -248,21 +294,23 @@ class LiteLLM(BaseLLM):
                         if not hasattr(chunk, "choices") or not chunk.choices:
                             # Check for usage information
                             if hasattr(chunk, "usage") and chunk.usage:
-                                yield chunk.usage, ChunkEnum.USAGE
+                                yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage)
                             continue
 
                         delta = chunk.choices[0].delta
 
                         # Handle regular response content
                         if hasattr(delta, "content") and delta.content is not None:
-                            yield delta.content, ChunkEnum.ANSWER
+                            yield FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content)
 
                         # Handle tool calls (function calling)
                         if hasattr(delta, "tool_calls") and delta.tool_calls is not None:
                             for tool_call in delta.tool_calls:
                                 index = getattr(tool_call, "index", 0)
 
-                                # Ensure we have enough tool call slots
+                                # Ensure we have enough tool call slots for parallel tool calls
+                                #  may be split across multiple chunks, so we accumulate
+                                # the id, name, and arguments incrementally
                                 while len(ret_tools) <= index:
                                     ret_tools.append(ToolCall(index=index))
 
@@ -291,44 +339,53 @@ class LiteLLM(BaseLLM):
                         continue
 
                 # Yield completed tool calls after streaming finishes
+                # Tool calls are only yielded after all chunks are received and validated
                 if ret_tools:
+                    # Create a mapping of available tool names for validation
                     tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
                     for tool in ret_tools:
                         # Only yield tool calls that correspond to available tools
                         if tools and tool.name not in tool_dict:
                             continue
 
+                        # Validate tool call arguments before yielding
                         if not tool.check_argument():
                             raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
-                        yield tool, ChunkEnum.TOOL
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
 
                 return
 
             except Exception as e:
                 logger.exception(f"async stream chat with LiteLLM model={self.model_name} encounter error: {e}")
 
-                # Handle retry logic with async sleep
-                await asyncio.sleep(1 + i)
+                # If this is the last retry attempt, handle final failure
+                if i == self.max_retries - 1:
+                    if self.raise_exception:
+                        raise e
+                    # If raise_exception=False, yield error and stop retrying
+                    yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
+                    return
 
-                if i == self.max_retries - 1 and self.raise_exception:
-                    raise e
-                else:
-                    yield str(e), ChunkEnum.ERROR
+                # Exponential backoff: wait before next retry attempt
+                # Note: For streaming, we yield error and continue retrying
+                yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
+                await asyncio.sleep(1 + i)  # Wait before next retry
 
     def _chat(
         self,
         messages: List[Message],
-        tools: List[ToolCall] = None,
+        tools: Optional[List[ToolCall]] = None,
         enable_stream_print: bool = False,
         **kwargs,
     ) -> Message:
         """
-        Perform a complete chat completion by aggregating streaming chunks from LiteLLM.
+        Internal method to perform a single chat completion by aggregating streaming chunks.
 
-        This method consumes the entire streaming response and combines all
-        chunks into a single Message object. It separates regular answer content
-        and tool calls, providing a complete response.
+        This method is called by the base class's chat() method which adds retry logic
+        and error handling. It consumes the entire streaming response from stream_chat()
+        and combines all chunks into a single Message object. It separates regular answer
+        content and tool calls, providing a complete response.
 
         Args:
             messages: List of conversation messages
@@ -337,37 +394,41 @@ class LiteLLM(BaseLLM):
             **kwargs: Additional parameters passed to LiteLLM
 
         Returns:
-            Complete Message with all content aggregated
+            Complete Message with all content aggregated from streaming chunks
         """
         answer_content = ""  # Final response content
         tool_calls = []  # List of tool calls to execute
 
         # Consume streaming response and aggregate chunks by type
-        for chunk, chunk_enum in self.stream_chat(messages, tools, **kwargs):
-            if chunk_enum is ChunkEnum.USAGE:
+        for stream_chunk in self.stream_chat(messages, tools, **kwargs):
+            if stream_chunk.chunk_type is ChunkEnum.USAGE:
+                chunk = stream_chunk.chunk
                 # Display token usage statistics
                 if enable_stream_print:
                     if hasattr(chunk, "model_dump_json"):
-                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>")
+                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>", flush=True)
                     else:
-                        print(f"\n<usage>{chunk}</usage>")
+                        print(f"\n<usage>{chunk}</usage>", flush=True)
 
-            elif chunk_enum is ChunkEnum.ANSWER:
+            elif stream_chunk.chunk_type is ChunkEnum.ANSWER:
+                chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(chunk, end="")
+                    print(chunk, end="", flush=True)
                 answer_content += chunk
 
-            elif chunk_enum is ChunkEnum.TOOL:
+            elif stream_chunk.chunk_type is ChunkEnum.TOOL:
+                chunk = stream_chunk.chunk
                 if enable_stream_print:
                     if hasattr(chunk, "model_dump_json"):
-                        print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="")
+                        print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="", flush=True)
                     else:
-                        print(f"\n<tool>{chunk}</tool>", end="")
+                        print(f"\n<tool>{chunk}</tool>", end="", flush=True)
                 tool_calls.append(chunk)
 
-            elif chunk_enum is ChunkEnum.ERROR:
+            elif stream_chunk.chunk_type is ChunkEnum.ERROR:
+                chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<error>{chunk}</error>", end="")
+                    print(f"\n<error>{chunk}</error>", end="", flush=True)
 
         # Construct complete response message
         return Message(
@@ -379,16 +440,17 @@ class LiteLLM(BaseLLM):
     async def _achat(
         self,
         messages: List[Message],
-        tools: List[ToolCall] = None,
+        tools: Optional[List[ToolCall]] = None,
         enable_stream_print: bool = False,
         **kwargs,
     ) -> Message:
         """
-        Perform an async complete chat completion by aggregating streaming chunks from LiteLLM.
+        Internal async method to perform a single chat completion by aggregating streaming chunks.
 
-        This method consumes the entire async streaming response and combines all
-        chunks into a single Message object. It separates regular answer content
-        and tool calls, providing a complete response.
+        This method is called by the base class's achat() method which adds retry logic
+        and error handling. It consumes the entire async streaming response from astream_chat()
+        and combines all chunks into a single Message object. It separates regular answer
+        content and tool calls, providing a complete response.
 
         Args:
             messages: List of conversation messages
@@ -397,37 +459,41 @@ class LiteLLM(BaseLLM):
             **kwargs: Additional parameters passed to LiteLLM
 
         Returns:
-            Complete Message with all content aggregated
+            Complete Message with all content aggregated from streaming chunks
         """
         answer_content = ""  # Final response content
         tool_calls = []  # List of tool calls to execute
 
         # Consume async streaming response and aggregate chunks by type
-        async for chunk, chunk_enum in self.astream_chat(messages, tools, **kwargs):
-            if chunk_enum is ChunkEnum.USAGE:
+        async for stream_chunk in self.astream_chat(messages, tools, **kwargs):
+            if stream_chunk.chunk_type is ChunkEnum.USAGE:
+                chunk = stream_chunk.chunk
                 # Display token usage statistics
                 if enable_stream_print:
                     if hasattr(chunk, "model_dump_json"):
-                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>")
+                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>", flush=True)
                     else:
-                        print(f"\n<usage>{chunk}</usage>")
+                        print(f"\n<usage>{chunk}</usage>", flush=True)
 
-            elif chunk_enum is ChunkEnum.ANSWER:
+            elif stream_chunk.chunk_type is ChunkEnum.ANSWER:
+                chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(chunk, end="")
+                    print(chunk, end="", flush=True)
                 answer_content += chunk
 
-            elif chunk_enum is ChunkEnum.TOOL:
+            elif stream_chunk.chunk_type is ChunkEnum.TOOL:
+                chunk = stream_chunk.chunk
                 if enable_stream_print:
                     if hasattr(chunk, "model_dump_json"):
-                        print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="")
+                        print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="", flush=True)
                     else:
-                        print(f"\n<tool>{chunk}</tool>", end="")
+                        print(f"\n<tool>{chunk}</tool>", end="", flush=True)
                 tool_calls.append(chunk)
 
-            elif chunk_enum is ChunkEnum.ERROR:
+            elif stream_chunk.chunk_type is ChunkEnum.ERROR:
+                chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<error>{chunk}</error>", end="")
+                    print(f"\n<error>{chunk}</error>", end="", flush=True)
 
         # Construct complete response message
         return Message(
@@ -435,61 +501,3 @@ class LiteLLM(BaseLLM):
             content=answer_content,
             tool_calls=tool_calls,
         )
-
-
-async def async_main():
-    """
-    Async test function for LiteLLMBaseLLM.
-
-    This function demonstrates how to use the LiteLLMBaseLLM class
-    with async operations. It requires proper environment variables
-    to be set for the chosen LLM provider.
-    """
-    from flowllm.utils.common_utils import load_env
-
-    load_env()
-
-    # Example with OpenAI model through LiteLLM
-    model_name = "qwen-max-2025-01-25"  # LiteLLM will route to OpenAI
-    llm = LiteLLM(model_name=model_name)
-
-    # Test async chat
-    message: Message = await llm.achat(
-        [Message(role=Role.USER, content="Hello! How are you?")],
-        [],
-        enable_stream_print=True,
-    )
-    print("\nAsync result:", message)
-
-
-def main():
-    """
-    Sync test function for LiteLLMBaseLLM.
-
-    This function demonstrates how to use the LiteLLMBaseLLM class
-    with synchronous operations. It requires proper environment variables
-    to be set for the chosen LLM provider.
-    """
-    from flowllm.utils.common_utils import load_env
-
-    load_env()
-
-    # Example with OpenAI model through LiteLLM
-    model_name = "qwen-max-2025-01-25"  # LiteLLM will route to OpenAI
-    llm = LiteLLM(model_name=model_name)
-
-    # Test sync chat
-    message: Message = llm.chat(
-        [Message(role=Role.USER, content="Hello! How are you?")],
-        [],
-        enable_stream_print=True,
-    )
-    print("\nSync result:", message)
-
-
-if __name__ == "__main__":
-    main()
-
-    # import asyncio
-    #
-    # asyncio.run(async_main())

@@ -1,13 +1,22 @@
+"""Base LLM class definition for flowllm.
+
+This module defines the BaseLLM abstract base class that serves as the
+foundation for all LLM implementations in the flowllm framework. It provides
+a standardized interface for interacting with various LLM providers while
+handling common concerns like retries, error handling, and streaming.
+"""
+
 import asyncio
 import time
 from abc import ABC
-from typing import List, Callable
+from typing import List, Callable, Optional, Generator, AsyncGenerator, Union, Any
 
 from loguru import logger
 from pydantic import Field, BaseModel
 
-from flowllm.schema.message import Message
-from flowllm.schema.tool_call import ToolCall
+from ..schema import FlowStreamChunk
+from ..schema import Message
+from ..schema import ToolCall
 
 
 class BaseLLM(BaseModel, ABC):
@@ -26,7 +35,6 @@ class BaseLLM(BaseModel, ABC):
     # Generation parameters
     seed: int = Field(default=42, description="Random seed for reproducible outputs")
     top_p: float | None = Field(default=None, description="Top-p (nucleus) sampling parameter")
-    # stream: bool = Field(default=True)  # Commented out - streaming is handled per request
     stream_options: dict = Field(default={"include_usage": True}, description="Options for streaming responses")
     temperature: float = Field(default=0.0000001, description="Sampling temperature (low for deterministic outputs)")
     presence_penalty: float | None = Field(default=None, description="Presence penalty to reduce repetition")
@@ -35,14 +43,19 @@ class BaseLLM(BaseModel, ABC):
     enable_thinking: bool = Field(default=False, description="Enable reasoning/thinking mode for supported models")
 
     # Tool usage configuration
-    tool_choice: str = Field(default=None, description="Strategy for tool selection")
+    tool_choice: Optional[str] = Field(default=None, description="Strategy for tool selection")
     parallel_tool_calls: bool = Field(default=True, description="Allow multiple tool calls in parallel")
 
     # Error handling and reliability
     max_retries: int = Field(default=5, description="Maximum number of retry attempts on failure")
     raise_exception: bool = Field(default=False, description="Whether to raise exceptions or return default values")
 
-    def stream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
+    def stream_chat(
+        self,
+        messages: List[Message],
+        tools: Optional[List[ToolCall]] = None,
+        **kwargs,
+    ) -> Generator[FlowStreamChunk, None, None]:
         """
         Stream chat completions from the LLM.
 
@@ -55,11 +68,17 @@ class BaseLLM(BaseModel, ABC):
             **kwargs: Additional model-specific parameters
 
         Yields:
-            Chunks of the streaming response with their types
+            FlowStreamChunk for each streaming piece.
+            FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
         raise NotImplementedError
 
-    async def astream_chat(self, messages: List[Message], tools: List[ToolCall] = None, **kwargs):
+    async def astream_chat(
+        self,
+        messages: List[Message],
+        tools: Optional[List[ToolCall]] = None,
+        **kwargs,
+    ) -> AsyncGenerator[FlowStreamChunk, None]:
         """
         Async stream chat completions from the LLM.
 
@@ -72,14 +91,15 @@ class BaseLLM(BaseModel, ABC):
             **kwargs: Additional model-specific parameters
 
         Yields:
-            Chunks of the streaming response with their types
+            FlowStreamChunk for each streaming piece.
+            FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
         raise NotImplementedError
 
     def _chat(
         self,
         messages: List[Message],
-        tools: List[ToolCall] = None,
+        tools: Optional[List[ToolCall]] = None,
         enable_stream_print: bool = False,
         **kwargs,
     ) -> Message:
@@ -104,7 +124,7 @@ class BaseLLM(BaseModel, ABC):
     async def _achat(
         self,
         messages: List[Message],
-        tools: List[ToolCall] = None,
+        tools: Optional[List[ToolCall]] = None,
         enable_stream_print: bool = False,
         **kwargs,
     ) -> Message:
@@ -129,12 +149,12 @@ class BaseLLM(BaseModel, ABC):
     def chat(
         self,
         messages: List[Message],
-        tools: List[ToolCall] = None,
+        tools: Optional[List[ToolCall]] = None,
         enable_stream_print: bool = False,
-        callback_fn: Callable = None,
-        default_value=None,
+        callback_fn: Optional[Callable[[Message], Any]] = None,
+        default_value: Any = None,
         **kwargs,
-    ):
+    ) -> Union[Message, Any]:
         """
         Perform a chat completion with retry logic and error handling.
 
@@ -175,25 +195,27 @@ class BaseLLM(BaseModel, ABC):
             except Exception as e:
                 logger.exception(f"chat with model={self.model_name} encounter error with e={e.args}")
 
-                time.sleep(1 + i)
-
+                # If this is the last retry attempt, handle final failure
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
-                    else:
-                        return default_value
+                    # If raise_exception=False, return default_value without waiting
+                    return default_value
 
-        return None
+                # Exponential backoff: wait before next retry attempt
+                time.sleep(1 + i)
+
+        return default_value
 
     async def achat(
         self,
         messages: List[Message],
-        tools: List[ToolCall] = None,
+        tools: Optional[List[ToolCall]] = None,
         enable_stream_print: bool = False,
-        callback_fn: Callable = None,
-        default_value=None,
+        callback_fn: Optional[Callable[[Message], Any]] = None,
+        default_value: Any = None,
         **kwargs,
-    ):
+    ) -> Union[Message, Any]:
         """
         Perform an async chat completion with retry logic and error handling.
 
@@ -234,14 +256,14 @@ class BaseLLM(BaseModel, ABC):
             except Exception as e:
                 logger.exception(f"async chat with model={self.model_name} encounter error with e={e.args}")
 
-                # Exponential backoff: wait longer after each failure
-                await asyncio.sleep(1 + i)
-
-                # Handle final retry failure
+                # If this is the last retry attempt, handle final failure
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
-                    else:
-                        return default_value
+                    # If raise_exception=False, return default_value without waiting
+                    return default_value
 
-        return None
+                # Exponential backoff: wait before next retry attempt
+                await asyncio.sleep(1 + i)
+
+        return default_value
