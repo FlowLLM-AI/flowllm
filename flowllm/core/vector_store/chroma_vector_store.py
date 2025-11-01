@@ -1,57 +1,126 @@
+"""
+ChromaDB vector store implementation.
+
+This module provides a ChromaDB-based vector store that stores vector nodes
+in ChromaDB collections. It supports workspace management, vector similarity search,
+metadata filtering, and provides both synchronous and asynchronous operations.
+"""
+
 import asyncio
 import os
 from functools import partial
-from typing import List, Iterable, Dict, Any, Optional
+from typing import List, Iterable, Dict, Any, Optional, TYPE_CHECKING
 
-import chromadb
-from chromadb import Collection
-from chromadb.config import Settings
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
+
+from .local_vector_store import LocalVectorStore
+from ..context import C
+from ..schema import VectorNode
+
+if TYPE_CHECKING:
+    from chromadb import Collection, PersistentClient
 
 # Disable ChromaDB telemetry to avoid PostHog warnings
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "false")
 
-from flowllm.context.service_context import C
-from flowllm.schema.vector_node import VectorNode
-from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
-
 
 @C.register_vector_store("chroma")
 class ChromaVectorStore(LocalVectorStore):
+    """ChromaDB vector store implementation.
+
+    This class provides a ChromaDB-based vector store that uses ChromaDB collections
+    for workspace management. Each workspace corresponds to a ChromaDB collection,
+    and vector nodes are stored with their embeddings, documents, and metadata.
+
+    Attributes:
+        store_dir: Directory path where ChromaDB data is persisted (default: "./chroma_vector_store").
+        collections: Dictionary mapping workspace_id to ChromaDB Collection objects.
+        _client: Private ChromaDB client instance.
+
+    The store supports both synchronous and asynchronous operations, with async methods
+    using thread pools to execute ChromaDB operations without blocking the event loop.
+    """
+
     store_dir: str = Field(default="./chroma_vector_store")
     collections: dict = Field(default_factory=dict)
-    _client: chromadb.ClientAPI = PrivateAttr()
+    _client: "PersistentClient" = PrivateAttr()
 
     @model_validator(mode="after")
     def init_client(self):
+        """Initialize the ChromaDB client with telemetry disabled.
+
+        Returns:
+            Self instance with initialized client.
+        """
+        from chromadb import PersistentClient
+        from chromadb.config import Settings
+
         # Disable telemetry to avoid PostHog warnings
-        settings = Settings(
-            persist_directory=self.store_dir,
-            anonymized_telemetry=False,
+        # Use PersistentClient explicitly to avoid singleton conflicts
+        self._client = PersistentClient(
+            path=self.store_dir,
+            settings=Settings(anonymized_telemetry=False),
         )
-        self._client = chromadb.Client(settings)
         return self
 
-    def _get_collection(self, workspace_id: str) -> Collection:
+    def _get_collection(self, workspace_id: str) -> "Collection":
+        """Get or create a ChromaDB collection for the given workspace.
+
+        Args:
+            workspace_id: The workspace identifier.
+
+        Returns:
+            ChromaDB Collection object for the workspace.
+        """
         if workspace_id not in self.collections:
             self.collections[workspace_id] = self._client.get_or_create_collection(workspace_id)
         return self.collections[workspace_id]
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
+        """Check if a workspace exists in the vector store.
+
+        Args:
+            workspace_id: The workspace identifier.
+            **kwargs: Additional keyword arguments (unused).
+
+        Returns:
+            True if the workspace exists, False otherwise.
+        """
         return workspace_id in [c.name for c in self._client.list_collections()]
 
     def delete_workspace(self, workspace_id: str, **kwargs):
+        """Delete a workspace from the vector store.
+
+        Args:
+            workspace_id: The workspace identifier to delete.
+            **kwargs: Additional keyword arguments (unused).
+        """
         self._client.delete_collection(workspace_id)
         if workspace_id in self.collections:
             del self.collections[workspace_id]
 
     def create_workspace(self, workspace_id: str, **kwargs):
+        """Create a new workspace in the vector store.
+
+        Args:
+            workspace_id: The workspace identifier to create.
+            **kwargs: Additional keyword arguments (unused).
+        """
         self.collections[workspace_id] = self._client.get_or_create_collection(workspace_id)
 
     def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
-        """Iterate over all nodes in a workspace."""
-        collection: Collection = self._get_collection(workspace_id)
+        """Iterate over all nodes in a workspace.
+
+        Args:
+            workspace_id: The workspace identifier.
+            callback_fn: Optional callback function to transform each node before yielding.
+            **kwargs: Additional keyword arguments (unused).
+
+        Yields:
+            VectorNode objects from the workspace, optionally transformed by callback_fn.
+        """
+        collection = self._get_collection(workspace_id)
         results = collection.get()
         for i in range(len(results["ids"])):
             node = VectorNode(
@@ -67,7 +136,19 @@ class ChromaVectorStore(LocalVectorStore):
 
     @staticmethod
     def _build_chroma_filters(filter_dict: Optional[Dict[str, Any]] = None) -> Optional[Dict]:
-        """Build ChromaDB where clause from filter_dict"""
+        """Build ChromaDB where clause from filter_dict.
+
+        Converts a filter dictionary into ChromaDB's where clause format.
+        Supports both term filters (exact match) and range filters (gte, lte, gt, lt).
+
+        Args:
+            filter_dict: Dictionary of filters to apply. Can contain:
+                - Term filters: {"key": "value"} -> exact match
+                - Range filters: {"key": {"gte": 1, "lte": 10}} -> range query
+
+        Returns:
+            ChromaDB where clause dictionary, or None if no filters provided.
+        """
         if not filter_dict:
             return None
 
@@ -100,11 +181,24 @@ class ChromaVectorStore(LocalVectorStore):
         filter_dict: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> List[VectorNode]:
+        """Search for similar vector nodes in the workspace.
+
+        Args:
+            query: Text query to search for.
+            workspace_id: The workspace identifier.
+            top_k: Number of top results to return (default: 1).
+            filter_dict: Optional metadata filters to apply.
+            **kwargs: Additional keyword arguments (unused).
+
+        Returns:
+            List of VectorNode objects matching the query, ordered by similarity.
+            Returns empty list if workspace doesn't exist.
+        """
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return []
 
-        collection: Collection = self._get_collection(workspace_id)
+        collection = self._get_collection(workspace_id)
         query_vector = self.embedding_model.get_embeddings(query)
 
         # Build where clause from filter_dict
@@ -134,6 +228,16 @@ class ChromaVectorStore(LocalVectorStore):
         return nodes
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
+        """Insert vector nodes into the workspace.
+
+        If nodes don't have embeddings, they will be generated using the embedding model.
+        Creates the workspace if it doesn't exist.
+
+        Args:
+            nodes: Single VectorNode or list of VectorNode objects to insert.
+            workspace_id: The workspace identifier.
+            **kwargs: Additional keyword arguments (unused).
+        """
         if not self.exist_workspace(workspace_id=workspace_id):
             self.create_workspace(workspace_id=workspace_id)
 
@@ -145,7 +249,7 @@ class ChromaVectorStore(LocalVectorStore):
         now_embedded_nodes = self.embedding_model.get_node_embeddings(not_embedded_nodes)
         all_nodes = embedded_nodes + now_embedded_nodes
 
-        collection: Collection = self._get_collection(workspace_id)
+        collection = self._get_collection(workspace_id)
         collection.add(
             ids=[n.unique_id for n in all_nodes],
             embeddings=[n.vector for n in all_nodes],
@@ -154,6 +258,13 @@ class ChromaVectorStore(LocalVectorStore):
         )
 
     def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
+        """Delete vector nodes from the workspace.
+
+        Args:
+            node_ids: Single node ID or list of node IDs to delete.
+            workspace_id: The workspace identifier.
+            **kwargs: Additional keyword arguments (unused).
+        """
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return
@@ -161,7 +272,7 @@ class ChromaVectorStore(LocalVectorStore):
         if isinstance(node_ids, str):
             node_ids = [node_ids]
 
-        collection: Collection = self._get_collection(workspace_id)
+        collection = self._get_collection(workspace_id)
         collection.delete(ids=node_ids)
 
     async def async_search(
@@ -172,7 +283,19 @@ class ChromaVectorStore(LocalVectorStore):
         filter_dict: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> List[VectorNode]:
-        """Async version of search using async embedding and run_in_executor for ChromaDB operations"""
+        """Async version of search using async embedding and run_in_executor for ChromaDB operations.
+
+        Args:
+            query: Text query to search for.
+            workspace_id: The workspace identifier.
+            top_k: Number of top results to return (default: 1).
+            filter_dict: Optional metadata filters to apply.
+            **kwargs: Additional keyword arguments (unused).
+
+        Returns:
+            List of VectorNode objects matching the query, ordered by similarity.
+            Returns empty list if workspace doesn't exist.
+        """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return []
@@ -209,7 +332,16 @@ class ChromaVectorStore(LocalVectorStore):
         return nodes
 
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
-        """Async version of insert using async embedding and run_in_executor for ChromaDB operations"""
+        """Async version of insert using async embedding and run_in_executor for ChromaDB operations.
+
+        If nodes don't have embeddings, they will be generated using the async embedding model.
+        Creates the workspace if it doesn't exist.
+
+        Args:
+            nodes: Single VectorNode or list of VectorNode objects to insert.
+            workspace_id: The workspace identifier.
+            **kwargs: Additional keyword arguments (unused).
+        """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             await self.async_create_workspace(workspace_id=workspace_id)
 
@@ -239,7 +371,13 @@ class ChromaVectorStore(LocalVectorStore):
         )
 
     async def async_delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
-        """Async version of delete using run_in_executor for ChromaDB operations"""
+        """Async version of delete using run_in_executor for ChromaDB operations.
+
+        Args:
+            node_ids: Single node ID or list of node IDs to delete.
+            workspace_id: The workspace identifier.
+            **kwargs: Additional keyword arguments (unused).
+        """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return
@@ -251,202 +389,3 @@ class ChromaVectorStore(LocalVectorStore):
         loop = asyncio.get_event_loop()
         collection = await loop.run_in_executor(C.thread_pool, self._get_collection, workspace_id)
         await loop.run_in_executor(C.thread_pool, partial(collection.delete, ids=node_ids))
-
-
-def main():
-    from flowllm.utils.common_utils import load_env
-    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
-
-    load_env()
-
-    embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-    workspace_id = "chroma_test_index"
-
-    chroma_store = ChromaVectorStore(
-        embedding_model=embedding_model,
-        store_dir="./chroma_test_db",
-    )
-
-    if chroma_store.exist_workspace(workspace_id):
-        chroma_store.delete_workspace(workspace_id)
-    chroma_store.create_workspace(workspace_id)
-
-    sample_nodes = [
-        VectorNode(
-            unique_id="node1",
-            workspace_id=workspace_id,
-            content="Artificial intelligence is a technology that simulates human intelligence.",
-            metadata={
-                "node_type": "n1",
-                "category": "tech",
-            },
-        ),
-        VectorNode(
-            unique_id="node2",
-            workspace_id=workspace_id,
-            content="AI is the future of mankind.",
-            metadata={
-                "node_type": "n1",
-                "category": "tech",
-            },
-        ),
-        VectorNode(
-            unique_id="node3",
-            workspace_id=workspace_id,
-            content="I want to eat fish!",
-            metadata={
-                "node_type": "n2",
-                "category": "food",
-            },
-        ),
-        VectorNode(
-            unique_id="node4",
-            workspace_id=workspace_id,
-            content="The bigger the storm, the more expensive the fish.",
-            metadata={
-                "node_type": "n1",
-                "category": "food",
-            },
-        ),
-    ]
-
-    chroma_store.insert(sample_nodes, workspace_id=workspace_id)
-
-    logger.info("=" * 20)
-    results = chroma_store.search("What is AI?", top_k=5, workspace_id=workspace_id)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    # Test filter_dict
-    logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
-    filter_dict = {"node_type": "n1"}
-    results = chroma_store.search("What is AI?", top_k=5, workspace_id=workspace_id, filter_dict=filter_dict)
-    logger.info(f"Filtered results (node_type=n1): {len(results)} results")
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    node2_update = VectorNode(
-        unique_id="node2",
-        workspace_id=workspace_id,
-        content="AI is the future of humanity and technology.",
-        metadata={
-            "node_type": "n1",
-            "category": "tech",
-            "updated": True,
-        },
-    )
-    chroma_store.delete(node2_update.unique_id, workspace_id=workspace_id)
-    chroma_store.insert(node2_update, workspace_id=workspace_id)
-
-    logger.info("Updated Result:")
-    results = chroma_store.search("fish?", top_k=10, workspace_id=workspace_id)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    chroma_store.dump_workspace(workspace_id=workspace_id)
-
-    chroma_store.delete_workspace(workspace_id=workspace_id)
-
-
-async def async_main():
-    from flowllm.utils.common_utils import load_env
-    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
-
-    load_env()
-
-    embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-    workspace_id = "chroma_async_test_index"
-
-    chroma_store = ChromaVectorStore(
-        embedding_model=embedding_model,
-        store_dir="./async_chroma_async_test_db",
-    )
-
-    # Clean up and create workspace
-    if await chroma_store.async_exist_workspace(workspace_id):
-        await chroma_store.async_delete_workspace(workspace_id)
-    await chroma_store.async_create_workspace(workspace_id)
-
-    sample_nodes = [
-        VectorNode(
-            unique_id="async_node1",
-            workspace_id=workspace_id,
-            content="Artificial intelligence is a technology that simulates human intelligence.",
-            metadata={
-                "node_type": "n1",
-                "category": "tech",
-            },
-        ),
-        VectorNode(
-            unique_id="async_node2",
-            workspace_id=workspace_id,
-            content="AI is the future of mankind.",
-            metadata={
-                "node_type": "n1",
-                "category": "tech",
-            },
-        ),
-        VectorNode(
-            unique_id="async_node3",
-            workspace_id=workspace_id,
-            content="I want to eat fish!",
-            metadata={
-                "node_type": "n2",
-                "category": "food",
-            },
-        ),
-        VectorNode(
-            unique_id="async_node4",
-            workspace_id=workspace_id,
-            content="The bigger the storm, the more expensive the fish.",
-            metadata={
-                "node_type": "n1",
-                "category": "food",
-            },
-        ),
-    ]
-
-    # Test async insert
-    await chroma_store.async_insert(sample_nodes, workspace_id=workspace_id)
-
-    logger.info("ASYNC TEST - " + "=" * 20)
-    # Test async search
-    results = await chroma_store.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    # Test async update (delete + insert)
-    node2_update = VectorNode(
-        unique_id="async_node2",
-        workspace_id=workspace_id,
-        content="AI is the future of humanity and technology.",
-        metadata={
-            "node_type": "n1",
-            "category": "tech",
-            "updated": True,
-        },
-    )
-    await chroma_store.async_delete(node2_update.unique_id, workspace_id=workspace_id)
-    await chroma_store.async_insert(node2_update, workspace_id=workspace_id)
-
-    logger.info("ASYNC Updated Result:")
-    results = await chroma_store.async_search("fish?", top_k=10, workspace_id=workspace_id)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    # Clean up
-    await chroma_store.async_dump_workspace(workspace_id=workspace_id)
-    await chroma_store.async_delete_workspace(workspace_id=workspace_id)
-
-
-if __name__ == "__main__":
-    main()
-
-    # Run async test
-    logger.info("\n" + "=" * 50 + " ASYNC TESTS " + "=" * 50)
-    # asyncio.run(async_main())

@@ -1,26 +1,60 @@
-import asyncio
-import os
-from typing import List, Tuple, Iterable, Dict, Any, Optional
+"""Elasticsearch vector store implementation.
 
-from elasticsearch import Elasticsearch, AsyncElasticsearch
-from elasticsearch.helpers import bulk, async_bulk
+This module provides an Elasticsearch-based vector store that stores vector nodes
+in Elasticsearch indices. It supports workspace management, vector similarity search,
+metadata filtering using Elasticsearch query DSL, and provides both synchronous and
+asynchronous operations using native Elasticsearch clients.
+"""
+
+import os
+from typing import List, Tuple, Iterable, Dict, Any, Optional, TYPE_CHECKING
+
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.service_context import C
-from flowllm.schema.vector_node import VectorNode
-from flowllm.storage.vector_store.local_vector_store import LocalVectorStore
+from .local_vector_store import LocalVectorStore
+from ..context import C
+from ..schema import VectorNode
+
+if TYPE_CHECKING:
+    from elasticsearch import Elasticsearch, AsyncElasticsearch
 
 
 @C.register_vector_store("elasticsearch")
 class EsVectorStore(LocalVectorStore):
+    """Elasticsearch vector store implementation.
+
+    This class provides a vector store backend using Elasticsearch for storing and
+    searching vector embeddings. It supports both synchronous and asynchronous operations
+    using native Elasticsearch clients, and includes metadata filtering capabilities
+    using Elasticsearch query DSL.
+
+    Attributes:
+        hosts: Elasticsearch host(s) as a string or list of strings. Defaults to
+            the FLOW_ES_HOSTS environment variable or "http://localhost:9200".
+        basic_auth: Optional basic authentication credentials as a string or
+            tuple of (username, password).
+        _client: Private synchronous Elasticsearch client instance.
+        _async_client: Private asynchronous Elasticsearch client instance.
+    """
+
     hosts: str | List[str] = Field(default_factory=lambda: os.getenv("FLOW_ES_HOSTS", "http://localhost:9200"))
     basic_auth: str | Tuple[str, str] | None = Field(default=None)
-    _client: Elasticsearch = PrivateAttr()
-    _async_client: AsyncElasticsearch = PrivateAttr()
+    _client: "Elasticsearch" = PrivateAttr()
+    _async_client: "AsyncElasticsearch" = PrivateAttr()
 
     @model_validator(mode="after")
     def init_client(self):
+        """Initialize Elasticsearch clients after model validation.
+
+        This method is called automatically by Pydantic after the model is created.
+        It initializes both synchronous and asynchronous Elasticsearch clients.
+
+        Returns:
+            self: The initialized instance.
+        """
+        from elasticsearch import Elasticsearch, AsyncElasticsearch
+
         if isinstance(self.hosts, str):
             self.hosts = [self.hosts]
         self._client = Elasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
@@ -29,12 +63,36 @@ class EsVectorStore(LocalVectorStore):
         return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
+        """Check if an Elasticsearch index (workspace) exists.
+
+        Args:
+            workspace_id: The identifier of the workspace/index to check.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Returns:
+            bool: True if the index exists, False otherwise.
+        """
         return self._client.indices.exists(index=workspace_id)
 
     def delete_workspace(self, workspace_id: str, **kwargs):
+        """Delete an Elasticsearch index (workspace).
+
+        Args:
+            workspace_id: The identifier of the workspace/index to delete.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+        """
         return self._client.indices.delete(index=workspace_id, **kwargs)
 
     def create_workspace(self, workspace_id: str, **kwargs):
+        """Create a new Elasticsearch index (workspace) with vector field mappings.
+
+        Args:
+            workspace_id: The identifier of the workspace/index to create.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Returns:
+            The response from Elasticsearch create index API.
+        """
         body = {
             "mappings": {
                 "properties": {
@@ -51,9 +109,24 @@ class EsVectorStore(LocalVectorStore):
         return self._client.indices.create(index=workspace_id, body=body)
 
     def iter_workspace_nodes(
-        self, workspace_id: str, callback_fn=None, max_size: int = 10000, **kwargs
+        self,
+        workspace_id: str,
+        callback_fn=None,
+        max_size: int = 10000,
+        **kwargs,
     ) -> Iterable[VectorNode]:
-        """Iterate over all nodes in a workspace."""
+        """Iterate over all nodes in a workspace.
+
+        Args:
+            workspace_id: The identifier of the workspace to iterate over.
+            callback_fn: Optional callback function to transform each node.
+            max_size: Maximum number of nodes to retrieve (default: 10000).
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Yields:
+            VectorNode: Vector nodes from the workspace, optionally transformed
+                by the callback function.
+        """
         response = self._client.search(index=workspace_id, body={"query": {"match_all": {}}, "size": max_size})
         for doc in response["hits"]["hits"]:
             node = self.doc2node(doc, workspace_id)
@@ -63,10 +136,24 @@ class EsVectorStore(LocalVectorStore):
                 yield node
 
     def refresh(self, workspace_id: str):
+        """Refresh an Elasticsearch index to make recent changes visible for search.
+
+        Args:
+            workspace_id: The identifier of the workspace/index to refresh.
+        """
         self._client.indices.refresh(index=workspace_id)
 
     @staticmethod
     def doc2node(doc, workspace_id: str) -> VectorNode:
+        """Convert an Elasticsearch document to a VectorNode.
+
+        Args:
+            doc: The Elasticsearch document hit from a search response.
+            workspace_id: The workspace identifier to assign to the node.
+
+        Returns:
+            VectorNode: A VectorNode instance created from the document data.
+        """
         node = VectorNode(**doc["_source"])
         node.workspace_id = workspace_id
         node.unique_id = doc["_id"]
@@ -76,7 +163,19 @@ class EsVectorStore(LocalVectorStore):
 
     @staticmethod
     def _build_es_filters(filter_dict: Optional[Dict[str, Any]] = None) -> List[Dict]:
-        """Build Elasticsearch filter clauses from filter_dict"""
+        """Build Elasticsearch filter clauses from filter_dict.
+
+        Converts a filter dictionary into Elasticsearch query filter clauses.
+        Supports both term filters (exact match) and range filters (gte, lte, gt, lt).
+
+        Args:
+            filter_dict: Dictionary of filter conditions. Keys are metadata field names,
+                values can be exact match values or range dictionaries like
+                {"gte": 1, "lte": 10}.
+
+        Returns:
+            List[Dict]: List of Elasticsearch filter clauses.
+        """
         if not filter_dict:
             return []
 
@@ -112,6 +211,19 @@ class EsVectorStore(LocalVectorStore):
         filter_dict: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> List[VectorNode]:
+        """Search for similar vector nodes using cosine similarity.
+
+        Args:
+            query: The text query to search for. Will be embedded using the
+                embedding model.
+            workspace_id: The identifier of the workspace to search in.
+            top_k: Maximum number of results to return (default: 1).
+            filter_dict: Optional dictionary of metadata filters to apply.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Returns:
+            List[VectorNode]: List of matching vector nodes sorted by similarity score.
+        """
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return []
@@ -144,6 +256,14 @@ class EsVectorStore(LocalVectorStore):
         return nodes
 
     def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, refresh: bool = True, **kwargs):
+        """Insert vector nodes into the Elasticsearch index.
+
+        Args:
+            nodes: A single VectorNode or list of VectorNodes to insert.
+            workspace_id: The identifier of the workspace to insert into.
+            refresh: Whether to refresh the index after insertion (default: True).
+            **kwargs: Additional keyword arguments passed to Elasticsearch bulk API.
+        """
         if not self.exist_workspace(workspace_id=workspace_id):
             self.create_workspace(workspace_id=workspace_id)
 
@@ -168,6 +288,8 @@ class EsVectorStore(LocalVectorStore):
             }
             for node in embedded_nodes + now_embedded_nodes
         ]
+        from elasticsearch.helpers import bulk
+
         status, error = bulk(self._client, docs, chunk_size=self.batch_size, **kwargs)
         logger.info(f"insert docs.size={len(docs)} status={status} error={error}")
 
@@ -175,6 +297,14 @@ class EsVectorStore(LocalVectorStore):
             self.refresh(workspace_id=workspace_id)
 
     def delete(self, node_ids: str | List[str], workspace_id: str, refresh: bool = True, **kwargs):
+        """Delete vector nodes from the Elasticsearch index.
+
+        Args:
+            node_ids: A single node ID or list of node IDs to delete.
+            workspace_id: The identifier of the workspace to delete from.
+            refresh: Whether to refresh the index after deletion (default: True).
+            **kwargs: Additional keyword arguments passed to Elasticsearch bulk API.
+        """
         if not self.exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return
@@ -190,6 +320,8 @@ class EsVectorStore(LocalVectorStore):
             }
             for node_id in node_ids
         ]
+        from elasticsearch.helpers import bulk
+
         status, error = bulk(self._client, actions, chunk_size=self.batch_size, **kwargs)
         logger.info(f"delete actions.size={len(actions)} status={status} error={error}")
 
@@ -198,15 +330,36 @@ class EsVectorStore(LocalVectorStore):
 
     # Async methods using native Elasticsearch async APIs
     async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
-        """Async version of exist_workspace using native ES async client"""
+        """Check if an Elasticsearch index (workspace) exists (async).
+
+        Args:
+            workspace_id: The identifier of the workspace/index to check.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Returns:
+            bool: True if the index exists, False otherwise.
+        """
         return await self._async_client.indices.exists(index=workspace_id)
 
     async def async_delete_workspace(self, workspace_id: str, **kwargs):
-        """Async version of delete_workspace using native ES async client"""
+        """Delete an Elasticsearch index (workspace) (async).
+
+        Args:
+            workspace_id: The identifier of the workspace/index to delete.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+        """
         return await self._async_client.indices.delete(index=workspace_id, **kwargs)
 
     async def async_create_workspace(self, workspace_id: str, **kwargs):
-        """Async version of create_workspace using native ES async client"""
+        """Create a new Elasticsearch index (workspace) with vector field mappings (async).
+
+        Args:
+            workspace_id: The identifier of the workspace/index to create.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Returns:
+            The response from Elasticsearch create index API.
+        """
         body = {
             "mappings": {
                 "properties": {
@@ -223,7 +376,11 @@ class EsVectorStore(LocalVectorStore):
         return await self._async_client.indices.create(index=workspace_id, body=body)
 
     async def async_refresh(self, workspace_id: str):
-        """Async version of refresh using native ES async client"""
+        """Refresh an Elasticsearch index to make recent changes visible for search (async).
+
+        Args:
+            workspace_id: The identifier of the workspace/index to refresh.
+        """
         await self._async_client.indices.refresh(index=workspace_id)
 
     async def async_search(
@@ -234,7 +391,19 @@ class EsVectorStore(LocalVectorStore):
         filter_dict: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> List[VectorNode]:
-        """Async version of search using native ES async client and async embedding"""
+        """Search for similar vector nodes using cosine similarity (async).
+
+        Args:
+            query: The text query to search for. Will be embedded using the
+                embedding model's async method.
+            workspace_id: The identifier of the workspace to search in.
+            top_k: Maximum number of results to return (default: 1).
+            filter_dict: Optional dictionary of metadata filters to apply.
+            **kwargs: Additional keyword arguments passed to Elasticsearch API.
+
+        Returns:
+            List[VectorNode]: List of matching vector nodes sorted by similarity score.
+        """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return []
@@ -274,7 +443,14 @@ class EsVectorStore(LocalVectorStore):
         refresh: bool = True,
         **kwargs,
     ):
-        """Async version of insert using native ES async client and async embedding"""
+        """Insert vector nodes into the Elasticsearch index (async).
+
+        Args:
+            nodes: A single VectorNode or list of VectorNodes to insert.
+            workspace_id: The identifier of the workspace to insert into.
+            refresh: Whether to refresh the index after insertion (default: True).
+            **kwargs: Additional keyword arguments passed to Elasticsearch bulk API.
+        """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             await self.async_create_workspace(workspace_id=workspace_id)
 
@@ -302,6 +478,8 @@ class EsVectorStore(LocalVectorStore):
             for node in embedded_nodes + now_embedded_nodes
         ]
 
+        from elasticsearch.helpers import async_bulk
+
         status, error = await async_bulk(self._async_client, docs, chunk_size=self.batch_size, **kwargs)
         logger.info(f"async insert docs.size={len(docs)} status={status} error={error}")
 
@@ -309,7 +487,14 @@ class EsVectorStore(LocalVectorStore):
             await self.async_refresh(workspace_id=workspace_id)
 
     async def async_delete(self, node_ids: str | List[str], workspace_id: str, refresh: bool = True, **kwargs):
-        """Async version of delete using native ES async client"""
+        """Delete vector nodes from the Elasticsearch index (async).
+
+        Args:
+            node_ids: A single node ID or list of node IDs to delete.
+            workspace_id: The identifier of the workspace to delete from.
+            refresh: Whether to refresh the index after deletion (default: True).
+            **kwargs: Additional keyword arguments passed to Elasticsearch bulk API.
+        """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
             logger.warning(f"workspace_id={workspace_id} is not exists!")
             return
@@ -326,6 +511,8 @@ class EsVectorStore(LocalVectorStore):
             for node_id in node_ids
         ]
 
+        from elasticsearch.helpers import async_bulk
+
         status, error = await async_bulk(self._async_client, actions, chunk_size=self.batch_size, **kwargs)
         logger.info(f"async delete actions.size={len(actions)} status={status} error={error}")
 
@@ -333,178 +520,9 @@ class EsVectorStore(LocalVectorStore):
             await self.async_refresh(workspace_id=workspace_id)
 
     def close(self):
+        """Close the synchronous Elasticsearch client connection."""
         self._client.close()
 
     async def async_close(self):
+        """Close the asynchronous Elasticsearch client connection."""
         await self._async_client.close()
-
-
-def main():
-    from flowllm.utils.common_utils import load_env
-    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
-
-    load_env()
-
-    embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-    workspace_id = "rag_nodes_index"
-    hosts = "http://11.160.132.46:8200"
-    es = EsVectorStore(hosts=hosts, embedding_model=embedding_model)
-    if es.exist_workspace(workspace_id=workspace_id):
-        es.delete_workspace(workspace_id=workspace_id)
-    es.create_workspace(workspace_id=workspace_id)
-
-    sample_nodes = [
-        VectorNode(
-            workspace_id=workspace_id,
-            content="Artificial intelligence is a technology that simulates human intelligence.",
-            metadata={
-                "node_type": "n1",
-            },
-        ),
-        VectorNode(
-            workspace_id=workspace_id,
-            content="AI is the future of mankind.",
-            metadata={
-                "node_type": "n1",
-            },
-        ),
-        VectorNode(
-            workspace_id=workspace_id,
-            content="I want to eat fish!",
-            metadata={
-                "node_type": "n2",
-            },
-        ),
-        VectorNode(
-            workspace_id=workspace_id,
-            content="The bigger the storm, the more expensive the fish.",
-            metadata={
-                "node_type": "n1",
-            },
-        ),
-    ]
-
-    es.insert(sample_nodes, workspace_id=workspace_id, refresh=True)
-
-    logger.info("=" * 20 + " FILTER TEST " + "=" * 20)
-    filter_dict = {"node_type": "n1"}
-    results = es.search("What is AI?", top_k=5, workspace_id=workspace_id, filter_dict=filter_dict)
-    logger.info(f"Filtered results (node_type=n1): {len(results)} results")
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    logger.info("=" * 20 + " UNFILTERED TEST " + "=" * 20)
-    results = es.search("What is AI?", top_k=5, workspace_id=workspace_id)
-    logger.info(f"Unfiltered results: {len(results)} results")
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-    es.dump_workspace(workspace_id=workspace_id)
-    es.delete_workspace(workspace_id=workspace_id)
-
-    es.close()
-
-
-async def async_main():
-    from flowllm.utils.common_utils import load_env
-    from flowllm.embedding_model import OpenAICompatibleEmbeddingModel
-
-    load_env()
-
-    embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-    workspace_id = "async_rag_nodes_index"
-    hosts = "http://11.160.132.46:8200"
-
-    # Use async context manager to ensure proper cleanup
-    es = EsVectorStore(hosts=hosts, embedding_model=embedding_model)
-    # Clean up and create workspace
-    if await es.async_exist_workspace(workspace_id=workspace_id):
-        await es.async_delete_workspace(workspace_id=workspace_id)
-    await es.async_create_workspace(workspace_id=workspace_id)
-
-    sample_nodes = [
-        VectorNode(
-            unique_id="async_es_node1",
-            workspace_id=workspace_id,
-            content="Artificial intelligence is a technology that simulates human intelligence.",
-            metadata={
-                "node_type": "n1",
-            },
-        ),
-        VectorNode(
-            unique_id="async_es_node2",
-            workspace_id=workspace_id,
-            content="AI is the future of mankind.",
-            metadata={
-                "node_type": "n1",
-            },
-        ),
-        VectorNode(
-            unique_id="async_es_node3",
-            workspace_id=workspace_id,
-            content="I want to eat fish!",
-            metadata={
-                "node_type": "n2",
-            },
-        ),
-        VectorNode(
-            unique_id="async_es_node4",
-            workspace_id=workspace_id,
-            content="The bigger the storm, the more expensive the fish.",
-            metadata={
-                "node_type": "n1",
-            },
-        ),
-    ]
-
-    # Test async insert
-    await es.async_insert(sample_nodes, workspace_id=workspace_id, refresh=True)
-
-    logger.info("ASYNC TEST - " + "=" * 20)
-    # Test async search with filter
-    filter_dict = {"node_type": "n1"}
-    results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id, filter_dict=filter_dict)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    # Test async search without filter
-    logger.info("ASYNC TEST WITHOUT FILTER - " + "=" * 20)
-    results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    # Test async update (delete + insert)
-    node2_update = VectorNode(
-        unique_id="async_es_node2",
-        workspace_id=workspace_id,
-        content="AI is the future of humanity and technology.",
-        metadata={
-            "node_type": "n1",
-            "updated": True,
-        },
-    )
-    await es.async_delete(node2_update.unique_id, workspace_id=workspace_id, refresh=True)
-    await es.async_insert(node2_update, workspace_id=workspace_id, refresh=True)
-
-    logger.info("ASYNC Updated Result:")
-    results = await es.async_search("fish?", workspace_id=workspace_id, top_k=10)
-    for r in results:
-        logger.info(r.model_dump(exclude={"vector"}))
-    logger.info("=" * 20)
-
-    # Clean up
-    await es.async_dump_workspace(workspace_id=workspace_id)
-    await es.async_delete_workspace(workspace_id=workspace_id)
-
-    await es.async_close()
-
-
-if __name__ == "__main__":
-    main()
-
-    # Run async test
-    logger.info("\n" + "=" * 50 + " ASYNC TESTS " + "=" * 50)
-    asyncio.run(async_main())
