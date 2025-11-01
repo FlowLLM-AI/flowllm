@@ -1,28 +1,26 @@
 """
-DataCache utility that supports multiple data types with local storage and data expiration functionality
+CacheHandler utility that supports DataFrame, list, string,
+and dict with local storage and data expiration functionality
 """
 
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any, Union, Type
+from typing import Optional, Dict, Any, Union
 
 import pandas as pd
 from loguru import logger
 
-from .cache_data_handler import CacheDataHandler, DataFrameHandler, DictHandler
 
-
-class DataCache:
+class CacheHandler:
     """
-    Generic data cache utility class
+    Cache utility class supporting DataFrame, list, string, and dict
 
     Features:
-    - Support for multiple data types (DataFrame, dict, and extensible for others)
+    - Support for DataFrame (CSV), list (JSON), string (TXT), and dict (JSON)
     - Support for data expiration time settings
     - Automatic cleanup of expired data
     - Recording and managing update timestamps
-    - Type-specific storage formats (CSV for DataFrame, JSON for dict)
     """
 
     def __init__(self, cache_dir: str = "cache"):
@@ -30,49 +28,41 @@ class DataCache:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.metadata_file = self.cache_dir / "metadata.json"
         self.metadata = {}
-
-        # Register default handlers
-        self.handlers: Dict[Type, CacheDataHandler] = {
-            pd.DataFrame: DataFrameHandler(),
-            dict: DictHandler(),
-        }
-
         self._load_metadata()
-
-    def register_handler(self, data_type: Type, handler: CacheDataHandler):
-        """
-        Register a custom data handler for a specific data type
-
-        Args:
-            data_type: The data type to handle
-            handler: The handler instance
-        """
-        self.handlers[data_type] = handler
-
-    def _get_handler(self, data_type: Type) -> CacheDataHandler:
-        """Get the appropriate handler for a data type"""
-        if data_type in self.handlers:
-            return self.handlers[data_type]
-
-        # Try to find a handler for parent classes
-        for registered_type, handler in self.handlers.items():
-            if issubclass(data_type, registered_type):
-                return handler
-
-        raise ValueError(f"No handler registered for data type: {data_type}")
 
     def _load_metadata(self):
         """Load metadata"""
         if self.metadata_file.exists():
-            with open(self.metadata_file) as f:
-                self.metadata = json.load(f)
+            try:
+                with open(self.metadata_file, "r", encoding="utf-8") as f:
+                    self.metadata = json.load(f)
+            except Exception as e:
+                logger.warning(f"Failed to load metadata: {e}")
+                self.metadata = {}
 
     def _save_metadata(self):
         """Save metadata"""
-        with open(self.metadata_file, "w") as f:
-            json.dump(self.metadata, f, ensure_ascii=False, indent=2)
+        try:
+            with open(self.metadata_file, "w", encoding="utf-8") as f:
+                json.dump(self.metadata, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save metadata: {e}")
 
-    def _get_file_path(self, key: str, data_type: Type = None) -> Path:
+    @staticmethod
+    def _get_file_extension(data_type: type) -> str:
+        """Get file extension for data type"""
+        if data_type is pd.DataFrame:
+            return ".csv"
+        elif data_type == dict:
+            return ".json"
+        elif data_type == list:
+            return ".json"
+        elif data_type == str:
+            return ".txt"
+        else:
+            return ".dat"
+
+    def _get_file_path(self, key: str, data_type: type = None) -> Path:
         """Get data file path with appropriate extension"""
         if data_type is None:
             # Try to get extension from metadata
@@ -82,25 +72,129 @@ class DataCache:
                     extension = ".csv"
                 elif stored_type_name == "dict":
                     extension = ".json"
+                elif stored_type_name == "list":
+                    extension = ".json"
                 elif stored_type_name == "str":
                     extension = ".txt"
                 else:
-                    # Try to find extension from registered handlers
-                    extension = ".dat"  # Default extension
-                    for registered_type, handler in self.handlers.items():
-                        if registered_type.__name__ == stored_type_name:
-                            extension = handler.get_file_extension()
-                            break
+                    extension = ".dat"
             else:
-                extension = ".dat"  # Default extension
+                extension = ".dat"
         else:
-            try:
-                handler = self._get_handler(data_type)
-                extension = handler.get_file_extension()
-            except ValueError:
-                extension = ".dat"  # Default extension
+            extension = self._get_file_extension(data_type)
 
         return self.cache_dir / f"{key}{extension}"
+
+    @staticmethod
+    def _save_dataframe(data: pd.DataFrame, file_path: Path, **kwargs) -> Dict[str, Any]:
+        """Save DataFrame as CSV"""
+        csv_params = {
+            "index": False,
+            "encoding": "utf-8",
+        }
+        csv_params.update(kwargs)
+        data.to_csv(file_path, **csv_params)
+        return {
+            "row_count": len(data),
+            "column_count": len(data.columns),
+            "file_size": file_path.stat().st_size,
+        }
+
+    @staticmethod
+    def _load_dataframe(file_path: Path, **kwargs) -> pd.DataFrame:
+        """Load DataFrame from CSV"""
+        csv_params = {
+            "encoding": "utf-8",
+        }
+        csv_params.update(kwargs)
+        return pd.read_csv(file_path, **csv_params)
+
+    @staticmethod
+    def _save_dict(data: dict, file_path: Path, **kwargs) -> Dict[str, Any]:
+        """Save dict as JSON"""
+        json_params = {
+            "ensure_ascii": False,
+            "indent": 2,
+            **kwargs,
+        }
+        json_params.update(kwargs)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, **json_params)
+        return {
+            "key_count": len(data),
+            "file_size": file_path.stat().st_size,
+        }
+
+    @staticmethod
+    def _load_dict(file_path: Path, **kwargs) -> dict:
+        """Load dict from JSON"""
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f, **kwargs)
+
+    @staticmethod
+    def _save_list(data: list, file_path: Path, **kwargs) -> Dict[str, Any]:
+        """Save list as JSON"""
+        json_params = {
+            "ensure_ascii": False,
+            "indent": 2,
+        }
+        json_params.update(kwargs)
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, **json_params)
+        return {
+            "item_count": len(data),
+            "file_size": file_path.stat().st_size,
+        }
+
+    @staticmethod
+    def _load_list(file_path: Path, **kwargs) -> list:
+        """Load list from JSON"""
+        with open(file_path, "r", encoding="utf-8") as f:
+            return json.load(f, **kwargs)
+
+    @staticmethod
+    def _save_string(data: str, file_path: Path, **kwargs) -> Dict[str, Any]:
+        """Save string as TXT"""
+        encoding = kwargs.get("encoding", "utf-8")
+        with open(file_path, "w", encoding=encoding) as f:
+            f.write(data)
+        return {
+            "char_count": len(data),
+            "file_size": file_path.stat().st_size,
+        }
+
+    @staticmethod
+    def _load_string(file_path: Path, **kwargs) -> str:
+        """Load string from TXT"""
+        encoding = kwargs.get("encoding", "utf-8")
+        with open(file_path, "r", encoding=encoding) as f:
+            return f.read()
+
+    def _save_data(self, data: Any, file_path: Path, data_type: type, **kwargs) -> Dict[str, Any]:
+        """Save data based on type"""
+        if data_type is pd.DataFrame:
+            return self._save_dataframe(data, file_path, **kwargs)
+        elif data_type == dict:
+            return self._save_dict(data, file_path, **kwargs)
+        elif data_type == list:
+            return self._save_list(data, file_path, **kwargs)
+        elif data_type == str:
+            return self._save_string(data, file_path, **kwargs)
+        else:
+            raise ValueError(f"Unsupported data type: {data_type}")
+
+    def _load_data(self, file_path: Path, data_type_name: str, **kwargs) -> Any:
+        """Load data based on type name"""
+        if data_type_name == "DataFrame":
+            return self._load_dataframe(file_path, **kwargs)
+        elif data_type_name == "dict":
+            return self._load_dict(file_path, **kwargs)
+        elif data_type_name == "list":
+            return self._load_list(file_path, **kwargs)
+        elif data_type_name == "str":
+            return self._load_string(file_path, **kwargs)
+        else:
+            raise ValueError(f"Unsupported data type: {data_type_name}")
 
     def _is_expired(self, key: str) -> bool:
         """Check if data is expired"""
@@ -117,36 +211,41 @@ class DataCache:
     def save(
         self,
         key: str,
-        data: Union[pd.DataFrame, dict, Any],
+        data: Union[pd.DataFrame, dict, list, str],
         expire_hours: Optional[float] = None,
-        **handler_kwargs,
+        **kwargs,
     ) -> bool:
         """
         Save data to cache
 
         Args:
             key: Cache key name
-            data: Data to save (DataFrame, dict, or other supported types)
+            data: Data to save (DataFrame, dict, list, or str)
             expire_hours: Expiration time in hours, None means never expires
-            **handler_kwargs: Additional parameters passed to the data handler
+            **kwargs: Additional parameters for save operations (e.g., encoding for string)
 
         Returns:
             bool: Whether save was successful
         """
         try:
             data_type = type(data)
-            handler = self._get_handler(data_type)
+
+            # Validate data type
+            if data_type not in [pd.DataFrame, dict, list, str]:
+                logger.error(f"Unsupported data type: {data_type}")
+                return False
+
             file_path = self._get_file_path(key, data_type)
 
-            # Save data using appropriate handler
-            handler_metadata = handler.save(data, file_path, **handler_kwargs)
+            # Save data
+            handler_metadata = self._save_data(data, file_path, data_type, **kwargs)
 
             # Update metadata
             current_time = datetime.now()
             self.metadata[key] = {
                 "created_time": current_time.isoformat(),
                 "updated_time": current_time.isoformat(),
-                "expire_time": (current_time + timedelta(hours=expire_hours)).isoformat() if expire_hours else None,
+                "expire_time": ((current_time + timedelta(hours=expire_hours)).isoformat() if expire_hours else None),
                 "data_type": data_type.__name__,
                 **handler_metadata,
             }
@@ -158,14 +257,19 @@ class DataCache:
             logger.exception(f"Failed to save data: {e}")
             return False
 
-    def load(self, key: str, auto_clean_expired: bool = True, **handler_kwargs) -> Optional[Any]:
+    def load(
+        self,
+        key: str,
+        auto_clean_expired: bool = True,
+        **kwargs,
+    ) -> Optional[Any]:
         """
         Load data from cache
 
         Args:
             key: Cache key name
             auto_clean_expired: Whether to automatically clean expired data
-            **handler_kwargs: Additional parameters passed to the data handler
+            **kwargs: Additional parameters for load operations (e.g., encoding for string)
 
         Returns:
             Optional[Any]: Loaded data, returns None if not exists or expired
@@ -183,34 +287,13 @@ class DataCache:
 
             # Get data type from metadata
             if key not in self.metadata or "data_type" not in self.metadata[key]:
-                logger.info(f"No data type information found for key '{key}'")
+                logger.warning(f"No data type information found for key '{key}'")
                 return None
 
             data_type_name = self.metadata[key]["data_type"]
 
-            # Map type name back to actual type
-            if data_type_name == "DataFrame":
-                data_type = pd.DataFrame
-            elif data_type_name == "dict":
-                data_type = dict
-            elif data_type_name == "str":
-                data_type = str
-            else:
-                # For other custom types, try to find a handler by checking registered types
-                data_type = None
-                for registered_type in self.handlers.keys():
-                    if registered_type.__name__ == data_type_name:
-                        data_type = registered_type
-                        break
-
-                if data_type is None:
-                    logger.info(f"Unknown data type: {data_type_name}")
-                    return None
-
-            handler = self._get_handler(data_type)
-
-            # Load data using appropriate handler
-            data = handler.load(file_path, **handler_kwargs)
+            # Load data
+            data = self._load_data(file_path, data_type_name, **kwargs)
 
             # Update last access time
             if key in self.metadata:
@@ -364,7 +447,7 @@ class DataCache:
             bool: Whether clearing was successful
         """
         try:
-            # Delete all data files (CSV, JSON, and other supported formats)
+            # Delete all data files (CSV, JSON, TXT, and other supported formats)
             for data_file in self.cache_dir.glob("*"):
                 if data_file.is_file() and data_file.name != "metadata.json":
                     data_file.unlink()
