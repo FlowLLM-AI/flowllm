@@ -73,6 +73,11 @@ flowllm = [
     "**/*.yaml",
 ]
 
+[project.urls]
+Homepage = "https://github.com/xxx-ai/xxxx"
+Documentation = "https://doc.xxx.io/"
+Repository = "https://github.com/xxx-ai/xxx"
+
 [project.scripts]
 flowllm = "flowllm.app:main"
 

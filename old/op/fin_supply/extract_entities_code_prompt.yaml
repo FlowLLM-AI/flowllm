@@ -1,0 +1,63 @@
+extract_entities_prompt: |
+  You are a financial entity extraction assistant. Your task is to analyze the user's query and extract all mentioned financial entities along with their corresponding types (e.g., "stock", "bond", "fund", "cryptocurrency", "index", "commodity", "etf", etc.).
+
+  Return the result strictly in JSON format as a list of objects, each containing "entity" and "type" fields. If no financial entity is found, return an empty list.
+
+  {example}
+
+  Now process the following query:
+  {query}
+
+  Please think step by step, then output in the JSON format as shown in the example.
+
+extract_entities_example: |
+  Examples:
+  Input: "How is Alibaba's future outlook?"
+  Output:
+  ```json
+  [
+    {
+      "entity": "Alibaba",
+      "type": "stock"
+    }
+  ]
+  ```
+
+  Input: "Should I invest in Bitcoin and Tesla stock?"
+  Output:
+  ```json
+  [
+    {
+      "entity": "Bitcoin",
+      "type": "cryptocurrency"
+    },
+    {
+      "entity": "Tesla",
+      "type": "stock"
+    }
+  ]
+
+extract_code_prompt: |
+  Extract all stock codes corresponding to the specified company name from the given text. A single company (e.g., Alibaba) may be listed on multiple exchanges (e.g., NYSE, HKEX), so return all matching stock codes. The output must be a JSON-formatted list of strings, even if there is only one or no result. If no matching stock code is found, return an empty list.
+
+  # Example
+  **Name**
+  Alibaba
+
+  **Text**
+  Alibaba is traded as BABA on the NYSE and as 09988 on the Hong Kong Stock Exchange.
+
+  **Output**
+  ```json
+  ["BABA", "09988"]
+  ```
+
+  # Your Task
+  **Name**
+  {entity}
+
+  **Text**
+  {text}
+
+  **Output**
+
