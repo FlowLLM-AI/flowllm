@@ -1,3 +1,9 @@
+"""Base embedding model implementation.
+
+This module provides the abstract base class for embedding models with common
+functionality including retry logic, error handling, and batch processing.
+"""
+
 import asyncio
 from abc import ABC
 from typing import List
@@ -5,7 +11,7 @@ from typing import List
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from flowllm.schema.vector_node import VectorNode
+from ..schema import VectorNode
 
 
 class BaseEmbeddingModel(BaseModel, ABC):

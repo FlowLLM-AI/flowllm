@@ -1,11 +1,18 @@
+"""OpenAI-compatible embedding model implementation.
+
+This module provides an embedding model implementation that works with
+OpenAI-compatible embedding APIs, including OpenAI's official API and
+other services that follow the same interface.
+"""
+
 import os
 from typing import Literal, List
 
 from openai import OpenAI, AsyncOpenAI
 from pydantic import Field, PrivateAttr, model_validator
 
-from flowllm.context.service_context import C
-from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
+from ..context import C
+from .base_embedding_model import BaseEmbeddingModel
 
 
 @C.register_embedding_model("openai_compatible")
@@ -119,42 +126,3 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
 
         else:
             raise RuntimeError(f"unsupported type={type(input_text)}")
-
-
-def main():
-    from flowllm.utils.common_utils import load_env
-
-    load_env()
-    model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-    res1 = model.get_embeddings(
-        "The clothes are of good quality and look good, definitely worth the wait. I love them.",
-    )
-    res2 = model.get_embeddings(["aa", "bb"])
-    print(res1)
-    print(res2)
-
-
-async def async_main():
-    from flowllm.utils.common_utils import load_env
-
-    load_env()
-    model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
-
-    # Test async single text embedding
-    res1 = await model.get_embeddings_async(
-        "The clothes are of good quality and look good, definitely worth the wait. I love them.",
-    )
-
-    # Test async batch text embedding
-    res2 = await model.get_embeddings_async(["aa", "bb"])
-
-    print("Async results:")
-    print(res1)
-    print(res2)
-
-
-if __name__ == "__main__":
-    # main()
-    import asyncio
-
-    asyncio.run(async_main())
