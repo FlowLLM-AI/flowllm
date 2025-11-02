@@ -1,15 +1,36 @@
+"""Logo and banner printing utilities.
+
+This module provides utilities for printing styled logos and service information
+using pyfiglet for ASCII art and rich for terminal formatting.
+"""
+
+from typing import TYPE_CHECKING
+
 from pyfiglet import Figlet
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+if TYPE_CHECKING:
+    from ..schema import ServiceConfig
 
-def print_logo(service_config, app_name: str, width: int = 400):
-    from flowllm.schema.service_config import ServiceConfig
 
-    assert isinstance(service_config, ServiceConfig)
+def print_logo(service_config: "ServiceConfig", app_name: str, width: int = 400):
+    """Print a styled logo and service information banner.
 
+    Creates and prints a formatted banner containing:
+    - ASCII art logo generated from the app name
+    - Service configuration information (backend, URL, transport)
+    - Version information for FlowLLM and related dependencies
+
+    Args:
+        service_config: Service configuration object containing backend settings.
+        app_name: Name of the application to display in the logo.
+        width: Width for the ASCII art logo generation. Defaults to 400.
+
+    The output is styled with colors and formatted as a panel using the rich library.
+    """
     f = Figlet(font="slant", width=width)
     logo: str = f.renderText(app_name)
     logo_text = Text(logo, style="bold green")

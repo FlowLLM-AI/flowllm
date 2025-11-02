@@ -7,34 +7,17 @@ from typing import List, Callable
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.context.flow_context import FlowContext
-from flowllm.context.prompt_handler import PromptHandler
-from flowllm.context.service_context import C
-from flowllm.embedding_model.base_embedding_model import BaseEmbeddingModel
-from flowllm.llm.base_llm import BaseLLM
-from flowllm.schema.service_config import LLMConfig, EmbeddingModelConfig
-from flowllm.storage.cache_handler import DataCache
-from flowllm.storage.vector_store.base_vector_store import BaseVectorStore
-from flowllm.utils.common_utils import camel_to_snake
-from flowllm.utils.timer import Timer
+from ..context import FlowContext, PromptHandler, C
+from ..embedding_model import BaseEmbeddingModel
+from ..llm import BaseLLM
+from ..schema import LLMConfig, EmbeddingModelConfig
+from ..storage import CacheHandler
+from ..vector_store import BaseVectorStore
+from ..utils import camel_to_snake
+from ..utils import Timer
 
 
 class BaseOp(ABC):
-    """
-    Base operation class that provides the foundation for all operations in FlowLLM.
-
-    This class implements:
-    - Synchronous execution with retry logic and error handling
-    - Context management for passing data between operations
-    - Integration with LLM, embedding models, and vector stores
-    - Prompt management and formatting
-    - Task submission and parallel execution using thread pools
-    - Caching mechanism for expensive operations
-    - Operator overloading for building operation pipelines (>>, |, <<)
-
-    All concrete operations should inherit from this class or its async variant (BaseAsyncOp).
-    """
-
     file_path: str = __file__
 
     def __new__(cls, *args, **kwargs):
@@ -106,7 +89,7 @@ class BaseOp(ABC):
         self.task_list: list = []
         self.timer = Timer(name=self.name)
         self.context: FlowContext | None = None
-        self._cache: DataCache | None = None
+        self._cache: CacheHandler | None = None
 
     @property
     def short_name(self) -> str:
