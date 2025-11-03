@@ -8,10 +8,11 @@ the original mcp_client.py implementation.
 import asyncio
 import os
 import shutil
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import mcp.types
 from fastmcp import Client
+from fastmcp.client.client import CallToolResult
 from fastmcp.client.transports import StdioTransport, SSETransport, StreamableHttpTransport
 from loguru import logger
 
@@ -270,12 +271,13 @@ class FastMcpClient:
         tools = await self.list_tools()
         return [ToolCall.from_mcp_tool(t) for t in tools]
 
-    async def call_tool(self, tool_name: str, arguments: dict):
+    async def call_tool(self, tool_name: str, arguments: dict, parse_result: bool = True) -> Union[str, CallToolResult]:
         """Call a tool on the MCP server.
 
         Args:
             tool_name: Name of the tool to call
             arguments: Dictionary of arguments to pass to the tool
+            parse_result: parse CallToolResult to str
 
         Returns:
             The result from the tool call
@@ -298,15 +300,18 @@ class FastMcpClient:
                 else:
                     result = await self.client.call_tool(tool_name, arguments)
 
-                if len(result.content) == 1:
-                    return result.content[0].text
+                if parse_result:
+                    if len(result.content) == 1:
+                        return result.content[0].text
 
+                    else:
+                        text_content = []
+                        for block in result.content:
+                            if hasattr(block, "text"):
+                                text_content.append(block.text)
+                        return "\n".join(text_content) if text_content else result
                 else:
-                    text_content = []
-                    for block in result.content:
-                        if hasattr(block, "text"):
-                            text_content.append(block.text)
-                    return "\n".join(text_content) if text_content else result
+                    return result
 
             except asyncio.TimeoutError as exc:
                 logger.exception(f"{self.name}.{tool_name} call_tool timeout after {self.timeout}s")

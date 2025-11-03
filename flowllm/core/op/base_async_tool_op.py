@@ -1,25 +1,30 @@
+"""Asynchronous tool operation base class.
+
+This module defines `BaseAsyncToolOp`, an abstract base operator that helps
+implement asynchronous tool-like operations. It manages input/output schema
+binding to a shared context, provides default result handling, and standardizes
+pre/post execution hooks for derived ops.
+"""
+
 import json
 from abc import ABCMeta
 from typing import List
 
 from loguru import logger
 
-from flowllm.op.base_async_op import BaseAsyncOp
-from flowllm.schema.tool_call import ToolCall, ParamAttrs
+from .base_async_op import BaseAsyncOp
+from ..schema import ToolCall, ParamAttrs
 
 
 class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
-    """
-    Base class for async tool operations with schema-based input/output handling.
+    """Base class for async tool operators.
 
-    Extends BaseAsyncOp to provide:
-    - Tool schema definition (input/output parameters with types and descriptions)
-    - Automatic context mapping for input/output parameters
-    - Support for multiple tool instances via tool_index
-    - Result formatting and storage
-
-    Tool operations are the bridge between LLM function calls and actual implementations.
-    They define what parameters a tool needs and what it returns.
+    Subclasses describe their tool interface via `build_tool_call()` and
+    implement their asynchronous execution while relying on this class to:
+    - extract inputs from the context before execution
+    - store outputs back into the context after execution
+    - optionally save the primary output to the response answer
+    - provide simple helpers for setting single or multiple results
     """
 
     def __init__(
@@ -31,16 +36,15 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         output_schema_mapping: dict = None,
         **kwargs,
     ):
-        """
-        Initialize a tool operation.
+        """Initialize the async tool operator.
 
         Args:
-            enable_print_output: Whether to log output dict
-            tool_index: Index for multiple instances of same tool (0=default, >0 for copies)
-            save_answer: Whether to save output to context.response.answer
-            input_schema_mapping: Map input parameter names to different context keys
-            output_schema_mapping: Map output parameter names to different context keys
-            **kwargs: Additional parameters passed to BaseAsyncOp
+            enable_print_output: Whether to log output dictionaries.
+            tool_index: Index for disambiguating multiple instances of the tool.
+            save_answer: If True, write primary output into `response.answer`.
+            input_schema_mapping: Optional mapping from input names to context keys.
+            output_schema_mapping: Optional mapping from output names to context keys.
+            **kwargs: Extra arguments forwarded to `BaseAsyncOp`.
         """
         super().__init__(**kwargs)
 
@@ -55,32 +59,17 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         self.output_dict: dict = {}  # Actual output values to save to context
 
     def build_tool_call(self) -> ToolCall:
-        """
-        Build the tool schema definition. Override this method to define your tool.
+        """Build and return the tool call schema for this operator.
 
-        Returns:
-            ToolCall with description, input_schema, and optionally output_schema
+        Subclasses should override to provide `description`, `input_schema`, and
+        optionally `output_schema`. If `output_schema` is not provided, a default
+        single string output will be created.
         """
-        return ToolCall(
-            **{
-                "description": "",
-                "input_schema": {},
-            },
-        )
+        return ToolCall(**{"description": "", "input_schema": {}})
 
     @property
     def tool_call(self):
-        """
-        Get or initialize the tool call schema.
-
-        Lazy initialization that:
-        1. Calls build_tool_call() to get the schema
-        2. Sets name and index
-        3. Adds default output_schema if not provided
-
-        Returns:
-            ToolCall instance with complete schema
-        """
+        """Return the lazily constructed `ToolCall` describing this tool."""
         if self._tool_call is None:
             self._tool_call = self.build_tool_call()
             self._tool_call.name = self.short_name
@@ -98,14 +87,9 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
     @property
     def output_keys(self) -> str | List[str]:
-        """
-        Get the output parameter name(s) from the tool schema.
-
-        Returns:
-            Single string if one output parameter, list of strings if multiple
-        """
+        """Return the output key name or list of names defined by the schema."""
         output_keys = []
-        for name, attrs in self.tool_call.output_schema.items():
+        for name, _ in self.tool_call.output_schema.items():
             if name not in output_keys:
                 output_keys.append(name)
 
@@ -116,14 +100,10 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
     @property
     def output(self) -> str:
-        """
-        Get the single output value (only works for single-output tools).
-
-        Returns:
-            Output value as string
+        """Convenience accessor for the primary output value.
 
         Raises:
-            NotImplementedError: If tool has multiple outputs
+            NotImplementedError: If multiple outputs exist; use `output_dict`.
         """
         if isinstance(self.output_keys, str):
             return self.output_dict[self.output_keys]
@@ -131,12 +111,10 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             raise NotImplementedError("use `output_dict` to get result")
 
     def set_result(self, value="", key: str = ""):
-        """
-        Set a single output value in output_dict.
+        """Set a single output value.
 
-        Args:
-            value: Value to store
-            key: Output parameter name (required for multi-output tools)
+        If only one output key exists, `key` is ignored and the single key is
+        used. Otherwise, `key` must be provided.
         """
         if isinstance(self.output_keys, str):
             self.output_dict[self.output_keys] = value
@@ -144,27 +122,15 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             self.output_dict[key] = value
 
     def set_results(self, **kwargs):
-        """
-        Set multiple output values at once.
-
-        Args:
-            **kwargs: key=value pairs for output parameters
-        """
+        """Set multiple output values using keyword arguments."""
         for k, v in kwargs.items():
             self.set_result(v, k)
 
     async def async_before_execute(self):
-        """
-        Extract input parameters from context based on tool schema.
+        """Populate `input_dict` by reading required inputs from the context.
 
-        For each input parameter in the schema:
-        1. Determines context key (with optional mapping and tool_index suffix)
-        2. Extracts value from context
-        3. Validates required parameters
-        4. Stores in input_dict for use in async_execute()
-
-        Raises:
-            ValueError: If a required parameter is missing from context
+        Applies `input_schema_mapping` and appends the `tool_index` suffix when
+        necessary. Raises if any required input is missing.
         """
         for name, attrs in self.tool_call.input_schema.items():
             context_key = name
@@ -179,14 +145,10 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
                 raise ValueError(f"{self.name}: {name} is required")
 
     async def async_after_execute(self):
-        """
-        Store output parameters to context and optionally save to answer.
+        """Write `output_dict` back to the context and optionally save answer.
 
-        For each output parameter:
-        1. Determines context key (with optional mapping and tool_index suffix)
-        2. Saves value to context for downstream operations
-        3. Optionally saves to context.response.answer if save_answer=True
-        4. Logs output if enable_print_output=True
+        Applies `output_schema_mapping` and appends the `tool_index` suffix when
+        necessary. Logs outputs when enabled.
         """
         for name, value in self.output_dict.items():
             context_key = name
@@ -211,11 +173,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
                 logger.info(f"{self.name}.{self.tool_index}.output_dict={self.output_dict}")
 
     async def async_default_execute(self):
-        """
-        Fallback behavior when tool execution fails.
-
-        Sets all output parameters to error messages indicating failure.
-        """
+        """Fill outputs with a default failure message when execution fails."""
         if isinstance(self.output_keys, str):
             self.output_dict[self.output_keys] = f"{self.name} execution failed!"
         else:
