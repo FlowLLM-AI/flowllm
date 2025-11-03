@@ -3,9 +3,20 @@
 Defines `BaseFlow`, which builds an operation tree (`BaseOp`) and provides
 sync (`call`) and async (`async_call`) entry points with optional streaming
 support and structured error handling.
+
+Caching:
+- Non-streaming requests can be cached by enabling `enable_cache`.
+- Cache key is a SHA-256 hash of the JSON-serialized request params (`**kwargs`).
+- If params are not serializable, a serialization exception is logged and the
+  call proceeds without caching.
+- Cached value is the `FlowResponse` serialized via `model_dump()`, stored with
+  an expiration configured by `cache_expire_hours`.
+- Streaming (`stream=True`) is not cached.
 """
 
 import asyncio
+import hashlib
+import json
 from abc import ABC
 from functools import partial
 from typing import Union, Optional
@@ -16,6 +27,7 @@ from ..context import FlowContext, C
 from ..enumeration import ChunkEnum
 from ..op import BaseOp, SequentialOp, ParallelOp, BaseAsyncOp
 from ..schema import FlowResponse, FlowStreamChunk
+from ..storage import CacheHandler
 from ..utils import camel_to_snake
 
 
@@ -26,6 +38,8 @@ class BaseFlow(ABC):
     Instances support both streaming and non-streaming responses and can run
     either in the current thread or in an async loop depending on the
     underlying op's async capability.
+
+    Caching is available for non-streaming paths when `enable_cache=True`.
     """
 
     def __init__(
@@ -33,6 +47,9 @@ class BaseFlow(ABC):
         name: str = "",
         stream: bool = False,
         raise_exception: bool = True,
+        enable_cache: bool = False,
+        cache_path: str = "cache/{flow_name}",
+        cache_expire_hours: float = 0.1,
         **kwargs,
     ):
         """Initialize a flow instance.
@@ -41,6 +58,9 @@ class BaseFlow(ABC):
             name: Flow name; defaults to the snake-cased class name.
             stream: Whether to stream output chunks.
             raise_exception: If False, capture exceptions into the response.
+            enable_cache: Whether to enable response caching (non-stream only).
+            cache_path: Cache storage path template with {flow_name} placeholder.
+            cache_expire_hours: Cache expiration time in hours.
             **kwargs: Extra parameters passed to the flow context.
         """
         self.name: str = name or camel_to_snake(self.__class__.__name__)
@@ -50,6 +70,81 @@ class BaseFlow(ABC):
 
         self._flow_op: Optional[BaseOp] = None
         self.flow_printed: bool = False
+        self.enable_cache: bool = enable_cache
+        self.cache_path: str = cache_path
+        self.cache_expire_hours: float = cache_expire_hours
+        self._cache: CacheHandler | None = None
+
+    @property
+    def cache(self) -> CacheHandler | None:
+        """Lazily initialize and return the cache handler.
+
+        Returns:
+            A `CacheHandler` instance when caching is enabled; otherwise `None`.
+        """
+        if self.enable_cache and self._cache is None:
+            self._cache = CacheHandler(self.cache_path.format(flow_name=self.name))
+        return self._cache
+
+    @staticmethod
+    def _compute_cache_key(params: dict) -> Optional[str]:
+        """Compute a stable cache key from request params.
+
+        The key is `sha256(json.dumps(params, sort_keys=True))`. If serialization
+        fails (e.g., params contain non-serializable objects), the error is logged
+        and `None` is returned which disables caching for this call.
+
+        Args:
+            params: Request keyword arguments to serialize.
+
+        Returns:
+            Hex digest string key or `None` on serialization failure.
+        """
+        try:
+            payload = json.dumps(params, sort_keys=True, ensure_ascii=False)
+            return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+        except Exception as e:
+            logger.exception(f"base_flow cache key serialization failed, error={e}")
+            return None
+
+    def _maybe_load_cached(self, params: dict) -> Optional[FlowResponse]:
+        """Return cached response if available for non-streaming requests.
+
+        Args:
+            params: Request keyword arguments to compute the cache key.
+
+        Returns:
+            A `FlowResponse` if found in cache; otherwise `None`.
+        """
+        if not self.enable_cache or self.stream:
+            return None
+
+        key = self._compute_cache_key(params)
+        if not key:
+            return None
+
+        cached = self.cache.load(key) if self.cache else None
+        if cached is not None:
+            logger.info(f"load flow response from cache with params={params}")
+        return cached
+
+    def _maybe_save_cache(self, params: dict, response: FlowResponse):
+        """Save a response into cache for non-streaming requests.
+
+        Args:
+            params: Request keyword arguments to compute the cache key.
+            response: The `FlowResponse` to persist. Stored as `model_dump()`.
+        """
+        if not self.enable_cache or self.stream:
+            return
+
+        key = self._compute_cache_key(params)
+        if not key:
+            return
+
+        if self.cache:
+            self.cache.save(key, response.model_dump(), expire_hours=self.cache_expire_hours)
 
     @property
     def async_mode(self) -> bool:
@@ -139,14 +234,27 @@ class BaseFlow(ABC):
         Keyword Args are forwarded to `FlowContext`.
         """
         kwargs["stream"] = self.stream
+
+        # Cache only for non-streaming
+        if not self.stream:
+            cached = self._maybe_load_cached(kwargs)
+            if cached is not None:
+                return cached
+
         context = FlowContext(**kwargs)
         logger.info(f"request.params={kwargs}")
 
         if self.raise_exception:
-            return await self._async_call(context=context)
+            result = await self._async_call(context=context)
+            if not self.stream:
+                self._maybe_save_cache(kwargs, result)
+            return result
 
         try:
-            return await self._async_call(context=context)
+            result = await self._async_call(context=context)
+            if not self.stream:
+                self._maybe_save_cache(kwargs, result)
+            return result
 
         except Exception as e:
             logger.exception(f"flow_name={self.name} async call encounter error={e.args}")
@@ -182,14 +290,27 @@ class BaseFlow(ABC):
         Keyword Args are forwarded to `FlowContext`.
         """
         kwargs["stream"] = self.stream
+
+        # Cache only for non-streaming
+        if not self.stream:
+            cached = self._maybe_load_cached(kwargs)
+            if cached is not None:
+                return cached
+
         context = FlowContext(**kwargs)
         logger.info(f"request.params={kwargs}")
 
         if self.raise_exception:
-            return self._call(context=context)
+            result = self._call(context=context)
+            if not self.stream:
+                self._maybe_save_cache(kwargs, result)
+            return result
 
         try:
-            return self._call(context=context)
+            result = self._call(context=context)
+            if not self.stream:
+                self._maybe_save_cache(kwargs, result)
+            return result
 
         except Exception as e:
             logger.exception(f"flow_name={self.name} call encounter error={e.args}")

@@ -1,20 +1,29 @@
+"""MCP service for exposing flows as Model Context Protocol tools.
+
+This service registers tool-callable flows with FastMCP and runs the selected
+transport (SSE, HTTP, or STDIO).
+"""
+
 from fastmcp import FastMCP
 from fastmcp.tools import FunctionTool
 
-from flowllm.context.service_context import C
-from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.service.base_service import BaseService
-from flowllm.utils.pydantic_utils import create_pydantic_model
+from .base_service import BaseService
+from ..context import C
+from ..flow import BaseToolFlow
+from ..utils.pydantic_utils import create_pydantic_model
 
 
 @C.register_service("mcp")
 class MCPService(BaseService):
+    """Service that exposes tool flows via FastMCP transports."""
 
     def __init__(self, **kwargs):
+        """Initialize the MCP server instance."""
         super().__init__(**kwargs)
         self.mcp = FastMCP(name=C.APP_NAME_VALUE)
 
     def integrate_tool_flow(self, flow: BaseToolFlow) -> bool:
+        """Register a tool-callable flow as an MCP tool."""
         request_model = create_pydantic_model(flow.name, flow.tool_call.input_schema)
 
         async def execute_tool(**kwargs) -> str:
@@ -25,8 +34,8 @@ class MCPService(BaseService):
         tool_call_schema = flow.tool_call.simple_input_dump()
         parameters = tool_call_schema[tool_call_schema["type"]]["parameters"]
         tool = FunctionTool(
-            name=flow.name,  # noqa
-            description=flow.tool_call.description,  # noqa
+            name=flow.name,
+            description=flow.tool_call.description,
             fn=execute_tool,
             parameters=parameters,
         )
@@ -35,6 +44,7 @@ class MCPService(BaseService):
         return True
 
     def run(self):
+        """Run the MCP server using the configured transport and options."""
         super().run()
         mcp_config = self.service_config.mcp
 

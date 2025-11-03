@@ -1,3 +1,9 @@
+"""HTTP service for serving flows via FastAPI.
+
+This service exposes registered flows as HTTP endpoints, including regular,
+tool-callable, and streaming flows. It also provides a health check endpoint.
+"""
+
 import asyncio
 from typing import AsyncGenerator
 
@@ -6,19 +12,19 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
-from flowllm.context.service_context import C
-from flowllm.flow import BaseFlow
-from flowllm.flow.base_tool_flow import BaseToolFlow
-from flowllm.schema.flow_response import FlowResponse
-from flowllm.schema.flow_stream_chunk import FlowStreamChunk
-from flowllm.service.base_service import BaseService
-from flowllm.utils.pydantic_utils import create_pydantic_model
+from .base_service import BaseService
+from ..context import C
+from ..flow import BaseFlow, BaseToolFlow
+from ..schema import FlowResponse, FlowStreamChunk
+from ..utils.pydantic_utils import create_pydantic_model
 
 
 @C.register_service("http")
 class HttpService(BaseService):
+    """FastAPI-based HTTP server that exposes registered flows as endpoints."""
 
     def __init__(self, **kwargs):
+        """Initialize the FastAPI application and middleware."""
         super().__init__(**kwargs)
         self.app = FastAPI(title=C.APP_NAME_VALUE)
         self.app.add_middleware(
@@ -35,6 +41,7 @@ class HttpService(BaseService):
         self.app.get("/health")(health_check)
 
     def integrate_flow(self, flow: BaseFlow) -> bool:
+        """Expose a non-tool, non-stream flow as a POST endpoint returning JSON."""
         request_model = create_pydantic_model(flow.name)
 
         async def execute_endpoint(request: request_model) -> FlowResponse:
@@ -44,15 +51,22 @@ class HttpService(BaseService):
         return True
 
     def integrate_tool_flow(self, flow: BaseToolFlow) -> bool:
+        """Expose a tool-callable flow as a POST endpoint with OpenAPI details."""
         request_model = create_pydantic_model(flow.name, input_schema=flow.tool_call.input_schema)
 
         async def execute_endpoint(request: request_model) -> FlowResponse:
             return await flow.async_call(**request.model_dump())
 
-        self.app.post(f"/{flow.name}", response_model=FlowResponse)(execute_endpoint)
+        # include tool description in OpenAPI, parameters are described via request_model fields
+        self.app.post(
+            f"/{flow.name}",
+            response_model=FlowResponse,
+            description=flow.tool_call.description,
+        )(execute_endpoint)
         return True
 
     def integrate_stream_flow(self, flow: BaseFlow) -> bool:
+        """Expose a streaming flow as a Server-Sent Events endpoint."""
         request_model = create_pydantic_model(flow.name)
 
         async def execute_stream_endpoint(request: request_model) -> StreamingResponse:
@@ -63,12 +77,11 @@ class HttpService(BaseService):
                 while True:
                     stream_chunk: FlowStreamChunk = await stream_queue.get()
                     if stream_chunk.done:
-                        yield f"data:[DONE]\n\n".encode("utf-8")
+                        yield "data:[DONE]\n\n".encode("utf-8")
                         await task
                         break
 
-                    else:
-                        yield f"data:{stream_chunk.model_dump_json()}\n\n".encode("utf-8")
+                    yield f"data:{stream_chunk.model_dump_json()}\n\n".encode("utf-8")
 
             return StreamingResponse(generate_stream(), media_type="text/event-stream")
 
@@ -76,6 +89,7 @@ class HttpService(BaseService):
         return True
 
     def run(self):
+        """Run the FastAPI app with the configured Uvicorn settings."""
         super().run()
         http_config = self.service_config.http
         uvicorn.run(

@@ -32,10 +32,18 @@ class CmdConfig(BaseModel):
 
 
 class FlowConfig(ToolCall):
-    """Configuration for flow execution with optional streaming."""
+    """Configuration for flow execution with optional streaming and caching.
+
+    In addition to tool-call metadata inherited from `ToolCall`, this config
+    controls execution behavior such as streaming output and response caching.
+    Caching is only applied to non-streaming invocations.
+    """
 
     flow_content: str = Field(default="")
     stream: bool = Field(default=False)
+    enable_cache: bool = Field(default=False, description="Enable non-stream response caching")
+    cache_path: str = Field(default="cache/{flow_name}", description="Cache path template; supports {flow_name}")
+    cache_expire_hours: float = Field(default=0.1, description="Cache TTL (hours)")
 
 
 class OpConfig(BaseModel):

@@ -6,16 +6,29 @@ from ..schema import FlowConfig, ToolCall
 
 
 class ExpressionToolFlow(BaseToolFlow):
-    """Tool-enabled flow constructed from `FlowConfig.flow_content`."""
+    """Tool-enabled flow constructed from `FlowConfig.flow_content`.
+
+    The flow forwards cache-related parameters from `FlowConfig` to `BaseFlow`,
+    enabling non-streaming response caching when configured.
+    """
 
     def __init__(self, flow_config: FlowConfig = None, **kwargs):
         """Initialize the flow with a `FlowConfig`.
 
         Args:
-            flow_config: Configuration containing expression and metadata.
+            flow_config: Configuration containing expression, metadata, and
+                optional caching controls (`enable_cache`, `cache_path`,
+                `cache_expire_hours`).
         """
         self.flow_config: FlowConfig = flow_config
-        super().__init__(name=flow_config.name, stream=self.flow_config.stream, **kwargs)
+        super().__init__(
+            name=flow_config.name,
+            stream=self.flow_config.stream,
+            enable_cache=self.flow_config.enable_cache,
+            cache_path=self.flow_config.cache_path,
+            cache_expire_hours=self.flow_config.cache_expire_hours,
+            **kwargs,
+        )
 
     def build_flow(self):
         """Parse and return the operation tree from the config content."""

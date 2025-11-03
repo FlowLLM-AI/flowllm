@@ -28,24 +28,20 @@ from .fastmcp_client import FastMcpClient
 from .http_client import HttpClient
 from .logger_utils import init_logger
 from .logo_utils import print_logo
+from .pydantic_utils import create_pydantic_model
 from .timer import Timer, timer
 
 __all__ = [
-    # HTTP client
     "HttpClient",
-    # MCP client
     "FastMcpClient",
-    # Common utilities
     "camel_to_snake",
     "snake_to_camel",
     "load_env",
     "extract_content",
     "singleton",
-    # Timer utilities
     "Timer",
     "timer",
-    # Logger utilities
     "init_logger",
-    # Logo utilities
     "print_logo",
+    "create_pydantic_model",
 ]
