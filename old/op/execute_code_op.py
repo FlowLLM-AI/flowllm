@@ -4,23 +4,23 @@ from io import StringIO
 
 from loguru import logger
 
-from flowllm.context.flow_context import FlowContext
-from flowllm.context.service_context import C
-from flowllm.op.base_async_tool_op import BaseAsyncToolOp
-from flowllm.schema.tool_call import ToolCall
+from ..base_async_tool_op import BaseAsyncToolOp
+from ...context import FlowContext, C
+from ...schema import ToolCall
 
 
-@C.register_op(register_app="FlowLLM")
+@C.register_op()
 class ExecuteCodeOp(BaseAsyncToolOp):
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(
             **{
-                "description": "Execute python code can be used in scenarios such as analysis or calculation, and the final result can be printed using the `print` function.",
+                "description": "Execute python code can be used in scenarios such as analysis or calculation, "
+                               "and the final result can be printed using the `print` function.",
                 "input_schema": {
                     "code": {
                         "type": "string",
-                        "description": "code to be executed. Please do not execute any matplotlib code here.",
+                        "description": "code to be executed",
                         "required": True,
                     },
                 },

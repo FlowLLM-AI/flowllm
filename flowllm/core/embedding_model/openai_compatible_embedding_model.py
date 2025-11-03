@@ -11,8 +11,8 @@ from typing import Literal, List
 from openai import OpenAI, AsyncOpenAI
 from pydantic import Field, PrivateAttr, model_validator
 
-from ..context import C
 from .base_embedding_model import BaseEmbeddingModel
+from ..context import C
 
 
 @C.register_embedding_model("openai_compatible")
