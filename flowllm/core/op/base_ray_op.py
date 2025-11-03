@@ -1,51 +1,70 @@
+"""Base Ray operation class for distributed parallel execution.
+
+This module provides the BaseRayOp class, which extends BaseOp with Ray-based
+distributed parallelization capabilities. It allows operations to be executed
+in parallel across multiple workers using Ray for efficient distributed computing.
+"""
+
 from abc import ABC
 
 import pandas as pd
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.context.base_context import BaseContext
-from flowllm.context.service_context import C
-from flowllm.op.base_op import BaseOp
+from .base_op import BaseOp
+from ..context import BaseContext, C
 
 
 class BaseRayOp(BaseOp, ABC):
-    """
-    Base class for Ray-based operations that provides distributed parallel execution.
+    """Base class for operations with Ray-based distributed parallelization.
 
-    Extends BaseOp to support Ray distributed computing framework.
-    Ray enables scaling operations across multiple CPU cores or even multiple machines.
+    This class extends BaseOp to provide distributed parallel execution using Ray.
+    It automatically detects list parameters for parallelization and distributes
+    work across multiple Ray workers. Large data structures (DataFrames, Series,
+    dicts, lists, Contexts) are automatically converted to Ray objects for
+    efficient sharing across workers.
 
-    Key features:
-    - Distributed task execution across Ray workers
-    - Automatic data serialization with Ray's object store
-    - Load balancing across available workers
-    - Progress tracking with tqdm
+    Attributes:
+        ray_task_list: List of Ray task futures being tracked
 
-    Use this when you need:
-    - Heavy parallelism beyond thread pool limits
-    - Processing large datasets in parallel
-    - Distributed computing across multiple machines
+    Example:
+        ```python
+        class MyRayOp(BaseRayOp):
+            def execute(self):
+                # Automatically parallelizes over 'items' list
+                results = self.submit_and_join_ray_task(
+                    fn=process_item,
+                    items=[1, 2, 3, 4, 5],
+                    other_param="value"
+                )
+                return results
+        ```
     """
 
     def __init__(self, **kwargs):
-        """Initialize Ray operation with empty task list."""
+        """Initialize the Ray operation.
+
+        Args:
+            **kwargs: Arguments passed to BaseOp.__init__
+        """
         super().__init__(**kwargs)
         self.ray_task_list = []
 
     def submit_and_join_parallel_op(self, op: BaseOp, **kwargs):
-        """
-        Helper to parallelize an operation over a list parameter.
+        """Submit a parallel operation and wait for all results.
 
-        Automatically detects the first list parameter and parallelizes the operation
-        across all values in that list.
+        Automatically detects the first list parameter in kwargs as the parallel key
+        and distributes the operation's execution across Ray workers.
 
         Args:
-            op: Operation to parallelize
-            **kwargs: Parameters including at least one list to parallelize over
+            op: BaseOp instance to execute in parallel
+            **kwargs: Arguments to pass to op.call(), must contain at least one list
 
         Returns:
-            Combined results from all parallel executions
+            List of results from all parallel executions
+
+        Raises:
+            AssertionError: If no list parameter is found in kwargs
         """
         parallel_key = None
         for key, value in kwargs.items():
@@ -70,25 +89,30 @@ class BaseRayOp(BaseOp, ABC):
         task_desc: str = "",
         **kwargs,
     ):
-        """
-        Parallelize a function across Ray workers with automatic load balancing.
+        """Submit Ray tasks for parallel execution and wait for all results.
 
-        This method:
-        1. Auto-detects the list parameter to parallelize over (if not specified)
-        2. Converts large objects (DataFrames, dicts, etc.) to Ray objects for efficiency
-        3. Distributes work across workers using round-robin scheduling
-        4. Collects and combines all results
+        This method distributes work across multiple Ray workers by splitting a
+        list parameter. Large data structures are automatically converted to Ray
+        objects for efficient sharing.
 
         Args:
-            fn: Function to execute in parallel (receives one item from parallel_key list)
-            parallel_key: Name of the list parameter to parallelize over (auto-detected if empty)
-            task_desc: Description for progress bar
-            **kwargs: Parameters for fn, one should be a list to parallelize over
+            fn: Function to execute in parallel. Will be called with each item
+                from the parallel_list as the parallel_key parameter.
+            parallel_key: Name of the keyword argument containing the list to
+                parallelize over. If empty, auto-detects the first list parameter.
+            task_desc: Description for progress bar display
+            **kwargs: Additional arguments to pass to fn. Large data structures
+                (DataFrame, Series, dict, list, BaseContext) are converted to
+                Ray objects automatically.
 
         Returns:
-            Combined list of results from all workers
-        """
+            List of results from all parallel executions, flattened if individual
+            results are lists
 
+        Raises:
+            AssertionError: If no list parameter is found when parallel_key is empty
+            RuntimeError: If Ray is not configured (ray_max_workers <= 1)
+        """
         import ray
 
         max_workers = C.service_config.ray_max_workers
@@ -132,28 +156,28 @@ class BaseRayOp(BaseOp, ABC):
 
     @staticmethod
     def ray_task_loop(
-        parallel_key: str, parallel_list: list, actor_index: int, max_workers: int, internal_fn, **kwargs
+        parallel_key: str,
+        parallel_list: list,
+        actor_index: int,
+        max_workers: int,
+        internal_fn,
+        **kwargs,
     ):
-        """
-        Worker loop that processes a subset of the parallel list.
+        """Worker loop that processes a subset of items from parallel_list.
 
-        Each worker processes every Nth item (round-robin scheduling) where N = max_workers.
-        For example, with 4 workers:
-        - Worker 0: items 0, 4, 8, 12, ...
-        - Worker 1: items 1, 5, 9, 13, ...
-        - Worker 2: items 2, 6, 10, 14, ...
-        - Worker 3: items 3, 7, 11, 15, ...
+        Each worker processes items assigned to it based on actor_index and
+        max_workers using a round-robin distribution (items[actor_index::max_workers]).
 
         Args:
-            parallel_key: Name of the list parameter
-            parallel_list: Full list to process
-            actor_index: This worker's index (0 to max_workers-1)
+            parallel_key: Name of the keyword argument to set with parallel_value
+            parallel_list: Full list of items to process
+            actor_index: Index of this worker (0 to max_workers-1)
             max_workers: Total number of workers
             internal_fn: Function to call for each item
-            **kwargs: Additional parameters for internal_fn
+            **kwargs: Additional arguments to pass to internal_fn
 
         Returns:
-            Combined results from all items processed by this worker
+            List of results from processing assigned items
         """
         result = []
         for parallel_value in parallel_list[actor_index::max_workers]:
@@ -167,13 +191,15 @@ class BaseRayOp(BaseOp, ABC):
         return result
 
     def submit_ray_task(self, fn, *args, **kwargs):
-        """
-        Submit a single Ray task for asynchronous execution.
+        """Submit a single Ray task for asynchronous execution.
+
+        Initializes Ray if not already initialized and creates a remote function
+        to execute the task. The task is added to ray_task_list for later joining.
 
         Args:
             fn: Function to execute remotely
-            *args: Positional arguments for the function
-            **kwargs: Keyword arguments for the function
+            *args: Positional arguments for fn
+            **kwargs: Keyword arguments for fn
 
         Returns:
             Self for method chaining
@@ -198,14 +224,17 @@ class BaseRayOp(BaseOp, ABC):
         return self
 
     def join_ray_task(self, task_desc: str = None) -> list:
-        """
-        Wait for all submitted Ray tasks to complete and collect their results.
+        """Wait for all submitted Ray tasks to complete and collect results.
+
+        Processes tasks with a progress bar and collects results. If individual
+        results are lists, they are flattened into the final result list.
 
         Args:
-            task_desc: Description for the progress bar
+            task_desc: Description for progress bar display. If None, uses
+                "{self.name}_ray"
 
         Returns:
-            Combined list of results from all completed tasks
+            List of all task results, flattened if individual results are lists
         """
         result = []
         # Process each task and collect results with progress bar

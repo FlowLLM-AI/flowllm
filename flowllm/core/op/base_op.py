@@ -350,7 +350,7 @@ class BaseOp(ABC):
             self.ops[name] = op
 
     def __lshift__(self, ops: Union["BaseOp", dict, list]):
-        """Left shift operator for adding operations (op << other_op).
+        """Left shift operator for adding operations (op << other_op, op << {"search": op1, "find": op2}).
 
         Args:
             ops: Operation(s) to add - can be BaseOp, dict of ops, or list of ops

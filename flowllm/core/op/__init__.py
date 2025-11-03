@@ -7,12 +7,14 @@ or asynchronously, and can be composed sequentially or in parallel.
 
 from .base_async_op import BaseAsyncOp
 from .base_op import BaseOp
+from .base_ray_op import BaseRayOp
 from .parallel_op import ParallelOp
 from .sequential_op import SequentialOp
 
 __all__ = [
     "BaseOp",
     "BaseAsyncOp",
+    "BaseRayOp",
     "SequentialOp",
     "ParallelOp",
 ]
