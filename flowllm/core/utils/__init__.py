@@ -7,6 +7,7 @@ This package provides utility functions and classes for:
 - Timer utilities for measuring execution time
 - Logger utilities for initializing and configuring loguru logger
 - Logo and banner printing utilities
+- Pydantic configuration parser for loading and merging configurations
 
 Modules:
     http_client: Async HTTP client for executing flows with retry mechanism
@@ -15,6 +16,7 @@ Modules:
     timer: Timer class and decorator for measuring execution time
     logger_utils: Logger initialization utilities for loguru
     logo_utils: Logo and banner printing utilities using pyfiglet and rich
+    pydantic_config_parser: Generic parser for Pydantic-based configuration management
 """
 
 from .common_utils import (
@@ -28,6 +30,7 @@ from .fastmcp_client import FastMcpClient
 from .http_client import HttpClient
 from .logger_utils import init_logger
 from .logo_utils import print_logo
+from .pydantic_config_parser import PydanticConfigParser
 from .pydantic_utils import create_pydantic_model
 from .timer import Timer, timer
 
@@ -44,4 +47,5 @@ __all__ = [
     "init_logger",
     "print_logo",
     "create_pydantic_model",
+    "PydanticConfigParser",
 ]

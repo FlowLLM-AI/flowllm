@@ -1,28 +1,26 @@
+"""FlowLLM application core module for managing flows, services, and configurations."""
+
 import asyncio
 import os
-import sys
 from concurrent.futures import ThreadPoolExecutor
 
 from loguru import logger
 
-from flowllm.client.mcp_client import McpClient
-from flowllm.config.pydantic_config_parser import PydanticConfigParser
-from flowllm.context import C
-from flowllm.enumeration.registry_enum import RegistryEnum
-from flowllm.flow.base_flow import BaseFlow
-from flowllm.flow.expression_tool_flow import ExpressionToolFlow
-from flowllm.schema.flow_stream_chunk import FlowStreamChunk
-from flowllm.schema.service_config import EmbeddingModelConfig, ServiceConfig
-from flowllm.service.base_service import BaseService
-from flowllm.utils.logger_utils import init_logger
+from .context import C
+from .enumeration import RegistryEnum
+from .flow import BaseFlow, ExpressionToolFlow
+from .schema import ServiceConfig, EmbeddingModelConfig, FlowStreamChunk
+from .service import BaseService
+from .utils import FastMcpClient, PydanticConfigParser, init_logger
 
 
 class FlowLLMApp:
     """
-    FlowLLM Application main class for managing flows, services, and configurations.
+    Main application class for FlowLLM framework.
 
-    This class provides the entry point for initializing and running FlowLLM applications,
-    managing vector stores, embedding models, and flow execution.
+    Manages the lifecycle of FlowLLM applications including configuration,
+    service initialization, flow execution, and resource management.
+    Supports both synchronous and asynchronous operation modes.
     """
 
     def __init__(
@@ -153,10 +151,9 @@ class FlowLLMApp:
             Dictionary containing server name and available tool calls, or empty dict on error
         """
         try:
-            async with McpClient(name=name, config=mcp_server_config) as client:
+            async with FastMcpClient(name=name, config=mcp_server_config) as client:
                 tool_calls = await client.list_tool_calls()
                 for tool_call in tool_calls:
-                    # str(tool_call.model_dump_json())[:200]...
                     logger.info(f"find mcp@{name}@{tool_call.name} {tool_call.model_dump_json()}")
 
                 return {
@@ -243,7 +240,7 @@ class FlowLLMApp:
             wait_thread_pool: Whether to wait for thread pool tasks to complete
             wait_ray: Whether to wait for Ray tasks to complete
         """
-        for name, vector_store in C.vector_store_dict.items():
+        for _, vector_store in C.vector_store_dict.items():
             await vector_store.async_close()
         C.thread_pool.shutdown(wait=wait_thread_pool)
         if self.service_config.ray_max_workers > 1:
@@ -292,7 +289,7 @@ class FlowLLMApp:
             wait_thread_pool: Whether to wait for thread pool tasks to complete
             wait_ray: Whether to wait for Ray tasks to complete
         """
-        for name, vector_store in C.vector_store_dict.items():
+        for _, vector_store in C.vector_store_dict.items():
             vector_store.close()
         C.thread_pool.shutdown(wait=wait_thread_pool)
         if self.service_config.ray_max_workers > 1:
@@ -361,10 +358,10 @@ class FlowLLMApp:
         while True:
             stream_chunk: FlowStreamChunk = await stream_queue.get()
             if stream_chunk.done:
-                yield f"data:[DONE]\n\n"
+                yield "data:[DONE]\n\n"
                 break
-            else:
-                yield f"data:{stream_chunk.model_dump_json()}\n\n"
+
+            yield f"data:{stream_chunk.model_dump_json()}\n\n"
 
     def run_service(self):
         """
@@ -379,17 +376,3 @@ class FlowLLMApp:
             enable_logo=self.service_config.enable_logo,
         )
         service.run()
-
-
-def main():
-    """
-    Entry point for running FlowLLM application from command line.
-
-    Parses command-line arguments and starts the service.
-    """
-    with FlowLLMApp(*sys.argv[1:]) as app:
-        app.run_service()
-
-
-if __name__ == "__main__":
-    main()
