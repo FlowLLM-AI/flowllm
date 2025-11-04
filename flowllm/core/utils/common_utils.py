@@ -26,10 +26,12 @@ def camel_to_snake(content: str) -> str:
         The converted snake_case string.
 
     Example:
-        >>> camel_to_snake("BaseWorker")
-        'base_worker'
-        >>> camel_to_snake("MyLLMClass")
-        'my_llm_class'
+        ```python
+        camel_to_snake("BaseWorker")
+        # 'base_worker'
+        camel_to_snake("MyLLMClass")
+        # 'my_llm_class'
+        ```
     """
     content = content.replace("LLM", "Llm")
     snake_str = re.sub(r"(?<!^)(?=[A-Z])", "_", content).lower()
@@ -46,10 +48,12 @@ def snake_to_camel(content: str) -> str:
         The converted PascalCase string.
 
     Example:
-        >>> snake_to_camel("base_worker")
-        'BaseWorker'
-        >>> snake_to_camel("my_llm_class")
-        'MyLLMClass'
+        ```python
+        snake_to_camel("base_worker")
+        # 'BaseWorker'
+        snake_to_camel("my_llm_class")
+        # 'MyLLMClass'
+        ```
     """
     camel_str = "".join(x.capitalize() for x in content.split("_"))
     camel_str = camel_str.replace("Llm", "LLM")
@@ -141,12 +145,16 @@ def extract_content(text: str, language_tag: str = "json"):
             - Original text if no code block is found
 
     Example:
-        >>> extract_content("```json\\n{\"key\": \"value\"}\\n```")  # noqa
-        {'key': 'value'}
-        >>> extract_content("```python\\nprint('hello')\\n```", "python")
-        "print('hello')"
+        ```python
+        extract_content("```json\\n{\"key\": \"value\"}\\n```")  # noqa
+        # {'key': 'value'}
+        extract_content("``` json\\n{\"key\": \"value\"}\\n```")  # noqa
+        # {'key': 'value'}
+        extract_content("```python\\nprint('hello')\\n```", "python")
+        # "print('hello')"
+        ```
     """
-    pattern = rf"```{re.escape(language_tag)}\s*(.*?)\s*```"
+    pattern = rf"```\s*{re.escape(language_tag)}\s*(.*?)\s*```"
     match = re.search(pattern, text, re.DOTALL)
 
     if match:
@@ -177,15 +185,16 @@ def singleton(cls):
         A wrapper function that returns the singleton instance of the class.
 
     Example:
-        >>> @singleton
-        ... class Config:
-        ...     def __init__(self):
-        ...         self.value = 42
-        ...
-        >>> c1 = Config()
-        >>> c2 = Config()
-        >>> c1 is c2
-        True
+        ```python
+        @singleton
+        class Config:
+            def __init__(self):
+                self.value = 42
+
+        c1 = Config()
+        c2 = Config()
+        c1 is c2  # True
+        ```
     """
     _instance = {}
 

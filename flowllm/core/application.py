@@ -14,13 +14,18 @@ from .service import BaseService
 from .utils import FastMcpClient, PydanticConfigParser, init_logger
 
 
-class FlowLLMApp:
+class Application:
     """
-    Main application class for FlowLLM framework.
+    Base application class for FlowLLM framework.
 
-    Manages the lifecycle of FlowLLM applications including configuration,
-    service initialization, flow execution, and resource management.
-    Supports both synchronous and asynchronous operation modes.
+    This is a generic, configurable base class that can be inherited to create
+    custom application implementations. It manages the lifecycle of FlowLLM
+    applications including configuration, service initialization, flow execution,
+    and resource management. Supports both synchronous and asynchronous operation modes.
+
+    This class can be used directly with custom parsers and configurations, or
+    can be subclassed (e.g., FlowLLMApp) to provide default configurations
+    and convenience methods for specific use cases.
     """
 
     def __init__(

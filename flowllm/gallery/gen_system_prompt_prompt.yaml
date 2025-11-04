@@ -1,0 +1,73 @@
+gen_system_prompt_prompt: |
+  # Context
+  Below are the user's questions or conversation history:
+  {formated_messages}
+
+  # Task
+  Based on the user's questions or conversation content, dynamically generate an appropriate system prompt that helps the LLM better understand and answer the user's questions.
+
+  # Requirements
+  1. **Emotion Recognition**: Analyze the emotional state of the user's question (such as anger, anxiety, happiness, confusion, etc.). If the user's emotion is negative, the system prompt should include empathy, patience, and understanding.
+  2. **Scenario Adaptation**: Adjust the tone and professionalism of the system prompt according to the question type (such as technical questions, emotional counseling, daily conversations, etc.).
+  3. **Role Positioning**: Clearly define the role the LLM should play (such as professional consultant, friend, assistant, etc.).
+  4. **Response Style**: Determine the style that should be adopted in responses (such as concise, detailed, gentle, professional, etc.).
+  5. **Special Needs**: Identify possible special needs of the user (such as needing encouragement, professional advice, comfort, etc.).
+
+  # Examples
+  - If the user's question shows anger or frustration: the system prompt should emphasize empathy, patience, understanding, and reassurance
+  - If the user's question is a technical question: the system prompt should emphasize professionalism, accuracy, and clarity
+  - If the user's question is emotional counseling: the system prompt should emphasize listening, support, and advice
+  - If the user's question is a daily conversation: the system prompt should be natural, friendly, and casual
+
+  # Output Format
+  Please output in the following format:
+
+  ``` think
+  Analyze the user's question regarding emotions, scenarios, and role requirements, and think about what kind of system prompt should be generated to help the LLM better answer the user's question.
+  Include:
+  - User emotional state analysis
+  - Question type and scenario identification
+  - Traits and capabilities that need to be emphasized
+  - Response style suggestions
+  ```
+
+  ``` prompt
+  Output the generated system prompt here. It should be clear, specific, targeted, and able to guide the LLM to answer the user's question in an appropriate manner.
+  ```
+
+gen_system_prompt_prompt_zh: |
+  # 上下文
+  以下是用户的问题或对话历史：
+  {formated_messages}
+
+  # 任务
+  根据用户的问题或对话内容，动态生成一个适合的system prompt，帮助LLM更好地理解和回答用户的问题。
+
+  # 要求
+  1. **情绪识别**：分析用户问题的情绪状态（如生气、焦虑、开心、困惑等），如果用户情绪负面，system prompt应该包含共情能力、耐心和理解。
+  2. **场景适配**：根据问题类型（如技术问题、情感咨询、日常对话等）调整system prompt的语气和专业度。
+  3. **角色定位**：明确LLM应该扮演的角色（如专业顾问、朋友、助手等）。
+  4. **回答风格**：确定回答应该采用的风格（如简洁、详细、温和、专业等）。
+  5. **特殊需求**：识别用户可能的特殊需求（如需要鼓励、需要专业建议、需要安慰等）。
+
+  # 示例
+  - 如果用户问题表现出愤怒或沮丧：system prompt应该强调共情、耐心、理解和安抚
+  - 如果用户问题是技术问题：system prompt应该强调专业性、准确性和清晰度
+  - 如果用户问题是情感咨询：system prompt应该强调倾听、支持和建议
+  - 如果用户问题是日常对话：system prompt应该自然、友好、随和
+
+  # 输出格式
+  请按照以下格式输出：
+
+  ``` think
+  分析用户问题的情绪、场景、角色需求，思考应该生成什么样的system prompt可以让llm更好的回答用户问题。
+  包括：
+  - 用户情绪状态分析
+  - 问题类型和场景识别
+  - 需要强调的特质和能力
+  - 回答风格建议
+  ```
+
+  ``` prompt
+  在这里输出生成的system prompt，应该清晰、具体、针对性强，能够指导LLM以合适的方式回答用户问题。
+  ```

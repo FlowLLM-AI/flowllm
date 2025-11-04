@@ -26,6 +26,7 @@ from .common_utils import (
     singleton,
     snake_to_camel,
 )
+from .llm_utils import format_messages
 from .fastmcp_client import FastMcpClient
 from .http_client import HttpClient
 from .logger_utils import init_logger
@@ -48,4 +49,5 @@ __all__ = [
     "print_logo",
     "create_pydantic_model",
     "PydanticConfigParser",
+    "format_messages",
 ]
