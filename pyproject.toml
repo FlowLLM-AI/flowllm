@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flowllm"
 version = "0.2.0.0"
-description = "A flexible framework for building LLM-powered flows and mcp services"
+description = "A flexible framework for building MCP/HTTP services powered by LLM workflows"
 authors = [
     { name = "jinli.yl", email = "jinli.yl@alibaba-inc.com" },
 ]
@@ -47,10 +47,41 @@ dependencies = [
     "rich>=13.5.0",
 ]
 
+[project.optional-dependencies]
+
+dev = [
+    "pytest>=8.4.2",
+    "pytest_asyncio>=1.2.0",
+]
+
+reme = [
+    "litellm>=1.0.0",
+    "elasticsearch>=8.10.0",
+    "chromadb>=0.4.0",
+    "qdrant_client>=1.15.1",
+]
+
+fin = [
+    "akshare>=1.9.0",
+    "crawl4ai>=0.7.4",
+    "tavily-python>=0.2.0",
+]
+
+token = [
+    "modelscope>=1.10.0",
+    "diffusers>=0.21.0",
+    "peft>=0.6.0",
+    "transformers>=4.35.0",
+    "tiktoken>=0.5.0",
+]
+
+full = [
+    "flowllm[dev,reme,fin]",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["flowllm*"]
-
 
 [tool.setuptools.package-data]
 flowllm = [
@@ -58,13 +89,10 @@ flowllm = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/xxx-ai/xxxx"
-Documentation = "https://doc.xxx.io/"
-Repository = "https://github.com/xxx-ai/xxx"
+Homepage = "https://github.com/flowllm-ai/flowllm"
+Documentation = "https://flowllm-ai.github.io/flowllm/"
+Repository = "https://github.com/flowllm-ai/flowllm"
 
 [project.scripts]
 flowllm = "flowllm.main:main"
 
-# conda create -n fl_test python=3.12
-# conda activate fl_test
-# conda env remove -n fl_test

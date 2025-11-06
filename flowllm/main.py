@@ -78,6 +78,10 @@ def main():
 
     Example:
         flowllm config=my_config.yaml llm.default.model_name=qwen3-max
+
+    conda create -n fl_test python=3.10
+    conda activate fl_test
+    conda env remove -n fl_test
     """
     with FlowLLMApp(*sys.argv[1:]) as app:
         app.run_service()

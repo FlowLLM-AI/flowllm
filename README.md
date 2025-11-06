@@ -16,3 +16,7 @@
 ---
 
 FlowLLM is a **configuration-driven** framework for building LLM-powered applications. Write operations once, compose them via YAML configuration, and automatically get HTTP APIs and MCP tools—no boilerplate code needed.
+
+### Documentation
+
+- Op 体系介绍（中文）：[docs/op.md](docs/op.md)

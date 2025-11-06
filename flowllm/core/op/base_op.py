@@ -33,6 +33,20 @@ class BaseOp(ABC):
     - LLM, embedding model, and vector store integration
     - Prompt handling and formatting
 
+    Prompt file convention:
+        Each Op can be paired with a prompt configuration file for templates.
+        By default, `prompt_path` is inferred from the Op's source file path by
+        replacing the suffix "op.py" with "prompt.yaml". For example:
+
+        - file: my_feature_op.py  -> prompt: my_feature_prompt.yaml
+        - file: chat_op.py        -> prompt: chat_prompt.yaml
+
+        This means the prompt file should be located in the same directory as
+        the Op file, and named by replacing "op.py" with "prompt.yaml".
+
+        You can override this behavior by explicitly passing `prompt_path` when
+        initializing the Op.
+
     Attributes:
         name: Operation name, auto-generated from class name if not provided
         async_mode: Whether to run in async mode
@@ -107,7 +121,10 @@ class BaseOp(ABC):
             raise_exception: Whether to raise exceptions on failure
             enable_multithread: Whether to enable multithreading
             language: Language for prompt handling
-            prompt_path: Path to prompt configuration file
+            prompt_path: Path to prompt configuration file. If not provided, it
+                will be inferred by replacing the Op file's suffix "op.py" with
+                "prompt.yaml" (same directory). For example:
+                - `xxx_op.py` -> `xxx_prompt.yaml`
             llm: LLM configuration name or instance
             embedding_model: Embedding model configuration name or instance
             vector_store: Vector store configuration name or instance
