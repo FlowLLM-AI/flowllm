@@ -117,11 +117,7 @@ class FastMcpClient:
 
             # Handle timeout
             if "timeout" in self.config:
-                kwargs["timeout"] = self.config["timeout"]
-
-            # Handle SSE read timeout
-            if "sse_read_timeout" in self.config:
-                kwargs["sse_read_timeout"] = self.config["sse_read_timeout"]
+                kwargs["sse_read_timeout"] = self.config["timeout"]
 
             # Determine transport type based on config or URL
             if transport_type in ["streamable_http", "streamablehttp"]:
@@ -271,7 +267,12 @@ class FastMcpClient:
         tools = await self.list_tools()
         return [ToolCall.from_mcp_tool(t) for t in tools]
 
-    async def call_tool(self, tool_name: str, arguments: dict, parse_result: bool = True) -> Union[str, CallToolResult]:
+    async def call_tool(
+        self,
+        tool_name: str,
+        arguments: dict,
+        parse_result: bool = False,
+    ) -> Union[str, CallToolResult]:
         """Call a tool on the MCP server.
 
         Args:

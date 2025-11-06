@@ -11,7 +11,8 @@ Key features:
 - Health check and endpoint listing capabilities
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, AsyncIterator
+import json
 
 import httpx
 from loguru import logger
@@ -118,6 +119,13 @@ class HttpClient:
 
         Raises:
             httpx.HTTPStatusError: If HTTP request fails and raise_exception=True
+
+        curl example:
+            curl -X POST http://localhost:8002/demo_http_flow \
+              -H "Content-Type: application/json" \
+              -d '{
+                "query": "what is ai?"
+              }'
         """
         endpoint = f"{self.base_url}/{flow_name}"
         result = None
@@ -161,3 +169,46 @@ class HttpClient:
         response = await self.client.get(f"{self.base_url}/openapi.json")
         response.raise_for_status()
         return response.json()
+
+    async def execute_stream_flow(self, flow_name: str, **kwargs) -> AsyncIterator[Dict[str, str]]:
+        """Execute the flow and stream responses as they arrive.
+
+        This streams Server-Sent Events style lines from the endpoint, parsing
+        entries that begin with "data:". Each valid JSON payload is expected to
+        include keys like "chunk_type" and "chunk" and will be yielded as a
+        dictionary: {"type": str, "content": str}. The stream terminates when a
+        line with payload "[DONE]" is received.
+
+        Args:
+            flow_name: Name of the flow endpoint to call.
+            **kwargs: JSON payload sent to the endpoint.
+
+        Yields:
+            Dict with keys "type" and "content" for each streamed chunk. If
+            an error occurs and raise_exception=False, an error chunk will be yielded.
+        """
+        endpoint = f"{self.base_url}/{flow_name}"
+
+        async with self.client.stream("POST", endpoint, json=kwargs) as response:
+            response.raise_for_status()
+
+            async for line in response.aiter_lines():
+                if not line:
+                    continue
+
+                if line.startswith("data:"):
+                    data_content = line[5:].strip()
+
+                    if data_content == "[DONE]":
+                        break
+
+                    try:
+                        json_data = json.loads(data_content)
+                        chunk_type = json_data.get("chunk_type", "answer")
+                        chunk_content = json_data.get("chunk", "")
+
+                        if chunk_content:
+                            yield {"type": chunk_type, "content": chunk_content}
+                    except Exception:
+                        # Skip lines that aren't valid JSON payloads
+                        continue
