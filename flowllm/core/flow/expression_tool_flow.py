@@ -1,8 +1,8 @@
 """Flow that builds from expression content and exposes a tool-call schema."""
 
 from .base_tool_flow import BaseToolFlow
-from .expression_parser import ExpressionParser
 from ..schema import FlowConfig, ToolCall
+from ..utils import parse_flow_expression
 
 
 class ExpressionToolFlow(BaseToolFlow):
@@ -32,8 +32,7 @@ class ExpressionToolFlow(BaseToolFlow):
 
     def build_flow(self):
         """Parse and return the operation tree from the config content."""
-        parser = ExpressionParser(self.flow_config.flow_content)
-        return parser.parse_flow()
+        return parse_flow_expression(self.flow_config.flow_content)
 
     def build_tool_call(self) -> ToolCall:
         """Construct and return the `ToolCall` for this flow.

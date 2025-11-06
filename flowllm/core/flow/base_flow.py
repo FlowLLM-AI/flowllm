@@ -6,7 +6,7 @@ support and structured error handling.
 
 Caching:
 - Non-streaming requests can be cached by enabling `enable_cache`.
-- Cache key is a SHA-256 hash of the JSON-serialized request params (`**kwargs`).
+- Cache key is an SHA-256 hash of the JSON-serialized request params (`**kwargs`).
 - If params are not serializable, a serialization exception is logged and the
   call proceeds without caching.
 - Cached value is the `FlowResponse` serialized via `model_dump()`, stored with
@@ -23,7 +23,7 @@ from typing import Union, Optional
 
 from loguru import logger
 
-from ..context import FlowContext, C
+from ..context import FlowContext, C, BaseContext
 from ..enumeration import ChunkEnum
 from ..op import BaseOp, SequentialOp, ParallelOp, BaseAsyncOp
 from ..schema import FlowResponse, FlowStreamChunk
@@ -195,9 +195,14 @@ class BaseFlow(ABC):
         else:
             logger.info(f"{prefix}Operation: {op.name}")
             if op.ops:
-                for i, sub_op in enumerate(op.ops):
-                    logger.info(f"{prefix} Sub {i + 1}:")
-                    self._print_operation_tree(sub_op, indent + 2)
+                if isinstance(op.ops, list):
+                    for i, sub_op in enumerate(op.ops):
+                        logger.info(f"{prefix} Sub {i + 1}:")
+                        self._print_operation_tree(sub_op, indent + 2)
+                elif isinstance(op.ops, BaseContext):
+                    for key, sub_op in op.ops.items():
+                        logger.info(f"{prefix} Sub {key}:")
+                        self._print_operation_tree(sub_op, indent + 2)
 
     async def _async_call(self, context: FlowContext) -> Union[FlowResponse | FlowStreamChunk | None]:
         """Internal async executor that handles streaming and errors.

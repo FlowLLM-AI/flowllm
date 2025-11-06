@@ -1,5 +1,7 @@
 """LLM chat operation for interactive conversations with LLM."""
 
+from loguru import logger
+
 from ..core.context import C
 from ..core.enumeration import Role
 from ..core.op import BaseAsyncOp
@@ -7,7 +9,7 @@ from ..core.schema import Message
 
 
 @C.register_op()
-class LLMChatOp(BaseAsyncOp):
+class ChatOp(BaseAsyncOp):
     """Operation for conducting chat conversations with LLM.
 
     This operation combines system prompt and user messages, sends them to the LLM,
@@ -22,7 +24,7 @@ class LLMChatOp(BaseAsyncOp):
         llm: str = "qwen3_30b_instruct",
         **kwargs,
     ):
-        """Initialize the LLMChatOp.
+        """Initialize the ChatOp.
 
         Args:
             llm: Name of the LLM to use for chat.
@@ -46,6 +48,7 @@ class LLMChatOp(BaseAsyncOp):
         assert system_prompt, "`system_prompt` is required!"
 
         messages = [Message(role=Role.SYSTEM, content=system_prompt)] + messages
+        logger.info(f"messages={messages}")
 
         response = await self.llm.achat(messages=messages, tools=None)
         assert isinstance(response, Message), "Response must be a Message object!"

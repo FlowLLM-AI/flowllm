@@ -23,6 +23,7 @@ from .common_utils import (
     camel_to_snake,
     extract_content,
     load_env,
+    parse_flow_expression,
     singleton,
     snake_to_camel,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "snake_to_camel",
     "load_env",
     "extract_content",
+    "parse_flow_expression",
     "singleton",
     "Timer",
     "timer",

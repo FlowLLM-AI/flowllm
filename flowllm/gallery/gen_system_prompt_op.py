@@ -23,8 +23,6 @@ class GenSystemPromptOp(BaseAsyncOp):
     def __init__(
         self,
         llm: str = "qwen3_30b_instruct",
-        # llm: str = "qwen3_80b_instruct",
-        # llm: str = "qwen25_max_instruct",
         **kwargs,
     ):
         """Initialize the GenSystemPromptOp.

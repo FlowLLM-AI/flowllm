@@ -6,7 +6,6 @@ operation graphs (flows). It includes:
 - BaseFlow: Abstract base providing sync/async execution and streaming support
 - BaseToolFlow: BaseFlow variant that exposes a tool-call descriptor
 - CmdFlow: Flow built from a user-provided expression string
-- ExpressionParser: Parser that converts expression text into `BaseOp` trees
 - ExpressionToolFlow: Tool-enabled flow constructed from expression content
 
 Common capabilities:
@@ -19,13 +18,11 @@ Common capabilities:
 from .base_flow import BaseFlow
 from .base_tool_flow import BaseToolFlow
 from .cmd_flow import CmdFlow
-from .expression_parser import ExpressionParser
 from .expression_tool_flow import ExpressionToolFlow
 
 __all__ = [
     "BaseFlow",
     "BaseToolFlow",
     "CmdFlow",
-    "ExpressionParser",
     "ExpressionToolFlow",
 ]

@@ -2,8 +2,8 @@
 
 import sys
 
-from .core.application import Application
 from .config import ConfigParser
+from .core.application import Application
 
 
 class FlowLLMApp(Application):

@@ -12,13 +12,14 @@ http:
 
 
 flow:
-  llm_flow:
-    flow_content: simple_llm_op
+  demo_http_flow:
+    flow_content: GenSystemPromptOp() >> ChatOp()
     stream: false
 
-  llm_flow_stream:
-    flow_content: stream_llm_op
+  demo_stream_http_flow:
+    flow_content: GenSystemPromptOp() >> StreamChatOp()
     stream: true
+
 
 llm:
   default:

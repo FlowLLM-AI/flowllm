@@ -4,6 +4,7 @@ This module defines the abstract `BaseService` that concrete services (CLI, HTTP
 MCP, etc.) extend to integrate registered flows and run the application.
 """
 
+import os
 from abc import ABC
 
 from loguru import logger
@@ -74,7 +75,7 @@ class BaseService(ABC):
                     logger.info(f"integrate flow={flow.name}")
 
         if self.enable_logo:
-            print_logo(service_config=self.service_config, app_name=C.APP_NAME_VALUE)
+            print_logo(service_config=self.service_config, app_name=os.getenv("APP_NAME"))
 
         import warnings
 

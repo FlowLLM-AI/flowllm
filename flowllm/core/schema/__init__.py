@@ -11,7 +11,6 @@ from .service_config import (
     HttpConfig,
     LLMConfig,
     MCPConfig,
-    OpConfig,
     ServiceConfig,
     VectorStoreConfig,
 )
@@ -30,7 +29,6 @@ __all__ = [
     "HttpConfig",
     "LLMConfig",
     "MCPConfig",
-    "OpConfig",
     "ServiceConfig",
     "VectorStoreConfig",
     "ParamAttrs",

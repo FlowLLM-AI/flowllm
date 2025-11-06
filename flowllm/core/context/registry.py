@@ -5,7 +5,6 @@ with dynamic lookup capabilities.
 """
 
 from .base_context import BaseContext
-from ..utils import camel_to_snake
 
 
 class Registry(BaseContext):
@@ -19,8 +18,7 @@ class Registry(BaseContext):
         """Register a class in the registry.
 
         Args:
-            name: Name to register the class under. If empty, the class
-                name will be converted to snake_case.
+            name: Name to register the class under.
             add_cls: Whether to actually add the class to the registry.
                 Defaults to True.
 
@@ -38,8 +36,8 @@ class Registry(BaseContext):
                 The class unchanged (for use as decorator).
             """
             if add_cls:
-                class_name = name if name else camel_to_snake(cls.__name__)
-                self._data[class_name] = cls
+                key = name or cls.__name__
+                self._data[key] = cls
             return cls
 
         return decorator

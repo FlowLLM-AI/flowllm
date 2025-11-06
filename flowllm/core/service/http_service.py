@@ -5,6 +5,7 @@ tool-callable, and streaming flows. It also provides a health check endpoint.
 """
 
 import asyncio
+import os
 from typing import AsyncGenerator
 
 import uvicorn
@@ -26,7 +27,7 @@ class HttpService(BaseService):
     def __init__(self, **kwargs):
         """Initialize the FastAPI application and middleware."""
         super().__init__(**kwargs)
-        self.app = FastAPI(title=C.APP_NAME_VALUE)
+        self.app = FastAPI(title=os.getenv("APP_NAME"))
         self.app.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],

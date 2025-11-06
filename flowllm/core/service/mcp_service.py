@@ -4,6 +4,8 @@ This service registers tool-callable flows with FastMCP and runs the selected
 transport (SSE, HTTP, or STDIO).
 """
 
+import os
+
 from fastmcp import FastMCP
 from fastmcp.tools import FunctionTool
 
@@ -20,7 +22,7 @@ class MCPService(BaseService):
     def __init__(self, **kwargs):
         """Initialize the MCP server instance."""
         super().__init__(**kwargs)
-        self.mcp = FastMCP(name=C.APP_NAME_VALUE)
+        self.mcp = FastMCP(name=os.getenv("APP_NAME"))
 
     def integrate_tool_flow(self, flow: BaseToolFlow) -> bool:
         """Register a tool-callable flow as an MCP tool."""

@@ -46,20 +46,6 @@ class FlowConfig(ToolCall):
     cache_expire_hours: float = Field(default=0.1, description="Cache TTL (hours)")
 
 
-class OpConfig(BaseModel):
-    """Configuration for operation execution with backend and model settings."""
-
-    backend: str = Field(default="")
-    language: str = Field(default="")
-    max_retries: int = Field(default=1)
-    raise_exception: bool = Field(default=True)
-    prompt_path: str = Field(default="")
-    llm: str = Field(default="")
-    embedding_model: str = Field(default="")
-    vector_store: str = Field(default="")
-    params: dict = Field(default_factory=dict)
-
-
 class LLMConfig(BaseModel):
     """Configuration for LLM (Large Language Model) backend settings."""
 
@@ -102,7 +88,6 @@ class ServiceConfig(BaseModel):
     external_mcp: Dict[str, dict] = Field(default_factory=dict, description="External MCP Server config")
     http: HttpConfig = Field(default_factory=HttpConfig)
     flow: Dict[str, FlowConfig] = Field(default_factory=dict)
-    op: Dict[str, OpConfig] = Field(default_factory=dict)
     llm: Dict[str, LLMConfig] = Field(default_factory=dict)
     embedding_model: Dict[str, EmbeddingModelConfig] = Field(default_factory=dict)
     vector_store: Dict[str, VectorStoreConfig] = Field(default_factory=dict)

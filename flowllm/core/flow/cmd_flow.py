@@ -1,7 +1,7 @@
 """Flow implementation that parses a string expression at runtime."""
 
 from .base_flow import BaseFlow
-from .expression_parser import ExpressionParser
+from ..utils import parse_flow_expression
 
 
 class CmdFlow(BaseFlow):
@@ -19,5 +19,4 @@ class CmdFlow(BaseFlow):
 
     def build_flow(self):
         """Parse and return the operation built from the expression."""
-        parser = ExpressionParser(self.flow)
-        return parser.parse_flow()
+        return parse_flow_expression(self.flow)

@@ -382,7 +382,7 @@ class OpenAICompatibleLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="", flush=True)
+                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
@@ -390,7 +390,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
                     # Display error information
-                    print(f"\n<error>{chunk}</error>", end="", flush=True)
+                    print(f"\n<error>{chunk}</error>", flush=True)
 
         # Construct complete response message
         return Message(
@@ -468,7 +468,7 @@ class OpenAICompatibleLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="", flush=True)
+                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
@@ -476,7 +476,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
                     # Display error information
-                    print(f"\n<error>{chunk}</error>", end="", flush=True)
+                    print(f"\n<error>{chunk}</error>", flush=True)
 
         # Construct complete response message
         return Message(

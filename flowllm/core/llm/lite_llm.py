@@ -90,6 +90,74 @@ class LiteLLM(BaseLLM):
 
         return self
 
+    def _convert_usage_to_dict(self, usage) -> dict:
+        """Convert usage object to dict to avoid Pydantic serialization warnings."""
+        if usage is not None:
+            if hasattr(usage, "model_dump"):
+                return usage.model_dump()
+            elif hasattr(usage, "dict"):
+                return usage.dict()
+            elif hasattr(usage, "__dict__"):
+                return usage.__dict__
+        return {}
+
+    def _process_delta_chunk(
+        self,
+        delta,
+        ret_tools: List[ToolCall],
+        is_answering: bool,
+    ) -> tuple[bool, List[FlowStreamChunk]]:
+        """Process a delta chunk and return updated is_answering state and chunks to yield."""
+        chunks_to_yield: List[FlowStreamChunk] = []
+
+        if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+            chunks_to_yield.append(
+                FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content),
+            )
+            return is_answering, chunks_to_yield
+
+        is_answering_now = True if not is_answering else is_answering
+        if delta.content is not None:
+            chunks_to_yield.append(
+                FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content),
+            )
+
+        if delta.tool_calls is not None:
+            for tool_call in delta.tool_calls:
+                index = tool_call.index
+                while len(ret_tools) <= index:
+                    ret_tools.append(ToolCall(index=index))
+
+                if tool_call.id:
+                    ret_tools[index].id += tool_call.id
+                if tool_call.function and tool_call.function.name:
+                    ret_tools[index].name += tool_call.function.name
+                if tool_call.function and tool_call.function.arguments:
+                    ret_tools[index].arguments += tool_call.function.arguments
+
+        return is_answering_now, chunks_to_yield
+
+    def _validate_and_yield_tools(
+        self,
+        ret_tools: List[ToolCall],
+        tools: Optional[List[ToolCall]],
+    ) -> Generator[FlowStreamChunk, None, None]:
+        """Validate tool calls and yield tool chunks."""
+        if not ret_tools:
+            return
+
+        tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
+        for tool in ret_tools:
+            if tool.name not in tool_dict:
+                continue
+
+            if not tool.check_argument():
+                raise ValueError(
+                    f"Tool call {tool.name} argument={tool.arguments} are invalid",
+                )
+
+            yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
+
     def stream_chat(
         self,
         messages: List[Message],
@@ -142,47 +210,18 @@ class LiteLLM(BaseLLM):
 
                 for chunk in completion_response:
                     if not chunk.choices:
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage)
-
+                        usage = self._convert_usage_to_dict(chunk.usage)
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=usage)
                     else:
                         delta = chunk.choices[0].delta
+                        is_answering, chunks_to_yield = self._process_delta_chunk(
+                            delta,
+                            ret_tools,
+                            is_answering,
+                        )
+                        yield from chunks_to_yield
 
-                        if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
-                            yield FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content)
-
-                        else:
-                            if not is_answering:
-                                is_answering = True
-
-                            if delta.content is not None:
-                                yield FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content)
-
-                            if delta.tool_calls is not None:
-                                for tool_call in delta.tool_calls:
-                                    index = tool_call.index
-
-                                    while len(ret_tools) <= index:
-                                        ret_tools.append(ToolCall(index=index))
-
-                                    if tool_call.id:
-                                        ret_tools[index].id += tool_call.id
-
-                                    if tool_call.function and tool_call.function.name:
-                                        ret_tools[index].name += tool_call.function.name
-
-                                    if tool_call.function and tool_call.function.arguments:
-                                        ret_tools[index].arguments += tool_call.function.arguments
-
-                if ret_tools:
-                    tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
-                    for tool in ret_tools:
-                        if tool.name not in tool_dict:
-                            continue
-
-                        if not tool.check_argument():
-                            raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
-
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
+                yield from self._validate_and_yield_tools(ret_tools, tools)
 
                 return
 
@@ -197,6 +236,27 @@ class LiteLLM(BaseLLM):
 
                 yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                 time.sleep(1 + i)
+
+    async def _avalidate_and_yield_tools(
+        self,
+        ret_tools: List[ToolCall],
+        tools: Optional[List[ToolCall]],
+    ) -> AsyncGenerator[FlowStreamChunk, None]:
+        """Validate tool calls and yield tool chunks asynchronously."""
+        if not ret_tools:
+            return
+
+        tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
+        for tool in ret_tools:
+            if tool.name not in tool_dict:
+                continue
+
+            if not tool.check_argument():
+                raise ValueError(
+                    f"Tool call {tool.name} argument={tool.arguments} are invalid",
+                )
+
+            yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
 
     async def astream_chat(
         self,
@@ -250,47 +310,20 @@ class LiteLLM(BaseLLM):
 
                 async for chunk in completion_response:
                     if not chunk.choices:
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage)
-
+                        usage = self._convert_usage_to_dict(chunk.usage)
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=usage)
                     else:
                         delta = chunk.choices[0].delta
+                        is_answering, chunks_to_yield = self._process_delta_chunk(
+                            delta,
+                            ret_tools,
+                            is_answering,
+                        )
+                        for chunk_to_yield in chunks_to_yield:
+                            yield chunk_to_yield
 
-                        if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
-                            yield FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content)
-
-                        else:
-                            if not is_answering:
-                                is_answering = True
-
-                            if delta.content is not None:
-                                yield FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content)
-
-                            if delta.tool_calls is not None:
-                                for tool_call in delta.tool_calls:
-                                    index = tool_call.index
-
-                                    while len(ret_tools) <= index:
-                                        ret_tools.append(ToolCall(index=index))
-
-                                    if tool_call.id:
-                                        ret_tools[index].id += tool_call.id
-
-                                    if tool_call.function and tool_call.function.name:
-                                        ret_tools[index].name += tool_call.function.name
-
-                                    if tool_call.function and tool_call.function.arguments:
-                                        ret_tools[index].arguments += tool_call.function.arguments
-
-                if ret_tools:
-                    tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
-                    for tool in ret_tools:
-                        if tool.name not in tool_dict:
-                            continue
-
-                        if not tool.check_argument():
-                            raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
-
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
+                async for tool_chunk in self._avalidate_and_yield_tools(ret_tools, tools):
+                    yield tool_chunk
 
                 return
 
@@ -369,14 +402,14 @@ class LiteLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="", flush=True)
+                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
             elif stream_chunk.chunk_type is ChunkEnum.ERROR:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<error>{chunk}</error>", end="", flush=True)
+                    print(f"\n<error>{chunk}</error>", flush=True)
 
         return Message(
             role=Role.ASSISTANT,
@@ -448,14 +481,14 @@ class LiteLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", end="", flush=True)
+                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
             elif stream_chunk.chunk_type is ChunkEnum.ERROR:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<error>{chunk}</error>", end="", flush=True)
+                    print(f"\n<error>{chunk}</error>", flush=True)
 
         return Message(
             role=Role.ASSISTANT,

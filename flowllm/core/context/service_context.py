@@ -4,7 +4,6 @@ This module provides a singleton service context that manages application-wide
 configuration, registries, vector stores, and other shared resources.
 """
 
-import os
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
@@ -39,7 +38,7 @@ class ServiceContext(BaseContext):
         flow_dict: Dictionary of flow instances.
     """
 
-    def __init__(self, service_id: str = uuid.uuid4().hex, **kwargs):
+    def __init__(self, service_id: str | None = None, **kwargs):
         """Initialize ServiceContext with service ID.
 
         Args:
@@ -48,35 +47,29 @@ class ServiceContext(BaseContext):
             **kwargs: Additional context data to store.
         """
         super().__init__(**kwargs)
-        self.service_id: str = service_id
+        self.service_id: str = service_id or uuid.uuid4().hex
 
         self.service_config: ServiceConfig | None = None
         self.language: str = ""
         self.thread_pool: ThreadPoolExecutor | None = None
         self.vector_store_dict: dict = {}
         self.external_mcp_tool_call_dict: dict = {}
-        self.registry_dict: Dict[str, Registry] = {v: Registry() for v in RegistryEnum.__members__.values()}
+        self.registry_dict: Dict[RegistryEnum, Registry] = {v: Registry() for v in RegistryEnum.__members__.values()}
         self.flow_dict: dict = {}
 
         load_env()
 
-    def register(self, name: str, register_type: RegistryEnum, register_app: str = ""):
+    def register(self, name: str, register_type: RegistryEnum):
         """Register a model class by name and type.
 
         Args:
             name: Name to register the class under.
             register_type: Type of registry (e.g., LLM, EMBEDDING_MODEL).
-            register_app: Application name filter. If provided, only registers
-                if it matches the APP_NAME environment variable.
 
         Returns:
             Decorator function for class registration.
         """
-        if register_app:
-            add_cls = register_app == os.getenv("APP_NAME")
-        else:
-            add_cls: bool = True
-        return self.registry_dict[register_type].register(name=name, add_cls=add_cls)
+        return self.registry_dict[register_type].register(name=name)
 
     def register_embedding_model(self, name: str = ""):
         """Register an embedding model class.
@@ -111,29 +104,27 @@ class ServiceContext(BaseContext):
         """
         return self.register(name=name, register_type=RegistryEnum.VECTOR_STORE)
 
-    def register_op(self, name: str = "", register_app: str = ""):
+    def register_op(self, name: str = ""):
         """Register an operation class.
 
         Args:
             name: Name to register the class under.
-            register_app: Application name filter.
 
         Returns:
             Decorator function for class registration.
         """
-        return self.register(name=name, register_type=RegistryEnum.OP, register_app=register_app)
+        return self.register(name=name, register_type=RegistryEnum.OP)
 
-    def register_flow(self, name: str = "", register_app: str = ""):
+    def register_flow(self, name: str = ""):
         """Register a flow class.
 
         Args:
             name: Name to register the class under.
-            register_app: Application name filter.
 
         Returns:
             Decorator function for class registration.
         """
-        return self.register(name=name, register_type=RegistryEnum.FLOW, register_app=register_app)
+        return self.register(name=name, register_type=RegistryEnum.FLOW)
 
     def register_service(self, name: str = ""):
         """Register a service class.
