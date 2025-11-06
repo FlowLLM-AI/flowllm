@@ -31,7 +31,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         self,
         enable_print_output: bool = True,
         tool_index: int = 0,
-        save_answer: bool = False,
+        save_answer: bool = True,
         input_schema_mapping: dict = None,
         output_schema_mapping: dict = None,
         **kwargs,
@@ -110,7 +110,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         else:
             raise NotImplementedError("use `output_dict` to get result")
 
-    def set_result(self, value="", key: str = ""):
+    def set_output(self, value="", key: str = ""):
         """Set a single output value.
 
         If only one output key exists, `key` is ignored and the single key is
@@ -121,10 +121,10 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         else:
             self.output_dict[key] = value
 
-    def set_results(self, **kwargs):
+    def set_outputs(self, **kwargs):
         """Set multiple output values using keyword arguments."""
         for k, v in kwargs.items():
-            self.set_result(v, k)
+            self.set_output(v, k)
 
     async def async_before_execute(self):
         """Populate `input_dict` by reading required inputs from the context.

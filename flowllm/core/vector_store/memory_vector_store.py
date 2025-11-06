@@ -76,6 +76,15 @@ class MemoryVectorStore(LocalVectorStore):
             self._memory_store[workspace_id] = {}
             logger.info(f"Created workspace_id={workspace_id} in memory")
 
+    def list_workspace(self, **kwargs) -> List[str]:
+        """
+        List all existing workspaces in memory.
+
+        Returns:
+            List[str]: Workspace identifiers currently present in memory.
+        """
+        return list(self._memory_store.keys())
+
     def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs):
         """
         Iterate over all nodes in a workspace.

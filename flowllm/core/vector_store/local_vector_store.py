@@ -224,6 +224,15 @@ class LocalVectorStore(BaseVectorStore):
         """
         self._dump_to_path(nodes=[], workspace_id=workspace_id, path=self.store_path, **kwargs)
 
+    def list_workspace(self, **kwargs) -> List[str]:
+        """
+        List all existing workspaces.
+
+        Returns:
+            List[str]: Workspace identifiers discovered in the storage directory.
+        """
+        return [p.stem for p in self.store_path.glob("*.jsonl") if p.is_file()]
+
     def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs):
         """
         Iterate over all nodes in a workspace.

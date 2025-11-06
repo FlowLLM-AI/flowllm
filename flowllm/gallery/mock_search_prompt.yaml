@@ -1,0 +1,37 @@
+mock_search_op_prompt: |
+  # Task
+  Generate {num_results} realistic search results for the query: "{query}".
+
+  # Fields per item
+  Each result must be a JSON object with fields:
+  - snippet: 2-3 sentence summary
+  - title: page title
+  - url: realistic URL (e.g., https://example.com/article/title)
+  - hostname: domain (e.g., example.com)
+  - hostlogo: logo URL (e.g., https://example.com/logo.png) or empty string
+
+  # Requirements
+  - Ensure relevance to the query
+  - Use diverse, realistic sources
+  - Ensure well-formed URLs
+  - If no relevant results, return an empty array
+
+  # Output Format
+  First, think briefly about good sources and angles:
+  ``` think
+  your brief reasoning here
+  ```
+
+  Then output ONLY the JSON array wrapped in a json code block, nothing else:
+  ``` json
+  [
+    {{
+      "snippet": "核心内容",
+      "title": "...",
+      "url": "...",
+      "hostname": "...",
+      "hostlogo": "..."
+    }}
+  ]
+  ```
+

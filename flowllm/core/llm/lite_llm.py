@@ -90,7 +90,8 @@ class LiteLLM(BaseLLM):
 
         return self
 
-    def _convert_usage_to_dict(self, usage) -> dict:
+    @staticmethod
+    def _convert_usage_to_dict(usage) -> dict:
         """Convert usage object to dict to avoid Pydantic serialization warnings."""
         if usage is not None:
             if hasattr(usage, "model_dump"):
@@ -101,8 +102,8 @@ class LiteLLM(BaseLLM):
                 return usage.__dict__
         return {}
 
+    @staticmethod
     def _process_delta_chunk(
-        self,
         delta,
         ret_tools: List[ToolCall],
         is_answering: bool,
@@ -137,8 +138,8 @@ class LiteLLM(BaseLLM):
 
         return is_answering_now, chunks_to_yield
 
+    @staticmethod
     def _validate_and_yield_tools(
-        self,
         ret_tools: List[ToolCall],
         tools: Optional[List[ToolCall]],
     ) -> Generator[FlowStreamChunk, None, None]:
@@ -237,8 +238,8 @@ class LiteLLM(BaseLLM):
                 yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                 time.sleep(1 + i)
 
+    @staticmethod
     async def _avalidate_and_yield_tools(
-        self,
         ret_tools: List[ToolCall],
         tools: Optional[List[ToolCall]],
     ) -> AsyncGenerator[FlowStreamChunk, None]:

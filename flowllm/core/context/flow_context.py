@@ -64,19 +64,6 @@ class FlowContext(BaseContext):
         await self.stream_queue.put(stream_chunk)
         return self
 
-    async def add_stream_chunk_and_type(self, chunk: str | bytes, chunk_type: ChunkEnum):
-        """Add a stream chunk with type to the stream queue.
-
-        Args:
-            chunk: The chunk data (string or bytes).
-            chunk_type: The type of the chunk.
-
-        Returns:
-            Self for method chaining.
-        """
-        await self.stream_queue.put(FlowStreamChunk(flow_id=self.flow_id, chunk_type=chunk_type, chunk=chunk))
-        return self
-
     async def add_stream_done(self):
         """Add a done signal to the stream queue.
 
@@ -96,17 +83,17 @@ class FlowContext(BaseContext):
         self.response.success = False
         self.response.answer = str(e.args)
 
-    def copy(self, **kwargs) -> "FlowContext":
-        """Create a copy of the flow context with optional updates.
-
-        Args:
-            **kwargs: Additional context data to update in the copy.
-
-        Returns:
-            A new FlowContext instance with copied data.
-        """
-        context_kwargs = self.dump()
-        context_kwargs.update(kwargs)
-        context_kwargs["response"] = FlowResponse()
-        context = FlowContext(**context_kwargs)
-        return context
+    # def copy(self, **kwargs) -> "FlowContext":
+    #     """Create a copy of the flow context with optional updates.
+    #
+    #     Args:
+    #         **kwargs: Additional context data to update in the copy.
+    #
+    #     Returns:
+    #         A new FlowContext instance with copied data.
+    #     """
+    #     context_kwargs = self.dump()
+    #     context_kwargs.update(kwargs)
+    #     context_kwargs["response"] = FlowResponse()
+    #     context = FlowContext(**context_kwargs)
+    #     return context

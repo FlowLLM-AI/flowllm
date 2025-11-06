@@ -4,14 +4,12 @@ This module provides an async operation that streams chat responses from an LLM,
 handling different chunk types including answers, thinking content, errors, and tool calls.
 """
 
-import json
-
 from loguru import logger
 
 from ..core.context import C
 from ..core.enumeration import Role, ChunkEnum
 from ..core.op import BaseAsyncOp
-from ..core.schema import Message, FlowStreamChunk, ToolCall
+from ..core.schema import Message, FlowStreamChunk
 
 
 @C.register_op()
@@ -47,15 +45,5 @@ class StreamChatOp(BaseAsyncOp):
 
         async for stream_chunk in self.llm.astream_chat(messages):
             assert isinstance(stream_chunk, FlowStreamChunk)
-            if stream_chunk.chunk_type in [ChunkEnum.ANSWER, ChunkEnum.THINK, ChunkEnum.ERROR]:
-                await self.context.add_stream_chunk_and_type(
-                    chunk=stream_chunk.chunk,
-                    chunk_type=stream_chunk.chunk_type,
-                )
-
-            elif stream_chunk.chunk_type == ChunkEnum.TOOL:
-                tool_call: ToolCall = stream_chunk.chunk
-                await self.context.add_stream_chunk_and_type(
-                    chunk=json.dumps(tool_call.simple_output_dump(), ensure_ascii=False),
-                    chunk_type=ChunkEnum.TOOL,
-                )
+            if stream_chunk.chunk_type in [ChunkEnum.ANSWER, ChunkEnum.THINK, ChunkEnum.ERROR, ChunkEnum.TOOL]:
+                await self.context.add_stream_chunk(stream_chunk)

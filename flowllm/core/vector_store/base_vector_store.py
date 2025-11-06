@@ -83,6 +83,15 @@ class BaseVectorStore(BaseModel, ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_workspace(self, **kwargs) -> List[str]:
+        """List all existing workspaces.
+
+        Returns:
+            List[str]: A list of workspace identifiers available in this vector store.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def search(
         self,
         query: str,

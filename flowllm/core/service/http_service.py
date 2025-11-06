@@ -12,9 +12,11 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from loguru import logger
 
 from .base_service import BaseService
 from ..context import C
+from ..enumeration import ChunkEnum
 from ..flow import BaseFlow, BaseToolFlow
 from ..schema import FlowResponse, FlowStreamChunk
 from ..utils.pydantic_utils import create_pydantic_model
@@ -76,13 +78,36 @@ class HttpService(BaseService):
 
             async def generate_stream() -> AsyncGenerator[bytes, None]:
                 while True:
-                    stream_chunk: FlowStreamChunk = await stream_queue.get()
-                    if stream_chunk.done:
-                        yield "data:[DONE]\n\n".encode("utf-8")
-                        await task
-                        break
+                    try:
+                        stream_chunk: FlowStreamChunk = await asyncio.wait_for(stream_queue.get(), timeout=1.0)
+                        if stream_chunk.done:
+                            yield "data:[DONE]\n\n".encode("utf-8")
+                            await task  # Ensure task completes
+                            break
+                        yield f"data:{stream_chunk.model_dump_json()}\n\n".encode("utf-8")
 
-                    yield f"data:{stream_chunk.model_dump_json()}\n\n".encode("utf-8")
+                    except asyncio.TimeoutError:
+                        # Timeout: check if task has completed or failed
+                        if task.done():
+                            try:
+                                await task  # This will raise exception if task failed
+                            except Exception as e:
+                                logger.exception(f"flow={flow.name} encounter error with args={e.args}")
+
+                                # Task failed, send error chunk
+                                error_chunk = FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e), done=True)
+                                yield f"data:{error_chunk.model_dump_json()}\n\n".encode("utf-8")
+                                yield "data:[DONE]\n\n".encode("utf-8")
+                                break
+
+                            else:
+                                # Task completed successfully but no done chunk received
+                                # This shouldn't happen normally, but handle gracefully
+                                yield "data:[DONE]\n\n".encode("utf-8")
+                                break
+
+                        # Task still running, continue waiting for chunks
+                        continue
 
             return StreamingResponse(generate_stream(), media_type="text/event-stream")
 

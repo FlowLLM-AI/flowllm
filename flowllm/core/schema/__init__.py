@@ -17,6 +17,9 @@ from .service_config import (
 from .tool_call import ParamAttrs, ToolCall
 from .vector_node import VectorNode
 
+# Rebuild FlowStreamChunk after ToolCall is imported to resolve forward references
+FlowStreamChunk.model_rebuild()
+
 __all__ = [
     "FlowRequest",
     "FlowResponse",

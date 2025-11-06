@@ -246,7 +246,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 async for chunk in completion:
                     # Handle chunks without choices (usually usage info)
                     if not chunk.choices:
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage)
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage.model_dump())
 
                     else:
                         delta = chunk.choices[0].delta

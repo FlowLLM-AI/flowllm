@@ -99,4 +99,4 @@ class BaseMcpOp(BaseAsyncToolOp):
             timeout=self.timeout,
         ) as client:
             result: str = await client.call_tool(self.tool_name, arguments=self.input_dict)
-            self.set_result(result)
+            self.set_output(result)

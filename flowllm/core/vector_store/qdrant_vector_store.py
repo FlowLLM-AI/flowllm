@@ -170,6 +170,15 @@ class QdrantVectorStore(LocalVectorStore):
             ),
         )
 
+    def list_workspace(self, **kwargs) -> List[str]:
+        """
+        List all existing workspaces (collections) in Qdrant.
+
+        Returns:
+            List[str]: Workspace identifiers (collection names).
+        """
+        return [c.name for c in self._client.get_collections().collections]
+
     def iter_workspace_nodes(
         self,
         workspace_id: str,

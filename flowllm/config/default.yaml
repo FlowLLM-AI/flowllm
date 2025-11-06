@@ -14,12 +14,31 @@ http:
 flow:
   demo_http_flow:
     flow_content: GenSystemPromptOp() >> ChatOp()
-    stream: false
+    description: "ai chat assistant"  # Optional
+    input_schema: # Optional
+      query:
+        type: string
+        description: "user query"
+        required: true
 
   demo_stream_http_flow:
     flow_content: GenSystemPromptOp() >> StreamChatOp()
     stream: true
+    description: "ai chat assistant"  # Optional
+    input_schema: # Optional
+      query:
+        type: string
+        description: "user query"
+        required: true
 
+  demo_mcp_flow:
+    flow_content: MockSearchOp()
+    description: "search results for a given query."
+    input_schema:
+      query:
+        type: string
+        description: "user query"
+        required: true
 
 llm:
   default:

@@ -108,6 +108,15 @@ class EsVectorStore(LocalVectorStore):
         }
         return self._client.indices.create(index=workspace_id, body=body)
 
+    def list_workspace(self, **kwargs) -> List[str]:
+        """
+        List all existing workspaces (indices) in Elasticsearch.
+
+        Returns:
+            List[str]: Workspace identifiers (index names).
+        """
+        return list(self._client.indices.get(index="*").keys())
+
     def iter_workspace_nodes(
         self,
         workspace_id: str,

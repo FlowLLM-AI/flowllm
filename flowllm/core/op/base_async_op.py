@@ -132,7 +132,7 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
                         break
 
                     except Exception as e:
-                        logger.exception(f"op={self.name} async execute failed, error={e.args}")
+                        logger.exception(f"op={self.name} async execute failed, error={e.args}", exc_info=e)
 
                         if i == self.max_retries - 1:
                             if self.raise_exception:
@@ -201,7 +201,7 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
 
             for t_result in task_results:
                 if return_exceptions and isinstance(t_result, Exception):
-                    logger.exception("Task failed with exception", exc_info=t_result)
+                    logger.opt(exception=t_result).error("Task failed with exception")
                     continue
 
                 if t_result:

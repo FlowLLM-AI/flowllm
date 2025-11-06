@@ -59,7 +59,7 @@ class ExecuteCodeOp(BaseAsyncToolOp):
             code_result = str(e)
 
         sys.stdout = old_stdout
-        self.set_result(code_result)
+        self.set_output(code_result)
 
     async def async_execute(self):
         """Execute code asynchronously in a thread pool.

@@ -109,6 +109,15 @@ class ChromaVectorStore(LocalVectorStore):
         """
         self.collections[workspace_id] = self._client.get_or_create_collection(workspace_id)
 
+    def list_workspace(self, **kwargs) -> List[str]:
+        """
+        List all existing workspaces (collections) in ChromaDB.
+
+        Returns:
+            List[str]: Workspace identifiers (collection names).
+        """
+        return [c.name for c in self._client.list_collections()]
+
     def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
         """Iterate over all nodes in a workspace.
 
