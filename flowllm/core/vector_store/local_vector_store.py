@@ -110,10 +110,11 @@ class LocalVectorStore(BaseVectorStore):
                 for line in tqdm(f, desc="load from path"):
                     if line.strip():
                         node_dict = json.loads(line.strip())
+                        node = VectorNode(**node_dict, **kwargs)
+
                         if callback_fn:
                             node = callback_fn(node_dict)
-                        else:
-                            node = VectorNode(**node_dict, **kwargs)
+
                         node.workspace_id = workspace_id
                         yield node
 
