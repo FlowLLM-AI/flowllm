@@ -75,7 +75,7 @@ class LocalVectorStore(BaseVectorStore):
         return self
 
     @staticmethod
-    def _load_from_path(workspace_id: str, path: str | Path, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
+    def _load_from_path(workspace_id: str, path: str | Path, callback_fn=None, **kwargs) -> Iterable:
         """
         Load vector nodes from a JSONL file on disk.
 
@@ -85,9 +85,6 @@ class LocalVectorStore(BaseVectorStore):
             callback_fn: Optional callback function to transform node dictionaries
                         before creating VectorNode instances.
             **kwargs: Additional keyword arguments to pass to VectorNode constructor.
-
-        Yields:
-            VectorNode: Vector nodes loaded from the file, one at a time.
 
         Note:
             This method uses file locking (shared lock) when available to ensure
@@ -111,11 +108,11 @@ class LocalVectorStore(BaseVectorStore):
                     if line.strip():
                         node_dict = json.loads(line.strip())
                         node = VectorNode(**node_dict, **kwargs)
+                        node.workspace_id = workspace_id
 
                         if callback_fn:
                             node = callback_fn(node)
 
-                        node.workspace_id = workspace_id
                         yield node
 
             finally:
