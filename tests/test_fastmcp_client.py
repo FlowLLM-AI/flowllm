@@ -7,10 +7,11 @@ It can be run directly with: python test_fastmcp_client.py
 import asyncio
 import os
 
-from flowllm.core.utils.fastmcp_client import FastMcpClient
 from flowllm.core.utils.common_utils import load_env
+from flowllm.core.utils.fastmcp_client import FastMcpClient
 
 load_env()
+
 
 async def main():
     """Test function to demonstrate FastMcpClient usage."""
@@ -45,17 +46,20 @@ async def main():
         "type": "sse",
         "url": "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/sse",
         "headers": {
-            "Authorization": f"Bearer {os.getenv('FLOW_BAILIAN_API_KEY')}"
+            "Authorization": f"Bearer {os.getenv('FLOW_BAILIAN_API_KEY')}",
         },
     }
 
     async with FastMcpClient("mcp", config) as client:
         tool_calls = await client.list_tool_calls()
+        tool_call = None
         for tool_call in tool_calls:
             print(tool_call.model_dump_json())
 
-        result = await client.call_tool(tool_call.name, arguments={"query": "半导体行业PE中位数"})
-        print(result)
+        if tool_call is not None:
+            result = await client.call_tool(tool_call.name, arguments={"query": "半导体行业PE中位数"})
+            print(result)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -5,7 +5,6 @@ It can be run directly with: python test_cache_handler.py
 """
 
 import shutil
-import tempfile
 from pathlib import Path
 from time import sleep
 
@@ -29,7 +28,7 @@ def test_dataframe():
             "name": ["Alice", "Bob", "Charlie"],
             "age": [25, 30, 35],
             "city": ["New York", "London", "Tokyo"],
-        }
+        },
     )
 
     # Test save
@@ -69,7 +68,7 @@ def test_dict():
     cache = CacheHandler(cache_dir="test_cache_dict")
 
     # Create test dict
-    test_dict = {
+    data_dict = {
         "name": "Alice",
         "age": 30,
         "city": "New York",
@@ -78,7 +77,7 @@ def test_dict():
     }
 
     # Test save
-    assert cache.save("test_dict", test_dict) is True
+    assert cache.save("test_dict", data_dict) is True
     assert cache.exists("test_dict") is True
 
     # Test load
@@ -113,10 +112,10 @@ def test_list():
     cache = CacheHandler(cache_dir="test_cache_list")
 
     # Create test list
-    test_list = ["apple", "banana", "cherry", {"nested": "dict"}, [1, 2, 3]]
+    data_list = ["apple", "banana", "cherry", {"nested": "dict"}, [1, 2, 3]]
 
     # Test save
-    assert cache.save("test_list", test_list) is True
+    assert cache.save("test_list", data_list) is True
     assert cache.exists("test_list") is True
 
     # Test load
@@ -151,17 +150,17 @@ def test_string():
     cache = CacheHandler(cache_dir="test_cache_string")
 
     # Create test string
-    test_string = "This is a test string\nwith multiple lines\nand special chars: 你好世界 🎉"
+    data_string = "This is a test string\nwith multiple lines\nand special chars: 你好世界 🎉"
 
     # Test save
-    assert cache.save("test_string", test_string) is True
+    assert cache.save("test_string", data_string) is True
     assert cache.exists("test_string") is True
 
     # Test load
     loaded_string = cache.load("test_string")
     assert loaded_string is not None
     assert isinstance(loaded_string, str)
-    assert loaded_string == test_string
+    assert loaded_string == data_string
     logger.info("✓ String save and load test passed")
 
     # Test get_info
@@ -169,7 +168,7 @@ def test_string():
     assert info is not None
     assert info["data_type"] == "str"
     assert "char_count" in info
-    assert info["char_count"] == len(test_string)
+    assert info["char_count"] == len(data_string)
     logger.info("✓ String get_info test passed")
 
     # Cleanup
@@ -413,14 +412,14 @@ def test_multiple_types():
 
     # Save different types
     df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
-    test_dict = {"key": "value"}
-    test_list = [1, 2, 3]
-    test_string = "hello world"
+    dict_data = {"key": "value"}
+    list_data = [1, 2, 3]
+    string_data = "hello world"
 
     cache.save("df", df)
-    cache.save("dict", test_dict)
-    cache.save("list", test_list)
-    cache.save("string", test_string)
+    cache.save("dict", dict_data)
+    cache.save("list", list_data)
+    cache.save("string", string_data)
 
     # Load and verify
     loaded_df = cache.load("df")
@@ -531,4 +530,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

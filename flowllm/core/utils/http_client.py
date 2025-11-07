@@ -11,8 +11,8 @@ Key features:
 - Health check and endpoint listing capabilities
 """
 
-from typing import Dict, Optional, AsyncIterator
 import json
+from typing import Dict, Optional, AsyncIterator
 
 import httpx
 from loguru import logger

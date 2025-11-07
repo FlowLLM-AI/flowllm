@@ -3,35 +3,35 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-ast
-        files: ^flowllm/
+        exclude: ^old/
       - id: check-yaml
-        files: ^flowllm/
+        exclude: ^old/
       - id: check-xml
-        files: ^flowllm/
+        exclude: ^old/
       - id: check-toml
-        files: ^flowllm/
+        exclude: ^old/
       - id: check-json
-        files: ^flowllm/
+        exclude: ^old/
       - id: detect-private-key
-        files: ^flowllm/
+        exclude: ^old/
       - id: trailing-whitespace
-        files: ^flowllm/
+        exclude: ^old/
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v4.0.0
     hooks:
       - id: add-trailing-comma
-        files: ^flowllm/.*\.py$
+        exclude: ^old/
   - repo: https://github.com/psf/black
     rev: 25.9.0
     hooks:
     - id: black
-      files: ^flowllm/.*\.py$
+      exclude: ^old/
       args: [--line-length=120]
   - repo: https://github.com/PyCQA/flake8
     rev: 7.3.0
     hooks:
       - id: flake8
-        files: ^flowllm/.*\.py$
+        exclude: ^old/
         args: [
           "--extend-ignore=E203",
           "--max-line-length=120"
@@ -40,10 +40,10 @@ repos:
     rev: v4.0.2
     hooks:
       - id: pylint
-        files: ^flowllm/.*\.py$
         exclude:
             (?x)(
-                ^docs
+                ^old/
+                | ^docs
                 | pb2\.py$
                 | grpc\.py$
                 | \.demo$

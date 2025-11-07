@@ -11,28 +11,28 @@ from flowllm.core.utils.common_utils import extract_content
 
 def test_extract_content_json_no_space():
     """Test extract_content with JSON code block and no space between ``` and json."""
-    text = "```json\n{\"key\": \"value\"}\n```"
+    text = '```json\n{"key": "value"}\n```'
     result = extract_content(text, language_tag="json")
     assert result == {"key": "value"}
 
 
 def test_extract_content_json_one_space():
     """Test extract_content with JSON code block and one space between ``` and json."""
-    text = "``` json\n{\"key\": \"value\"}\n```"
+    text = '``` json\n{"key": "value"}\n```'
     result = extract_content(text, language_tag="json")
     assert result == {"key": "value"}
 
 
 def test_extract_content_json_two_spaces():
     """Test extract_content with JSON code block and two spaces between ``` and json."""
-    text = "```  json\n{\"key\": \"value\"}\n```"
+    text = '```  json\n{"key": "value"}\n```'
     result = extract_content(text, language_tag="json")
     assert result == {"key": "value"}
 
 
 def test_extract_content_json_multiple_spaces():
     """Test extract_content with JSON code block and multiple spaces between ``` and json."""
-    text = "```   json\n{\"key\": \"value\"}\n```"
+    text = '```   json\n{"key": "value"}\n```'
     result = extract_content(text, language_tag="json")
     assert result == {"key": "value"}
 
@@ -60,14 +60,14 @@ def test_extract_content_python_two_spaces():
 
 def test_extract_content_json_complex():
     """Test extract_content with complex JSON."""
-    text = "```json\n{\"name\": \"test\", \"value\": 123, \"nested\": {\"key\": \"val\"}}\n```"
+    text = '```json\n{"name": "test", "value": 123, "nested": {"key": "val"}}\n```'
     result = extract_content(text, language_tag="json")
     assert result == {"name": "test", "value": 123, "nested": {"key": "val"}}
 
 
 def test_extract_content_json_with_spaces_complex():
     """Test extract_content with complex JSON and spaces."""
-    text = "```  json\n{\"name\": \"test\", \"value\": 123}\n```"
+    text = '```  json\n{"name": "test", "value": 123}\n```'
     result = extract_content(text, language_tag="json")
     assert result == {"name": "test", "value": 123}
 
@@ -95,4 +95,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

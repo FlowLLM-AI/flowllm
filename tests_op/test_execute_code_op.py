@@ -9,7 +9,9 @@ import asyncio
 from flowllm.gallery.execute_code_op import ExecuteCodeOp
 from flowllm.main import FlowLLMApp
 
+
 async def async_main():
+    """Test function for ExecuteCodeOp."""
     async with FlowLLMApp():
         op = ExecuteCodeOp()
         print(op.tool_call.model_dump_json(exclude_none=True))

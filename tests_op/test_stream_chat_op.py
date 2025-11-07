@@ -17,7 +17,7 @@ async def async_task(op: StreamChatOp, messages, system_prompt: str, stream_queu
     await op.async_call(
         messages=messages,
         system_prompt=system_prompt,
-        stream_queue=stream_queue
+        stream_queue=stream_queue,
     )
     await op.context.add_stream_done()
 
@@ -32,7 +32,7 @@ async def async_main():
 
         op = StreamChatOp()
         messages = [
-            Message(role=Role.USER, content="Hello, how are you?")
+            Message(role=Role.USER, content="Hello, how are you?"),
         ]
 
         stream_queue = asyncio.Queue()
@@ -41,8 +41,8 @@ async def async_main():
                 op=op,
                 messages=messages,
                 system_prompt="You are a helpful assistant.",
-                stream_queue=stream_queue
-            )
+                stream_queue=stream_queue,
+            ),
         )
 
         # Collect stream chunks
@@ -52,15 +52,13 @@ async def async_main():
             if stream_chunk.done:
                 print("\nend")
                 break
-            else:
-                stream_chunks.append(stream_chunk)
-                print(stream_chunk.chunk, end="", flush=True)
+            stream_chunks.append(stream_chunk)
+            print(stream_chunk.chunk, end="", flush=True)
 
         await task
 
         assert len(stream_chunks) > 0, "Should receive at least one stream chunk"
-        assert any(chunk.chunk_type == ChunkEnum.ANSWER for chunk in stream_chunks), \
-            "Should receive ANSWER chunks"
+        assert any(chunk.chunk_type == ChunkEnum.ANSWER for chunk in stream_chunks), "Should receive ANSWER chunks"
         print("\n✓ Test 1 passed\n")
 
         # Test 2: Test assertion error with invalid messages
@@ -73,7 +71,7 @@ async def async_main():
             await op2.async_call(
                 messages=["not a Message object"],
                 system_prompt="Test prompt",
-                stream_queue=asyncio.Queue()
+                stream_queue=asyncio.Queue(),
             )
             print("✗ Test 2 failed: Should have raised an assertion error")
             assert False, "Should have raised AssertionError"

@@ -1,3 +1,10 @@
+"""Test module for HttpClient functionality.
+
+This module contains tests and examples demonstrating the usage of HttpClient
+for interacting with flow execution endpoints, including health checks,
+endpoint listing, synchronous flow execution, and streaming flow execution.
+"""
+
 import asyncio
 import json
 
@@ -5,6 +12,14 @@ from flowllm.core.utils import HttpClient
 
 
 async def main():
+    """Test function for HttpClient.
+
+    This function demonstrates how to use HttpClient to:
+    - Check health status
+    - List available endpoints
+    - Execute flows synchronously
+    - Execute flows with streaming
+    """
     async with HttpClient("http://0.0.0.0:8002") as client:
 
         # Test 1: Health check
@@ -37,18 +52,18 @@ async def main():
         response = await client.execute_flow("demo_http_flow", query=query)
         print(f"result: {response.answer}")
 
-        """
-        curl -X POST http://localhost:8002/demo_stream_http_flow \ 
-          -H "Content-Type: application/json" \
-          -d '{
-            "query": "what is ai"      
-          }'
-        """
+        # Example curl command for streaming endpoint:
+        # curl -X POST http://localhost:8002/demo_stream_http_flow \
+        #   -H "Content-Type: application/json" \
+        #   -d '{
+        #     "query": "what is ai"
+        #   }'
         print("=" * 50)
         print("Testing streaming endpoint...")
         try:
             async for chunk in client.execute_stream_flow(
-                "demo_stream_http_flow", query="what is ai"
+                "demo_stream_http_flow",
+                query="what is ai",
             ):
                 chunk_type = chunk.get("type", "answer")
                 chunk_content = chunk.get("content", "")
@@ -56,7 +71,7 @@ async def main():
                     print(f"[{chunk_type}] {chunk_content}")
         except Exception as e:
             print(f"Streaming test failed: {e}")
-        
+
 
 if __name__ == "__main__":
     asyncio.run(main())

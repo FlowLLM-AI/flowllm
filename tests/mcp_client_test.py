@@ -1,3 +1,10 @@
+"""Test module for FastMcpClient functionality.
+
+This module contains tests and examples demonstrating the usage of FastMcpClient
+for interacting with MCP (Model Context Protocol) servers, including listing
+available tools and calling MCP tools with arguments.
+"""
+
 import asyncio
 import json
 
@@ -7,12 +14,19 @@ from flowllm.core.utils import FastMcpClient
 
 
 async def main():
+    """Test function for FastMcpClient.
+
+    This function demonstrates how to use FastMcpClient to:
+    - List available MCP tools
+    - Call MCP tools with arguments
+    - Handle tool results and errors
+    """
     # New config-based interface matching McpClient
     config = {
         "type": "sse",
         "url": "http://0.0.0.0:8001/sse",
         "headers": {},
-        "timeout": 30.0
+        "timeout": 30.0,
     }
 
     async with FastMcpClient("test_client", config, max_retries=3) as client:

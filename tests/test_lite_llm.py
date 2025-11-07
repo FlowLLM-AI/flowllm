@@ -179,7 +179,7 @@ def test_chat_multiple_tools():
     print(f"✓ Tool calls count: {len(message.tool_calls)}")
     if message.tool_calls:
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 def test_chat_streaming():
@@ -233,7 +233,7 @@ def test_chat_complex_query():
             Message(
                 role=Role.USER,
                 content="Explain the difference between machine learning and deep learning in one sentence.",
-            )
+            ),
         ],
         [],
         enable_stream_print=False,
@@ -286,7 +286,7 @@ async def test_achat_with_tools():
     print(f"✓ Tool calls count: {len(message.tool_calls)}")
     if message.tool_calls:
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 async def test_achat_multiple_tools():
@@ -305,7 +305,7 @@ async def test_achat_multiple_tools():
     print(f"✓ Tool calls count: {len(message.tool_calls)}")
     if message.tool_calls:
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 async def test_achat_streaming():
@@ -341,15 +341,12 @@ async def test_achat_concurrent_requests():
     """Test multiple concurrent async requests."""
     print("\n=== Test: achat_concurrent_requests ===")
     llm = create_llm()
-    tasks = [
-        llm.achat([Message(role=Role.USER, content="Say hello")], [], enable_stream_print=False)
-        for _ in range(3)
-    ]
+    tasks = [llm.achat([Message(role=Role.USER, content="Say hello")], [], enable_stream_print=False) for _ in range(3)]
     messages = await asyncio.gather(*tasks)
     print(f"✓ Messages count: {len(messages)}")
     for i, message in enumerate(messages):
-        print(f"✓ Message {i+1} role: {message.role}")
-        print(f"✓ Message {i+1} content: {message.content}")
+        print(f"✓ Message {i + 1} role: {message.role}")
+        print(f"✓ Message {i + 1} content: {message.content}")
 
 
 def test_stream_chat_basic():
@@ -395,7 +392,7 @@ def test_stream_chat_with_tools():
     print(f"✓ Tool calls count: {len(message.tool_calls)}")
     if message.tool_calls:
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 async def test_astream_chat_with_tools():
@@ -413,7 +410,7 @@ async def test_astream_chat_with_tools():
     print(f"✓ Tool calls count: {len(message.tool_calls)}")
     if message.tool_calls:
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 def test_stream_chat_thinking():
@@ -577,7 +574,7 @@ def test_tool_call_multiple_tools_choice():
         tool_names = [tc.name for tc in message.tool_calls]
         print(f"✓ Tool names: {tool_names}")
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 def test_tool_call_parallel():
@@ -591,7 +588,7 @@ def test_tool_call_parallel():
             Message(
                 role=Role.USER,
                 content="Get the weather for Beijing and search for information about weather APIs",
-            )
+            ),
         ],
         [weather_tool, search_tool],
         enable_stream_print=False,
@@ -602,7 +599,7 @@ def test_tool_call_parallel():
         tool_names = [tc.name for tc in message.tool_calls]
         print(f"✓ Tool names: {tool_names}")
         for i, tc in enumerate(message.tool_calls):
-            print(f"✓ Tool call {i+1}: name={tc.name}, arguments={tc.arguments}")
+            print(f"✓ Tool call {i + 1}: name={tc.name}, arguments={tc.arguments}")
 
 
 def test_tool_call_with_enum():
@@ -631,7 +628,7 @@ def main():
     print("=" * 60)
     print("Running LiteLLM Tests")
     print("=" * 60)
-    
+
     # Sync tests
     test_chat_basic()
     test_chat_with_thinking()
@@ -641,19 +638,19 @@ def main():
     test_chat_empty_message()
     test_chat_long_conversation()
     test_chat_complex_query()
-    
+
     # Streaming tests
     test_stream_chat_basic()
     test_stream_chat_with_tools()
     test_stream_chat_thinking()
-    
+
     # Configuration tests
     test_custom_temperature()
     test_custom_seed()
     test_custom_top_p()
     test_custom_provider()
     test_presence_penalty()
-    
+
     # Tool calling tests
     test_tool_call_weather()
     test_tool_call_calculator()
@@ -661,7 +658,7 @@ def main():
     test_tool_call_multiple_tools_choice()
     test_tool_call_parallel()
     test_tool_call_with_enum()
-    
+
     # Async tests
     print("\n" + "=" * 60)
     print("Running Async Tests")
@@ -676,7 +673,7 @@ def main():
     asyncio.run(test_astream_chat_basic())
     asyncio.run(test_astream_chat_with_tools())
     asyncio.run(test_tool_call_async())
-    
+
     print("\n" + "=" * 60)
     print("All tests completed!")
     print("=" * 60)

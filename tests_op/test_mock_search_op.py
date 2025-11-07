@@ -35,7 +35,7 @@ async def async_main():
             parsed = json.loads(op.context.response.answer)
             assert isinstance(parsed, (list, dict)), "Parsed JSON should be list or dict"
         except json.JSONDecodeError as e:
-            raise AssertionError(f"Output should be valid JSON, got decode error: {e}")
+            raise AssertionError(f"Output should be valid JSON, got decode error: {e}") from e
 
         print("\n✓ Test passed\n")
         print("=" * 80)
@@ -45,5 +45,3 @@ async def async_main():
 
 if __name__ == "__main__":
     asyncio.run(async_main())
-
-

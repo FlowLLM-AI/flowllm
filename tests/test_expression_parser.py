@@ -1,3 +1,9 @@
+"""Test suite for flow expression parser functionality.
+
+This module contains tests for parsing various flow expressions including
+sequential, parallel, and mixed operations with different syntax patterns.
+"""
+
 from flowllm.core.context.service_context import C
 from flowllm.core.op.base_op import BaseOp
 from flowllm.core.utils.common_utils import parse_flow_expression
@@ -6,41 +12,60 @@ from flowllm.core.utils.common_utils import parse_flow_expression
 # Define minimal ops for testing and register them with stable names
 @C.register_op()
 class ContainerOp(BaseOp):
+    """A container operation for testing purposes."""
+
     def execute(self):
+        """Execute the container operation."""
         return self.name
 
 
 @C.register_op()
 class SearchOp(BaseOp):
+    """A search operation for testing purposes."""
+
     def execute(self):
+        """Execute the search operation."""
         return self.name
 
 
 @C.register_op()
 class FindOp(BaseOp):
+    """A find operation for testing purposes."""
+
     def execute(self):
+        """Execute the find operation."""
         return self.name
 
 
 @C.register_op()
 class Op1Op(BaseOp):
+    """Operation 1 for testing purposes."""
+
     def execute(self):
+        """Execute operation 1."""
         return self.name
 
 
 @C.register_op()
 class Op2Op(BaseOp):
+    """Operation 2 for testing purposes."""
+
     def execute(self):
+        """Execute operation 2."""
         return self.name
 
 
 @C.register_op()
 class Op3Op(BaseOp):
+    """Operation 3 for testing purposes."""
+
     def execute(self):
+        """Execute operation 3."""
         return self.name
 
 
 def test_expression_parser_single_line_sequential():
+    """Test parsing a single-line sequential flow expression."""
     flow = "Op1Op() >> Op2Op() >> Op3Op()"
     result = parse_flow_expression(flow)
     # Should be a SequentialOp with three ops
@@ -54,6 +79,7 @@ def test_expression_parser_single_line_sequential():
 
 
 def test_expression_parser_multiline_exec_and_eval_independent():
+    """Test parsing multiline flow with assignments that don't affect the final expression."""
     flow = """
 op = ContainerOp()
 op.ops.search = SearchOp()
@@ -73,6 +99,7 @@ Op1Op() >> Op2Op() >> Op3Op()
 
 
 def test_expression_parser_multiline_return_assigned_op():
+    """Test parsing multiline flow that returns an assigned operation."""
     flow = """
 op = ContainerOp()
 op.ops.search = SearchOp()
@@ -90,6 +117,7 @@ op
 
 
 def test_expression_parser_multiline_variable_reassignment_and_return():
+    """Test parsing multiline flow with variable reassignment."""
     flow = """
 opx = Op1Op() >> Op2Op()
 opx = opx >> Op3Op()
@@ -107,6 +135,7 @@ opx
 
 
 def test_expression_parser_parallel_basic():
+    """Test parsing a basic parallel flow expression."""
     flow = "Op1Op() | Op2Op()"
     result = parse_flow_expression(flow)
     from flowllm.core.op.parallel_op import ParallelOp
@@ -118,6 +147,7 @@ def test_expression_parser_parallel_basic():
 
 
 def test_expression_parser_mixed_with_parentheses():
+    """Test parsing a mixed sequential and parallel flow with parentheses."""
     flow = "Op1Op() >> (Op2Op() | Op3Op()) >> Op1Op()"
     result = parse_flow_expression(flow)
     from flowllm.core.op.sequential_op import SequentialOp
@@ -135,6 +165,7 @@ def test_expression_parser_mixed_with_parentheses():
 
 
 def test_expression_parser_multiline_multiple_attribute_assignments_mixed_chain():
+    """Test parsing multiline flow with multiple attribute assignments in a mixed chain."""
     flow = """
 op1 = Op1Op()
 op1.ops.search = SearchOp()
@@ -155,7 +186,9 @@ op1.ops.find = FindOp()
     assert isinstance(result.ops[0].ops[0].ops.search, SearchOp)
     assert isinstance(result.ops[0].ops[0].ops.find, FindOp)
 
+
 def test_expression_parser_complex_left_shift_parallel_and_sequential():
+    """Test parsing a complex flow with left-shift operator, parallel and sequential operations."""
     flow = """
 op = ContainerOp()
 op << {"search": Op1Op(), "find": Op2Op()}
@@ -195,5 +228,6 @@ op << {"search": Op1Op(), "find": Op2Op()}
 
     # Final op is the container op
     assert isinstance(third, ContainerOp)
+
 
 # pytest -q tests/test_expression_parser.py

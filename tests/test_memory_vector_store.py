@@ -10,13 +10,14 @@ Requires proper environment variables:
 
 import asyncio
 
+from loguru import logger
+
 from flowllm.core.embedding_model.openai_compatible_embedding_model import (
     OpenAICompatibleEmbeddingModel,
 )
 from flowllm.core.schema.vector_node import VectorNode
 from flowllm.core.utils import load_env
 from flowllm.core.vector_store.memory_vector_store import MemoryVectorStore
-from loguru import logger
 
 load_env()
 
@@ -272,4 +273,3 @@ if __name__ == "__main__":
     # Run async test
     logger.info("\n" + "=" * 50 + " ASYNC TESTS " + "=" * 50)
     asyncio.run(async_main())
-
