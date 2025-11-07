@@ -113,7 +113,7 @@ class LocalVectorStore(BaseVectorStore):
                         node = VectorNode(**node_dict, **kwargs)
 
                         if callback_fn:
-                            node = callback_fn(node_dict)
+                            node = callback_fn(node)
 
                         node.workspace_id = workspace_id
                         yield node
