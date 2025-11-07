@@ -115,7 +115,6 @@ class BaseVectorStore(BaseModel, ABC):
 
     def close(self) -> None:
         """Close the vector store and clean up resources. Default implementation does nothing."""
-        raise NotImplementedError
 
     # Async versions of all methods
 
