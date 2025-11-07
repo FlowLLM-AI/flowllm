@@ -52,6 +52,8 @@ dependencies = [
 dev = [
     "pytest>=8.4.2",
     "pytest_asyncio>=1.2.0",
+    "pre-commit",
+    "mkdocs-shadcn",
 ]
 
 reme = [

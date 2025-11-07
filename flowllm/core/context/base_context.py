@@ -143,6 +143,10 @@ class BaseContext:
         """
         return self._data.items()
 
+    def clear(self):
+        """Clear all context data."""
+        self._data.clear()
+
     def __getstate__(self):
         """Get state for pickling.
 

@@ -436,7 +436,7 @@ class BaseOp(ABC):
 
         return parallel_op
 
-    def copy(self, **kwargs) -> "BaseOp":
+    def copy(self, **kwargs):
         """Create a deep copy of this operation.
 
         Args:
@@ -447,9 +447,19 @@ class BaseOp(ABC):
         """
         copy_op = self.__class__(*self._init_args, **self._init_kwargs, **kwargs)
         if self.ops:
-            copy_op.ops.clear()
-            for op in self.ops:
-                copy_op.ops.append(op.copy())
+            if isinstance(self.ops, list):
+                copy_op.ops.clear()
+                for op in self.ops:
+                    copy_op.ops.append(op.copy())
+
+            elif isinstance(self.ops, BaseContext):
+                copy_op.ops.clear()
+                for name, op in self.ops.items():
+                    copy_op.ops[name] = op.copy()
+
+            else:
+                raise NotImplementedError("ops type not supported")
+
         return copy_op
 
     @property
