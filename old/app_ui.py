@@ -8,7 +8,7 @@ import streamlit as st
 
 from flowllm.context import C
 
-APP_NAME: str = os.getenv("APP_NAME")
+APP_NAME: str = os.getenv("FLOW_APP_NAME")
 available_models = [
     "langchain+brief+bailian_search",
     "langchain+bailian_search",

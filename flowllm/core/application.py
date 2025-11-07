@@ -377,7 +377,7 @@ class Application:
         """
 
         if self.service_config.enable_logo:
-            print_logo(service_config=self.service_config, app_name=os.getenv("APP_NAME"))
+            print_logo(service_config=self.service_config, app_name=os.getenv("FLOW_APP_NAME"))
 
         service_cls = C.get_service_class(self.service_config.backend)
         service: BaseService = service_cls(service_config=self.service_config)

@@ -29,7 +29,7 @@ class HttpService(BaseService):
     def __init__(self, **kwargs):
         """Initialize the FastAPI application and middleware."""
         super().__init__(**kwargs)
-        self.app = FastAPI(title=os.getenv("APP_NAME"))
+        self.app = FastAPI(title=os.getenv("FLOW_APP_NAME"))
         self.app.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],

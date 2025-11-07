@@ -2,7 +2,7 @@
 
 import os
 
-os.environ.setdefault("APP_NAME", "FlowLLM")
+os.environ.setdefault("FLOW_APP_NAME", "FlowLLM")
 
 from .core.utils import load_env  # noqa: E402  # pylint: disable=wrong-import-position
 

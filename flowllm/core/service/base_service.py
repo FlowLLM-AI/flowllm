@@ -60,15 +60,15 @@ class BaseService(ABC):
             assert isinstance(flow, BaseFlow)
             if flow.stream:
                 if self.integrate_stream_flow(flow):
-                    logger.info(f"integrate stream flow={flow.name}")
+                    logger.info(f"integrate {flow.name}[stream]")
 
             elif isinstance(flow, BaseToolFlow):
                 if self.integrate_tool_flow(flow):
-                    logger.info(f"integrate tool flow={flow.name}")
+                    logger.info(f"integrate {flow.name}")
 
             else:
                 if self.integrate_flow(flow):
-                    logger.info(f"integrate flow={flow.name}")
+                    logger.info(f"integrate {flow.name}")
 
         import warnings
 

@@ -22,7 +22,7 @@ class MCPService(BaseService):
     def __init__(self, **kwargs):
         """Initialize the MCP server instance."""
         super().__init__(**kwargs)
-        self.mcp = FastMCP(name=os.getenv("APP_NAME"))
+        self.mcp = FastMCP(name=os.getenv("FLOW_APP_NAME"))
 
     def integrate_tool_flow(self, flow: BaseToolFlow) -> bool:
         """Register a tool-callable flow as an MCP tool."""

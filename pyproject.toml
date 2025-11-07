@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flowllm"
-version = "0.2.0a1"
+dynamic = ["version"]
 description = "A flexible framework for building MCP/HTTP services powered by LLM workflows"
 authors = [
     { name = "jinli.yl", email = "jinli.yl@alibaba-inc.com" },
@@ -89,6 +89,9 @@ include = ["flowllm*"]
 flowllm = [
     "**/*.yaml",
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "flowllm.__version__"}
 
 [project.urls]
 Homepage = "https://github.com/flowllm-ai/flowllm"
