@@ -85,25 +85,19 @@ class MemoryVectorStore(LocalVectorStore):
         """
         return list(self._memory_store.keys())
 
-    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs):
+    def iter_workspace_nodes(self, workspace_id: str, **kwargs):
         """
         Iterate over all nodes in a workspace.
 
         Args:
             workspace_id: Identifier of the workspace.
-            callback_fn: Optional callback function to transform nodes.
             **kwargs: Additional keyword arguments (unused).
 
         Yields:
             VectorNode: Nodes from the workspace, one at a time.
-                       If callback_fn is provided, yields transformed nodes.
         """
         if workspace_id in self._memory_store:
-            for node in self._memory_store[workspace_id].values():
-                if callback_fn:
-                    yield callback_fn(node)
-                else:
-                    yield node
+            yield from self._memory_store[workspace_id].values()
 
     def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
         """
@@ -171,9 +165,8 @@ class MemoryVectorStore(LocalVectorStore):
         if nodes:
             all_nodes.extend(nodes)
 
-        if path:
-            for node in self._load_from_path(path=path, workspace_id=workspace_id, callback_fn=callback_fn, **kwargs):
-                all_nodes.append(node)
+        for node in self._load_from_path(path=path, workspace_id=workspace_id, callback_fn=callback_fn, **kwargs):
+            all_nodes.append(node)
 
         if all_nodes:
             self.insert(nodes=all_nodes, workspace_id=workspace_id, **kwargs)

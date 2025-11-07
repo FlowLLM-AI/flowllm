@@ -28,7 +28,7 @@ def main():
     Test the EsVectorStore with synchronous operations.
 
     This function demonstrates basic operations including create, insert, search,
-    filtering, update (delete + insert), and workspace management.
+    filtering, update (delete + insert), dump_workspace, load_workspace, and workspace management.
     """
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "rag_nodes_index"
@@ -85,9 +85,28 @@ def main():
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
-    es.dump_workspace(workspace_id=workspace_id)
-    es.delete_workspace(workspace_id=workspace_id)
 
+    # Test dump_workspace
+    dump_result = es.dump_workspace(workspace_id=workspace_id)
+    logger.info(f"Dump result: {dump_result}")
+
+    # Test load_workspace: delete workspace and reload from dump
+    logger.info("=" * 20 + " LOAD TEST " + "=" * 20)
+    es.delete_workspace(workspace_id=workspace_id)
+    logger.info(f"Workspace deleted, exist_workspace: {es.exist_workspace(workspace_id)}")
+
+    # Load workspace back
+    load_result = es.load_workspace(workspace_id)
+    logger.info(f"Load result: {load_result}")
+
+    # Verify data is restored by searching
+    results = es.search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"After load, search returned {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    es.delete_workspace(workspace_id=workspace_id)
     es.close()
 
 
@@ -96,8 +115,8 @@ async def async_main():
     Test the EsVectorStore with asynchronous operations.
 
     This function demonstrates async operations including async_create_workspace,
-    async_insert, async_search, async_delete for better performance in
-    async applications.
+    async_insert, async_search, async_delete, async_dump_workspace, and
+    async_load_workspace for better performance in async applications.
     """
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "async_rag_nodes_index"
@@ -182,10 +201,28 @@ async def async_main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
-    # Clean up
-    await es.async_dump_workspace(workspace_id=workspace_id)
-    await es.async_delete_workspace(workspace_id=workspace_id)
+    # Test async_dump_workspace
+    dump_result = await es.async_dump_workspace(workspace_id=workspace_id)
+    logger.info(f"Async dump result: {dump_result}")
 
+    # Test async_load_workspace: delete workspace and reload from dump
+    logger.info("ASYNC LOAD TEST - " + "=" * 20)
+    await es.async_delete_workspace(workspace_id=workspace_id)
+    logger.info(f"Workspace deleted, exist_workspace: {await es.async_exist_workspace(workspace_id)}")
+
+    # Load workspace back
+    load_result = await es.async_load_workspace(workspace_id)
+    logger.info(f"Async load result: {load_result}")
+
+    # Verify data is restored by searching
+    results = await es.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"After async load, search returned {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Clean up
+    await es.async_delete_workspace(workspace_id=workspace_id)
     await es.async_close()
 
 

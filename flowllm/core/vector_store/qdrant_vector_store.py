@@ -182,7 +182,6 @@ class QdrantVectorStore(LocalVectorStore):
     def iter_workspace_nodes(
         self,
         workspace_id: str,
-        callback_fn=None,
         limit: int = 10000,
         **kwargs,
     ) -> Iterable[VectorNode]:
@@ -193,13 +192,11 @@ class QdrantVectorStore(LocalVectorStore):
 
         Args:
             workspace_id: The ID of the workspace to iterate nodes from.
-            callback_fn: Optional callback function to transform nodes before yielding.
-                If provided, each node is passed through this function before being yielded.
             limit: Maximum number of points to retrieve per scroll operation (default: 10000).
             **kwargs: Additional keyword arguments (unused, kept for interface compatibility).
 
         Yields:
-            VectorNode: Each node in the workspace, optionally transformed by callback_fn.
+            VectorNode: Each node in the workspace.
         """
         offset = None
         while True:
@@ -216,10 +213,7 @@ class QdrantVectorStore(LocalVectorStore):
 
             for record in records:
                 node = self.point2node(record, workspace_id)
-                if callback_fn:
-                    yield callback_fn(node)
-                else:
-                    yield node
+                yield node
 
             if next_offset is None:
                 break

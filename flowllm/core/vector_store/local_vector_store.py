@@ -21,26 +21,26 @@ from .base_vector_store import BaseVectorStore
 from ..context.service_context import C
 from ..schema.vector_node import VectorNode
 
+# fcntl is Unix/Linux specific, not available on Windows
+try:
+    import fcntl
+
+    HAS_FCNTL = True
+except ImportError:
+    HAS_FCNTL = False
+    logger.warning("fcntl module not available (Windows system?). File locking will be disabled.")
+
 
 def _acquire_lock(file_obj, lock_type):
     """Acquire file lock if fcntl is available."""
-    try:
-        import fcntl
-    except ImportError:
-        # fcntl is Unix/Linux specific, not available on Windows
-        return
-    if lock_type is not None:
+    if HAS_FCNTL:
         fcntl.flock(file_obj, lock_type)
 
 
 def _release_lock(file_obj):
     """Release file lock if fcntl is available."""
-    try:
-        import fcntl
-    except ImportError:
-        # fcntl is Unix/Linux specific, not available on Windows
-        return
-    fcntl.flock(file_obj, fcntl.LOCK_UN)
+    if HAS_FCNTL:
+        fcntl.flock(file_obj, fcntl.LOCK_UN)
 
 
 @C.register_vector_store("local")
@@ -96,23 +96,17 @@ class LocalVectorStore(BaseVectorStore):
             return
 
         with workspace_path.open() as f:
-            try:
-                import fcntl
-
-                lock_type = fcntl.LOCK_SH
-            except ImportError:
-                lock_type = None
-            _acquire_lock(f, lock_type)
+            _acquire_lock(f, fcntl.LOCK_SH if HAS_FCNTL else None)
             try:
                 for line in tqdm(f, desc="load from path"):
                     if line.strip():
                         node_dict = json.loads(line.strip())
-                        node = VectorNode(**node_dict, **kwargs)
-                        node.workspace_id = workspace_id
-
                         if callback_fn:
-                            node = callback_fn(node)
-
+                            node: VectorNode = callback_fn(node_dict)
+                            assert isinstance(node, VectorNode)
+                        else:
+                            node: VectorNode = VectorNode(**node_dict, **kwargs)
+                        node.workspace_id = workspace_id
                         yield node
 
             finally:
@@ -153,21 +147,16 @@ class LocalVectorStore(BaseVectorStore):
 
         count = 0
         with dump_file.open("w") as f:
-            try:
-                import fcntl
-
-                lock_type = fcntl.LOCK_EX
-            except ImportError:
-                lock_type = None
-            _acquire_lock(f, lock_type)
+            _acquire_lock(f, fcntl.LOCK_EX if HAS_FCNTL else None)
             try:
                 for node in tqdm(nodes, desc="dump to path"):
                     node.workspace_id = workspace_id
                     if callback_fn:
                         node_dict = callback_fn(node)
+                        assert isinstance(node_dict, dict)
                     else:
                         node_dict = node.model_dump()
-                    assert isinstance(node_dict, dict)
+
                     f.write(json.dumps(node_dict, ensure_ascii=ensure_ascii, **kwargs))
                     f.write("\n")
                     count += 1
@@ -231,13 +220,12 @@ class LocalVectorStore(BaseVectorStore):
         """
         return [p.stem for p in self.store_path.glob("*.jsonl") if p.is_file()]
 
-    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs):
+    def iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
         """
         Iterate over all nodes in a workspace.
 
         Args:
             workspace_id: Identifier of the workspace.
-            callback_fn: Optional callback function to transform node dictionaries.
             **kwargs: Additional keyword arguments to pass to _load_from_path.
 
         Yields:
@@ -246,7 +234,6 @@ class LocalVectorStore(BaseVectorStore):
         yield from self._load_from_path(
             path=self.store_path,
             workspace_id=workspace_id,
-            callback_fn=callback_fn,
             **kwargs,
         )
 
@@ -270,7 +257,7 @@ class LocalVectorStore(BaseVectorStore):
             return {}
 
         return self._dump_to_path(
-            nodes=self.iter_workspace_nodes(workspace_id=workspace_id, callback_fn=callback_fn, **kwargs),
+            nodes=self.iter_workspace_nodes(workspace_id=workspace_id, **kwargs),
             workspace_id=workspace_id,
             path=path,
             callback_fn=callback_fn,
@@ -309,11 +296,15 @@ class LocalVectorStore(BaseVectorStore):
         self.create_workspace(workspace_id=workspace_id, **kwargs)
 
         all_nodes: List[VectorNode] = []
+
         if nodes:
             all_nodes.extend(nodes)
+
         for node in self._load_from_path(path=path, workspace_id=workspace_id, callback_fn=callback_fn, **kwargs):
             all_nodes.append(node)
-        self.insert(nodes=all_nodes, workspace_id=workspace_id, **kwargs)
+
+        if all_nodes:
+            self.insert(nodes=all_nodes, workspace_id=workspace_id, **kwargs)
         return {"size": len(all_nodes)}
 
     def copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):

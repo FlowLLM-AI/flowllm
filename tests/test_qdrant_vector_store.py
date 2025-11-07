@@ -30,7 +30,7 @@ def main():
     Test the QdrantVectorStore with synchronous operations.
 
     This function demonstrates basic operations including create, insert, search,
-    filtering, update (delete + insert), and workspace management.
+    filtering, update (delete + insert), dump_workspace, load_workspace, and workspace management.
     """
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "qdrant_rag_nodes_index"
@@ -100,9 +100,27 @@ def main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
-    qdrant.dump_workspace(workspace_id=workspace_id)
-    qdrant.delete_workspace(workspace_id=workspace_id)
+    # Test dump_workspace
+    dump_result = qdrant.dump_workspace(workspace_id=workspace_id)
+    logger.info(f"Dump result: {dump_result}")
 
+    # Test load_workspace: delete workspace and reload from dump
+    logger.info("=" * 20 + " LOAD TEST " + "=" * 20)
+    qdrant.delete_workspace(workspace_id=workspace_id)
+    logger.info(f"Workspace deleted, exist_workspace: {qdrant.exist_workspace(workspace_id)}")
+
+    # Load workspace back
+    load_result = qdrant.load_workspace(workspace_id)
+    logger.info(f"Load result: {load_result}")
+
+    # Verify data is restored by searching
+    results = qdrant.search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"After load, search returned {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    qdrant.delete_workspace(workspace_id=workspace_id)
     qdrant.close()
 
 
@@ -111,8 +129,8 @@ async def async_main():
     Test the QdrantVectorStore with asynchronous operations.
 
     This function demonstrates async operations including async_create_workspace,
-    async_insert, async_search, async_delete for better performance in
-    async applications.
+    async_insert, async_search, async_delete, async_dump_workspace, and
+    async_load_workspace for better performance in async applications.
     """
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "async_qdrant_rag_nodes_index"
@@ -197,10 +215,28 @@ async def async_main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
-    # Clean up
-    await qdrant.async_dump_workspace(workspace_id=workspace_id)
-    await qdrant.async_delete_workspace(workspace_id=workspace_id)
+    # Test async_dump_workspace
+    dump_result = await qdrant.async_dump_workspace(workspace_id=workspace_id)
+    logger.info(f"Async dump result: {dump_result}")
 
+    # Test async_load_workspace: delete workspace and reload from dump
+    logger.info("ASYNC LOAD TEST - " + "=" * 20)
+    await qdrant.async_delete_workspace(workspace_id=workspace_id)
+    logger.info(f"Workspace deleted, exist_workspace: {await qdrant.async_exist_workspace(workspace_id)}")
+
+    # Load workspace back
+    load_result = await qdrant.async_load_workspace(workspace_id)
+    logger.info(f"Async load result: {load_result}")
+
+    # Verify data is restored by searching
+    results = await qdrant.async_search("What is AI?", top_k=5, workspace_id=workspace_id)
+    logger.info(f"After async load, search returned {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
+    # Clean up
+    await qdrant.async_delete_workspace(workspace_id=workspace_id)
     await qdrant.async_close()
 
 
@@ -209,5 +245,6 @@ if __name__ == "__main__":
 
     # Run async test
     logger.info("\n" + "=" * 50 + " ASYNC TESTS " + "=" * 50)
-    # import asyncio
-    # asyncio.run(async_main())
+    import asyncio
+
+    asyncio.run(async_main())

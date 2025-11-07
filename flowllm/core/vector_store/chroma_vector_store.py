@@ -118,16 +118,15 @@ class ChromaVectorStore(LocalVectorStore):
         """
         return [c.name for c in self._client.list_collections()]
 
-    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
+    def iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
         """Iterate over all nodes in a workspace.
 
         Args:
             workspace_id: The workspace identifier.
-            callback_fn: Optional callback function to transform each node before yielding.
             **kwargs: Additional keyword arguments (unused).
 
         Yields:
-            VectorNode objects from the workspace, optionally transformed by callback_fn.
+            VectorNode objects from the workspace.
         """
         collection = self._get_collection(workspace_id)
         results = collection.get()
@@ -138,10 +137,7 @@ class ChromaVectorStore(LocalVectorStore):
                 content=results["documents"][i],
                 metadata=results["metadatas"][i],
             )
-            if callback_fn:
-                yield callback_fn(node)
-            else:
-                yield node
+            yield node
 
     @staticmethod
     def _build_chroma_filters(filter_dict: Optional[Dict[str, Any]] = None) -> Optional[Dict]:

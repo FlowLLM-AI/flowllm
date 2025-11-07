@@ -56,7 +56,7 @@ class BaseVectorStore(BaseModel, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
+    def iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
         """Iterate over all nodes in a workspace."""
         raise NotImplementedError
 
@@ -157,12 +157,11 @@ class BaseVectorStore(BaseModel, ABC):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.create_workspace, workspace_id, **kwargs))
 
-    async def async_iter_workspace_nodes(self, workspace_id: str, callback_fn=None, **kwargs) -> Iterable[VectorNode]:
+    async def async_iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
         """Async version of iter_workspace_nodes.
 
         Args:
             workspace_id: The ID of the workspace to iterate nodes from.
-            callback_fn: Optional callback function to be called for each node during iteration.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
 
         Returns:
@@ -178,7 +177,6 @@ class BaseVectorStore(BaseModel, ABC):
             partial(
                 self.iter_workspace_nodes,
                 workspace_id,
-                callback_fn,
                 **kwargs,
             ),
         )

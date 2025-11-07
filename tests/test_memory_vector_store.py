@@ -23,7 +23,7 @@ load_env()
 
 
 def main():
-    """Test the MemoryVectorStore with synchronous operations"""
+    """Test the MemoryVectorStore with synchronous operations including dump_workspace and load_workspace"""
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "memory_test_workspace"
     client = MemoryVectorStore(embedding_model=embedding_model)
@@ -126,6 +126,20 @@ def main():
     logger.info("=" * 20 + " DUMP TEST " + "=" * 20)
     dump_result = client.dump_workspace(workspace_id)
     logger.info(f"Dumped {dump_result['size']} nodes to disk")
+
+    # Test load from disk (first delete from memory, then load)
+    logger.info("=" * 20 + " LOAD TEST " + "=" * 20)
+    client.delete_workspace(workspace_id)  # Clear from memory
+    logger.info(f"Workspace deleted from memory, exist_workspace: {client.exist_workspace(workspace_id)}")
+
+    load_result = client.load_workspace(workspace_id, path=client.store_path)
+    logger.info(f"Loaded {load_result['size']} nodes from disk")
+
+    # Verify loaded data
+    results = client.search("AI technology", workspace_id=workspace_id, top_k=3)
+    logger.info(f"After load, search returned {len(results)} results")
+    for i, r in enumerate(results, 1):
+        logger.info(f"Loaded Result {i}: {r.model_dump(exclude={'vector'})}")
 
     # Test copy workspace
     logger.info("=" * 20 + " COPY TEST " + "=" * 20)

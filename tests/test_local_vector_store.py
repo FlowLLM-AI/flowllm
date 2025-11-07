@@ -27,7 +27,7 @@ def main():
     Test the LocalVectorStore with synchronous operations.
 
     This function demonstrates basic operations including create, insert, search,
-    filtering, and workspace management.
+    filtering, dump_workspace, load_workspace, and workspace management.
     """
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "rag_nodes_index"
@@ -82,7 +82,26 @@ def main():
     for r in results:
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
-    client.dump_workspace(workspace_id)
+
+    # Test dump_workspace
+    dump_result = client.dump_workspace(workspace_id)
+    logger.info(f"Dump result: {dump_result}")
+
+    # Test load_workspace: delete workspace and reload from dump
+    logger.info("=" * 20 + " LOAD TEST " + "=" * 20)
+    client.delete_workspace(workspace_id)
+    logger.info(f"Workspace deleted, exist_workspace: {client.exist_workspace(workspace_id)}")
+
+    # Load workspace back
+    load_result = client.load_workspace(workspace_id)
+    logger.info(f"Load result: {load_result}")
+
+    # Verify data is restored by searching
+    results = client.search("What is AI?", workspace_id=workspace_id, top_k=5)
+    logger.info(f"After load, search returned {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
 
     client.delete_workspace(workspace_id)
 
@@ -92,8 +111,8 @@ async def async_main():
     Test the LocalVectorStore with asynchronous operations.
 
     This function demonstrates async operations including async_create_workspace,
-    async_insert, async_search, and async_delete for better performance in
-    async applications.
+    async_insert, async_search, async_delete, async_dump_workspace, and
+    async_load_workspace for better performance in async applications.
     """
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "async_rag_nodes_index"
@@ -168,8 +187,27 @@ async def async_main():
         logger.info(r.model_dump(exclude={"vector"}))
     logger.info("=" * 20)
 
+    # Test async_dump_workspace
+    dump_result = await client.async_dump_workspace(workspace_id)
+    logger.info(f"Async dump result: {dump_result}")
+
+    # Test async_load_workspace: delete workspace and reload from dump
+    logger.info("ASYNC LOAD TEST - " + "=" * 20)
+    await client.async_delete_workspace(workspace_id)
+    logger.info(f"Workspace deleted, exist_workspace: {await client.async_exist_workspace(workspace_id)}")
+
+    # Load workspace back
+    load_result = await client.async_load_workspace(workspace_id)
+    logger.info(f"Async load result: {load_result}")
+
+    # Verify data is restored by searching
+    results = await client.async_search("What is AI?", workspace_id=workspace_id, top_k=5)
+    logger.info(f"After async load, search returned {len(results)} results")
+    for r in results:
+        logger.info(r.model_dump(exclude={"vector"}))
+    logger.info("=" * 20)
+
     # Clean up
-    await client.async_dump_workspace(workspace_id)
     await client.async_delete_workspace(workspace_id)
 
 

@@ -59,7 +59,7 @@ class EsVectorStore(LocalVectorStore):
             self.hosts = [self.hosts]
         self._client = Elasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
         self._async_client = AsyncElasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
-        logger.debug(f"Elasticsearch client initialized with hosts: {self.hosts}")
+        logger.info(f"Elasticsearch client initialized with hosts: {self.hosts}")
         return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
@@ -120,7 +120,6 @@ class EsVectorStore(LocalVectorStore):
     def iter_workspace_nodes(
         self,
         workspace_id: str,
-        callback_fn=None,
         max_size: int = 10000,
         **kwargs,
     ) -> Iterable[VectorNode]:
@@ -128,21 +127,16 @@ class EsVectorStore(LocalVectorStore):
 
         Args:
             workspace_id: The identifier of the workspace to iterate over.
-            callback_fn: Optional callback function to transform each node.
             max_size: Maximum number of nodes to retrieve (default: 10000).
             **kwargs: Additional keyword arguments passed to Elasticsearch API.
 
         Yields:
-            VectorNode: Vector nodes from the workspace, optionally transformed
-                by the callback function.
+            VectorNode: Vector nodes from the workspace.
         """
         response = self._client.search(index=workspace_id, body={"query": {"match_all": {}}, "size": max_size})
         for doc in response["hits"]["hits"]:
             node = self.doc2node(doc, workspace_id)
-            if callback_fn:
-                yield callback_fn(node)
-            else:
-                yield node
+            yield node
 
     def refresh(self, workspace_id: str):
         """Refresh an Elasticsearch index to make recent changes visible for search.
