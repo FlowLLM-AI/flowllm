@@ -4,7 +4,6 @@ This module defines the abstract `BaseService` that concrete services (CLI, HTTP
 MCP, etc.) extend to integrate registered flows and run the application.
 """
 
-import os
 from abc import ABC
 
 from loguru import logger
@@ -12,7 +11,6 @@ from loguru import logger
 from ..context import C
 from ..flow import BaseFlow, BaseToolFlow
 from ..schema import ServiceConfig
-from ..utils import print_logo
 
 
 class BaseService(ABC):
@@ -22,14 +20,12 @@ class BaseService(ABC):
     (e.g., CLI, HTTP server, MCP) and then starting that runtime.
     """
 
-    def __init__(self, service_config: ServiceConfig, enable_logo: bool = True):
+    def __init__(self, service_config: ServiceConfig):
         """Initialize the service.
 
         - service_config: The configuration object for the current service mode.
-        - enable_logo: Whether to print the ASCII logo on startup.
         """
         self.service_config: ServiceConfig = service_config
-        self.enable_logo: bool = enable_logo
 
     def integrate_flow(self, _flow: BaseFlow) -> bool:
         """Integrate a standard flow into the service.
@@ -73,9 +69,6 @@ class BaseService(ABC):
             else:
                 if self.integrate_flow(flow):
                     logger.info(f"integrate flow={flow.name}")
-
-        if self.enable_logo:
-            print_logo(service_config=self.service_config, app_name=os.getenv("APP_NAME"))
 
         import warnings
 

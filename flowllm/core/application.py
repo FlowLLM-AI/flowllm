@@ -11,7 +11,7 @@ from .enumeration import RegistryEnum
 from .flow import BaseFlow, ExpressionToolFlow
 from .schema import ServiceConfig, EmbeddingModelConfig, FlowStreamChunk
 from .service import BaseService
-from .utils import FastMcpClient, PydanticConfigParser, init_logger
+from .utils import FastMcpClient, PydanticConfigParser, init_logger, print_logo
 
 
 class Application:
@@ -375,9 +375,10 @@ class Application:
         Initializes and runs the appropriate service implementation
         (e.g., FastAPI, Flask) according to service configuration.
         """
+
+        if self.service_config.enable_logo:
+            print_logo(service_config=self.service_config, app_name=os.getenv("APP_NAME"))
+
         service_cls = C.get_service_class(self.service_config.backend)
-        service: BaseService = service_cls(
-            service_config=self.service_config,
-            enable_logo=self.service_config.enable_logo,
-        )
+        service: BaseService = service_cls(service_config=self.service_config)
         service.run()
