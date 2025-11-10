@@ -14,7 +14,7 @@ async def async_main():
     """Test function for ReactSearchOp."""
     async with FlowLLMApp():
         op = ReactSearchOp()
-        await op.async_call(query="茅台和五粮现在股价多少？")
+        await op.async_call(query="小米股价为什么一直跌？现在还值得买吗？")
         print(op.output)
 
 

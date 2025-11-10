@@ -34,7 +34,7 @@ class ReactSearchOp(BaseAsyncToolOp):
 
     file_path: str = __file__
 
-    def __init__(self, llm: str = "qwen3_30b_instruct", max_steps: int = 5, **kwargs):
+    def __init__(self, llm: str = "qwen3_30b_thinking", max_steps: int = 5, **kwargs):
         super().__init__(llm=llm, **kwargs)
         self.max_steps: int = max_steps
 
@@ -55,11 +55,12 @@ class ReactSearchOp(BaseAsyncToolOp):
     async def async_execute(self):
         query: str = self.input_dict["query"]
         if "search" in self.ops:
-            search_op = self.ops["search"]
+            search_op = self.ops.search
         else:
             from .dashscope_search_op import DashscopeSearchOp
 
             search_op = DashscopeSearchOp()
+
         assert isinstance(search_op, BaseAsyncToolOp)
         # NOTE search_op.tool_call.name √ search_op.name ×
         tool_dict = {search_op.tool_call.name: search_op}
@@ -75,7 +76,10 @@ class ReactSearchOp(BaseAsyncToolOp):
         logger.info(f"step.0 user_prompt={user_prompt}")
 
         for i in range(self.max_steps):
-            assistant_message: Message = await self.llm.achat(messages, tools=[x.tool_call for x in tool_dict.values()])
+            assistant_message: Message = await self.llm.achat(
+                messages,
+                tools=[op.tool_call for op in tool_dict.values()],
+            )
             messages.append(assistant_message)
             logger.info(
                 f"assistant.round{i}.reasoning_content={assistant_message.reasoning_content}\n"
