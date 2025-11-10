@@ -217,3 +217,23 @@ Apache License 2.0 - see [LICENSE](./LICENSE) file for details.
 ## 🌟 Star History
 
 If you find FlowLLM useful, please consider giving it a star!
+
+
+1. op简介
+2. 写简单的异步op，增加llm和prompt
+4. 其他的能力,emb,vectorstore，并发
+5. 进阶版工具tool没了能够
+6. 配置pipeline
+7. http服务例子
+8. mcp服务例子
+9. http stream例子
+10. readme例子  学习课堂
+11. contribute
+12. installation
+13. quick start
+
+
+写一个op介绍，要求简洁，口语化：
+1. 包括继承关系总览，他们是怎么继承的
+2. 表格对比不同的op，从各个维度，我可以想到的，比如能力，参数、适合使用的场景等等维度
+3. 诶个详细介绍每一个op，不需要代码哈
