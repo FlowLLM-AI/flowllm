@@ -10,4 +10,4 @@ load_env()
 
 from . import gallery  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
 
-__version__ = "0.2.0a1"
+__version__ = "0.2.0.0"
