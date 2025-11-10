@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python Version"></a>
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/pypi-v0.2.0.0-blue?logo=pypi" alt="PyPI Version"></a>
+  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/pypi-0.2.0.0-blue?logo=pypi" alt="PyPI Version"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
 </p>
 
