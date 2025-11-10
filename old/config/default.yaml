@@ -1,0 +1,76 @@
+backend: http
+thread_pool_max_workers: 128
+
+mcp:
+  transport: sse
+  host: "0.0.0.0"
+  port: 8001
+
+http:
+  host: "0.0.0.0"
+  port: 8002
+
+
+flow:
+  llm_flow:
+    flow_content: simple_llm_op
+    stream: false
+
+  llm_flow_stream:
+    flow_content: stream_llm_op
+    stream: true
+
+llm:
+  default:
+    backend: openai_compatible
+    model_name: qwen3-30b-a3b-instruct-2507
+    params:
+      temperature: 0.6
+
+  qwen3_30b_instruct:
+    backend: openai_compatible
+    model_name: qwen3-30b-a3b-instruct-2507
+
+  qwen3_30b_thinking:
+    backend: openai_compatible
+    model_name: qwen3-30b-a3b-thinking-2507
+
+  qwen3_235b_instruct:
+    backend: openai_compatible
+    model_name: qwen3-235b-a22b-instruct-2507
+
+  qwen3_235b_thinking:
+    backend: openai_compatible
+    model_name: qwen3-235b-a22b-thinking-2507
+
+  qwen3_80b_instruct:
+    backend: openai_compatible
+    model_name: qwen3-next-80b-a3b-instruct
+
+  qwen3_80b_thinking:
+    backend: openai_compatible
+    model_name: qwen3-next-80b-a3b-thinking
+#    params:
+#      presence_penalty: 2
+
+  qwen3_max_instruct:
+    backend: openai_compatible
+    model_name: qwen3-max
+
+  qwen25_max_instruct:
+    backend: openai_compatible
+    model_name: qwen-max-2025-01-25
+
+embedding_model:
+  default:
+    backend: openai_compatible
+    model_name: text-embedding-v4
+    params:
+      dimensions: 1024
+
+vector_store:
+  default:
+    backend: elasticsearch
+    embedding_model: default
+#    params:
+#      hosts: "http://localhost:9200"
