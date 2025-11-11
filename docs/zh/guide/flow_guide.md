@@ -25,7 +25,9 @@ flow:
 - `flow_content`: **必需**。Flow 表达式，使用运算符组合多个 Op。
 - `description`: **可选**。流程描述，用于文档生成和调试。
 - `stream`: **可选**。若为 `true`，表示该流程以流式方式输出（如 SSE/Chunk）。
-- `input_schema`: **可选**。输入字段约定，用于校验与自动文档生成。
+- `input_schema`: 在不同运行模式下有不同要求：
+  - 在 MCP 模式下：**必需** 且需精确定义输入字段（类型、是否必填、描述等），用于参数校验与客户端能力展示。
+  - 在 HTTP/Stream 模式下：**可选**；建议提供以便进行入参校验与自动文档生成，但不是强制项。
 
 ---
 
@@ -297,7 +299,10 @@ stream_flow:
 
 ### 七、与 input_schema 的配合
 
-`input_schema` 定义了 Flow 的输入接口，与 `flow_content` 配合使用：
+`input_schema` 定义了 Flow 的输入接口，与 `flow_content` 配合使用。注意不同运行模式的要求：
+
+- MCP 模式：`input_schema` 为**必填**，且需与真实入参严格一致，MCP 客户端会基于该定义进行参数校验与提示。
+- HTTP/Stream 模式：`input_schema` 为**可选**，但建议填写以获得更好的入参校验与自动生成文档的体验。
 
 ```yaml
 flow:

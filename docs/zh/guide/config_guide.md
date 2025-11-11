@@ -101,9 +101,11 @@ vector_store:
 - mcp
   - `transport`: 传输方式，示例使用 `sse`（Server-Sent Events）。
   - `host`/`port`: MCP 服务监听地址与端口。若你有外部 MCP 工具或希望通过 MCP 集成，保持该段开启。
+  - `flow` 相关：在 MCP 模式下，各 Flow 的 `input_schema` 为**必填**，需精确描述输入参数（类型、必填与否、描述等），以便 MCP 客户端进行参数校验与能力展示。
 
 - http
   - `host`/`port`: HTTP 服务监听地址与端口。默认 `0.0.0.0:8002` 便于容器与本机调试。
+  - `flow` 相关：在 HTTP 模式（包括 `stream: true` 的流式模式）下，`input_schema` **可选**；建议填写以获得更好的入参校验与自动文档生成体验。
 
 - flow
   - 定义一组可被调用的流程（Flow）。每个 Flow 都由若干 Op 组合而成，可顺序（`>>`）或并行（`|`）组织。
