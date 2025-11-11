@@ -26,38 +26,12 @@ class EchoOp(BaseAsyncOp):
 - 用 `@C.register_op()` 注册后方可在 Flow 中引用
 - 对话型 Op 通常继承 `BaseAsyncOp` 并实现 `async_execute`
 - 可通过 `self.context` 读写上下文，`self.llm` 调用模型，`self.prompt_format()` 绑定同名 `*_prompt.yaml`
-
-测试建议：
 - 单元：以最小上下文执行 `EchoOp.async_execute`，断言 `context.response.answer`
 - 端到端：启动 HTTP 服务后用客户端调用并断言（见“客户端调用与测试”）
 
 ---
 
-### 二、编排 Flow（示例）
-
-将 `EchoOp` 编排进 Flow（通用对话可用 `GenSystemPromptOp() >> ChatOp()`）：
-
-```yaml
-flow:
-  demo_http_flow:
-    flow_content: EchoOp()
-    description: "回声接口"
-    input_schema:
-      text:
-        type: string
-        description: "要回显的文本"
-        required: true
-```
-
-快速通用对话 Flow 可参考下一节配置中的 `demo_http_flow`。
-
-更多 Flow 表达式与字段说明，参考：
-- `docs/zh/guide/flow_guide.md`
-- `docs/zh/guide/config_guide.md`
-
----
-
-### 三、编写配置
+### 二、编写yaml config
 
 保存如下配置为：
 - 覆盖默认：`flowllm/flowllm/config/default.yaml`
@@ -103,14 +77,18 @@ vector_store:
 ```
 
 要点：
+- Flow 的编排直接在配置文件的 `flow` 段中定义（如上 `demo_http_flow`）。若要将自定义的 `EchoOp` 暴露为接口，可将其填入对应 `flow_content`；通用对话可参考 `GenSystemPromptOp() >> ChatOp()`。
 - `backend: http` 指定以 HTTP 服务启动
 - `flow` 定义同步接口
 - `input_schema` 在 HTTP 模式下可选，建议填写以生成更完善的 OpenAPI 与入参校验
 - `llm/embedding_model/vector_store` 为默认能力，可按需替换
+- 更多 Flow 表达式与字段说明，参考：
+  - `docs/zh/guide/flow_guide.md`
+  - `docs/zh/guide/config_guide.md`
 
 ---
 
-### 四、启动服务
+### 三、启动服务
 
 确保已安装 FlowLLM，并在`.env`中设置模型相关环境变量，可直接参考项目根的示例文件 `example.env`：
 ```bash
@@ -120,14 +98,7 @@ export FLOW_EMBEDDING_API_KEY="sk-xxxx"
 export FLOW_EMBEDDING_BASE_URL="https://xxxx/v1"
 ```
 
-- 使用默认配置：
-
-```bash
-flowllm
-```
-
-- 使用自定义配置（推荐）：
-
+- 使用my_http_config启动：
 ```bash
 flowllm config=my_http_config backend=http
 ```
@@ -145,7 +116,7 @@ flowllm config=my_http_config backend=http
 
 ---
 
-### 五、客户端调用与测试
+### 四、客户端调用与测试
 
 使用内置 `HttpClient` 进行调用：
 

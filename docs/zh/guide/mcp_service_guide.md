@@ -11,6 +11,7 @@ MCP 工具的业务逻辑来源于 Flow 中的 Op。可直接复用已有 Op，�
 ```python
 from ..core.context import C
 from ..core.op import BaseAsyncOp
+
 @C.register_op()
 class MockSearchOp(BaseAsyncOp):
     """Mock search operation that uses LLM to generate realistic search results."""
@@ -40,33 +41,11 @@ class MockSearchOp(BaseAsyncOp):
 
 ---
 
-### 二、编排 Flow（示例）
-
-将 `MockSearchOp` 编排为一个 Flow，供 MCP 工具调用：
-
-```yaml
-flow:
-  demo_mcp_flow:
-    flow_content: MockSearchOp()
-    description: "search results for a given query."
-    input_schema:
-      query:
-        type: string
-        description: "user query"
-        required: true
-```
-
-要点：
-- Flow 名即工具名（如 `demo_mcp_flow`），在 MCP 中以同名工具暴露。
-- `input_schema` 建议填写，便于客户端生成入参校验与帮助信息。
-
----
-
-### 三、编写配置
+### 二、编写yaml config
 
 保存如下配置为：
 - 覆盖默认：`flowllm/flowllm/config/default.yaml`
-- 自定义：项目根新建 `my_http_config.yaml`
+- 自定义：项目根新建 `my_mcp_config.yaml`
 
 ```yaml
 backend: mcp
@@ -109,13 +88,15 @@ vector_store:
 ```
 
 要点：
+- Flow 的编排直接在配置文件的 `flow` 段中定义（如上 `demo_mcp_flow`）。Flow 名即工具名，在 MCP 中以同名工具暴露。
+- `input_schema` 建议填写，便于客户端生成入参校验与帮助信息。
 - `backend: mcp` 指定以 MCP 服务启动。
 - `mcp.transport` 当前支持 `sse`；服务默认暴露 SSE 端点 `GET /sse`。
 - `flow` 中声明的每个 Flow 都将作为一个 MCP 工具对外提供。
 
 ---
 
-### 四、启动服务
+### 三、启动服务
 
 确保已安装 FlowLLM，并在`.env`中设置模型相关环境变量，可直接参考项目根的示例文件 `example.env`：
 ```bash
@@ -125,14 +106,7 @@ export FLOW_EMBEDDING_API_KEY="sk-xxxx"
 export FLOW_EMBEDDING_BASE_URL="https://xxxx/v1"
 ```
 
-- 使用默认配置（若默认配置仍为 `backend: http`，请显式覆盖为 MCP）：
-
-```bash
-flowllm config=my_http_config backend=mcp
-```
-
-- 使用自定义配置（推荐）：
-
+- 使用my_mcp_config启动：
 ```bash
 flowllm config=my_mcp_config backend=mcp
 ```
@@ -147,24 +121,34 @@ flowllm config=my_mcp_config backend=mcp
 
 ---
 
-### 五、客户端调用与测试
+### 四、客户端调用与测试
 
 使用内置 `FastMcpClient` 进行调用（简化示例）：
 
 ```python
-config = {
-    "type": "sse",
-    "url": "http://0.0.0.0:8001/sse",
-    "headers": {},
-    "timeout": 30.0,
-}
-async with FastMcpClient("test_client", config, max_retries=3) as client:
-    # 1) 列出可用工具
-    tool_calls = await client.list_tool_calls()
-    # 2) 调用工具（与 Flow 同名）
-    result = await client.call_tool("demo_mcp_flow", {"query": "阿里巴巴前景怎么样？"})
-    # 3) 读取结果
-    print(result)
+import asyncio
+
+from flowllm.core.utils import FastMcpClient
+
+
+async def main():
+    config = {
+        "type": "sse",
+        "url": "http://0.0.0.0:8001/sse",
+        "headers": {},
+        "timeout": 30.0,
+    }
+    async with FastMcpClient("test_client", config, max_retries=3) as client:
+        # 1) 列出可用工具
+        tool_calls = await client.list_tool_calls()
+        # 2) 调用工具（与 Flow 同名）
+        result = await client.call_tool("demo_mcp_flow", {"query": "阿里巴巴前景怎么样？"})
+        # 3) 读取结果
+        print(result)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
 ```
 
 也可直接运行内置测试脚本：
