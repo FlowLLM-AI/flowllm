@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>FlowLLM：让基于LLM的HTTP/MCP服务开发更简单</strong><br>
-  <em><sub>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</sub></em>
+  <strong>FlowLLM: Making LLM-based HTTP/MCP Service Development Easier</strong><br>
+  <em><sub>If you find it useful, please give us a ⭐ Star. Your support is the driving force for our continuous improvement</sub></em>
 </p>
 
 <p align="center">
@@ -14,49 +14,53 @@
   <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/stars/flowllm-ai/flowllm?style=social" alt="GitHub Stars"></a>
 </p>
 
+<p align="center">
+  <a href="README.md">English</a> •
+  <a href="README_ZH.md">中文</a>
+</p>
+
 ---
 
-## 📖 简介
+## 📖 Introduction
 
-FlowLLM 将 LLM/Embedding/vector store 能力封装为 HTTP/MCP 服务，适用于 AI 对话助手、RAG 应用、工作流服务等场景，并可集成到支持
-MCP 的客户端工具中。
+FlowLLM encapsulates LLM/Embedding/vector store capabilities as HTTP/MCP services, suitable for AI conversational assistants, RAG applications, workflow services, and can be integrated into client tools that support MCP.
 
-### 🏗️ 架构概览
+### 🏗️ Architecture Overview
 
 <p align="center">
   <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
 </p>
 
 
-### ⭐ 核心特性
-- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。
+### ⭐ Core Features
+- **Easy-to-use Op Development**: Inherit from BaseOp or BaseAsyncOp base classes and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores. Developers can easily use these resources through `self.llm`, `self.embedding_model`, and `self.vector_store`. FlowLLM also provides complete Prompt template management capabilities through `prompt_format()` and `get_prompt()` methods for formatting and usage.
 
-- **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如 `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用 `flowllm config=your_config` 命令即可启动服务。
+- **Flexible Flow Orchestration**: Combine Ops into Flows through YAML configuration files, supporting flexible orchestration. `>>` represents serial composition, `|` represents parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` can build complex workflows. After defining input and output schemas, use the `flowllm config=your_config` command to start the service.
 
-- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTful API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
+- **Automatic Service Generation**: After configuration, FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides standard RESTful APIs, supporting synchronous JSON responses and HTTP Stream streaming responses. The MCP service automatically registers as Model Context Protocol tools and can be integrated into MCP-supported clients. The CMD service supports command-line mode to execute a single Op, suitable for quick testing and debugging.
 
 
-### 🌟 基于FlowLLM的应用
+### 🌟 Applications Based on FlowLLM
 
-| 项目名 | 描述 |
-|--------|------|
-| [ReMe](https://github.com/agentscope-ai/ReMe) | 面向智能体的记忆管理工具包 |
+| Project Name | Description |
+|--------------|-------------|
+| [ReMe](https://github.com/agentscope-ai/ReMe) | Memory management toolkit for agents |
 
-### 📚 学习资料分享
+### 📚 Learning Resources
 
-这里是项目开发者分享的学习资料。
+Here are learning resources shared by the project developers.
 
-| 日期         | 标题                                                                                | 描述                                          |
-|------------|-----------------------------------------------------------------------------------|---------------------------------------------|
-| 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video |
-| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 从提示工程到上下文工程的演进指南                            |
-| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                       |
+| Date       | Title                                                                                | Description                                          |
+|------------|--------------------------------------------------------------------------------------|------------------------------------------------------|
+| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video |
+| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                     | Evolution Guide from Prompt Engineering to Context Engineering                            |
+| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI                       |
 
 ---
 
-## ⚡ 快速开始
+## ⚡ Quick Start
 
-### 📦 Step0 安装
+### 📦 Step0 Installation
 
 #### 📥 From PyPI
 
@@ -72,17 +76,17 @@ cd flowllm
 pip install -e .
 ```
 
-详细安装与配置方法请参考 [安装指南](docs/zh/guide/installation.md)。
+For detailed installation and configuration methods, please refer to the [Installation Guide](docs/zh/guide/installation.md).
 
-### ⚙️ 配置
+### ⚙️ Configuration
 
-创建 `.env` 文件，配置 API Key。你可以从 `example.env` 复制并修改：
+Create a `.env` file and configure your API Key. You can copy from `example.env` and modify:
 
 ```bash
 cp example.env .env
 ```
 
-然后在 `.env` 文件中配置你的 API Key：
+Then configure your API Key in the `.env` file:
 
 ```bash
 FLOW_LLM_API_KEY=sk-xxxx
@@ -91,9 +95,9 @@ FLOW_EMBEDDING_API_KEY=sk-xxxx
 FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
 ```
 
-详细配置说明请参考 [配置指南](docs/zh/guide/config_guide.md)。
+For detailed configuration instructions, please refer to the [Configuration Guide](docs/zh/guide/config_guide.md).
 
-### 🛠️ Step1 构建Op
+### 🛠️ Step1 Build Op
 
 ```python
 from flowllm.core.context import C
@@ -110,11 +114,11 @@ class SimpleChatOp(BaseAsyncOp):
         self.context.response.answer = response.content.strip()
 ```
 
-详细内容请参考 [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)、[LLM Op 指南](docs/zh/guide/async_op_llm_guide.md) 和 [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)（包含 Embedding、VectorStore 和并发执行等高级功能）。
+For detailed content, please refer to the [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md), [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md), and [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) (including advanced features such as Embedding, VectorStore, and concurrent execution).
 
-### 📝 Step2 配置config
+### 📝 Step2 Configure Config
 
-以下示例展示如何构建一个 MCP（Model Context Protocol）服务。创建配置文件 `my_mcp_config.yaml`：
+The following example shows how to build an MCP (Model Context Protocol) service. Create a configuration file `my_mcp_config.yaml`:
 
 ```yaml
 backend: mcp
@@ -142,64 +146,62 @@ llm:
       temperature: 0.6
 ```
 
-### 🚀 Step3 启动 MCP 服务
+### 🚀 Step3 Start MCP Service
 
 ```bash
 flowllm \
   config=my_mcp_config \
-  backend=mcp \  # 可选，覆盖config配置
-  mcp.transport=sse \  # 可选，覆盖config配置
-  mcp.port=8001 \  # 可选，覆盖config配置
-  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # 可选，覆盖config配置
+  backend=mcp \  # Optional, overrides config
+  mcp.transport=sse \  # Optional, overrides config
+  mcp.port=8001 \  # Optional, overrides config
+  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # Optional, overrides config
 ```
 
-服务启动后可以参考[Client Guide](docs/zh/guide/client_guide.md)来使用服务，可以直接获取模型所需要的tool_call。
+After the service starts, you can refer to the [Client Guide](docs/zh/guide/client_guide.md) to use the service and directly obtain the tool_call required by the model.
 
 ---
 
-## 📚 详细文档
+## 📚 Detailed Documentation
 
-### 🚀 入门指南
-- [安装指南](docs/zh/guide/installation.md)
-- [配置指南](docs/zh/guide/config_guide.md)
+### 🚀 Getting Started
+- [Installation Guide](docs/zh/guide/installation.md)
+- [Configuration Guide](docs/zh/guide/config_guide.md)
 
-### 🔧 Op 开发
-- [Op 介绍](docs/zh/guide/op_introduction.md)
-- [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)
-- [LLM Op 指南](docs/zh/guide/async_op_llm_guide.md)
-- [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)
-- [Tool Op 指南](docs/zh/guide/async_tool_op_guide.md)
-- [Vector Store 指南](docs/zh/guide/vector_store_guide.md)
+### 🔧 Op Development
+- [Op Introduction](docs/zh/guide/op_introduction.md)
+- [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md)
+- [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
+- [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
+- [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
+- [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
 
-### 🔀 Flow 编排
-- [Flow 指南](docs/zh/guide/flow_guide.md)
+### 🔀 Flow Orchestration
+- [Flow Guide](docs/zh/guide/flow_guide.md)
 
-### 🌐 服务使用
-- [HTTP 服务指南](docs/zh/guide/http_service_guide.md)
-- [HTTP Stream 指南](docs/zh/guide/http_stream_guide.md)
-- [MCP 服务指南](docs/zh/guide/mcp_service_guide.md)
-- [CMD 服务指南](docs/zh/guide/cmd_service_guide.md)
-- [客户端指南](docs/zh/guide/client_guide.md)
-
-### 🤝 其他
-- [贡献指南](docs/zh/guide/contribution.md)
+### 🌐 Service Usage
+- [HTTP Service Guide](docs/zh/guide/http_service_guide.md)
+- [HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)
+- [MCP Service Guide](docs/zh/guide/mcp_service_guide.md)
+- [CMD Service Guide](docs/zh/guide/cmd_service_guide.md)
+- [Client Guide](docs/zh/guide/client_guide.md)
 
 ---
 
-## 🤝 参与贡献
+## 🤝 Contributing
 
-欢迎各种形式的贡献！具体参与方式请参考 [贡献指南](docs/zh/guide/contribution.md)。
+Contributions of all forms are welcome! For specific participation methods, please refer to the [Contribution Guide](docs/zh/guide/contribution.md).
 
 ---
 
-## 📄 许可证
+## 📄 License
 
-本项目采用 [Apache 2.0](LICENSE) 许可证。
+This project is licensed under the [Apache 2.0](LICENSE) License.
 
 ---
 
 <p align="center">
   <a href="https://github.com/flowllm-ai/flowllm">GitHub</a> •
-  <a href="https://flowllm-ai.github.io/flowllm/">文档</a> •
+  <a href="https://flowllm-ai.github.io/flowllm/">Documentation</a> •
   <a href="https://pypi.org/project/flowllm/">PyPI</a>
 </p>
+
