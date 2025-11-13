@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "flowllm"
 dynamic = ["version"]
-description = "A flexible framework for building MCP/HTTP services powered by LLM workflows"
+description = "FlowLLM: Simplifying LLM-based HTTP/MCP Service Development"
 authors = [
     { name = "jinli.yl", email = "jinli.yl@alibaba-inc.com" },
 ]

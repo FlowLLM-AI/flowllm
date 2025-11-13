@@ -1,0 +1,66 @@
+site_name: FlowLLM
+site_url: https://flowllm-ai.github.io/flowllm/
+site_description: "FlowLLM: Simplifying LLM-based HTTP/MCP Service Development"
+repo_url: https://github.com/flowllm-ai/flowllm
+repo_name: flowllm-ai/flowllm
+
+theme:
+  name: shadcn
+  image: figure/logo.png
+  show_stargazers: true
+  locale: zh_CN
+
+plugins:
+  - search
+  - excalidraw
+
+nav:
+  - 欢迎: index.md
+  - 快速开始:
+      - 安装: zh/guide/installation.md
+      - 配置: zh/guide/config_guide.md
+  - 阅读:
+      - 上下文管理视频材料: zh/reading/20251110-manus-context-raw.md
+      - 上下文管理指南: zh/reading/20251110-manus-context-report.md
+      - Gemini-CLI上下文管理: zh/reading/20251113-gemini-cli-context-management.md
+  - 操作开发:
+      - 操作介绍: zh/guide/op_introduction.md
+      - 简单操作指南: zh/guide/async_op_minimal_guide.md
+      - LLM 操作指南: zh/guide/async_op_llm_guide.md
+      - 高级操作指南: zh/guide/async_op_advance_guide.md
+      - 工具操作指南: zh/guide/async_tool_op_guide.md
+      - 向量存储指南: zh/guide/vector_store_guide.md
+  - 流程编排:
+      - 流程指南: zh/guide/flow_guide.md
+  - 服务使用:
+      - HTTP 服务指南: zh/guide/http_service_guide.md
+      - HTTP 流指南: zh/guide/http_stream_guide.md
+      - MCP 服务指南: zh/guide/mcp_service_guide.md
+      - CMD 服务指南: zh/guide/cmd_service_guide.md
+      - 客户端指南: zh/guide/client_guide.md
+  - 贡献:
+      - 贡献指南: zh/guide/contribution.md
+
+markdown_extensions:
+  admonition:
+  codehilite:
+  fenced_code:
+  footnotes:
+  extra:
+  pymdownx.blocks.details:
+  pymdownx.tabbed:
+  pymdownx.blocks.tab:
+    combine_header_slug: true
+    separator: ___
+  pymdownx.progressbar:
+  pymdownx.snippets:
+  pymdownx.arithmatex:
+    generic: true
+  shadcn.extensions.echarts.alpha:
+  shadcn.extensions.codexec:
+  shadcn.extensions.iconify:
+
+# pip install mkdocs-shadcn
+# mkdocs build
+# mkdocs serve
+# mkdocs gh-deploy --force
