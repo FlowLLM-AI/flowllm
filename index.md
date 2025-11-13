@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="../figure/logo.png" alt="FlowLLM Logo" width="50%">
+  <img src="figure/logo.png" alt="FlowLLM Logo" width="50%">
 </p>
 
 <p align="center">
@@ -7,12 +7,12 @@
   <em><sub>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</sub></em>
 </p>
 
-<p align="center">
+<div class="flex justify-center space-x-3">
   <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python Version"></a>
   <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/pypi-0.2.0.0-blue?logo=pypi" alt="PyPI Version"></a>
   <a href="https://github.com/flowllm-ai/flowllm/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
   <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/stars/flowllm-ai/flowllm?style=social" alt="GitHub Stars"></a>
-</p>
+</div>
 
 ---
 
@@ -24,22 +24,27 @@ MCP 的客户端工具中。
 ### 🏗️ 架构概览
 
 <p align="center">
-  <img src="../figure/framework.png" alt="FlowLLM Framework" width="100%">
+  <img src="figure/framework.png" alt="FlowLLM Framework" width="100%">
 </p>
 
-
 ### ⭐ 核心特性
-- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。
 
-- **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如 `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用 `flowllm config=your_config` 命令即可启动服务。
+- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding
+  模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的
+  Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。
 
-- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTful API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
+- **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如
+  `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用
+  `flowllm config=your_config` 命令即可启动服务。
 
+- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTful API，支持同步 JSON 响应和
+  HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个
+  Op，适合快速测试和调试。
 
 ### 🌟 基于FlowLLM的应用
 
-| 项目名 | 描述 |
-|--------|------|
+| 项目名                                           | 描述            |
+|-----------------------------------------------|---------------|
 | [ReMe](https://github.com/agentscope-ai/ReMe) | 面向智能体的记忆管理工具包 |
 
 ---
@@ -62,7 +67,7 @@ cd flowllm
 pip install -e .
 ```
 
-详细安装与配置方法请参考 [安装指南](guide/installation.md)。
+详细安装与配置方法请参考 [安装指南](zh/guide/installation.md)。
 
 ### ⚙️ 配置
 
@@ -81,7 +86,7 @@ FLOW_EMBEDDING_API_KEY=sk-xxxx
 FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
 ```
 
-详细配置说明请参考 [配置指南](guide/config_guide.md)。
+详细配置说明请参考 [配置指南](zh/guide/config_guide.md)。
 
 ### 🛠️ Step1 构建Op
 
@@ -90,6 +95,7 @@ from flowllm.core.context import C
 from flowllm.core.op.base_async_op import BaseAsyncOp
 from flowllm.core.schema import Message
 from flowllm.core.enumeration import Role
+
 
 @C.register_op()
 class SimpleChatOp(BaseAsyncOp):
@@ -100,7 +106,8 @@ class SimpleChatOp(BaseAsyncOp):
         self.context.response.answer = response.content.strip()
 ```
 
-详细内容请参考 [简单 Op 指南](guide/async_op_minimal_guide.md)、[LLM Op 指南](guide/async_op_llm_guide.md) 和 [高级 Op 指南](guide/async_op_advance_guide.md)（包含 Embedding、VectorStore 和并发执行等高级功能）。
+详细内容请参考 [简单 Op 指南](zh/guide/async_op_minimal_guide.md)、[LLM Op 指南](zh/guide/async_op_llm_guide.md)
+和 [高级 Op 指南](zh/guide/async_op_advance_guide.md)（包含 Embedding、VectorStore 和并发执行等高级功能）。
 
 ### 📝 Step2 配置config
 
@@ -143,4 +150,4 @@ flowllm \
   llm.default.model_name=qwen3-30b-a3b-thinking-2507  # 可选，覆盖config配置
 ```
 
-服务启动后可以参考[Client Guide](guide/client_guide.md)来使用服务，可以直接获取模型所需要的tool_call。
+服务启动后可以参考[Client Guide](zh/guide/client_guide.md)来使用服务，可以直接获取模型所需要的tool_call。
