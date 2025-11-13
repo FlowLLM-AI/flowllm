@@ -38,7 +38,7 @@ FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP s
 
 ### 📚 Learning Resources
 
-Learning resources shared by the project developers.
+Project developers will share their latest learning materials here.
 
 | Date       | Title                                                                                                  | Description                                                    |
 |------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
@@ -194,6 +194,12 @@ Contributions of all forms are welcome! For participation methods, refer to the 
 ## 📄 License
 
 This project is licensed under the [Apache 2.0](LICENSE) license.
+
+---
+
+## Star 历史
+
+[![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)
 
 ---
 
