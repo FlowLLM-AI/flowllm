@@ -36,6 +36,82 @@ Gemini CLI 通过多层机制管理过长的对话上下文，确保在 token �
      - `<overall_goal>`: 用户高层目标
      - `<key_knowledge>`: 关键事实
      - `<file_system_state>`: 文件系统状态
+     - `<recent_actions>`: 最近的重要操作
+     - `<current_plan>`: 当前执行计划
+
+**压缩 Prompt** (`core/prompts.ts` → `getCompressionPrompt()`):
+
+压缩时使用的系统指令要求模型：
+
+1. 在私有 `<scratchpad>` 中思考整个历史
+2. 生成结构化的 `<state_snapshot>` XML 对象
+3. 必须保留所有关键细节、计划、错误和用户指令
+
+完整 Prompt 内容：
+
+```
+You are the component that summarizes internal chat history into a given structure.
+
+When the conversation history grows too large, you will be invoked to distill the entire history into a concise, structured XML snapshot. This snapshot is CRITICAL, as it will become the agent's *only* memory of the past. The agent will resume its work based solely on this snapshot. All crucial details, plans, errors, and user directives MUST be preserved.
+
+First, you will think through the entire history in a private <scratchpad>. Review the user's overall goal, the agent's actions, tool outputs, file modifications, and any unresolved questions. Identify every piece of information that is essential for future actions.
+
+After your reasoning is complete, generate the final <state_snapshot> XML object. Be incredibly dense with information. Omit any irrelevant conversational filler.
+
+The structure MUST be as follows:
+
+<state_snapshot>
+    <overall_goal>
+        <!-- A single, concise sentence describing the user's high-level objective. -->
+        <!-- Example: "Refactor the authentication service to use a new JWT library." -->
+    </overall_goal>
+
+    <key_knowledge>
+        <!-- Crucial facts, conventions, and constraints the agent must remember based on the conversation history and interaction with the user. Use bullet points. -->
+        <!-- Example:
+         - Build Command: `npm run build`
+         - Testing: Tests are run with `npm test`. Test files must end in `.test.ts`.
+         - API Endpoint: The primary API endpoint is `https://api.example.com/v2`.
+        -->
+    </key_knowledge>
+
+    <file_system_state>
+        <!-- List files that have been created, read, modified, or deleted. Note their status and critical learnings. -->
+        <!-- Example:
+         - CWD: `/home/user/project/src`
+         - READ: `package.json` - Confirmed 'axios' is a dependency.
+         - MODIFIED: `services/auth.ts` - Replaced 'jsonwebtoken' with 'jose'.
+         - CREATED: `tests/new-feature.test.ts` - Initial test structure for the new feature.
+        -->
+    </file_system_state>
+
+    <recent_actions>
+        <!-- A summary of the last few significant agent actions and their outcomes. Focus on facts. -->
+        <!-- Example:
+         - Ran `grep 'old_function'` which returned 3 results in 2 files.
+         - Ran `npm run test`, which failed due to a snapshot mismatch in `UserProfile.test.ts`.
+         - Ran `ls -F static/` and discovered image assets are stored as `.webp`.
+        -->
+    </recent_actions>
+
+    <current_plan>
+        <!-- The agent's step-by-step plan. Mark completed steps. -->
+        <!-- Example:
+         1. [DONE] Identify all files using the deprecated 'UserAPI'.
+         2. [IN PROGRESS] Refactor `src/components/UserProfile.tsx` to use the new 'ProfileAPI'.
+         3. [TODO] Refactor the remaining files.
+         4. [TODO] Update tests to reflect the API change.
+        -->
+    </current_plan>
+</state_snapshot>
+```
+
+**压缩执行流程**:
+
+1. 将 `historyToCompress` 作为用户消息发送给 LLM
+2. 添加用户提示: `"First, reason in your scratchpad. Then, generate the <state_snapshot>."`
+3. 使用 `getCompressionPrompt()` 作为系统指令
+4. 将生成的摘要作为新的用户消息，添加模型确认回复，然后拼接 `historyToKeep`
 
 **失败保护**:
 - 若压缩后 token 数反而增加，放弃压缩，返回原始历史
@@ -138,9 +214,24 @@ Gemini CLI 通过多层机制管理过长的对话上下文，确保在 token �
 ## 关键数据结构
 
 ```typescript
+// 压缩状态枚举
+enum CompressionStatus {
+  /** 压缩成功 */
+  COMPRESSED = 1,
+
+  /** 压缩失败：压缩后 token 数反而增加 */
+  COMPRESSION_FAILED_INFLATED_TOKEN_COUNT,
+
+  /** 压缩失败：token 计数错误 */
+  COMPRESSION_FAILED_TOKEN_COUNT_ERROR,
+
+  /** 无需压缩，未执行任何操作 */
+  NOOP,
+}
+
 // 压缩信息
 interface ChatCompressionInfo {
-  compressionStatus: CompressionStatus; // COMPRESSED | COMPRESSION_FAILED_INFLATED_TOKEN_COUNT
+  compressionStatus: CompressionStatus;
   originalTokenCount: number;
   newTokenCount: number;
 }
@@ -156,6 +247,52 @@ interface Content {
   role: 'user' | 'model';
   parts: Part[];
 }
+
+// 压缩后的状态快照结构（XML 格式）
+interface StateSnapshot {
+  overall_goal: string;        // 用户高层目标（单句描述）
+  key_knowledge: string;        // 关键事实、约定和约束（要点列表）
+  file_system_state: string;    // 文件系统状态（创建/读取/修改/删除的文件）
+  recent_actions: string;      // 最近的重要操作摘要
+  current_plan: string;         // 当前执行计划（步骤列表，标记完成状态）
+}
+```
+
+**压缩后的状态快照示例**:
+
+```xml
+
+<state_snapshot>
+    <overall_goal>
+        Refactor the authentication service to use a new JWT library.
+    </overall_goal>
+
+    <key_knowledge>
+        - Build Command: `npm run build`
+        - Testing: Tests are run with `npm test`. Test files must end in `.test.ts`.
+        - API Endpoint: The primary API endpoint is `https://api.example.com/v2`.
+    </key_knowledge>
+
+    <file_system_state>
+        - CWD: `/home/user/project/src`
+        - READ: `package.json` - Confirmed 'axios' is a dependency.
+        - MODIFIED: `services/auth.ts` - Replaced 'jsonwebtoken' with 'jose'.
+        - CREATED: `tests/new-feature.test.ts` - Initial test structure for the new feature.
+    </file_system_state>
+
+    <recent_actions>
+        - Ran `grep 'old_function'` which returned 3 results in 2 files.
+        - Ran `npm run test`, which failed due to a snapshot mismatch in `UserProfile.test.ts`.
+        - Ran `ls -F static/` and discovered image assets are stored as `.webp`.
+    </recent_actions>
+
+    <current_plan>
+        1. [DONE] Identify all files using the deprecated 'UserAPI'.
+        2. [IN PROGRESS] Refactor `src/components/UserProfile.tsx` to use the new 'ProfileAPI'.
+        3. [TODO] Refactor the remaining files.
+        4. [TODO] Update tests to reflect the API change.
+    </current_plan>
+</state_snapshot>
 ```
 
 ## 配置参数总结
