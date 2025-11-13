@@ -42,9 +42,9 @@ MCP 的客户端工具中。
 |--------|------|
 | [ReMe](https://github.com/agentscope-ai/ReMe) | 面向智能体的记忆管理工具包 |
 
-### 📚 开发者的阅读信息
+### 📚 学习资料分享
 
-这里是项目开发者分享的阅读笔记和学习资料。
+这里是项目开发者分享的学习资料。
 
 | 日期         | 标题                                                                                | 描述                                        |
 |------------|-----------------------------------------------------------------------------------|-------------------------------------------|
@@ -142,7 +142,7 @@ llm:
       temperature: 0.6
 ```
 
-启动 MCP 服务：
+### 🚀 Step3 启动 MCP 服务
 
 ```bash
 flowllm \
@@ -159,23 +159,30 @@ flowllm \
 
 ## 📚 详细文档
 
-### Op 开发
-- [Op Intro](docs/zh/guide/op_introduction.md)
-- [Async Op Guide](docs/zh/guide/async_op_minimal_guide.md)
-- [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
-- [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
-- [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
-- [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
+### 🚀 入门指南
+- [安装指南](docs/zh/guide/installation.md)
+- [配置指南](docs/zh/guide/config_guide.md)
 
-### Flow 编排
-- [Flow Guide](docs/zh/guide/flow_guide.md)
+### 🔧 Op 开发
+- [Op 介绍](docs/zh/guide/op_introduction.md)
+- [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)
+- [LLM Op 指南](docs/zh/guide/async_op_llm_guide.md)
+- [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)
+- [Tool Op 指南](docs/zh/guide/async_tool_op_guide.md)
+- [Vector Store 指南](docs/zh/guide/vector_store_guide.md)
 
-### 服务使用
-- [HTTP Guide](docs/zh/guide/http_service_guide.md)
-- [HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)
-- [MCP Guide](docs/zh/guide/mcp_service_guide.md)
-- [CMD Guide](docs/zh/guide/cmd_service_guide.md)
-- [Client Guide](docs/zh/guide/client_guide.md)
+### 🔀 Flow 编排
+- [Flow 指南](docs/zh/guide/flow_guide.md)
+
+### 🌐 服务使用
+- [HTTP 服务指南](docs/zh/guide/http_service_guide.md)
+- [HTTP Stream 指南](docs/zh/guide/http_stream_guide.md)
+- [MCP 服务指南](docs/zh/guide/mcp_service_guide.md)
+- [CMD 服务指南](docs/zh/guide/cmd_service_guide.md)
+- [客户端指南](docs/zh/guide/client_guide.md)
+
+### 🤝 其他
+- [贡献指南](docs/zh/guide/contribution.md)
 
 ---
 
