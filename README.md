@@ -16,14 +16,15 @@
 
 ---
 
-## 📖 FlowLLM 简介
+## 📖 简介
 
-FlowLLM适用于需要将融合LLM/Embedding/vector store能力暴露为HTTP/MCP服务的场景，包括但不限于：快速搭建AI对话助手的流式API、构建RAG应用的问答服务、将多个工具组合成复杂的工作流服务，以及通过 MCP 将功能集成到 Claude Desktop、Cursor 等支持 MCP 的客户端工具中。
+FlowLLM 将 LLM/Embedding/vector store 能力封装为 HTTP/MCP 服务，适用于 AI 对话助手、RAG 应用、工作流服务等场景，并可集成到支持
+MCP 的客户端工具中。
 
 ### 🏗️ 架构概览
 
 <p align="center">
-  <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="80%">
+  <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
 </p>
 
 
@@ -41,6 +42,15 @@ FlowLLM适用于需要将融合LLM/Embedding/vector store能力暴露为HTTP/MCP
 |--------|------|
 | [ReMe](https://github.com/agentscope-ai/ReMe) | 面向智能体的记忆管理工具包 |
 
+### 📚 开发者的阅读信息
+
+这里是项目开发者分享的阅读笔记和学习资料。
+
+| 日期         | 标题                                                                                | 描述                                        |
+|------------|-----------------------------------------------------------------------------------|-------------------------------------------|
+| 2025-11-10 | [LangChain & Manus 视频资料](./docs/zh/reading/20251110-manus-context-raw.md)         | LangChain 和 Manus 关于上下文工程的网络研讨会视频转录       |
+| 2025-11-10 | [上下文管理（Context Management）指南](./docs/zh/reading/20251110-manus-context-report.md) | 从提示工程到上下文工程的演进，以及智能体上下文管理的实践指南            |
+| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略：预判溢出、自动压缩、内容截断、历史过滤 |
 
 ---
 
