@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>FlowLLM：让基于LLM的HTTP/MCP服务开发更简单</strong><br>
-  <em>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</em>
+  <small>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</small>
 </p>
 
 <p align="center">
@@ -29,15 +29,10 @@ FlowLLM适用于需要将融合LLM/Embedding/vector store能力暴露为HTTP/MCP
 
 ### ⭐ 核心特性
 - **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。
-  - 详细内容请参考 [Op Intro](docs/zh/guide/op_introduction.md)、[Async Op Guide](docs/zh/guide/async_op_minimal_guide.md)、[LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)、[Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) 和 [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)。
-  - Vector Store 的详细使用请参考 [Vector Store Guide](docs/zh/guide/vector_store_guide.md)。
 
 - **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如 `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用 `flowllm config=your_config` 命令即可启动服务。
-  - 详细内容请参考 [Flow Guide](docs/zh/guide/flow_guide.md)。
 
 - **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTful API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
-  - 详细内容请参考 [HTTP Guide](docs/zh/guide/http_service_guide.md)、[HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)、[MCP Guide](docs/zh/guide/mcp_service_guide.md) 和 [CMD Guide](docs/zh/guide/cmd_service_guide.md)。
-  - 如何使用服务可以参考[Client Guide](docs/zh/guide/client_guide.md)。
 
 
 ### 🌟 基于FlowLLM的应用
@@ -149,6 +144,28 @@ flowllm \
 ```
 
 服务启动后可以参考[Client Guide](docs/zh/guide/client_guide.md)来使用服务，可以直接获取模型所需要的tool_call。
+
+---
+
+## 📚 详细文档
+
+### Op 开发
+- [Op Intro](docs/zh/guide/op_introduction.md)
+- [Async Op Guide](docs/zh/guide/async_op_minimal_guide.md)
+- [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
+- [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
+- [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
+- [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
+
+### Flow 编排
+- [Flow Guide](docs/zh/guide/flow_guide.md)
+
+### 服务使用
+- [HTTP Guide](docs/zh/guide/http_service_guide.md)
+- [HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)
+- [MCP Guide](docs/zh/guide/mcp_service_guide.md)
+- [CMD Guide](docs/zh/guide/cmd_service_guide.md)
+- [Client Guide](docs/zh/guide/client_guide.md)
 
 ---
 
