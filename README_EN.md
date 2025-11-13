@@ -40,11 +40,11 @@ FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP s
 
 Project developers will share their latest learning materials here.
 
-| Date       | Title                                                                                                  | Description                                                    |
-|------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
-| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video                     |
-| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Evolution Guide from Prompt Engineering to Context Engineering |
-| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI         |
+| Date       | Title                                                                                                  | Description                                            |
+|------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
+| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video             |
+| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Context Management Guide                               |
+| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI |
 
 ### ⭐ Core Features
 

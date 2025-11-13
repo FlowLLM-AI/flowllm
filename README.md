@@ -44,7 +44,7 @@ MCP 的客户端工具中。
 | 日期         | 标题                                                                                | 描述                                          |
 |------------|-----------------------------------------------------------------------------------|---------------------------------------------|
 | 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video |
-| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 从提示工程到上下文工程的演进指南                            |
+| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 上下文管理指南                                     |
 | 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                       |
 
 ### ⭐ 核心特性
