@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>FlowLLM: Making LLM-based HTTP/MCP Service Development Easier</strong><br>
-  <em><sub>If you find it useful, please give us a ⭐ Star. Your support is the driving force for our continuous improvement</sub></em>
+  <strong>FlowLLM: Simplifying LLM-based HTTP/MCP Service Development</strong><br>
+  <em><sub>If you find it useful, please give us a ⭐ Star. Your support drives our continuous improvement.</sub></em>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 ## 📖 Introduction
 
-FlowLLM encapsulates LLM/Embedding/vector store capabilities as HTTP/MCP services, suitable for AI conversational assistants, RAG applications, workflow services, and can be integrated into client tools that support MCP.
+FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP services. It is suitable for AI assistants, RAG applications, and workflow services, and can be integrated into MCP-compatible client tools.
 
 ### 🏗️ Architecture Overview
 
@@ -32,11 +32,11 @@ FlowLLM encapsulates LLM/Embedding/vector store capabilities as HTTP/MCP service
 
 
 ### ⭐ Core Features
-- **Easy-to-use Op Development**: Inherit from BaseOp or BaseAsyncOp base classes and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores. Developers can easily use these resources through `self.llm`, `self.embedding_model`, and `self.vector_store`. FlowLLM also provides complete Prompt template management capabilities through `prompt_format()` and `get_prompt()` methods for formatting and usage.
+- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods.
 
-- **Flexible Flow Orchestration**: Combine Ops into Flows through YAML configuration files, supporting flexible orchestration. `>>` represents serial composition, `|` represents parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` can build complex workflows. After defining input and output schemas, use the `flowllm config=your_config` command to start the service.
+- **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
 
-- **Automatic Service Generation**: After configuration, FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides standard RESTful APIs, supporting synchronous JSON responses and HTTP Stream streaming responses. The MCP service automatically registers as Model Context Protocol tools and can be integrated into MCP-supported clients. The CMD service supports command-line mode to execute a single Op, suitable for quick testing and debugging.
+- **Automatic Service Generation**: FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides RESTful APIs with synchronous JSON and HTTP Stream responses. The MCP service registers as Model Context Protocol tools for MCP-compatible clients. The CMD service executes a single Op in command-line mode for quick testing and debugging.
 
 
 ### 🌟 Applications Based on FlowLLM
@@ -47,11 +47,11 @@ FlowLLM encapsulates LLM/Embedding/vector store capabilities as HTTP/MCP service
 
 ### 📚 Learning Resources
 
-Here are learning resources shared by the project developers.
+Learning resources shared by the project developers.
 
 | Date       | Title                                                                                | Description                                          |
 |------------|--------------------------------------------------------------------------------------|------------------------------------------------------|
-| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video |
+| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management Video |
 | 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                     | Evolution Guide from Prompt Engineering to Context Engineering                            |
 | 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI                       |
 
@@ -75,17 +75,17 @@ cd flowllm
 pip install -e .
 ```
 
-For detailed installation and configuration methods, please refer to the [Installation Guide](docs/zh/guide/installation.md).
+For detailed installation and configuration, refer to the [Installation Guide](docs/zh/guide/installation.md).
 
 ### ⚙️ Configuration
 
-Create a `.env` file and configure your API Key. You can copy from `example.env` and modify:
+Create a `.env` file and configure your API keys. Copy from `example.env` and modify:
 
 ```bash
 cp example.env .env
 ```
 
-Then configure your API Key in the `.env` file:
+Configure your API keys in the `.env` file:
 
 ```bash
 FLOW_LLM_API_KEY=sk-xxxx
@@ -94,7 +94,7 @@ FLOW_EMBEDDING_API_KEY=sk-xxxx
 FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
 ```
 
-For detailed configuration instructions, please refer to the [Configuration Guide](docs/zh/guide/config_guide.md).
+For detailed configuration, refer to the [Configuration Guide](docs/zh/guide/config_guide.md).
 
 ### 🛠️ Step1 Build Op
 
@@ -113,11 +113,11 @@ class SimpleChatOp(BaseAsyncOp):
         self.context.response.answer = response.content.strip()
 ```
 
-For detailed content, please refer to the [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md), [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md), and [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) (including advanced features such as Embedding, VectorStore, and concurrent execution).
+For details, refer to the [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md), [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md), and [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) (including Embedding, VectorStore, and concurrent execution).
 
 ### 📝 Step2 Configure Config
 
-The following example shows how to build an MCP (Model Context Protocol) service. Create a configuration file `my_mcp_config.yaml`:
+The following example demonstrates building an MCP (Model Context Protocol) service. Create a configuration file `my_mcp_config.yaml`:
 
 ```yaml
 backend: mcp
@@ -156,7 +156,7 @@ flowllm \
   llm.default.model_name=qwen3-30b-a3b-thinking-2507  # Optional, overrides config
 ```
 
-After the service starts, you can refer to the [Client Guide](docs/zh/guide/client_guide.md) to use the service and directly obtain the tool_call required by the model.
+After the service starts, refer to the [Client Guide](docs/zh/guide/client_guide.md) to use the service and obtain the tool_call required by the model.
 
 ---
 
@@ -188,13 +188,13 @@ After the service starts, you can refer to the [Client Guide](docs/zh/guide/clie
 
 ## 🤝 Contributing
 
-Contributions of all forms are welcome! For specific participation methods, please refer to the [Contribution Guide](docs/zh/guide/contribution.md).
+Contributions of all forms are welcome! For participation methods, refer to the [Contribution Guide](docs/zh/guide/contribution.md).
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [Apache 2.0](LICENSE) License.
+This project is licensed under the [Apache 2.0](LICENSE) license.
 
 ---
 

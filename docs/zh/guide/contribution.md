@@ -142,7 +142,6 @@ flowllm/gallery/
 
 - 💬 开启一个 [Discussion](https://github.com/flowllm-ai/flowllm/discussions)
 - 🐛 通过 [Issues](https://github.com/flowllm-ai/flowllm/issues) 报告错误
-- 📧 联系开发团队（链接在 README.md 中）
 
 ---
 

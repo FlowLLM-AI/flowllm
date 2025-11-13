@@ -22,7 +22,7 @@
 
 ## 📖 简介
 
-FlowLLM 将 LLM/Embedding/vector store 能力封装为 HTTP/MCP 服务，适用于 AI 对话助手、RAG 应用、工作流服务等场景，并可集成到支持
+FlowLLM 将 LLM/Embedding/vector_store 能力封装为 HTTP/MCP 服务，适用于 AI 对话助手、RAG 应用、工作流服务等场景，并可集成到支持
 MCP 的客户端工具中。
 
 ### 🏗️ 架构概览
