@@ -9,8 +9,8 @@
 MCP 工具的业务逻辑来源于 Flow 中的 Op。可直接复用已有 Op，也可先编写一个简单示例。以下为内置示例 `MockSearchOp`：
 
 ```python
-from ..core.context import C
-from ..core.op import BaseAsyncOp
+from flowllm.core.context import C
+from flowllm.core.op.base_async_op import BaseAsyncOp
 
 @C.register_op()
 class MockSearchOp(BaseAsyncOp):
@@ -108,7 +108,12 @@ export FLOW_EMBEDDING_BASE_URL="https://xxxx/v1"
 
 - 使用my_mcp_config启动：
 ```bash
-flowllm config=my_mcp_config backend=mcp
+flowllm \
+  config=my_mcp_config \
+  backend=mcp \
+  mcp.transport=sse \
+  mcp.port=8002 \
+  llm.default.model_name=qwen3-30b-a3b-thinking-2507
 ```
 
 成功后（以 `host=0.0.0.0`, `port=8001` 为例）：

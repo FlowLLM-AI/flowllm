@@ -9,8 +9,8 @@
 HTTP 工具的业务逻辑来源于 Flow 中的 Op。基类见 `flowllm/core/op/base_op.py`，异步基类为 `BaseAsyncOp`：
 
 ```python
-from ..core.context import C
-from ..core.op import BaseAsyncOp
+from flowllm.core.context import C
+from flowllm.core.op.base_async_op import BaseAsyncOp
 
 @C.register_op()
 class EchoOp(BaseAsyncOp):
@@ -46,14 +46,13 @@ http:
   port: 8002
 
 flow:
-  # 同步 HTTP 流程（POST /demo_http_flow）
   demo_http_flow:
     flow_content: GenSystemPromptOp() >> ChatOp()
-    description: "AI 对话助手（同步返回）"
+    description: "AI assistant"
     input_schema:
       query:
         type: string
-        description: "用户问题"
+        description: "user query"
         required: true
 
 llm:

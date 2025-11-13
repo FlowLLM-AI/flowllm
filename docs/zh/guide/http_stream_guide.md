@@ -9,10 +9,10 @@
 流式 Op 与普通 Op 的主要区别在于使用 `self.context.add_stream_chunk()` 来发送流式数据块，而不是一次性返回完整结果。基类见 `flowllm/core/op/base_async_op.py`：
 
 ```python
-from ..core.context import C
-from ..core.op import BaseAsyncOp
-from ..core.enumeration import ChunkEnum, Role
-from ..core.schema import FlowStreamChunk, Message
+from flowllm.core.context import C
+from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.enumeration import ChunkEnum, Role
+from flowllm.core.schema import FlowStreamChunk, Message
 
 @C.register_op()
 class StreamChatOp(BaseAsyncOp):
