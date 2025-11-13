@@ -9,7 +9,7 @@ from ..core.context import C
 from ..core.enumeration import Role
 from ..core.op import BaseAsyncOp
 from ..core.schema import Message
-from ..core.utils.common_utils import extract_content
+from ..core.utils import extract_content
 
 
 @C.register_op()

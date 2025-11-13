@@ -59,7 +59,7 @@ class EchoToolOp(BaseAsyncToolOp):
 有时候 LLM 返回的内容需要提取或者转换，可以用 `callback_fn` 来处理：
 
 ```python
-from flowllm.core.utils.common_utils import extract_content
+from flowllm.core.utils import extract_content
 import json
 
 @C.register_op()

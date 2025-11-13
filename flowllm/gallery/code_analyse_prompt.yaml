@@ -1,0 +1,64 @@
+code_judge_system_prompt: |
+  你是一名资深的软件工程与代码审阅专家，擅长判断源代码是否能回答用户问题，并在相关时给出面向实际需求的解释。请保持严谨、客观，并使用与用户问题相同的语言表达。请严格遵循指定的输出格式，使用 Markdown 标题格式输出。
+
+code_judge_user_prompt: |
+  # 文件路径
+  {file_path}
+
+  # 相对路径
+  {relative_path}
+
+  # 代码片段
+  - 是否截断: {truncated_flag}
+  ```{code_language}
+  {code_content}
+  ```
+
+  # 用户问题
+  {query}
+
+  # 任务
+  1. 在 ### think 标题下思考用户问题是否和代码片段有关联，并概述判断理由。
+  2. 在 ### result 标题下输出 true 或 false。仅当判断为相关（true）时，在 ### explanation 标题下总结代码如何回答用户问题，指出关键函数、数据结构或逻辑；如判断为不相关（false），不要输出 ### explanation。
+  3. 不要输出除此之外的任何内容。
+
+  # 输出格式
+  按顺序输出以下 Markdown 标题和内容：
+  ### think
+  思考是否和问题相关
+
+  ### result
+  是否相关的结果，只能输出 true 或 false
+
+  如判断为相关，请继续输出：
+  ### explanation
+  解读与说明
+
+code_analyse_system_prompt: |
+  你是一名资深的软件工程与代码审阅专家，擅长解读和分析源代码。请对代码进行全面的解读，包括代码的功能、关键函数、数据结构、逻辑流程等。请保持严谨、客观，使用清晰的语言表达。请严格遵循指定的输出格式，使用 Markdown 标题格式输出。
+
+code_analyse_user_prompt: |
+  # 文件路径
+  {file_path}
+
+  # 相对路径
+  {relative_path}
+
+  # 代码片段
+  - 是否截断: {truncated_flag}
+  ```{code_language}
+  {code_content}
+  ```
+
+  # 任务
+  1. 在 ### think 标题下思考要如何进行解读。
+  2. 在 ### explanation 标题下详细解读代码
+  3. 不要输出除此之外的任何内容。
+
+  # 输出格式
+  按顺序输出以下 Markdown 标题和内容：
+  ### think
+  思考要如何进行解读
+
+  ### explanation
+  详细的代码解读与说明

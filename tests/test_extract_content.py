@@ -6,7 +6,7 @@ It can be run directly with: python test_common_utils.py
 
 import pytest
 
-from flowllm.core.utils.common_utils import extract_content
+from flowllm.core.utils import extract_content
 
 
 def test_extract_content_json_no_space():

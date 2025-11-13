@@ -24,7 +24,6 @@ Modules:
 
 from .common_utils import (
     camel_to_snake,
-    extract_content,
     load_env,
     parse_flow_expression,
     singleton,
@@ -32,7 +31,12 @@ from .common_utils import (
 )
 from .fastmcp_client import FastMcpClient
 from .http_client import HttpClient
-from .llm_utils import format_messages, merge_messages_content
+from .llm_utils import (
+    extract_content,
+    format_messages,
+    merge_messages_content,
+    parse_message_by_keys,
+)
 from .logger_utils import init_logger
 from .logo_utils import print_logo
 from .pydantic_config_parser import PydanticConfigParser
@@ -56,4 +60,5 @@ __all__ = [
     "PydanticConfigParser",
     "format_messages",
     "merge_messages_content",
+    "parse_message_by_keys",
 ]

@@ -10,23 +10,10 @@ It includes ready-to-use operations for:
 - MockSearchOp: Mock search operation that uses LLM to generate search results
 - DashscopeSearchOp: Web search operation using Dashscope API for retrieving internet information
 - ReactSearchOp: ReAct (Reasoning and Acting) agent for answering queries using search tools
-
-Typical usage:
-    from flowllm.gallery import (
-        ExecuteCodeOp,
-        ChatOp,
-        StreamChatOp,
-        GenSystemPromptOp,
-        MockSearchOp,
-        DashscopeSearchOp,
-        ReactSearchOp,
-    )
-    from flowllm.core.context import C
-
-    # Operations are automatically registered via @C.register_op() decorator
 """
 
 from .chat_op import ChatOp
+from .code_analyse_op import CodeAnalyseOp
 from .dashscope_search_op import DashscopeSearchOp
 from .execute_code_op import ExecuteCodeOp
 from .gen_system_prompt_op import GenSystemPromptOp
@@ -36,6 +23,7 @@ from .stream_chat_op import StreamChatOp
 
 __all__ = [
     "ChatOp",
+    "CodeAnalyseOp",
     "DashscopeSearchOp",
     "ExecuteCodeOp",
     "GenSystemPromptOp",

@@ -45,6 +45,7 @@ dependencies = [
     "uvicorn[standard]>=0.23.0",
     "pyfiglet>=0.8.0",
     "rich>=13.5.0",
+    "pathspec>=0.12.1"
 ]
 
 [project.optional-dependencies]

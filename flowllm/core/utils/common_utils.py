@@ -8,7 +8,6 @@ This module provides utility functions for:
 - Parsing flow expressions into composed `BaseOp` trees
 """
 
-import json
 import os
 import re
 from pathlib import Path
@@ -127,55 +126,6 @@ def load_env(path: str | Path = None, enable_log: bool = True):
                 return
 
         logger.warning(".env not found")
-
-
-def extract_content(text: str, language_tag: str = "json"):
-    """Extract and parse content from Markdown code blocks.
-
-    Searches for content within Markdown code blocks (triple backticks)
-    and extracts it. If the language tag is "json", attempts to parse
-    the extracted content as JSON. If no code block is found, returns
-    the original text (or parsed JSON if applicable).
-
-    Args:
-        text: The text to search for code blocks.
-        language_tag: The language tag of the code block (e.g., "json",
-            "python"). Defaults to "json".
-
-    Returns:
-        If language_tag is "json":
-            - Parsed JSON object/dict/list if valid JSON is found
-            - None if JSON parsing fails
-        Otherwise:
-            - Extracted content string from code block
-            - Original text if no code block is found
-
-    Example:
-        ```python
-        extract_content("```json\\n{\"key\": \"value\"}\\n```")  # noqa
-        # {'key': 'value'}
-        extract_content("``` json\\n{\"key\": \"value\"}\\n```")  # noqa
-        # {'key': 'value'}
-        extract_content("```python\\nprint('hello')\\n```", "python")
-        # "print('hello')"
-        ```
-    """
-    pattern = rf"```\s*{re.escape(language_tag)}\s*(.*?)\s*```"
-    match = re.search(pattern, text, re.DOTALL)
-
-    if match:
-        result = match.group(1).strip()
-    else:
-        result = text
-
-    if language_tag == "json":
-        try:
-            result = json.loads(result)
-
-        except json.JSONDecodeError:
-            result = None
-
-    return result
 
 
 def singleton(cls):
