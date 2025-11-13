@@ -1,51 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/INSTALLATION/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/async_op_advance_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/QUICKSTART/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/async_op_llm_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/async_task_handling/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/async_op_minimal_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/company_factor_op_implementation/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/async_tool_op_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/deep_research/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/client_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/fin_supply_deploy/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/cmd_service_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/fin_supply_quick_start/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/config_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/fin_supply_readme/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/contribution/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/making_sop_memories/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/flow_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/todo/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/http_service_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
     <url>
-         <loc>https://github.com/flowllm-ai/flowllm/vector_store/</loc>
-         <lastmod>2025-10-20</lastmod>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/http_stream_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/installation/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/mcp_service_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/op_introduction/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/guide/vector_store_guide/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/reading/20251110-manus-context-raw/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/reading/20251110-manus-context-report/</loc>
+         <lastmod>2025-11-13</lastmod>
+    </url>
+    <url>
+         <loc>https://github.com/flowllm-ai/flowllm/zh/reading/20251113-gemini-cli-context-management/</loc>
+         <lastmod>2025-11-13</lastmod>
     </url>
 </urlset>

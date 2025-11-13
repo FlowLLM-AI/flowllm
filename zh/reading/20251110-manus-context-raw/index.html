@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        // for search plugin notably
+        const base_url = "https://github.com/flowllm-ai/flowllm/";
+    </script>
+    <script>
+    const darkTheme = window.matchMedia("(prefers-color-scheme: dark)");
+    darkTheme.onchange = (e) => {
+        if (e.matches) {
+            document.documentElement.classList.add("dark")
+            localStorage.theme = 'dark';
+        } else {
+            document.documentElement.classList.remove("dark")
+            localStorage.removeItem("theme")
+        }
+    };
+
+    // On page load. Priotiry to lcaolStorage
+    if (localStorage.theme === "dark") {
+        document.documentElement.classList.add("dark")
+    } else if (localStorage.theme === "light") {
+        document.documentElement.classList.remove("dark")
+    } else if (darkTheme.matches) {
+        document.documentElement.classList.add("dark")
+    } else {
+        document.documentElement.classList.remove("dark")
+    }
+
+    // set the layout based on localStorage
+    document.documentElement.classList.add(localStorage.getItem("html-layout") || "layout-fixed");
+</script>
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LangChain&Manus Video Materials - FlowLLM</title>
+    
+
+
+<title>LangChain&Manus Video Materials</title>
+
+
+
+
+
+
+
+
+
+<link rel="canonical" href="https://github.com/flowllm-ai/flowllm/zh/reading/20251110-manus-context-raw/">
+
+
+<!-- Open Graph (Facebook, LinkedIn) -->
+
+<meta property="og:title" content="LangChain&Manus Video Materials">
+
+
+
+
+
+<meta property="og:url" content="https://github.com/flowllm-ai/flowllm/zh/reading/20251110-manus-context-raw/">
+
+
+
+
+
+
+<!-- Twitter Card -->
+
+<meta name="twitter:title" content="LangChain&Manus Video Materials">
+
+
+
+
+
+
+<!-- JSON-LD Structured Data -->
+
+
+
+    <link rel="icon" href="../../../img/favicon.ico">
+
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/geist.css" rel="stylesheet">
+
+    
+    
+
+<link id="pygments-light" rel="stylesheet"
+    href="../../../css/pygments/shadcn-light.css">
+<link id="pygments-dark" rel="stylesheet"
+    href="../../../css/pygments/github-dark.css"
+    media="(prefers-color-scheme: dark)">
+
+
+    
+
+    
+
+    <script src="../../../js/callbacks.js"></script>
+
+    
+    <!-- katex -->
+<link rel="stylesheet" href="../../../css/katex.min.css">
+<!-- The loading of KaTeX is deferred to speed up page rendering -->
+<script defer src="../../../js/katex.min.js"></script>
+<!-- To automatically render math in text elements, include the auto-render extension: -->
+<script defer src="../../../js/auto-render.min.js"
+    onload='renderMathInElement(document.body, "{}");'></script>
+    
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.js"></script>
+<script>
+    const rootStyles = getComputedStyle(document.documentElement);
+    const color = ["#8ec5ff", "#2b7fff", "#1d6ed4", "#155ab6", "#0f4c8a"];
+    const waitForECharts = () => {
+        if (typeof echarts !== 'undefined') {
+            console.log('ECharts is loaded');
+            echarts.registerTheme('shadcn', {
+                "seriesCnt": "5",
+                "backgroundColor": "rgba(0,0,0,0)",
+                "titleColor": "#0a0a0a",
+                "subtitleColor": "#737373",
+                "textColorShow": false,
+                "textColor": "#333",
+                "textStyle": {
+                    "fontFamily": "Geist"
+                },
+                "markTextColor": "#ffffff",
+                "color": color,
+                "borderColor": "#e5e5e5",
+                "borderWidth": 0,
+                "visualMapColor": [
+                    "#09090b",
+                    "#18181b",
+                    "#27272a",
+                    "#3f3f46",
+                    "#52525b",
+                    "#71717a",
+                    "#a1a1aa",
+                    "#d4d4d8",
+                    "#e4e4e7",
+                    "#f4f4f5",
+                    "#fafafa"
+                ],
+                "legendTextColor": "#0a0a0a",
+                "kColor": "#eb5454",
+                "kColor0": "#47b262",
+                "kBorderColor": "#eb5454",
+                "kBorderColor0": "#47b262",
+                "kBorderWidth": 1,
+                "lineWidth": 2,
+                "symbolSize": 4,
+                "symbol": "emptyCircle",
+                "symbolBorderWidth": 1,
+                "lineSmooth": true,
+                "graphLineWidth": 1,
+                "graphLineColor": "#aaaaaa",
+                "mapLabelColor": "#000",
+                "mapLabelColorE": "rgb(100,0,0)",
+                "mapBorderColor": "#444",
+                "mapBorderColorE": "#444",
+                "mapBorderWidth": 0.5,
+                "mapBorderWidthE": 1,
+                "mapAreaColor": "#eee",
+                "mapAreaColorE": "rgba(255,215,0,0.8)",
+                "axes": [
+                    {
+                        "type": "all",
+                        "name": "通用坐标轴",
+                        "axisLineShow": true,
+                        "axisLineColor": "#6E7079",
+                        "axisTickShow": true,
+                        "axisTickColor": "#6E7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6E7079",
+                        "splitLineShow": true,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "category",
+                        "name": "类目坐标轴",
+                        "axisLineShow": true,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": true,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": false,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "value",
+                        "name": "数值坐标轴",
+                        "axisLineShow": false,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": false,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": true,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "log",
+                        "name": "对数坐标轴",
+                        "axisLineShow": false,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": false,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": true,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    },
+                    {
+                        "type": "time",
+                        "name": "时间坐标轴",
+                        "axisLineShow": true,
+                        "axisLineColor": "#6e7079",
+                        "axisTickShow": true,
+                        "axisTickColor": "#6e7079",
+                        "axisLabelShow": true,
+                        "axisLabelColor": "#6e7079",
+                        "splitLineShow": false,
+                        "splitLineColor": [
+                            "#E0E6F1"
+                        ],
+                        "splitAreaShow": false,
+                        "splitAreaColor": [
+                            "rgba(250,250,250,0.2)",
+                            "rgba(210,219,238,0.2)"
+                        ]
+                    }
+                ],
+                "axisSeperateSetting": true,
+                "toolboxColor": "#999999",
+                "toolboxEmphasisColor": "#666666",
+                "tooltipAxisColor": "#cccccc",
+                "tooltipAxisWidth": 1,
+                "timelineLineColor": "#e5e5e5",
+                "timelineLineWidth": 2,
+                "timelineItemColor": "#e5e5e5",
+                "timelineItemColorE": "#ffffff",
+                "timelineCheckColor": "#171717",
+                "timelineCheckBorderColor": "#ffffff",
+                "timelineItemBorderWidth": 1,
+                "timelineControlColor": "#737373",
+                "timelineControlBorderColor": "#171717",
+                "timelineControlBorderWidth": "0.0",
+                "timelineLabelColor": "#737373"
+            })
+        } else {
+            setTimeout(waitForECharts, 300);
+        }
+    }
+
+    waitForECharts();
+
+</script>
+    
+
+    
+
+</head>
+
+<body
+    class="text-foreground group/body overscroll-none font-sans antialiased [--footer-height:calc(var(--spacing)*14)] [--header-height:calc(var(--spacing)*14)] xl:[--footer-height:calc(var(--spacing)*24)] theme-default">
+    <div id="inner-body" class="bg-background relative z-10 flex min-h-svh flex-col">
+        <header class="bg-background sticky top-0 z-50 w-full" view-transition-name="header">
+    <div class="container-wrapper 3xl:fixed:px-0 px-6">
+        <div class="3xl:fixed:container flex h-(--header-height) items-center gap-2 **:data-[slot=separator]:!h-4">
+            <button id="menu-button" data-slot="popover-trigger" onclick="onMobileMenuButtonClick(event)"
+                class="group whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:text-accent-foreground px-4 py-2 has-[&gt;svg]:px-3 extend-touch-target h-8 touch-manipulation items-center justify-start gap-2.5 !p-0 hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 active:bg-transparent dark:hover:bg-transparent flex lg:hidden"
+                type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«Rmplb»"
+                data-state="closed">
+                <div class="relative flex h-8 w-4 items-center justify-center">
+                    <div class="relative size-4">
+                        <!-- 16px x 16px -->
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="0" x2="16" y1="5" y2="5"
+                                class="group-data-[state=open]:translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:rotate-45 transition-all duration-300 origin-center" />
+                            <line x1="0" x2="16" y1="11" y2="11"
+                                class="group-data-[state=open]:-translate-y-[2.25px] group-data-[state=open]:-translate-x-[2.25px] group-data-[state=open]:-rotate-45 transition-all duration-300 origin-center" />
+                        </svg>
+                    </div>
+
+                    <span class="sr-only">Toggle Menu</span>
+                </div>
+                <span class="flex h-8 items-center text-lg leading-none font-medium">Menu</span>
+            </button>
+            <a data-slot="button"
+                class="items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-5 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 hidden h-8 lg:flex"
+                href="https://github.com/flowllm-ai/flowllm/">
+                <span class="size-8 flex flex-row justify-center items-center">
+                    
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"
+    class="size-5">
+    <rect width="256" height="256" fill="none"></rect>
+    <line x1="208" y1="128" x2="128" y2="208" fill="none" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round" stroke-width="32"></line>
+    <line x1="192" y1="40" x2="40" y2="192" fill="none" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round" stroke-width="32"></line>
+</svg>
+
+
+                </span>
+
+                
+                <h1 class="pr-2">FlowLLM</h1>
+                
+            </a>
+            
+            <div class="ml-auto flex items-center gap-2 md:flex-1 md:justify-end">
+                <div class="hidden w-full flex-1 md:flex md:w-auto md:flex-none">
+                    <button data-slot="dialog-trigger" onclick="onSearchBarClick(event)"
+    class="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-secondary/80 px-4 py-2 has-[&gt;svg]:px-3 bg-surface text-surface-foreground/60 dark:bg-card relative h-8 w-full justify-start pl-2.5 font-normal shadow-none sm:pr-12 md:w-40 lg:w-56 xl:w-64"
+    type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="radix-«R66plb»" data-state="closed">
+    <span class="text-muted-foreground hidden lg:inline-flex">Search documentation...</span>
+    <span class="text-muted-foreground inline-flex lg:hidden">Search...</span>
+    <div class="absolute top-1.5 right-1.5 hidden gap-1 sm:flex">
+        <kbd
+            class="bg-background text-muted-foreground pointer-events-none flex h-5 items-center justify-center gap-1 rounded border px-1 font-sans text-[0.7rem] font-medium select-none [&amp;_svg:not([class*='size-'])]:size-3">Ctrl</kbd><kbd
+            class="bg-background text-muted-foreground pointer-events-none flex h-5 items-center justify-center gap-1 rounded border px-1 font-sans text-[0.7rem] font-medium select-none [&amp;_svg:not([class*='size-'])]:size-3 aspect-square">K</kbd>
+    </div>
+</button>
+<dialog id="search-dialog" onclick="onSearchDialogClick(event)"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background rounded-lg shadow-lg border overflow-hidden p-0">
+    <div class="w-lg gap-4">
+        <div class="flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground">
+            <div data-slot="command-input-wrapper" class="flex h-9 items-center gap-2 border-b px-3"><svg
+                    xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="lucide lucide-search size-4 shrink-0 opacity-50">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.3-4.3"></path>
+                </svg>
+                <input data-slot="command-input"
+                    class="placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Search documentation..." cmdk-input="" autocomplete="off" autocorrect="off"
+                    spellcheck="false" aria-autocomplete="list" role="combobox" aria-expanded="true"
+                    aria-controls="radix-«r1t6»" aria-labelledby="radix-«r1t7»" id="radix-«r1t8»" type="text" value=""
+                    aria-activedescendant="radix-«r1th»" oninput="onInputHandler(event)">
+            </div>
+        </div>
+        <div id="mkdocs-search-results">
+            <!-- search results go there -->
+        </div>
+    </div>
+</dialog>
+<script>
+    document.removeEventListener("keydown", searchShortcutHandler);
+    document.addEventListener("keydown", searchShortcutHandler);
+</script>
+                </div>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px ml-2 hidden lg:block">
+                </div>
+                <a target="_blank" rel="noreferrer" data-slot="button"
+                    class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 h-8 shadow-none"
+                    href="https://github.com/flowllm-ai/flowllm">
+                    <svg viewBox="0 0 438.549 438.549">
+                        <path fill="currentColor"
+                            d="M409.132 114.573c-19.608-33.596-46.205-60.194-79.798-79.8-33.598-19.607-70.277-29.408-110.063-29.408-39.781 0-76.472 9.804-110.063 29.408-33.596 19.605-60.192 46.204-79.8 79.8C9.803 148.168 0 184.854 0 224.63c0 47.78 13.94 90.745 41.827 128.906 27.884 38.164 63.906 64.572 108.063 79.227 5.14.954 8.945.283 11.419-1.996 2.475-2.282 3.711-5.14 3.711-8.562 0-.571-.049-5.708-.144-15.417a2549.81 2549.81 0 01-.144-25.406l-6.567 1.136c-4.187.767-9.469 1.092-15.846 1-6.374-.089-12.991-.757-19.842-1.999-6.854-1.231-13.229-4.086-19.13-8.559-5.898-4.473-10.085-10.328-12.56-17.556l-2.855-6.57c-1.903-4.374-4.899-9.233-8.992-14.559-4.093-5.331-8.232-8.945-12.419-10.848l-1.999-1.431c-1.332-.951-2.568-2.098-3.711-3.429-1.142-1.331-1.997-2.663-2.568-3.997-.572-1.335-.098-2.43 1.427-3.289 1.525-.859 4.281-1.276 8.28-1.276l5.708.853c3.807.763 8.516 3.042 14.133 6.851 5.614 3.806 10.229 8.754 13.846 14.842 4.38 7.806 9.657 13.754 15.846 17.847 6.184 4.093 12.419 6.136 18.699 6.136 6.28 0 11.704-.476 16.274-1.423 4.565-.952 8.848-2.383 12.847-4.285 1.713-12.758 6.377-22.559 13.988-29.41-10.848-1.14-20.601-2.857-29.264-5.14-8.658-2.286-17.605-5.996-26.835-11.14-9.235-5.137-16.896-11.516-22.985-19.126-6.09-7.614-11.088-17.61-14.987-29.979-3.901-12.374-5.852-26.648-5.852-42.826 0-23.035 7.52-42.637 22.557-58.817-7.044-17.318-6.379-36.732 1.997-58.24 5.52-1.715 13.706-.428 24.554 3.853 10.85 4.283 18.794 7.952 23.84 10.994 5.046 3.041 9.089 5.618 12.135 7.708 17.705-4.947 35.976-7.421 54.818-7.421s37.117 2.474 54.823 7.421l10.849-6.849c7.419-4.57 16.18-8.758 26.262-12.565 10.088-3.805 17.802-4.853 23.134-3.138 8.562 21.509 9.325 40.922 2.279 58.24 15.036 16.18 22.559 35.787 22.559 58.817 0 16.178-1.958 30.497-5.853 42.966-3.9 12.471-8.941 22.457-15.125 29.979-6.191 7.521-13.901 13.85-23.131 18.986-9.232 5.14-18.182 8.85-26.84 11.136-8.662 2.286-18.415 4.004-29.263 5.146 9.894 8.562 14.842 22.077 14.842 40.539v60.237c0 3.422 1.19 6.279 3.572 8.562 2.379 2.279 6.136 2.95 11.276 1.995 44.163-14.653 80.185-41.062 108.068-79.226 27.88-38.161 41.825-81.126 41.825-128.906-.01-39.771-9.818-76.454-29.414-110.049z">
+                        </path>
+                    </svg>
+                    
+                    <span id="stargazers" class="text-muted-foreground w-8 text-xs tabular-nums" onload="test()">
+                    </span>
+                    
+                </a>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px 3xl:flex hidden">
+                </div>
+                <button data-slot="button"
+                    class="items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 size-8 3xl:flex hidden"
+                    title="Toggle layout" onclick="toggleLayout(event)">
+                    <span class="sr-only">Toggle layout</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="lucide lucide-gallery-horizontal">
+                        <path d="M2 3v18"></path>
+                        <rect width="12" height="18" x="6" y="3" rx="2"></rect>
+                        <path d="M22 3v18"></path>
+                    </svg>
+                </button>
+                <div data-orientation="vertical" role="none" data-slot="separator"
+                    class="bg-border shrink-0 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-px">
+                </div>
+                <button data-slot="button"
+                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 group/toggle extend-touch-target size-8"
+                    title="Toggle theme" onclick="onThemeSwitch(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="size-4.5">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                        <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+                        <path d="M12 3l0 18"></path>
+                        <path d="M12 9l4.65 -4.65"></path>
+                        <path d="M12 14.3l7.37 -7.37"></path>
+                        <path d="M12 19.6l8.85 -8.85"></path>
+                    </svg>
+                    <span class="sr-only">Toggle theme</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+        <main class="flex flex-1 flex-col">
+            <div class="container-wrapper flex flex-1 flex-col px-2">
+                <div data-slot="sidebar-wrapper" style="--sidebar-width: 16rem; --sidebar-width-icon: 3rem;"
+                    class="group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex w-full 3xl:fixed:container 3xl:fixed:px-3 min-h-min flex-1 items-start px-0 [--sidebar-width:220px] [--top-spacing:0] lg:grid lg:grid-cols-[var(--sidebar-width)_minmax(0,1fr)] lg:[--sidebar-width:240px] lg:[--top-spacing:calc(var(--spacing)*4)]">
+                    <div data-slot="sidebar"
+                        class="text-sidebar-foreground w-(--sidebar-width) flex-col sticky top-[calc(var(--header-height)+1px)] z-30 hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] bg-transparent lg:flex">
+                        <div data-slot="sidebar-content" data-sidebar="content"
+                            class="flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden no-scrollbar px-2 pb-12">
+                            <div class="h-(--top-spacing) shrink-0"></div>
+                            <div view-transition-name="sidebar" data-slot="sidebar-group" data-sidebar="group"
+    class="relative flex w-full min-w-0 flex-col p-2 no-scrollbar">
+    
+
+    
+    
+    
+
+    
+
+    
+    
+
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Welcome
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+            </ul>
+        </div>
+    </div>
+    
+
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Getting Started</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/installation/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Installation
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/config_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Configuration
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Op Development</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/op_introduction/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Op Introduction
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/async_op_minimal_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Simple Op Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/async_op_llm_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        LLM Op Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/async_op_advance_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Advanced Op Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/async_tool_op_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Tool Op Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/vector_store_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Vector Store Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Flow Orchestration</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/flow_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Flow Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Service Usage</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/http_service_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        HTTP Service Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/http_stream_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        HTTP Stream Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/mcp_service_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        MCP Service Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/cmd_service_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        CMD Service Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/client_guide/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Client Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Contributing</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/guide/contribution/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Contribution Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Reading</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/reading/20251110-manus-context-raw/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        LangChain&Manus Video Materials
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/reading/20251110-manus-context-report/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Context Management Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/flowllm-ai/flowllm/zh/reading/20251113-gemini-cli-context-management/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Gemini CLI Context Management
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+            </ul>
+        </div>
+    </div>
+    
+    
+
+
+    
+</div>
+                        </div>
+                    </div>
+                    <div class="h-full w-full">
+                        <div data-slot="docs" class="flex items-stretch text-[1.05rem] sm:text-[15px] xl:w-full">
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                <article class="w-full" view-transition-name="page">
+  <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2">
+      <div id="page-header" class="flex items-start justify-between">
+        <h1
+          class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl"
+        >
+          LangChain&Manus Video Materials
+        </h1>
+
+        <div class="flex items-center gap-2 pt-1.5">
+          
+<button onclick="fetch(`https://github.com/flowllm-ai/flowllm/zh/reading/20251110-manus-context-raw.md`).then((r) => r.blob()).then((blob) => navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]))" 
+        data-slot="button" 
+        class="cursor-pointer inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md gap-1.5 px-3 has-[&>svg]:px-2.5 h-8 shadow-none md:h-7 md:text-[0.8rem]">
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tabler-icon tabler-icon-copy ">
+    <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z"></path><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"></path>
+</svg>
+<span class="max-md:hidden">Copy Page</span>
+</button> 
+          
+          <a
+            data-slot="button"
+            id="previous-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="/flowllm-ai/flowllm/zh/guide/contribution/"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-left"
+            >
+              <path d="M5 12l14 0"></path>
+              <path d="M5 12l6 6"></path>
+              <path d="M5 12l6 -6"></path>
+            </svg>
+            <span class="sr-only">Previous</span>
+          </a>
+           
+          
+          <a
+            data-slot="button"
+            id="next-button"
+            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 extend-touch-target size-8 shadow-none md:size-7"
+            href="/flowllm-ai/flowllm/zh/reading/20251110-manus-context-report/"
+          >
+            <span class="sr-only">Next</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="tabler-icon tabler-icon-arrow-right"
+            >
+              <path d="M5 12l14 0"></path>
+              <path d="M13 18l6 -6"></path>
+              <path d="M13 6l6 6"></path>
+            </svg>
+          </a>
+          
+        </div>
+      </div>
+      
+    </div>
+    <div class="flex justify-end items-center">
+       
+    </div>
+  </div>
+  <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
+    <p>from https://www.youtube.com/watch?v=6_BcCthVvb8</p>
+<p>好的。嗯，感谢大家的到来。我们现在就开始网络研讨会吧，我相信还会陆续有人加入。呃，我是 Lance，LangChain 的创始工程师之一。和我一起的是来自 Manis 的 Pete。Pete，你要不要简单介绍一下自己？</p>
+<blockquote>
+<blockquote>
+<p>好的。大家好，我是 Manis 的联合创始人兼首席科学家。基本上，Manis 的智能体框架和很多东西都是我设计的，今天能来到这里我非常兴奋。谢谢 Lance 的邀请。</p>
+<p>是的，我们也很高兴能做这次分享，因为 Manis 首先是一个非常酷的产品。我自己已经用了很久了。此外，他们几个月前还发表了一篇关于“上下文工程”（context engineering）的精彩博文，对我影响很大。所以我想先快速概述一下我对上下文工程的理解，并会引用他们的文章，然后 Pete 将做一个演讲，介绍一些文章中没有涵盖的新想法。所以，即使你已经读过那篇文章，今天的内容也会包含一些新东西，希望对你们来说相当有趣。我会先做个铺垫，然后交给 Pete，最后我们会进行问答环节。</p>
+</blockquote>
+</blockquote>
+<p>你可能听说过“上下文工程”这个术语，它大约在今年早些时候出现。如果你查看谷歌搜索趋势的时间线，“提示工程”（prompt engineering）是在 ChatGPT 之后兴起的，也就是2022年12月。当我们有了这种新的聊天模型后，人们开始对如何给这些模型下指令产生了极大的兴趣。“提示工程”因此成为一门与聊天模型协作并为其编写提示的学科。</p>
+<p>而“上下文工程”则在今年5月左右出现，我们在谷歌趋势上看到它真正开始上升，这与“智能体之年”的概念大致吻合。为什么会这样呢？一个被很多人观察到的现象是，如果你在构建智能体，就会发现上下文会增长，而且是以一种非常特定的方式增长。我的意思是，我们有一个大语言模型（LLM），它绑定了一些工具，这个 LLM 可以在一个循环中自主调用这些工具。挑战在于，每次调用工具后，你都会得到一个工具观察结果，这个结果会被追加到聊天消息列表中。随着时间的推移，这些消息会不断增长，从而可能导致智能体运行时消息数量的无限制爆炸式增长。</p>
+<p>举个例子，Manis 在他们的文章中提到，典型的任务大约需要50次工具调用。Anthropic 也提到，生产环境中的智能体可以进行长达数百轮的对话。因此，挑战在于，智能体由于运行时间越来越长且具有自主性，它们会自由地使用工具，从而通过这种工具调用的累积积累大量的上下文。</p>
+<p>Chrome（应为 Cognition）发布了一份非常不错的报告，谈到了“上下文腐烂”（context rot）的问题，其核心观察就是：随着上下文的增长，性能会下降。</p>
+<p>这就形成了一个悖论，一个具有挑战性的情况：智能体因为工具调用而需要大量上下文，但我们知道，随着上下文的增长，性能反而会下降。</p>
+<p>这是我们很多人都面临过的挑战，也正是这个挑战催生或孕育了“上下文工程”这个术语。Arvind Narayanan（应为 Arvind Athalye）今年早些时候在 Twitter 上创造了这个词。你可以把上下文工程理解为一门精妙的艺术与科学，其目标是在上下文窗口中填充下一步决策所需的恰到好处的信息。它试图对抗在构建智能体并让它们自由调用工具时发生的上下文爆炸问题。所有这些工具消息都会累积在你的消息队列中。我们如何才能确保在任何时候，都能向智能体呈现做出正确下一步决策所需的信息呢？</p>
+<p>为了解决这个问题，我想强调几个我们在许多不同工作中（包括 Manis）看到的共同主题。</p>
+<p><strong>第一个想法是上下文卸载（Context Offloading）。</strong>
+我们一次又一次地看到这个趋势。其核心思想是，并非所有上下文都需要存在于智能体的消息历史记录中。你可以将信息卸载出去，发送到其他地方，使其位于上下文窗口之外，但在需要时可以检索回来（稍后我们会谈到）。</p>
+<p>这里最流行的想法之一就是使用文件系统。例如，将工具消息的输出转储到文件系统中，然后只向你的智能体发送回一些必要的最小信息，以便它能在需要时引用完整的上下文。但完整的有效载荷（例如，一个非常占用 token 的网页搜索结果）不会永久地充斥在你的上下文窗口中。</p>
+<p>我们在许多不同的项目中都看到了这一点。Manis 使用这种方法。我们有一个名为“深度智能体”（deep agents）的项目，它利用了文件系统。Open Deep Research 项目实际上也使用了类似“智能体状态”（agent state）的东西来扮演外部文件系统的角色。Cloud Code 当然也非常广泛地使用了这种方法。长期运行的智能体也大量使用它。</p>
+<p>因此，将上下文卸载到文件系统的想法，在我们今天看到的许多生产级智能体示例中都非常常见和流行。</p>
+<p><strong>第二个想法是减少上下文（Reducing Context）。</strong>
+卸载非常简单，就是拿走像工具消息这样占用大量 token 的信息，不把它全部送回你的消息列表，而是将其转储到一个文件系统中，只在需要时检索。这就是卸载。
+而减少上下文则类似，但你是对信息进行摘要或压缩。
+对工具调用输出进行摘要是实现这一点的一种直观方法。例如，我们在 Open Deep Research 中就是这样做的。
+裁剪（Pruning）工具调用或工具消息。一件非常有趣的事情是，Claude 3.5（原文为4.5，应为笔误）实际上已经在其最新的版本中加入了这一功能。如果你查看他们的一些最新发布，现在他们会开箱即用地支持裁剪旧的工具调用及其输出或消息。因此，这种裁剪旧工具调用的想法现在已经被 Claude 内置到他们的 SDK 中了。
+对完整的消息历史进行摘要或压缩。你在 Cloud Code 的压缩（compaction）功能中可以看到这一点。一旦你达到整体上下文窗口的某个百分比，就会触发此功能。
+Cognition 也谈到了在智能体之间交接时进行摘要和证明的想法。
+因此，这种减少上下文的想法是我们从 Cloud Code 到我们的 Open Deep Research、Cognition 等众多不同示例中看到的一个非常流行的主题。Claude 3.5 也已将其纳入。</p>
+<p><strong>检索上下文（Retrieving Context）。</strong>
+这是如今你可能在 X（Twitter）上看到激烈争论的经典话题之一：检索上下文的正确方法是什么？Cursor 的 Lee Robinson 最近做了一个非常好的演讲（我会确保分享这些幻灯片，这样你就能看到这些链接）。他在 OpenAI Demo Day 上谈到了 Cursor，例如，它使用索引和语义搜索，以及更简单的基于文件的搜索工具，如 <code>glob</code> 和 <code>grep</code>。Cloud Code 则只使用文件系统和简单的搜索工具，特别是 <code>glob</code> 和 <code>grep</code>。因此，有多种方法可以按需为你的智能体检索上下文：索引和语义搜索、文件系统和简单的文件搜索工具，两者都可以非常有效。在问答环节我们可以讨论各自的优缺点，但上下文检索对于构建有效的智能体至关重要。</p>
+<p><strong>上下文隔离（Context Isolation）</strong> 是我们看到的另一个主要主题，特别是跨多个子智能体（multi-agents）拆分上下文。这里的要点是什么？每个子智能体都有自己的上下文窗口，子智能体允许关注点分离。Manis 的宽智能体（wide agents）谈到了这一点。我们的深度智能体工作也使用了这一点。Open Deep Research 也使用了它。Claude 的子智能体在其研究中被利用，Claude 的多智能体研究员（multi-agent researcher）和 Claude Ghost 也都支持子智能体。因此，子智能体是我们在许多不同项目中看到的执行上下文隔离的一种非常常见的方法。</p>
+<p>有一件我认为非常有趣的事情是<strong>缓存上下文（caching context）</strong>，Manis 对此谈得很多。稍后我会让 Pete 来详细讲讲，但我认为这也是一个非常有趣的技巧。</p>
+<p>我只想展示一个我们在 Open Deep Research 中看到的简短示例。这是我们一个非常受欢迎的代码库。它基本上是一个开源的深度研究实现，其性能与市面上一些最佳实现相当。你可以查看我们的代码库，我们有来自 Deep Research Bench 的结果显示我们排在前十名。它有三个阶段：研究范围界定、研究阶段本身（使用多智能体架构）以及最后的一次性写作阶段。</p>
+<p>我们使用了<strong>卸载</strong>。我们基本上创建了一个研究计划简报，然后将其卸载。我们不会只是把它保存在上下文窗口中，因为那个上下文窗口很快就会被其他东西填满。我们将其卸载，使其独立保存。在我们的案例中，可以从行图状态（line graph state）中访问它，但它也可以来自文件系统，道理是一样的。因此，你创建了一个研究计划，将其卸载，它就始终可以访问。你去做一堆工作，然后可以根据需要将其拉回，比如放在消息列表的末尾，这样你的智能体就可以轻松访问它，以执行例如写作阶段的任务。</p>
+<p>正如你所见，我们使用卸载来帮助引导研究和写作阶段。</p>
+<p>我们使用<strong>缩减</strong>来摘要来自占用大量 token 的网络搜索工具调用的观察结果。这是在研究阶段内部完成的。</p>
+<p>我们在研究阶段内部的子智能体之间使用了<strong>上下文隔离</strong>。</p>
+<p>这总结了我们在许多不同项目中看到的各种想法。实际上，Pete 接下来要专门谈谈 Manis 以及他们学到的一些经验教训。这只是为他做个铺垫。这部分内容总结了我刚才谈到的这些不同主题：卸载、减少上下文、检索上下文、隔离、缓存，以及它们在一些流行项目中的应用。我会在笔记中分享这些幻灯片的链接。我现在想让 Pete 继续进行他的演讲，因为我想确保他有充足的时间，并留出问答时间。这只是做个铺垫。Pete，接下来交给你了。我停止共享屏幕。</p>
+<p>好的。你能看到我的幻灯片吗？
+能。
+好的，完美。谢谢 Lance。今天我很高兴能在这里分享一些我们在构建 Manis 过程中学到的关于上下文工程的新鲜经验教训。我说“新鲜”，是因为我意识到你提到的那篇关于上下文工程的博客文章是我今年7月写的，而在“智能体之年”，7月基本上就像是上个纪元了。当然，在本次会议之前，我又回去读了一遍，幸运的是，我觉得那篇博客里写的大部分内容至今仍然成立。但我不想浪费大家的时间，只是重复博客里已经说过的话。所以今天，我想深入探讨一些我之前要么没有深入探讨，要么根本没有触及的领域。实际上，我们将重点关注 Lance 之前幻灯片中的“非共识”（Discourage）一栏，因为就我个人而言，我认为探索这些非共识的想法往往能带来最大的启发。</p>
+<p>好的，今天演讲的主题如下。首先，我们会稍微探讨一下为什么我们需要上下文工程这个更大的问题，然后我们会更多地讨论上下文缩减、上下文隔离，最后会介绍一些关于我们正在内部测试的上下文卸载的新内容。我今天分享的一切都在 Manis 中投入生产，并经过了实战检验，但我不知道它能持续多久，因为事情变化得太快了。</p>
+<p>让我们从第一个大问题开始：为什么我们甚至需要上下文工程，尤其是在微调（fine-tuning）或后训练（post-training）模型如今已经变得更容易获取的情况下？例如，Thinking Machines 团队刚刚发布了 Tinker API，我很喜欢它的设计。但对我来说，为什么需要上下文工程这个问题，是经过几个痛苦的认知阶段才形成的。</p>
+<p>在创办 Manis 之前，我已经在自然语言处理（NLP）领域深耕了十多年，也就是在 ChatGPT 和 LLMs 出现之前我们所说的构建语言模型。Manis 是我的第二或第三家公司，在我之前的创业公司，我们从头开始训练自己的语言模型，用于开放域信息抽取，并在此基础上构建知识图谱和语义搜索引擎，那过程非常痛苦。我们产品创新的速度完全被模型的迭代速度所限制。即使在当时，模型比今天小得多，但单次训练加评估周期也可能需要一两周时间。最糟糕的是，那时我们还没有达到产品市场契合度（PMF），却把所有时间都花在改进一些可能对产品根本不重要的基准测试上。因此，我认为初创公司不应该过早地构建专用模型，而应该尽可能长时间地依赖通用模型和上下文工程。当然，现在这可能已经成为某种常识。</p>
+<p>但随着你的产品成熟，开源基础模型变得更强，你会很容易产生这样的想法：“嘿，也许我应该选一个强大的基础模型，用我的数据进行微调，让它在我的用例上表现得非常好。”我们也尝试过这样做，结果发现这是另一个陷阱。要知道，要让强化学习（RL）真正有效，你通常需要固定一个动作空间，围绕你当前的产品行为设计奖励函数，并生成大量的在线策略（on-policy）轨迹和反馈。但这也很危险，因为我们仍处于 AI 和智能体的早期阶段，一切都有可能在一夜之间发生巨变。对我们来说，经典的例子就是 MCP 的发布。它彻底改变了 Manis 的设计，从一个紧凑的静态动作空间变成了一个近乎无限可扩展的东西。如果你曾经训练过自己的模型，你就会知道这种开放域问题极难优化。当然，你可以投入巨大的精力进行后训练以确保泛化能力，但那样的话，你不就基本上是在试图自己成为一家大模型公司了吗？因为你基本上是在重建他们已经构建好的同一层，这是一种重复劳动。</p>
+<p>说了这么多铺垫，我的观点是：坚定地划清界限。目前，上下文工程是应用层和模型层之间最清晰、最实用的边界。相信你的选择。</p>
+<p>好了，哲学部分到此为止，让我们来谈谈一些真正的技术。</p>
+<p><strong>第一个主题：上下文缩减（Context Reduction）。</strong>
+在这里，我想澄清两种不同类型的压缩操作，因为我们认为上下文缩减虽然很有趣，但它也是一个新概念，有很多实现方式。在 Manis，我们将其分为<strong>压缩（Compaction）</strong>和<strong>摘要（Summarization）</strong>。</p>
+<p>在 Manis，每个工具调用和工具结果实际上都有两种格式：完整格式和紧凑格式。紧凑版本会剥离掉任何可以从文件系统或外部状态中重建的信息。例如，假设你有一个写入文件的工具，它可能有两个字段：路径（path）和内容（content）。但一旦工具返回，你就可以确保该文件已经存在于环境中。因此，在紧凑格式中，我们可以安全地丢弃超长的内容字段，只保留路径。如果你的智能体足够聪明，每当它需要再次读取该文件时，它只需通过路径检索即可。因此，信息并没有真正丢失，只是被外部化了。我们认为这种可逆性至关重要，因为智能体会基于先前的动作和观察进行链式预测，你永远不知道哪个过去的行为会在10步之后突然变得非常重要，这是无法预测的。这就是通过压缩实现的可逆缩减。</p>
+<p>当然，压缩只能带你走这么远。最终，你的上下文仍然会增长并触及上限。这时，我们会将压缩与更传统的摘要结合起来，但我们会非常谨慎地进行。例如，在摘要之前，我们可能会将上下文的关键部分卸载到文件中。有时，我们甚至会更激进地将整个摘要前的上下文作为一个文本文件或日志文件转储到文件系统中，以便我们以后总能恢复它。正如 Lance 所提到的，有些人使用 <code>glob</code> 和 <code>grep</code>，<code>glob</code> 对日志文件也同样有效。如果模型足够聪明，它甚至知道如何检索那些被摘要的、摘要前的上下文。</p>
+<p>我认为这里的区别在于，压缩是可逆的，而摘要则不是。两者都能减少上下文长度，但它们的行为截然不同。为了让这两种方法共存，我们必须在顶层跟踪一些上下文长度阈值。例如，你的模型有一个硬性的上下文限制，比如现在常见的100万个 token。但在现实中，大多数模型在远低于此限制时就开始退化，通常在20万左右，你会开始看到我们所说的“上下文腐烂”（context rot），比如重复、推理变慢、质量下降。因此，通过大量评估，对你来说非常重要的一点是识别出这个“腐烂前阈值”（pre-rot threshold），通常是128K到200K，并将其作为触发上下文缩减的条件。</p>
+<p>当你的上下文大小接近这个阈值时，你就必须触发上下文缩减，但要从压缩开始，而不是摘要。而且，压缩并不意味着压缩整个历史记录。我们可能会压缩最旧的50%的工具调用，同时保留较新的工具调用的完整细节，这样模型仍然有最新的、清晰的例子来了解如何正确使用工具。否则，在最坏的情况下，模型会模仿这种行为，并输出那些缺少字段的紧凑格式，这是完全错误的。</p>
+<p>在压缩之后，我们必须检查这次压缩操作实际为我们节省了多少空闲上下文。有时，如这张图所示，在多轮压缩之后，收益微乎其微，因为即使是压缩后的信息仍然会占用上下文。这时，我们才会转向摘要。但也要记住，在摘要时，我们总是使用数据的完整版本，而不是紧凑版本。并且，我们仍然会将最后几次工具调用和工具结果保持完整细节，而不是摘要，因为这可以让模型知道它上次停在了哪里，从而能更顺利地继续下去。否则，你会发现在摘要之后，模型有时会改变其风格和语气，我们发现保留一些工具调用和工具结果的示例真的很有帮助。</p>
+<p>好了，我们已经讨论了缩减，现在来谈谈<strong>隔离（Isolation）</strong>。</p>
+<p>我非常赞同 Cognition 博客中的观点，他们警告不要使用多智能体设置，因为当你有多个智能体时，在它们之间同步信息会变成一场噩梦。但这个问题并不新鲜。在计算机编程的早期，多进程或多线程协调就是一个经典挑战。我认为我们可以借鉴一些其中的智慧。</p>
+<p>我不知道今天有多少 Go 语言程序员在这里，但在 Go 语言社区有一句名言：“不要通过共享内存来通信，而要通过通信来共享内存。”（Do not communicate by sharing memory; instead, share memory by communicating.）当然，这句话并非直接针对智能体，有时甚至对智能体来说也是错误的。但我认为重要的是，它突出了两种截然不同的模式：通过通信（by communicating）或通过共享内存（by sharing memory）。</p>
+<p>如果我们把这里的“内存”一词翻译成“上下文”，我们就能看到一个非常清晰的对应关系。</p>
+<p>“通过通信”是更容易理解的一种模式，因为它就是经典的子智能体设置。例如，主智能体编写一个提示，然后将该提示发送给一个子智能体，而子智能体的整个上下文仅由该指令组成。我们认为，如果一个任务有清晰简短的指令，并且只有最终输出才重要（比如说，在代码库中搜索一个特定的片段），那么就应该使用通信模式，并保持简单。因为主智能体并不关心子智能体是如何找到代码的，它只需要结果。这也是 Cloud Code 通常的做法，它使用其任务工具（task tool）将一个独立、清晰的任务委派给一些子智能体。</p>
+<p>相比之下，对于更复杂的场景，“通过共享内存”意味着子智能体可以看到之前所有的上下文，即所有的工具使用历史。但子智能体有自己的系统提示（system prompt）和自己的动作空间。例如，在一个深度研究场景中，最终报告依赖于大量的中间搜索和笔记，在这种情况下，你应该考虑使用共享内存模式（或者用我们的话说，共享上下文）。因为即使你可以把所有笔记和搜索结果保存到文件中，再让子智能体重新读取一切，也只是在浪费延迟和上下文。如果你计算一下 token 的数量，你甚至可能会使用更多的 token 来完成这件事。</p>
+<p>因此，我们认为对于那些需要完整历史的场景，就应该使用共享内存模式，但要注意，共享上下文是比较昂贵的，因为每个子智能体都有更大的输入需要预填充（prefill），这意味着你会在输入 token 上花费更多。而且，由于系统提示和动作空间不同，你无法重用 KV 缓存，因此你必须支付全额费用。</p>
+<p>最后，让我们稍微谈谈<strong>上下文卸载（Context Offloading）</strong>。当人们说卸载时，通常是指将工作上下文的一部分移动到外部文件中。但随着你的系统不断增长，特别是如果你决定集成 MCP，有一天你会意识到工具本身也会占用大量上下文，上下文中存在太多工具会导致混淆。我们称之为“上下文混淆”（context confusion），模型可能会调用错误的工具，甚至是不存在的工具。因此，我们必须找到一种方法来卸载工具本身。</p>
+<p>目前一种常见的方法是对工具描述进行动态 RAG（Retrieval-Augmented Generation），例如根据当前任务或状态按需加载工具。但这也会导致两个问题。首先，由于工具定义位于上下文的前面，每次加载都会导致你的 KV 缓存重置。更重要的是，模型对已移除工具的过往调用仍然存在于上下文中，这可能会诱使模型调用无效的工具或使用无效的参数。</p>
+<p>为了解决这个问题，我们正在 Manis 中试验一种新的分层动作空间（layered action space）。本质上，我们可以让 Manis 从三个不同级别的抽象中进行选择：
+1.  <strong>函数调用（Function Calling）</strong>
+2.  <strong>沙盒工具（Sandbox Utilities）</strong>
+3.  <strong>包和 API（Packages and APIs）</strong></p>
+<p>让我们深入探讨这三层动作空间。
+<strong>第一层：函数调用。</strong> 这是经典的模式，大家都很熟悉。由于约束解码（constraint decoding），它是模式安全的（schema safe）。但我们都知道它的缺点，比如会破坏缓存，以及太多的工具调用可能会引起混淆。因此，在 Manis 中，我们目前只使用固定数量的原子函数，例如读写文件、执行 shell 命令、在文件和互联网中搜索，以及一些浏览器操作。我们认为这些原子函数有非常清晰的边界，它们可以协同工作以组合成更复杂的工作流。</p>
+<p>然后，我们将其他所有内容都卸载到下一层，即<strong>沙盒工具</strong>。如你所知，每个 Manis 会话都在一个完整的虚拟机沙盒中运行，该沙盒运行在我们定制的 Linux 系统上。这意味着 Manis 可以使用 shell 命令来运行我们为 Manis 开发的预安装工具。例如，我们有一些格式转换器、语音识别工具，甚至一个特殊的 MCP CLI（命令行界面），我们通过它来调用 MCP。我们不会将 MCP 工具注入到函数调用空间中，而是在沙盒内通过命令行界面完成所有操作。</p>
+<p>工具的好处在于，你可以添加新功能而无需触碰模型的函数调用空间。就像你熟悉 Linux 一样，你总是知道如何找到这些新命令，甚至可以运行 <code>--help</code> 来弄清楚如何使用一个新工具。另一个好处是，对于较大的输出，它们可以直接写入文件或分页返回结果，你可以使用所有这些 Linux 工具（如 <code>grep</code>、<code>cat</code>、<code>less</code>、<code>more</code>）来即时处理这些结果。</p>
+<p>这里的权衡是，它非常适合处理大输出，但对于与前端进行低延迟的来回交互来说效果不佳，因为要可视化你的智能体的交互并向用户展示，这是相当棘手的。但我们认为它已经卸载了很多东西。</p>
+<p>然后我们还有最后一层，我们称之为<strong>包和 API</strong>。在这里，Manis 可以编写 Python 脚本来调用预授权的 API 或自定义包。例如，Manis 可能会使用一个 3D 设计库进行建模，或调用一个金融 API 来获取市场数据。实际上，我们已经代表用户购买了所有这些 API，并为他们付费，这些都包含在订阅中。因此，我们有很多 API 密钥预装在 Manis 中，Manis 可以使用这些密钥访问这些 API。</p>
+<p>我们认为这对于需要大量内存计算但不需要将所有数据推送到模型上下文中的任务是完美的。例如，想象一下你正在分析一只股票一整年的价格数据。你不会把所有数字都喂给模型，而是应该让脚本进行计算，只把摘要放回上下文中。</p>
+<p>而且，由于代码和 API 具有很强的可组合性，你实际上可以在一步中串联很多事情。例如，在一个典型的 API 调用中，你可以在一个 Python 脚本中完成获取城市名称、获取城市 ID、获取天气等所有操作。</p>
+<p>我的一位朋友还发表了一篇名为《CodeAct》的论文，很多人都在讨论它。我认为这是同一个想法，因为代码是可组合的，可以在一步中完成很多事情。但它也不是模式安全的，对代码进行约束解码是非常非常困难的。因此，我们认为你应该为这些功能找到合适的场景。对我们来说，我们会将所有能在编译器或解释器运行时内处理的事情都用代码来完成，否则我们会使用沙盒工具或函数调用。</p>
+<p>好消息是，从模型的角度来看，这三层都通过标准的函数调用进行。因此，接口保持简单、对缓存友好，并且在函数之间是正交的。因为我们提到过，沙盒工具仍然是通过 shell 函数来访问的；如果你使用第三方应用程序的 API，也只是使用文件函数来读写文件，然后使用 shell 函数来执行它。因此，它不会给模型增加额外负担，因为这些都是模型已经训练过并且熟悉的。</p>
+<p>让我们拉远视角，将五个维度——卸载、缩减、检索、隔离和缓存——联系起来。你会发现它们并不是独立的。我们可以看到，卸载和检索使得更高效的缩减成为可能，而稳定的检索使得隔离变得安全。但隔离也会减慢上下文的增长速度，并降低缩减的频率。然而，更多的隔离和缩减也会影响缓存效率和输出质量。</p>
+<p>归根结底，我认为上下文工程是一门需要在多个潜在冲突的目标之间取得完美平衡的艺术与科学。这真的很难。</p>
+<p>在结束之前，我想留给你们一个最后的想法，这与我刚才所说的几乎完全相反，那就是：<strong>请避免过度工程化上下文（avoid context over-engineering）</strong>。</p>
+<p>回顾 Manis 发布以来的过去六七个月，我们所见过的最大飞跃并非来自于添加更多花哨的上下文管理层或巧妙的检索技巧。它们都来自于简化，来自于移除不必要的技巧，并更多地信任模型。每次我们简化架构，系统都会变得更快、更稳定、更聪明。因为我们认为，上下文工程的目标应该是让模型的工作变得更简单，而不是更难。</p>
+<p>所以，如果今天你只带走一点，我认为应该是：<strong>少构建，多理解（build less and understand more）</strong>。</p>
+<p>非常感谢大家，再次感谢 Lance 和 LangChain 团队的邀请。迫不及待想看到你们接下来会构建出什么。现在交回给 Lance。</p>
+<blockquote>
+<blockquote>
+<p>太棒了，非常感谢。我们这里有一系列不错的问题。也许我们可以开始回答了，如果需要的话，可以参考一下幻灯片。Pete，你的幻灯片对 everyone 可用吗？
+哦，是的，我可以稍后分享 PDF 版本。
+好的，听起来不错。</p>
+</blockquote>
+</blockquote>
+<p>嗯，好吧。我来看看问题，也许我们可以从最近的问题开始。
+……
+（后续为问答环节，篇幅较长，此处省略具体问答内容，但翻译逻辑一致）</p>
+<p>……</p>
+<blockquote>
+<blockquote>
+<p>好的，我想我们差不多到时间了，我想尊重你的时间，因为我知道现在新加坡还是凌晨，对你来说非常早。嗯，好吧，这次分享真的很好，谢谢你。我们一定会确保这次录制的视频可用，并确保幻灯片也能提供。
+嗯，有什么最后想说的吗？有什么想特别指出的，或者行动号召？嗯，大家应该去试试 Manis，但话筒交给你了。
+是的，我就想说，大家都去试试吧。我们有免费套餐。
+是的，绝对要试。嘿，非常感谢你，Pete。希望以后还能再做一次。
+谢谢邀请我。
+好的，再见。</p>
+</blockquote>
+</blockquote>
+  </div>
+</article>
+                                <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 shadow-none"
+        href="/flowllm-ai/flowllm/zh/guide/contribution/">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-left ">
+            <path d="M5 12l14 0"></path>
+            <path d="M5 12l6 6"></path>
+            <path d="M5 12l6 -6"></path>
+        </svg>
+        <span class="max-[500px]:hidden">Contribution Guide</span>
+    </a>
+    
+    
+    <a data-slot="button"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive bg-secondary text-secondary-foreground hover:bg-secondary/80 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5 ml-auto shadow-none"
+        href="/flowllm-ai/flowllm/zh/reading/20251110-manus-context-report/">
+        <span class="max-[500px]:hidden">Context Management Guide</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="tabler-icon tabler-icon-arrow-right ">
+            <path d="M5 12l14 0"></path>
+            <path d="M13 18l6 -6"></path>
+            <path d="M13 6l6 6"></path>
+        </svg>
+    </a>
+    
+</div>
+                                <dialog id="bottom-sidebar" onclick="onBottomSidebarDialogClick(event)" class="bg-transparent"
+    style="position: fixed; left: 0px; top: 0px; transform: translate(0px, 58px); min-width: max-content; --radix-popper-transform-origin: 0% 0px; will-change: transform; z-index: 50; --radix-popper-available-width: 504px; --radix-popper-available-height: 857px; --radix-popper-anchor-width: 72.94999694824219px; --radix-popper-anchor-height: 32px;">
+    <div data-side="bottom" data-align="start" data-state="open" role="dialog" data-slot="popover-content"
+        class="text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 origin-(--radix-popover-content-transform-origin) border outline-hidden bg-background/90 no-scrollbar h-(--radix-popper-available-height) w-(--radix-popper-available-width) overflow-y-auto rounded-none border-none p-0 shadow-none backdrop-blur duration-100"
+        style="--radix-popover-content-transform-origin: var(--radix-popper-transform-origin); --radix-popover-content-available-width: var(--radix-popper-available-width); --radix-popover-content-available-height: var(--radix-popper-available-height); --radix-popover-trigger-width: var(--radix-popper-anchor-width); --radix-popover-trigger-height: var(--radix-popper-anchor-height);"
+        tabindex="-1">
+        <div class="flex flex-col gap-12 overflow-auto px-6 py-6">
+            
+            
+            
+
+            
+            <div class="flex flex-col gap-4">
+                <div class="text-muted-foreground text-sm font-medium">Menu</div>
+                <div class="flex flex-col gap-3">
+                    
+                    <a class="text-2xl font-medium" href="../../">
+                        
+                        Welcome
+                        
+                    </a>
+                    
+                </div>
+            </div>
+            
+
+            
+            <div class="flex flex-col gap-8">
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Getting Started</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../guide/installation/">
+                            
+                            Installation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/config_guide/">
+                            
+                            Configuration
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Op Development</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../guide/op_introduction/">
+                            
+                            Op Introduction
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/async_op_minimal_guide/">
+                            
+                            Simple Op Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/async_op_llm_guide/">
+                            
+                            LLM Op Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/async_op_advance_guide/">
+                            
+                            Advanced Op Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/async_tool_op_guide/">
+                            
+                            Tool Op Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/vector_store_guide/">
+                            
+                            Vector Store Guide
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Flow Orchestration</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../guide/flow_guide/">
+                            
+                            Flow Guide
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Service Usage</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../guide/http_service_guide/">
+                            
+                            HTTP Service Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/http_stream_guide/">
+                            
+                            HTTP Stream Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/mcp_service_guide/">
+                            
+                            MCP Service Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/cmd_service_guide/">
+                            
+                            CMD Service Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../guide/client_guide/">
+                            
+                            Client Guide
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Contributing</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../guide/contribution/">
+                            
+                            Contribution Guide
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Reading</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="./">
+                            
+                            LangChain&Manus Video Materials
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../20251110-manus-context-report/">
+                            
+                            Context Management Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../20251113-gemini-cli-context-management/">
+                            
+                            Gemini CLI Context Management
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+            
+
+        </div>
+    </div>
+</dialog>
+                            </div>
+                            <div
+                                class="sticky top-[calc(var(--header-height)+1px)] z-30 ml-auto hidden h-[calc(100svh-var(--header-height)-var(--footer-height))] w-72 flex-col gap-4 overflow-hidden overscroll-none pb-8 xl:flex">
+                                <div class="h-(--top-spacing) shrink-0"></div>
+                                <div view-transition-name="toc" class="no-scrollbar overflow-y-auto px-8">
+    <div class="flex flex-col gap-2 p-4 pt-0 text-sm">
+        <p class="text-muted-foreground bg-background sticky top-0 h-6 text-xs">On This Page</p>
+        
+
+    </div>
+    <div class="h-12"></div>
+</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer view-transition-name="footer"
+    class="group-has-[.section-soft]/body:bg-surface/40 3xl:fixed:bg-transparent dark:bg-transparent">
+    <div class="container-wrapper px-4 xl:px-6">
+        <div class="flex h-(--footer-height) items-center justify-between">
+            <div class="text-muted-foreground w-full text-center text-xs leading-loose sm:text-sm">
+                
+                <a href="https://github.com/asiffer/mkdocs-shadcn">shadcn theme</a> provided by
+                <a href="https://github.com/asiffer">@asiffer</a>
+            </div>
+        </div>
+    </div>
+</footer>
+    </div>
+     
+
+<script src="../../../search/main.js"></script>
+
+
+    
+
+    <script src="../../../js/copy-button.js"></script>
+    <script>updatePygmentsStylesheet();</script>
+    
+    <script>fetchStargazers("https://github.com/flowllm-ai/flowllm");</script>
+    
+    
+    
+    <script src="../../../js/socket.io.min.js"></script>
+<script>
+    function randomString(length = 10) {
+        const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const array = new Uint32Array(length);
+        crypto.getRandomValues(array);
+        return Array.from(array, x => chars[x % chars.length]).join('');
+    }
+
+    /**
+     * Executes code using Programiz REPL via socket.io
+     * @param {string} lang - Programming language (e.g., "python", "cpp", "javascript")
+     * @param {string} code - Code to execute
+     * @returns {Promise<{output:string,ok:boolean}>} Promise resolving to the output
+     */
+    function runCodexec(code, lang) {
+        console.log(`Running code in ${lang}:`, code);
+        if (!["r", "c", "cpp", "csharp", "java", "python", "javascript", "typescript", "scala", "dart", "ruby", "golang", "php", "swift", "rust"].includes(lang)) {
+            return Promise.reject(new Error(`Unsupported language: ${lang}`));
+        }
+        const sessionId = randomString();
+        const socket = io(`wss://${lang}.repl-web.programiz.com`, {
+            path: "/socket.io",
+            transports: ["websocket"],
+            query: {
+                sessionId,
+                lang,
+                EIO: "3",
+            },
+        });
+
+        const id = `${lang}/${sessionId}`;
+
+
+        return new Promise((resolve, reject) => {
+            let timeout;
+            let result = ""
+            let ok = true;
+
+            socket.on("connect_error", (err) => {
+                console.error(`[${id}] Connection error:`, err);
+                reject(err);
+            });
+
+            socket.on("connect", () => {
+                console.log(`[${id}] Connected`);
+                console.log(`[${id}] Code:\n${code}`);
+                socket.emit("run", { code });
+            });
+
+            socket.on("disconnect", () => {
+                clearTimeout(timeout);
+                // remove bottom marker and trim
+                result = result.replace("=== Code Execution Successful ===", "").trim(); // trim trailing newlines
+                resolve({ output: result, ok });
+                console.log(`[${id}] Disconnected`);
+            });
+
+            socket.on("output", ({ output }) => {
+                console.log(`[${id}] Output received:`, output);
+                if (output.slice(0, 6) === "ERROR!") {
+                    ok = false;
+                    // we try to retrieve the error message in the next message
+                    return
+                }
+                // append output
+                result += output;
+            });
+
+            // safety timeout
+            timeout = setTimeout(() => {
+                reject(new Error(`[${id}] Timeout while waiting for output`));
+                socket.disconnect();
+            }, 10000);
+        });
+    }
+
+</script>
+    
+    <script type="speculationrules">
+{
+  "prerender": [
+    {
+      "where": {
+          "selector_matches": ["#next-button", "#previous-button"],
+      }
+    }
+  ]
+}
+</script>
+</body>
+
+</html>
