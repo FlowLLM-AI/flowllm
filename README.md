@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>FlowLLM：让基于LLM的HTTP/MCP服务开发更简单</strong><br>
-  <em>`如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力`</em>
+  <em><sub>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</sub></em>
 </p>
 
 <p align="center">
