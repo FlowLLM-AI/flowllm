@@ -30,30 +30,29 @@ FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP s
   <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
 </p>
 
-
-### ⭐ Core Features
-- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods.
-
-- **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
-
-- **Automatic Service Generation**: FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides RESTful APIs with synchronous JSON and HTTP Stream responses. The MCP service registers as Model Context Protocol tools for MCP-compatible clients. The CMD service executes a single Op in command-line mode for quick testing and debugging.
-
-
 ### 🌟 Applications Based on FlowLLM
 
-| Project Name | Description |
-|--------------|-------------|
+| Project Name                                  | Description                          |
+|-----------------------------------------------|--------------------------------------|
 | [ReMe](https://github.com/agentscope-ai/ReMe) | Memory management toolkit for agents |
 
 ### 📚 Learning Resources
 
 Learning resources shared by the project developers.
 
-| Date       | Title                                                                                | Description                                          |
-|------------|--------------------------------------------------------------------------------------|------------------------------------------------------|
-| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management Video |
-| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                     | Evolution Guide from Prompt Engineering to Context Engineering                            |
-| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI                       |
+| Date       | Title                                                                                                  | Description                                                    |
+|------------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video                     |
+| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Evolution Guide from Prompt Engineering to Context Engineering |
+| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI         |
+
+### ⭐ Core Features
+
+- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods.
+
+- **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
+
+- **Automatic Service Generation**: FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides RESTful APIs with synchronous JSON and HTTP Stream responses. The MCP service registers as Model Context Protocol tools for MCP-compatible clients. The CMD service executes a single Op in command-line mode for quick testing and debugging.
 
 ---
 
