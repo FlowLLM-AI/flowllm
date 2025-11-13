@@ -46,11 +46,11 @@ MCP 的客户端工具中。
 
 这里是项目开发者分享的学习资料。
 
-| 日期         | 标题                                                                                | 描述                                        |
-|------------|-----------------------------------------------------------------------------------|-------------------------------------------|
-| 2025-11-10 | [LangChain & Manus 视频资料](./docs/zh/reading/20251110-manus-context-raw.md)         | LangChain 和 Manus 关于上下文工程的网络研讨会视频转录       |
-| 2025-11-10 | [上下文管理（Context Management）指南](./docs/zh/reading/20251110-manus-context-report.md) | 从提示工程到上下文工程的演进，以及智能体上下文管理的实践指南            |
-| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略：预判溢出、自动压缩、内容截断、历史过滤 |
+| 日期         | 标题                                                                                | 描述                                          |
+|------------|-----------------------------------------------------------------------------------|---------------------------------------------|
+| 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video |
+| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 从提示工程到上下文工程的演进指南                            |
+| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                       |
 
 ---
 
