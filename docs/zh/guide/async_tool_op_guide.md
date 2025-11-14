@@ -12,7 +12,7 @@
 import asyncio
 
 from flowllm.core.context import C
-from flowllm.core.op.base_async_tool_op import BaseAsyncToolOp
+from flowllm.core.op import BaseAsyncToolOp
 from flowllm.core.schema import ToolCall
 from flowllm.main import FlowLLMApp
 

@@ -10,7 +10,7 @@ HTTP 工具的业务逻辑来源于 Flow 中的 Op。基类见 `flowllm/core/op/
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 
 @C.register_op()
 class EchoOp(BaseAsyncOp):

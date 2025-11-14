@@ -100,7 +100,7 @@ For detailed configuration, refer to the [Configuration Guide](docs/zh/guide/con
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 from flowllm.core.schema import Message
 from flowllm.core.enumeration import Role
 

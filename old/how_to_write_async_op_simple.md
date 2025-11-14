@@ -12,7 +12,7 @@
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 
 @C.register_op()
 class MyAsyncOp(BaseAsyncOp):
@@ -66,7 +66,7 @@ class SumOp(BaseAsyncOp):
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 from flowllm.core.schema import Message
 from flowllm.core.enumeration import Role
 from flowllm.main import FlowLLMApp
@@ -132,7 +132,7 @@ class QAOp(BaseAsyncOp):
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 from flowllm.core.schema import Message
 from flowllm.core.enumeration import Role
 from flowllm.main import FlowLLMApp

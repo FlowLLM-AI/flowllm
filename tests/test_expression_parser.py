@@ -4,9 +4,9 @@ This module contains tests for parsing various flow expressions including
 sequential, parallel, and mixed operations with different syntax patterns.
 """
 
-from flowllm.core.context.service_context import C
-from flowllm.core.op.base_op import BaseOp
-from flowllm.core.utils.common_utils import parse_flow_expression
+from flowllm.core.context import C
+from flowllm.core.op import BaseOp
+from flowllm.core.utils import parse_flow_expression
 
 
 # Define minimal ops for testing and register them with stable names
@@ -69,7 +69,7 @@ def test_expression_parser_single_line_sequential():
     flow = "Op1Op() >> Op2Op() >> Op3Op()"
     result = parse_flow_expression(flow)
     # Should be a SequentialOp with three ops
-    from flowllm.core.op.sequential_op import SequentialOp
+    from flowllm.core.op import SequentialOp
 
     assert isinstance(result, SequentialOp)
     assert len(result.ops) == 3
@@ -88,7 +88,7 @@ Op1Op() >> Op2Op() >> Op3Op()
 """.strip()
 
     result = parse_flow_expression(flow)
-    from flowllm.core.op.sequential_op import SequentialOp
+    from flowllm.core.op import SequentialOp
 
     # The assignments should execute without affecting the final expression
     assert isinstance(result, SequentialOp)
@@ -125,7 +125,7 @@ opx
 """.strip()
 
     result = parse_flow_expression(flow)
-    from flowllm.core.op.sequential_op import SequentialOp
+    from flowllm.core.op import SequentialOp
 
     assert isinstance(result, SequentialOp)
     assert len(result.ops) == 3
@@ -138,7 +138,7 @@ def test_expression_parser_parallel_basic():
     """Test parsing a basic parallel flow expression."""
     flow = "Op1Op() | Op2Op()"
     result = parse_flow_expression(flow)
-    from flowllm.core.op.parallel_op import ParallelOp
+    from flowllm.core.op import ParallelOp
 
     assert isinstance(result, ParallelOp)
     assert len(result.ops) == 2
@@ -150,8 +150,8 @@ def test_expression_parser_mixed_with_parentheses():
     """Test parsing a mixed sequential and parallel flow with parentheses."""
     flow = "Op1Op() >> (Op2Op() | Op3Op()) >> Op1Op()"
     result = parse_flow_expression(flow)
-    from flowllm.core.op.sequential_op import SequentialOp
-    from flowllm.core.op.parallel_op import ParallelOp
+    from flowllm.core.op import SequentialOp
+    from flowllm.core.op import ParallelOp
 
     assert isinstance(result, SequentialOp)
     assert len(result.ops) == 3
@@ -174,8 +174,8 @@ op1.ops.find = FindOp()
 """.strip()
 
     result = parse_flow_expression(flow)
-    from flowllm.core.op.sequential_op import SequentialOp
-    from flowllm.core.op.parallel_op import ParallelOp
+    from flowllm.core.op import SequentialOp
+    from flowllm.core.op import ParallelOp
 
     assert isinstance(result, SequentialOp)
     assert isinstance(result.ops[0], ParallelOp)
@@ -196,8 +196,8 @@ op << {"search": Op1Op(), "find": Op2Op()}
 """.strip()
 
     result = parse_flow_expression(flow)
-    from flowllm.core.op.sequential_op import SequentialOp
-    from flowllm.core.op.parallel_op import ParallelOp
+    from flowllm.core.op import SequentialOp
+    from flowllm.core.op import ParallelOp
 
     # Structure: Sequential with three parts: Parallel, Parallel, Container
     assert isinstance(result, SequentialOp)

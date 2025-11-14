@@ -10,7 +10,7 @@
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 from flowllm.core.schema import VectorNode
 from flowllm.main import FlowLLMApp
 import asyncio
