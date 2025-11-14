@@ -993,12 +993,13 @@
 <h2 id="_2">可用的实现类型</h2>
 <p>FlowLLM 提供了多种 Vector Store 实现，适用于不同的使用场景：</p>
 <ul>
-<li><strong>LocalVectorStore</strong>：基于本地文件的实现，使用 JSONL 格式持久化存储，适合单机部署和小规模数据</li>
-<li><strong>MemoryVectorStore</strong>：内存实现，数据存储在内存中，访问速度快，适合临时数据或测试场景</li>
-<li><strong>QdrantVectorStore</strong>：基于 Qdrant 向量数据库，支持高性能向量搜索，适合大规模生产环境</li>
-<li><strong>ChromaVectorStore</strong>：基于 ChromaDB 的实现，提供持久化存储和元数据过滤能力</li>
-<li><strong>EsVectorStore</strong>：基于 Elasticsearch 的实现，支持强大的全文搜索和向量搜索组合</li>
+<li><strong>LocalVectorStore</strong>（<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/local_vector_store.py">代码路径</a>）：基于本地文件的实现，使用 JSONL 格式持久化存储，适合单机部署和小规模数据</li>
+<li><strong>MemoryVectorStore</strong>（<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/memory_vector_store.py">代码路径</a>）：内存实现，数据存储在内存中，访问速度快，适合临时数据或测试场景</li>
+<li><strong>QdrantVectorStore</strong>（<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/qdrant_vector_store.py">代码路径</a>）：基于 Qdrant 向量数据库，支持高性能向量搜索，适合大规模生产环境</li>
+<li><strong>ChromaVectorStore</strong>（<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/chroma_vector_store.py">代码路径</a>）：基于 ChromaDB 的实现，提供持久化存储和元数据过滤能力</li>
+<li><strong>EsVectorStore</strong>（<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/es_vector_store.py">代码路径</a>）：基于 Elasticsearch 的实现，支持强大的全文搜索和向量搜索组合</li>
 </ul>
+<p>所有 Vector Store 实现都继承自 <strong>BaseVectorStore</strong>（<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/base_vector_store.py">代码路径</a>），提供统一的接口规范。</p>
 <h2 id="_3">核心功能</h2>
 <h3 id="_4">工作空间管理</h3>
 <ul>
@@ -1067,21 +1068,157 @@
 <li><strong>hosts</strong>：Elasticsearch 主机地址，可以是字符串或列表，默认 <code>http://localhost:9200</code></li>
 <li><strong>basic_auth</strong>：基本认证凭据（用户名和密码）</li>
 </ul>
-<h2 id="_11">元数据过滤</h2>
+<h2 id="_11">配置文件示例</h2>
+<p>在 <code>flowllm/config/default.yaml</code> 中配置 Vector Store，所有配置都在 <code>vector_store</code> 部分下。基本配置结构如下：</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;backend_name&gt;</span><span class="w">        </span><span class="c1"># 必需：向量库后端类型</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w">       </span><span class="c1"># 必需：嵌入模型配置名称</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span><span class="w">                        </span><span class="c1"># 可选：后端特定参数</span>
+<span class="w">      </span><span class="c1"># 后端特定参数</span>
+</code></pre></div>
+
+<h3 id="_12">配置字段说明</h3>
+<ul>
+<li><strong><code>backend</code></strong>（必需）：向量库后端类型，可选值：<code>local</code>、<code>memory</code>、<code>chroma</code>、<code>qdrant</code>、<code>elasticsearch</code></li>
+<li><strong><code>embedding_model</code></strong>（必需）：嵌入模型配置名称，引用 <code>embedding_model</code> 部分的配置</li>
+<li><strong><code>params</code></strong>（可选）：后端特定参数字典，将传递给向量库构造函数</li>
+</ul>
+<h3 id="_13">各类型配置示例</h3>
+<h4 id="1-localvectorstore">1. LocalVectorStore 配置</h4>
+<p>最简单的本地文件存储，适合开发和测试。</p>
+<p><strong>代码实现</strong>：<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/local_vector_store.py"><code>flowllm/core/vector_store/local_vector_store.py</code></a></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">local</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">store_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./local_vector_store&quot;</span><span class="w">  </span><span class="c1"># 存储目录（可选，默认：&quot;./local_vector_store&quot;）</span>
+</code></pre></div>
+
+<h4 id="2-memoryvectorstore">2. MemoryVectorStore 配置</h4>
+<p>内存存储，访问速度快，适合临时数据或测试。</p>
+<p><strong>代码实现</strong>：<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/memory_vector_store.py"><code>flowllm/core/vector_store/memory_vector_store.py</code></a></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">memory</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">store_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./memory_vector_store&quot;</span><span class="w">  </span><span class="c1"># 持久化目录（可选，默认：&quot;./memory_vector_store&quot;）</span>
+</code></pre></div>
+
+<h4 id="3-chromavectorstore">3. ChromaVectorStore 配置</h4>
+<p>基于 ChromaDB 的持久化存储，支持元数据过滤。</p>
+<p><strong>代码实现</strong>：<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/chroma_vector_store.py"><code>flowllm/core/vector_store/chroma_vector_store.py</code></a></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">chroma</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">store_dir</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./chroma_vector_store&quot;</span><span class="w">  </span><span class="c1"># ChromaDB 数据目录（可选，默认：&quot;./chroma_vector_store&quot;）</span>
+</code></pre></div>
+
+<h4 id="4-qdrantvectorstore">4. QdrantVectorStore 配置</h4>
+<p><strong>代码实现</strong>：<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/qdrant_vector_store.py"><code>flowllm/core/vector_store/qdrant_vector_store.py</code></a></p>
+<p><strong>本地 Qdrant 实例：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qdrant</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;localhost&quot;</span><span class="w">      </span><span class="c1"># Qdrant 服务器主机（可选，默认：localhost）</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6333</span><span class="w">             </span><span class="c1"># Qdrant 服务器端口（可选，默认：6333）</span>
+<span class="w">      </span><span class="nt">distance</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;COSINE&quot;</span><span class="w">     </span><span class="c1"># 距离度量方式（可选，默认：COSINE，可选值：COSINE、EUCLIDEAN、DOT）</span>
+</code></pre></div>
+
+<p><strong>Qdrant Cloud 配置：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qdrant</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://your-cluster.qdrant.io:6333&quot;</span><span class="w">  </span><span class="c1"># Qdrant Cloud 地址</span>
+<span class="w">      </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;your-api-key-here&quot;</span><span class="w">                 </span><span class="c1"># API 密钥</span>
+<span class="w">      </span><span class="nt">distance</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;COSINE&quot;</span>
+</code></pre></div>
+
+<h4 id="5-esvectorstore">5. EsVectorStore 配置</h4>
+<p><strong>代码实现</strong>：<a href="https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/es_vector_store.py"><code>flowllm/core/vector_store/es_vector_store.py</code></a></p>
+<p><strong>基本配置（本地 Elasticsearch）：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">elasticsearch</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;http://localhost:9200&quot;</span><span class="w">  </span><span class="c1"># Elasticsearch 主机地址（可选，默认：http://localhost:9200）</span>
+</code></pre></div>
+
+<p><strong>带认证的配置：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">elasticsearch</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;http://elasticsearch.example.com:9200&quot;</span>
+<span class="w">      </span><span class="nt">basic_auth</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;username&quot;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&quot;password&quot;</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># 基本认证凭据</span>
+</code></pre></div>
+
+<p><strong>多主机配置：</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">elasticsearch</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;http://es-node1:9200&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;http://es-node2:9200&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;http://es-node3:9200&quot;</span>
+</code></pre></div>
+
+<h3 id="_14">完整配置示例</h3>
+<p>以下是一个完整的 <code>default.yaml</code> 配置示例，包含嵌入模型和向量库配置：</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># 嵌入模型配置</span>
+<span class="nt">embedding_model</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai_compatible</span>
+<span class="w">    </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">text-embedding-v4</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dimensions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span>
+
+<span class="c1"># 向量库配置</span>
+<span class="nt">vector_store</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">default</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">elasticsearch</span>
+<span class="w">    </span><span class="nt">embedding_model</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">hosts</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;http://localhost:9200&quot;</span>
+</code></pre></div>
+
+<h3 id="_15">环境变量支持</h3>
+<p>部分 Vector Store 支持通过环境变量进行配置，作为 YAML 配置的补充：</p>
+<ul>
+<li><strong>Elasticsearch</strong>：<code>FLOW_ES_HOSTS</code> - Elasticsearch 主机地址</li>
+<li><strong>Qdrant</strong>：</li>
+<li><code>FLOW_QDRANT_HOST</code> - Qdrant 主机（默认：<code>localhost</code>）</li>
+<li><code>FLOW_QDRANT_PORT</code> - Qdrant 端口（默认：<code>6333</code>）</li>
+<li><code>FLOW_QDRANT_API_KEY</code> - Qdrant API 密钥</li>
+</ul>
+<p>当 YAML 配置中未明确指定参数时，系统会使用环境变量作为后备值。</p>
+<h2 id="_16">元数据过滤</h2>
 <p>支持两种类型的元数据过滤：</p>
 <ul>
 <li><strong>精确匹配</strong>：直接指定字段值进行精确匹配</li>
 <li><strong>范围查询</strong>：使用 <code>gte</code>、<code>lte</code>、<code>gt</code>、<code>lt</code> 操作符进行数值范围查询</li>
 <li><strong>嵌套字段</strong>：支持使用点号访问嵌套的元数据字段</li>
 </ul>
-<h2 id="_12">使用场景建议</h2>
+<h2 id="_17">使用场景建议</h2>
 <ul>
 <li><strong>开发测试</strong>：使用 MemoryVectorStore 或 LocalVectorStore，无需额外服务</li>
 <li><strong>小规模应用</strong>：使用 LocalVectorStore 或 ChromaVectorStore，简单易用</li>
 <li><strong>生产环境</strong>：使用 QdrantVectorStore 或 EsVectorStore，提供高性能和可扩展性</li>
 <li><strong>混合搜索</strong>：使用 EsVectorStore，结合向量搜索和全文搜索能力</li>
 </ul>
-<h2 id="_13">注意事项</h2>
+<h2 id="_18">注意事项</h2>
 <ul>
 <li>确保嵌入模型的维度与 Vector Store 配置一致</li>
 <li>大规模数据建议使用专业的向量数据库（Qdrant、Elasticsearch）</li>
@@ -1451,12 +1588,46 @@
         <a href="#_11"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
+            配置文件示例
+        </a>
+        
+        
+        <a href="#_12"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            配置字段说明
+        </a>
+        
+        <a href="#_13"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            各类型配置示例
+        </a>
+        
+        <a href="#_14"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            完整配置示例
+        </a>
+        
+        <a href="#_15"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            环境变量支持
+        </a>
+        
+        
+
+        
+        <a href="#_16"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
             元数据过滤
         </a>
         
 
         
-        <a href="#_12"
+        <a href="#_17"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
             使用场景建议
@@ -1464,7 +1635,7 @@
         
 
         
-        <a href="#_13"
+        <a href="#_18"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
             注意事项
