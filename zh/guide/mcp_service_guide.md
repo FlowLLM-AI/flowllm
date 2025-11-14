@@ -10,7 +10,7 @@ MCP 工具的业务逻辑来源于 Flow 中的 Op。可直接复用已有 Op，�
 
 ```python
 from flowllm.core.context import C
-from flowllm.core.op.base_async_op import BaseAsyncOp
+from flowllm.core.op import BaseAsyncOp
 
 @C.register_op()
 class MockSearchOp(BaseAsyncOp):

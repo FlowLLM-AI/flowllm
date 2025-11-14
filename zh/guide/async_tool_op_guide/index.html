@@ -989,11 +989,12 @@
 <hr />
 <h3 id="_1">完整示例</h3>
 <h4 id="op-echo_tool_oppy">Op 文件：<code>echo_tool_op.py</code></h4>
-<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.core.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">C</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.core.op.base_async_tool_op</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAsyncToolOp</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.core.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolCall</span><span class="p">,</span> <span class="n">ParamAttrs</span>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.core.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">C</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.core.op</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseAsyncToolOp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.core.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolCall</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">flowllm.main</span><span class="w"> </span><span class="kn">import</span> <span class="n">FlowLLMApp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 
 
 <span class="nd">@C</span><span class="o">.</span><span class="n">register_op</span><span class="p">()</span>
@@ -1003,18 +1004,16 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">build_tool_call</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ToolCall</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;定义工具的 Schema：描述、输入参数、输出参数&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">ToolCall</span><span class="p">(</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Echo input text, returns the same text as output&quot;</span><span class="p">,</span>
-            <span class="n">input_schema</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="n">ParamAttrs</span><span class="p">(</span>
-                    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;str&quot;</span><span class="p">,</span>
-                    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;text to echo&quot;</span><span class="p">,</span>
-                    <span class="n">required</span><span class="o">=</span><span class="kc">True</span>
-                <span class="p">),</span>
-            <span class="p">},</span>
-            <span class="c1"># 可选：如果不提供 output_schema，会自动生成默认的单字符串输出键</span>
-            <span class="c1"># output_schema={</span>
-            <span class="c1">#     &quot;result&quot;: ParamAttrs(type=&quot;str&quot;, description=&quot;echoed text&quot;)</span>
-            <span class="c1"># }</span>
+            <span class="o">**</span><span class="p">{</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;Echo input text, returns the same text as output&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;input_schema&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;text&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;str&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;text to echo&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;required&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">},</span>
+            <span class="p">}</span>
         <span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">async_execute</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

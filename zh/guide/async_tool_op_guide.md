@@ -9,11 +9,12 @@
 #### Op 文件：`echo_tool_op.py`
 
 ```python
-from flowllm.core.context import C
-from flowllm.core.op.base_async_tool_op import BaseAsyncToolOp
-from flowllm.core.schema import ToolCall, ParamAttrs
-from flowllm.main import FlowLLMApp
 import asyncio
+
+from flowllm.core.context import C
+from flowllm.core.op import BaseAsyncToolOp
+from flowllm.core.schema import ToolCall
+from flowllm.main import FlowLLMApp
 
 
 @C.register_op()
@@ -23,18 +24,16 @@ class EchoToolOp(BaseAsyncToolOp):
     def build_tool_call(self) -> ToolCall:
         """定义工具的 Schema：描述、输入参数、输出参数"""
         return ToolCall(
-            description="Echo input text, returns the same text as output",
-            input_schema={
-                "text": ParamAttrs(
-                    type="str",
-                    description="text to echo",
-                    required=True
-                ),
-            },
-            # 可选：如果不提供 output_schema，会自动生成默认的单字符串输出键
-            # output_schema={
-            #     "result": ParamAttrs(type="str", description="echoed text")
-            # }
+            **{
+                "description": "Echo input text, returns the same text as output",
+                "input_schema": {
+                    "text": {
+                        "type": "str",
+                        "description": "text to echo",
+                        "required": True,
+                    },
+                },
+            }
         )
 
     async def async_execute(self):
