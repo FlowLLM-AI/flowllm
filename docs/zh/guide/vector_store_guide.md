@@ -14,11 +14,13 @@ Vector Store 是用于存储、管理和检索向量嵌入的组件，支持工�
 
 FlowLLM 提供了多种 Vector Store 实现，适用于不同的使用场景：
 
-- **LocalVectorStore**：基于本地文件的实现，使用 JSONL 格式持久化存储，适合单机部署和小规模数据
-- **MemoryVectorStore**：内存实现，数据存储在内存中，访问速度快，适合临时数据或测试场景
-- **QdrantVectorStore**：基于 Qdrant 向量数据库，支持高性能向量搜索，适合大规模生产环境
-- **ChromaVectorStore**：基于 ChromaDB 的实现，提供持久化存储和元数据过滤能力
-- **EsVectorStore**：基于 Elasticsearch 的实现，支持强大的全文搜索和向量搜索组合
+- **LocalVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/local_vector_store.py)）：基于本地文件的实现，使用 JSONL 格式持久化存储，适合单机部署和小规模数据
+- **MemoryVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/memory_vector_store.py)）：内存实现，数据存储在内存中，访问速度快，适合临时数据或测试场景
+- **QdrantVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/qdrant_vector_store.py)）：基于 Qdrant 向量数据库，支持高性能向量搜索，适合大规模生产环境
+- **ChromaVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/chroma_vector_store.py)）：基于 ChromaDB 的实现，提供持久化存储和元数据过滤能力
+- **EsVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/es_vector_store.py)）：基于 Elasticsearch 的实现，支持强大的全文搜索和向量搜索组合
+
+所有 Vector Store 实现都继承自 **BaseVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/base_vector_store.py)），提供统一的接口规范。
 
 ## 核心功能
 
@@ -91,6 +93,177 @@ FlowLLM 提供了多种 Vector Store 实现，适用于不同的使用场景：
 
 - **hosts**：Elasticsearch 主机地址，可以是字符串或列表，默认 `http://localhost:9200`
 - **basic_auth**：基本认证凭据（用户名和密码）
+
+## 配置文件示例
+
+在 `flowllm/config/default.yaml` 中配置 Vector Store，所有配置都在 `vector_store` 部分下。基本配置结构如下：
+
+```yaml
+vector_store:
+  default:
+    backend: <backend_name>        # 必需：向量库后端类型
+    embedding_model: default       # 必需：嵌入模型配置名称
+    params:                        # 可选：后端特定参数
+      # 后端特定参数
+```
+
+### 配置字段说明
+
+- **`backend`**（必需）：向量库后端类型，可选值：`local`、`memory`、`chroma`、`qdrant`、`elasticsearch`
+- **`embedding_model`**（必需）：嵌入模型配置名称，引用 `embedding_model` 部分的配置
+- **`params`**（可选）：后端特定参数字典，将传递给向量库构造函数
+
+### 各类型配置示例
+
+#### 1. LocalVectorStore 配置
+
+最简单的本地文件存储，适合开发和测试。
+
+**代码实现**：[`flowllm/core/vector_store/local_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/local_vector_store.py)
+
+```yaml
+vector_store:
+  default:
+    backend: local
+    embedding_model: default
+    params:
+      store_dir: "./local_vector_store"  # 存储目录（可选，默认："./local_vector_store"）
+```
+
+#### 2. MemoryVectorStore 配置
+
+内存存储，访问速度快，适合临时数据或测试。
+
+**代码实现**：[`flowllm/core/vector_store/memory_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/memory_vector_store.py)
+
+```yaml
+vector_store:
+  default:
+    backend: memory
+    embedding_model: default
+    params:
+      store_dir: "./memory_vector_store"  # 持久化目录（可选，默认："./memory_vector_store"）
+```
+
+#### 3. ChromaVectorStore 配置
+
+基于 ChromaDB 的持久化存储，支持元数据过滤。
+
+**代码实现**：[`flowllm/core/vector_store/chroma_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/chroma_vector_store.py)
+
+```yaml
+vector_store:
+  default:
+    backend: chroma
+    embedding_model: default
+    params:
+      store_dir: "./chroma_vector_store"  # ChromaDB 数据目录（可选，默认："./chroma_vector_store"）
+```
+
+#### 4. QdrantVectorStore 配置
+
+**代码实现**：[`flowllm/core/vector_store/qdrant_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/qdrant_vector_store.py)
+
+**本地 Qdrant 实例：**
+
+```yaml
+vector_store:
+  default:
+    backend: qdrant
+    embedding_model: default
+    params:
+      host: "localhost"      # Qdrant 服务器主机（可选，默认：localhost）
+      port: 6333             # Qdrant 服务器端口（可选，默认：6333）
+      distance: "COSINE"     # 距离度量方式（可选，默认：COSINE，可选值：COSINE、EUCLIDEAN、DOT）
+```
+
+**Qdrant Cloud 配置：**
+
+```yaml
+vector_store:
+  default:
+    backend: qdrant
+    embedding_model: default
+    params:
+      url: "https://your-cluster.qdrant.io:6333"  # Qdrant Cloud 地址
+      api_key: "your-api-key-here"                 # API 密钥
+      distance: "COSINE"
+```
+
+#### 5. EsVectorStore 配置
+
+**代码实现**：[`flowllm/core/vector_store/es_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/es_vector_store.py)
+
+**基本配置（本地 Elasticsearch）：**
+
+```yaml
+vector_store:
+  default:
+    backend: elasticsearch
+    embedding_model: default
+    params:
+      hosts: "http://localhost:9200"  # Elasticsearch 主机地址（可选，默认：http://localhost:9200）
+```
+
+**带认证的配置：**
+
+```yaml
+vector_store:
+  default:
+    backend: elasticsearch
+    embedding_model: default
+    params:
+      hosts: "http://elasticsearch.example.com:9200"
+      basic_auth: ["username", "password"]  # 基本认证凭据
+```
+
+**多主机配置：**
+
+```yaml
+vector_store:
+  default:
+    backend: elasticsearch
+    embedding_model: default
+    params:
+      hosts:
+        - "http://es-node1:9200"
+        - "http://es-node2:9200"
+        - "http://es-node3:9200"
+```
+
+### 完整配置示例
+
+以下是一个完整的 `default.yaml` 配置示例，包含嵌入模型和向量库配置：
+
+```yaml
+# 嵌入模型配置
+embedding_model:
+  default:
+    backend: openai_compatible
+    model_name: text-embedding-v4
+    params:
+      dimensions: 1024
+
+# 向量库配置
+vector_store:
+  default:
+    backend: elasticsearch
+    embedding_model: default
+    params:
+      hosts: "http://localhost:9200"
+```
+
+### 环境变量支持
+
+部分 Vector Store 支持通过环境变量进行配置，作为 YAML 配置的补充：
+
+- **Elasticsearch**：`FLOW_ES_HOSTS` - Elasticsearch 主机地址
+- **Qdrant**：
+  - `FLOW_QDRANT_HOST` - Qdrant 主机（默认：`localhost`）
+  - `FLOW_QDRANT_PORT` - Qdrant 端口（默认：`6333`）
+  - `FLOW_QDRANT_API_KEY` - Qdrant API 密钥
+
+当 YAML 配置中未明确指定参数时，系统会使用环境变量作为后备值。
 
 ## 元数据过滤
 
