@@ -22,7 +22,7 @@ from tqdm import tqdm
 from ..core.context import C
 from ..core.enumeration import Role
 from ..core.op import BaseAsyncToolOp
-from ..core.schema import Message, ParamAttrs, ToolCall
+from ..core.schema import Message, ToolCall
 from ..core.utils.llm_utils import parse_message_by_keys
 
 
@@ -53,33 +53,33 @@ class CodeAnalyseOp(BaseAsyncToolOp):
             **{
                 "description": "Traverse code files, judge relevance to a query, and produce explanations.",
                 "input_schema": {
-                    "query": ParamAttrs(
-                        type="string",
-                        description="User question or task the code should address. "
+                    "query": {
+                        "type": "string",
+                        "description": "User question or task the code should address. "
                         "If empty, the code will be directly analyzed without relevance judgment.",
-                        required=False,
-                    ),
-                    "code_dir": ParamAttrs(
-                        type="string",
-                        description="Absolute path to the root directory of the code to inspect.",
-                        required=True,
-                    ),
-                    "file_suffix": ParamAttrs(
-                        type="string",
-                        description="File suffix to include when scanning, e.g. 'py'.",
-                        required=True,
-                    ),
-                    "exclude_suffix": ParamAttrs(
-                        type="string",
-                        description="File suffix to exclude when scanning, e.g. 'test.py'. "
+                        "required": False,
+                    },
+                    "code_dir": {
+                        "type": "string",
+                        "description": "Absolute path to the root directory of the code to inspect.",
+                        "required": True,
+                    },
+                    "file_suffix": {
+                        "type": "string",
+                        "description": "File suffix to include when scanning, e.g. 'py'.",
+                        "required": True,
+                    },
+                    "exclude_suffix": {
+                        "type": "string",
+                        "description": "File suffix to exclude when scanning, e.g. 'test.py'. "
                         "Multiple suffixes can be separated by commas.",
-                        required=False,
-                    ),
-                    "output_dir": ParamAttrs(
-                        type="string",
-                        description="Absolute path to the directory where analysis files will be written.",
-                        required=True,
-                    ),
+                        "required": False,
+                    },
+                    "output_dir": {
+                        "type": "string",
+                        "description": "Absolute path to the directory where analysis files will be written.",
+                        "required": True,
+                    },
                 },
             },
         )

@@ -15,7 +15,7 @@ from typing import Dict, Optional
 from pydantic import create_model, Field
 
 from . import snake_to_camel
-from ..schema import ParamAttrs, FlowRequest
+from ..schema import ToolAttr, FlowRequest
 
 TYPE_MAPPING = {
     "string": str,
@@ -27,7 +27,7 @@ TYPE_MAPPING = {
 }
 
 
-def create_pydantic_model(flow_name: str, input_schema: Dict[str, ParamAttrs] = None):
+def create_pydantic_model(flow_name: str, input_schema: Dict[str, ToolAttr] = None):
     """Create a Pydantic model class for a flow's input schema.
 
     The returned model subclasses `FlowRequest` and includes one field per
@@ -39,9 +39,8 @@ def create_pydantic_model(flow_name: str, input_schema: Dict[str, ParamAttrs] = 
     Args:
         flow_name: The name of the flow. Used to derive the generated model
             class name in CamelCase.
-        input_schema: A mapping from parameter name to its attributes
-            (`ParamAttrs`). If ``None`` or empty, only the fields from the
-            `FlowRequest` base are present.
+        input_schema: A mapping from parameter name to its attributes.
+            If ``None`` or empty, only the fields from the `FlowRequest` base are present.
 
     Returns:
         A dynamically created `pydantic.BaseModel` subclass named

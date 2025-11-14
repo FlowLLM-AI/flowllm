@@ -1,21 +1,43 @@
 """Tool call schema definitions for representing and managing tool calls."""
 
 import json
-from typing import Dict, List
+from typing import Dict, List, Literal
 
 from mcp.types import Tool
 from pydantic import BaseModel, Field, model_validator, ConfigDict
 
+TOOL_ATTR_TYPE = Literal["string", "array", "integer", "number", "boolean", "object"]
 
-class ParamAttrs(BaseModel):
+
+class ToolAttr(BaseModel):
     """Attributes for tool parameters."""
 
-    type: str = Field(default="str", description="tool parameter type")
-    description: str = Field(default="", description="tool parameter description")
-    required: bool = Field(default=True, description="tool parameter required")
-    enum: List[str] | None = Field(default=None, description="tool parameter enum")
+    type: TOOL_ATTR_TYPE = Field(default="string", description="tool attribute type")
+    description: str = Field(default="", description="tool attribute description")
+    required: bool = Field(default=True, description="tool attribute required")
+    enum: List[str] | None = Field(default=None, description="tool attribute enum")
+    items: dict = Field(default_factory=dict, description="tool attribute items")
 
     model_config = ConfigDict(extra="allow")
+
+    def simple_input_dump(self, version: str = "default") -> dict:
+        """Convert ToolAttr to input format dictionary for API requests."""
+        if version == "default":
+            result: dict = {
+                "type": self.type,
+                "description": self.description,
+            }
+
+            if self.enum:
+                result["enum"] = self.enum
+
+            if self.items:
+                result["items"] = self.items
+
+            return result
+
+        else:
+            raise NotImplementedError(f"version {version} not supported")
 
 
 class ToolCall(BaseModel):
@@ -58,8 +80,8 @@ class ToolCall(BaseModel):
     arguments: str = Field(default="", description="tool execution arguments")
 
     description: str = Field(default="")
-    input_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
-    output_schema: Dict[str, ParamAttrs] = Field(default_factory=dict)
+    input_schema: Dict[str, ToolAttr] = Field(default_factory=dict)
+    output_schema: Dict[str, ToolAttr] = Field(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
@@ -78,14 +100,14 @@ class ToolCall(BaseModel):
             data["description"] = tool_type_dict["description"]
 
         if "parameters" in tool_type_dict:
-            tool_params = tool_type_dict["parameters"]
-            properties: dict = tool_params.get("properties", {})
-            required: list = tool_params.get("required", [])
+            parameters = tool_type_dict["parameters"]
+            properties: dict = parameters.get("properties", {})
+            required: list = parameters.get("required", [])
             data["input_schema"] = {}
             for name, param_attrs in properties.items():
-                tool_param = ParamAttrs(**param_attrs)
-                tool_param.required = name in required
-                data["input_schema"][name] = tool_param
+                tool_attr = ToolAttr(**param_attrs)
+                tool_attr.required = name in required
+                data["input_schema"][name] = tool_attr
 
         return data
 
@@ -102,25 +124,30 @@ class ToolCall(BaseModel):
         except Exception:
             return False
 
+    @staticmethod
+    def _build_schema_dict(schema: Dict[str, ToolAttr]) -> dict:
+        required_list = []
+        properties = {}
+        for name, tool_attr in schema.items():
+            if tool_attr.required:
+                required_list.append(name)
+            properties[name] = tool_attr.simple_input_dump()
+
+        return {
+            "type": "object",
+            "properties": properties,
+            "required": required_list,
+        }
+
     def simple_input_dump(self, version: str = "default") -> dict:
         """Convert ToolCall to input format dictionary for API requests."""
         if version == "default":
-            required_list = [name for name, tool_param in self.input_schema.items() if tool_param.required]
-            properties = {
-                name: tool_param.model_dump(exclude={"required"}, exclude_none=True)
-                for name, tool_param in self.input_schema.items()
-            }
-
             return {
                 "type": self.type,
                 self.type: {
                     "name": self.name,
                     "description": self.description,
-                    "parameters": {
-                        "type": "object",
-                        "properties": properties,
-                        "required": required_list,
-                    },
+                    "parameters": self._build_schema_dict(self.input_schema),
                 },
             }
 
@@ -149,15 +176,10 @@ class ToolCall(BaseModel):
         properties = tool.inputSchema["properties"]
         required = tool.inputSchema.get("required", [])
         for name, attr_dict in properties.items():
-            param_attrs = ParamAttrs()
-
+            tool_attr = ToolAttr(**attr_dict)
             if name in required:
-                param_attrs.required = True
-            param_attrs.type = attr_dict.get("type", "str")
-            param_attrs.description = attr_dict.get("description", "")
-            if "enum" in attr_dict:
-                param_attrs.enum = attr_dict["enum"]
-            input_schema[name] = param_attrs
+                tool_attr.required = True
+            input_schema[name] = tool_attr
 
         return cls(
             name=tool.name,
@@ -165,56 +187,16 @@ class ToolCall(BaseModel):
             input_schema=input_schema,
         )
 
-    @staticmethod
-    def _build_mcp_schema(schema_dict: Dict[str, ParamAttrs]) -> dict:
-        """Build an MCP schema dictionary from a ParamAttrs schema dictionary."""
-        properties = {}
-        required = []
-
-        for name, param_attrs in schema_dict.items():
-            param_dict = {
-                "type": param_attrs.type,
-                "description": param_attrs.description,
-            }
-
-            # Add enum if present
-            if param_attrs.enum is not None:
-                param_dict["enum"] = param_attrs.enum
-
-            # Copy any extra fields from param_attrs
-            excluded_keys = {"type", "description", "required", "enum"}
-            for key, value in param_attrs.model_dump().items():
-                if key not in excluded_keys:
-                    param_dict[key] = value
-
-            properties[name] = param_dict
-
-            # Track required parameters
-            if param_attrs.required:
-                required.append(name)
-
-        mcp_schema = {
-            "type": "object",
-            "properties": properties,
-        }
-
-        if required:
-            mcp_schema["required"] = required
-
-        return mcp_schema
-
     def to_mcp_tool(self) -> Tool:
         """Convert this ToolCall to an MCP Tool object."""
-        input_schema = self._build_mcp_schema(self.input_schema)
+        tool = Tool(
+            name=self.name,
+            description=self.description,
+            inputSchema=self._build_schema_dict(self.input_schema),
+        )
 
         # Build outputSchema from output_schema if present
-        output_schema = None
         if self.output_schema:
-            output_schema = self._build_mcp_schema(self.output_schema)
+            tool.outputSchema = self._build_schema_dict(self.output_schema)
 
-        return Tool(
-            name=self.name,
-            description=self.description or None,
-            inputSchema=input_schema,
-            outputSchema=output_schema,
-        )
+        return tool

@@ -3,7 +3,7 @@
 This module defines `BaseAsyncToolOp`, an abstract base operator that helps
 implement asynchronous tool-like operations. It manages input/output schema
 binding to a shared context, provides default result handling, and standardizes
-pre/post execution hooks for derived ops.
+pre- / post-execution hooks for derived ops.
 """
 
 import json
@@ -13,7 +13,7 @@ from typing import List
 from loguru import logger
 
 from .base_async_op import BaseAsyncOp
-from ..schema import ToolCall, ParamAttrs
+from ..schema import ToolCall, ToolAttr
 
 
 class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
@@ -72,12 +72,15 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             ```python
             def build_tool_call(self) -> ToolCall:
                 return ToolCall(
-                    description="Search the web for information",
-                    input_schema={
-                        "query": ParamAttrs(type="str", description="Search query", required=True)
-                    },
-                    output_schema={
-                        "results": ParamAttrs(type="str", description="Search results")
+                    **{
+                        "description": "Search the web for information",
+                        "input_schema": {
+                            "query": {
+                                "type": "string",
+                                "description":"Search query",
+                                "required": True,
+                            },
+                        },
                     }
                 )
             ```
@@ -105,8 +108,8 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
             if not self._tool_call.output_schema:
                 self._tool_call.output_schema = {
-                    f"{self.short_name}_result": ParamAttrs(
-                        type="str",
+                    f"{self.short_name}_result": ToolAttr(
+                        type="string",
                         description=f"The execution result of the {self.short_name}",
                     ),
                 }

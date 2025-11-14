@@ -5,12 +5,15 @@ It includes ready-to-use operations for:
 
 - EditOp: File editing operation for replacing text within files
 - GlobOp: File search operation for finding files matching glob patterns
+- WriteTodosOp: to do list management operation for tracking task progress
 """
 
 from .edit_op import EditOp
 from .glob_op import GlobOp
+from .write_todos_op import WriteTodosOp
 
 __all__ = [
     "EditOp",
     "GlobOp",
+    "WriteTodosOp",
 ]

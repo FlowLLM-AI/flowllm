@@ -14,7 +14,7 @@ from .service_config import (
     ServiceConfig,
     VectorStoreConfig,
 )
-from .tool_call import ParamAttrs, ToolCall
+from .tool_call import ToolAttr, ToolCall
 from .vector_node import VectorNode
 
 # Rebuild FlowStreamChunk after ToolCall is imported to resolve forward references
@@ -34,7 +34,7 @@ __all__ = [
     "MCPConfig",
     "ServiceConfig",
     "VectorStoreConfig",
-    "ParamAttrs",
+    "ToolAttr",
     "ToolCall",
     "VectorNode",
 ]
