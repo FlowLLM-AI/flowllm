@@ -64,16 +64,44 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         Subclasses should override to provide `description`, `input_schema`, and
         optionally `output_schema`. If `output_schema` is not provided, a default
         single string output will be created.
+
+        Returns:
+            ToolCall instance describing the tool's interface
+
+        Example:
+            ```python
+            def build_tool_call(self) -> ToolCall:
+                return ToolCall(
+                    description="Search the web for information",
+                    input_schema={
+                        "query": ParamAttrs(type="str", description="Search query", required=True)
+                    },
+                    output_schema={
+                        "results": ParamAttrs(type="str", description="Search results")
+                    }
+                )
+            ```
         """
         return ToolCall(**{"description": "", "input_schema": {}})
 
     @property
     def tool_call(self):
-        """Return the lazily constructed `ToolCall` describing this tool."""
+        """Return the lazily constructed `ToolCall` describing this tool.
+
+        The tool call is constructed on first access by calling `build_tool_call()`.
+        The name and index are automatically set from the operator's short_name
+        and tool_index.
+
+        Returns:
+            ToolCall instance with name and index set
+        """
         if self._tool_call is None:
             self._tool_call = self.build_tool_call()
-            self._tool_call.name = self.short_name
-            self._tool_call.index = self.tool_index
+            if not self._tool_call.name:
+                self._tool_call.name = self.short_name
+
+            if not self._tool_call.index:
+                self._tool_call.index = self.tool_index
 
             if not self._tool_call.output_schema:
                 self._tool_call.output_schema = {
@@ -87,7 +115,14 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
     @property
     def output_keys(self) -> str | List[str]:
-        """Return the output key name or list of names defined by the schema."""
+        """Return the output key name or list of names defined by the schema.
+
+        If the tool has a single output, returns the key name as a string.
+        If the tool has multiple outputs, returns a list of key names.
+
+        Returns:
+            Single output key name (str) or list of output key names (List[str])
+        """
         output_keys = []
         for name, _ in self.tool_call.output_schema.items():
             if name not in output_keys:
@@ -115,6 +150,14 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
         If only one output key exists, `key` is ignored and the single key is
         used. Otherwise, `key` must be provided.
+
+        Args:
+            value: The output value to set
+            key: The output key name (required if multiple outputs exist)
+
+        Raises:
+            KeyError: If multiple outputs exist and `key` is not provided or
+                doesn't match any output key
         """
         if isinstance(self.output_keys, str):
             self.output_dict[self.output_keys] = value
@@ -122,7 +165,17 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             self.output_dict[key] = value
 
     def set_outputs(self, **kwargs):
-        """Set multiple output values using keyword arguments."""
+        """Set multiple output values using keyword arguments.
+
+        Args:
+            **kwargs: Keyword arguments where keys are output names and values
+                are the output values
+
+        Example:
+            ```python
+            self.set_outputs(result="success", count=10, status="ok")
+            ```
+        """
         for k, v in kwargs.items():
             self.set_output(v, k)
 
@@ -131,6 +184,9 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
 
         Applies `input_schema_mapping` and appends the `tool_index` suffix when
         necessary. Raises if any required input is missing.
+
+        Raises:
+            ValueError: If any required input is missing from the context
         """
         for name, attrs in self.tool_call.input_schema.items():
             context_key = name
@@ -147,8 +203,15 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
     async def async_after_execute(self):
         """Write `output_dict` back to the context and optionally save answer.
 
+        This method:
+        1. Writes all values from `output_dict` to the context using the
+           appropriate keys (with mapping and index suffix if needed)
+        2. Optionally saves the primary output to `context.response.answer`
+           if `save_answer` is True
+        3. Logs the output dictionary if `enable_print_output` is True
+
         Applies `output_schema_mapping` and appends the `tool_index` suffix when
-        necessary. Logs outputs when enabled.
+        necessary.
         """
         for name, value in self.output_dict.items():
             context_key = name
@@ -172,8 +235,16 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             else:
                 logger.info(f"{self.name}.{self.tool_index}.output_dict={self.output_dict}")
 
-    async def async_default_execute(self):
-        """Fill outputs with a default failure message when execution fails."""
+    async def async_default_execute(self, e: Exception = None, **kwargs):
+        """Fill outputs with a default failure message when execution fails.
+
+        This method is called when `async_execute()` fails. It sets all output
+        keys in `output_dict` to a failure message string.
+
+        Args:
+            e: The exception that was raised during execution (if any)
+            **kwargs: Additional keyword arguments (not used by default)
+        """
         if isinstance(self.output_keys, str):
             self.output_dict[self.output_keys] = f"{self.name} execution failed!"
         else:

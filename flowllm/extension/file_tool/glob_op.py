@@ -28,32 +28,32 @@ class GlobOp(BaseAsyncToolOp):
     Supports gitignore patterns for filtering files.
     """
 
+    file_path = __file__
+
     def __init__(self, gitignore_patterns: List[str] = None, **kwargs):
+        kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)
         self.gitignore_patterns = gitignore_patterns
 
     def build_tool_call(self) -> ToolCall:
         """Build and return the tool call schema for this operator."""
         tool_params = {
-            "description": """
-Efficiently finds files matching specific glob patterns (e.g., `src/**/*.ts`, `**/*.md`), returning absolute paths
-sorted by modification time (newest first). Ideal for quickly locating files based on their name or path structure,
-especially in large codebases.""".strip(),
+            "name": "FindFiles",
+            "description": self.get_prompt("tool_desc"),
             "input_schema": {
                 "pattern": {
                     "type": "string",
-                    "description": "The glob pattern to match against (e.g., '**/*.py', 'docs/*.md').",
+                    "description": self.get_prompt("pattern"),
                     "required": True,
                 },
                 "dir_path": {
                     "type": "string",
-                    "description": "Optional: The absolute path to the directory to search within. "
-                    "If omitted, searches the current working directory.",
+                    "description": self.get_prompt("dir_path"),
                     "required": False,
                 },
                 "case_sensitive": {
                     "type": "boolean",
-                    "description": "Optional: Whether the search should be case-sensitive. Defaults to false.",
+                    "description": self.get_prompt("case_sensitive"),
                     "required": False,
                 },
             },
@@ -190,10 +190,12 @@ especially in large codebases.""".strip(),
 
         self.set_output(result_message)
 
-    async def async_default_execute(self):
+    async def async_default_execute(self, e: Exception = None, **kwargs):
         """Fill outputs with a default failure message when execution fails."""
         pattern: str = self.input_dict.get("pattern", "").strip()
         error_msg = f'Failed to search files matching pattern "{pattern}"'
+        if e:
+            error_msg += f": {str(e)}"
         self.set_output(error_msg)
 
     def _glob_match(

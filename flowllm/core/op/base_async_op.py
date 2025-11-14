@@ -43,7 +43,13 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
         kwargs.setdefault("async_mode", True)
         super().__init__(**kwargs)
 
-    def execute(self): ...
+    def execute(self):
+        """Placeholder for synchronous execute method.
+
+        This method is not used in async operations. Subclasses should implement
+        `async_execute()` instead. This method exists only to satisfy the abstract
+        method requirement from BaseOp.
+        """
 
     async def async_save_load_cache(self, key: str, fn: Callable, **kwargs):
         """Save or load from cache asynchronously.
@@ -82,10 +88,36 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
         return result
 
     async def async_before_execute(self):
-        """Hook method called before async_execute(). Override in subclasses."""
+        """Hook method called before async_execute(). Override in subclasses.
+
+        This method is called automatically by `async_call()` before executing
+        the main `async_execute()` method. Use this to perform any setup,
+        validation, or preprocessing needed before execution.
+
+        Example:
+            ```python
+            async def async_before_execute(self):
+                # Validate inputs
+                if not self.context.get("input"):
+                    raise ValueError("Input is required")
+        ```
+        """
 
     async def async_after_execute(self):
-        """Hook method called after async_execute(). Override in subclasses."""
+        """Hook method called after async_execute(). Override in subclasses.
+
+        This method is called automatically by `async_call()` after successfully
+        executing the main `async_execute()` method. Use this to perform any
+        cleanup, post-processing, or result transformation.
+
+        Example:
+            ```python
+            async def async_after_execute(self):
+                # Post-process results
+                if self.context.response:
+                    self.context.response.answer = self.context.response.answer.upper()
+        ```
+        """
 
     @abstractmethod
     async def async_execute(self):
@@ -95,25 +127,48 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
             Execution result
         """
 
-    async def async_default_execute(self):
+    async def async_default_execute(self, e: Exception = None, **kwargs):
         """Default async execution method when main execution fails. Override in subclasses.
+
+        This method is called when `async_execute()` fails and `raise_exception`
+        is False. It provides a fallback mechanism to return a default result
+        instead of raising an exception.
+
+        Args:
+            e: The exception that was raised during execution (if any)
+            **kwargs: Additional keyword arguments
 
         Returns:
             Default execution result
+
+        Example:
+            ```python
+            async def async_default_execute(self, e: Exception = None, **kwargs):
+                logger.warning(f"Execution failed: {e}, returning default result")
+                return {"status": "error", "message": str(e)}
+            ```
         """
 
     async def async_call(self, context: FlowContext = None, **kwargs) -> Any:
         """Execute the operation asynchronously.
 
         This method handles the full async execution lifecycle including retries,
-        error handling, and context management.
+        error handling, and context management. It automatically calls
+        `async_before_execute()`, `async_execute()`, and `async_after_execute()`
+        in sequence.
 
         Args:
-            context: Flow context for this execution
-            **kwargs: Additional context updates
+            context: Flow context for this execution. If None, a new context
+                will be created.
+            **kwargs: Additional context updates to merge into the context
 
         Returns:
-            Execution result, context response, or None
+            Execution result from `async_execute()`, context response if result
+            is None, or None if both are None
+
+        Raises:
+            Exception: If execution fails and `raise_exception` is True and
+                `max_retries` is exhausted
         """
         self.context = self.build_context(context, **kwargs)
         with self.timer:
@@ -132,13 +187,12 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
                         break
 
                     except Exception as e:
-                        logger.exception(f"op={self.name} async execute failed, error={e.args}", exc_info=e)
+                        logger.exception(f"op={self.name} async execute failed, error={e.args}")
 
-                        if i == self.max_retries - 1:
-                            if self.raise_exception:
-                                raise e
+                        if self.raise_exception and i == self.max_retries - 1:
+                            raise e
 
-                            result = await self.async_default_execute()
+                        result = await self.async_default_execute(e)
 
         if result is not None:
             return result
@@ -153,6 +207,7 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
         """Submit an async task for execution.
 
         Creates an asyncio task and adds it to the task list for later joining.
+        Tasks can be collected using `join_async_task()`.
 
         Args:
             fn: Coroutine function to execute
@@ -162,6 +217,15 @@ class BaseAsyncOp(BaseOp, metaclass=ABCMeta):
         Note:
             Only coroutine functions are supported. Non-coroutine functions
             will trigger a warning and be ignored.
+
+        Example:
+            ```python
+            async def my_task(x):
+                return x * 2
+
+            self.submit_async_task(my_task, 5)
+            results = await self.join_async_task()
+            ```
         """
         loop = asyncio.get_running_loop()
         if asyncio.iscoroutinefunction(fn):

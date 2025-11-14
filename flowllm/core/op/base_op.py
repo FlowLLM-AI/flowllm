@@ -82,12 +82,17 @@ class BaseOp(ABC):
     def __new__(cls, *args, **kwargs):
         """Create a new instance and save initialization arguments for copying.
 
+        This method saves the initialization arguments so that `copy()` can
+        recreate the instance with the same parameters. This is necessary for
+        deep copying operations.
+
         Args:
             *args: Positional arguments passed to __init__
             **kwargs: Keyword arguments passed to __init__
 
         Returns:
-            New instance with saved initialization arguments
+            New instance with saved initialization arguments stored in
+            `_init_args` and `_init_kwargs` attributes
         """
         instance = super().__new__(cls)
         instance._init_args = copy.copy(args)
@@ -207,10 +212,36 @@ class BaseOp(ABC):
         return result
 
     def before_execute(self):
-        """Hook method called before execute(). Override in subclasses."""
+        """Hook method called before execute(). Override in subclasses.
+
+        This method is called automatically by `call()` before executing
+        the main `execute()` method. Use this to perform any setup,
+        validation, or preprocessing needed before execution.
+
+        Example:
+            ```python
+            def before_execute(self):
+                # Validate inputs
+                if not self.context.get("input"):
+                    raise ValueError("Input is required")
+        ```
+        """
 
     def after_execute(self):
-        """Hook method called after execute(). Override in subclasses."""
+        """Hook method called after execute(). Override in subclasses.
+
+        This method is called automatically by `call()` after successfully
+        executing the main `execute()` method. Use this to perform any
+        cleanup, post-processing, or result transformation.
+
+        Example:
+            ```python
+            def after_execute(self):
+                # Post-process results
+                if self.context.response:
+                    self.context.response.answer = self.context.response.answer.upper()
+        ```
+        """
 
     @abstractmethod
     def execute(self):
@@ -220,11 +251,26 @@ class BaseOp(ABC):
             Execution result
         """
 
-    def default_execute(self):
+    def default_execute(self, e: Exception = None, **kwargs):
         """Default execution method when main execution fails. Override in subclasses.
+
+        This method is called when `execute()` fails and `raise_exception`
+        is False. It provides a fallback mechanism to return a default result
+        instead of raising an exception.
+
+        Args:
+            e: The exception that was raised during execution (if any)
+            **kwargs: Additional keyword arguments
 
         Returns:
             Default execution result
+
+        Example:
+            ```python
+            def default_execute(self, e: Exception = None, **kwargs):
+                logger.warning(f"Execution failed: {e}, returning default result")
+                return {"status": "error", "message": str(e)}
+            ```
         """
 
     @staticmethod
@@ -248,14 +294,21 @@ class BaseOp(ABC):
         """Execute the operation synchronously.
 
         This method handles the full execution lifecycle including retries,
-        error handling, and context management.
+        error handling, and context management. It automatically calls
+        `before_execute()`, `execute()`, and `after_execute()` in sequence.
 
         Args:
-            context: Flow context for this execution
-            **kwargs: Additional context updates
+            context: Flow context for this execution. If None, a new context
+                will be created.
+            **kwargs: Additional context updates to merge into the context
 
         Returns:
-            Execution result, context response, or None
+            Execution result from `execute()`, context response if result
+            is None, or None if both are None
+
+        Raises:
+            Exception: If execution fails and `raise_exception` is True and
+                `max_retries` is exhausted
         """
         self.context = self.build_context(context, **kwargs)
         with self.timer:
@@ -276,11 +329,10 @@ class BaseOp(ABC):
                     except Exception as e:
                         logger.exception(f"op={self.name} execute failed, error={e.args}")
 
-                        if i == self.max_retries - 1:
-                            if self.raise_exception:
-                                raise e
+                        if self.raise_exception and i == self.max_retries - 1:
+                            raise e
 
-                            result = self.default_execute()  # pylint: disable=E1111
+                        result = self.default_execute(e)  # pylint: disable=E1111
 
         if result is not None:
             return result
@@ -294,6 +346,10 @@ class BaseOp(ABC):
     def submit_task(self, fn, *args, **kwargs) -> "BaseOp":
         """Submit a task for execution (multithreaded or synchronous).
 
+        If `enable_multithread` is True, the task is submitted to a thread pool
+        for concurrent execution. Otherwise, it is executed immediately and
+        the result is stored. Tasks can be collected using `join_task()`.
+
         Args:
             fn: Function to execute
             *args: Positional arguments for the function
@@ -301,6 +357,15 @@ class BaseOp(ABC):
 
         Returns:
             Self for method chaining
+
+        Example:
+            ```python
+            def my_task(x):
+                return x * 2
+
+            self.submit_task(my_task, 5)
+            results = self.join_task()
+            ```
         """
         if self.enable_multithread:
             task = C.thread_pool.submit(fn, *args, **kwargs)
@@ -319,11 +384,17 @@ class BaseOp(ABC):
     def join_task(self, task_desc: str = None) -> list:
         """Wait for all submitted tasks to complete and collect results.
 
+        This method waits for all tasks submitted via `submit_task()` to
+        complete and collects their results. If multithreading is enabled,
+        a progress bar is displayed. The task list is cleared after collection.
+
         Args:
-            task_desc: Description for progress bar display
+            task_desc: Description for progress bar display. If None, uses
+                the operation name.
 
         Returns:
-            List of task results
+            List of task results. If a task returns a list, its elements are
+            extended into the result list; otherwise, the result is appended.
         """
         result = []
         if self.enable_multithread:
@@ -355,9 +426,14 @@ class BaseOp(ABC):
     def add_op(self, op: "BaseOp", name: str = ""):
         """Add a sub-operation to this operation.
 
+        The operation is added to `self.ops`. If `ops` is a list, the operation
+        is appended. If `ops` is a dict, the operation is stored with the given
+        name (or the operation's own name if not provided).
+
         Args:
             op: Operation to add
-            name: Name for the operation (only used if ops is a dict)
+            name: Name for the operation (only used if ops is a dict). If empty
+                and ops is a dict, uses `op.name`.
         """
         if isinstance(self.ops, list):
             self.ops.append(op)
@@ -439,11 +515,19 @@ class BaseOp(ABC):
     def copy(self, **kwargs):
         """Create a deep copy of this operation.
 
+        Creates a new instance using the saved initialization arguments and
+        recursively copies all sub-operations. Any additional kwargs override
+        the original initialization parameters.
+
         Args:
             **kwargs: Additional parameters to override in the copy
 
         Returns:
-            New operation instance with copied configuration
+            New operation instance with copied configuration and sub-operations
+
+        Raises:
+            NotImplementedError: If the ops type is not supported (not a list
+                or BaseContext)
         """
         copy_op = self.__class__(*self._init_args, **self._init_kwargs, **kwargs)
         if self.ops:
