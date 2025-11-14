@@ -20,9 +20,10 @@ nav:
       - 安装: zh/guide/installation.md
       - 配置: zh/guide/config_guide.md
   - 学习资料分享:
-      - 上下文管理视频材料: zh/reading/20251110-manus-context-raw.md
-      - 上下文管理指南: zh/reading/20251110-manus-context-report.md
+      - HaluMem解读: zh/reading/20251114-halumem.md
       - Gemini-CLI上下文管理: zh/reading/20251113-gemini-cli-context-management.md
+      - 上下文管理指南: zh/reading/20251110-manus-context-report.md
+      - 上下文管理视频材料: zh/reading/20251110-manus-context-raw.md
   - 操作开发:
       - 操作介绍: zh/guide/op_introduction.md
       - 简单操作指南: zh/guide/async_op_minimal_guide.md
