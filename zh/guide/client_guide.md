@@ -58,9 +58,11 @@ async def run_mcp_example():
         "timeout": 30.0,
     }
     async with FastMcpClient("test_client", config, max_retries=3) as client:
-        # 列出工具
-        calls = await client.list_tool_calls()
-        print("available tool calls:", [c.name for c in (calls or [])])
+        tool_calls = await client.list_tool_calls()
+        if tool_calls:
+            for tool_call in tool_calls:
+                # 模型需要的tool call格式（qwen）
+                print(tool_call.simple_input_dump())
 
         # 调用工具
         result = await client.call_tool("demo_mcp_flow", {"query": "阿里巴巴前景怎么样？"})
