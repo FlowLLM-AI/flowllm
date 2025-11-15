@@ -9,7 +9,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from flowllm.extension.file_tool import EditOp
+from flowllm.extensions.file_tool import EditOp
 from flowllm.main import FlowLLMApp
 
 

@@ -9,17 +9,7 @@ This package provides utility functions and classes for:
 - Logger utilities for initializing and configuring loguru logger
 - Logo and banner printing utilities
 - Pydantic configuration parser for loading and merging configurations
-
-Modules:
-    http_client: Async HTTP client for executing flows with retry mechanism
-    common_utils: Common utility functions for string conversion and content extraction
-    fastmcp_client: Async MCP client using FastMCP for tool integration
-    llm_utils: Utility functions for formatting and processing LLM messages
-    timer: Timer class and decorator for measuring execution time
-    logger_utils: Logger initialization utilities for loguru
-    logo_utils: Logo and banner printing utilities using pyfiglet and rich
-    pydantic_config_parser: Generic parser for Pydantic-based configuration management
-    pydantic_utils: Utility functions for creating Pydantic models dynamically
+- Tushare API client for financial market data
 """
 
 from .common_utils import (
@@ -42,10 +32,12 @@ from .logo_utils import print_logo
 from .pydantic_config_parser import PydanticConfigParser
 from .pydantic_utils import create_pydantic_model
 from .timer import Timer, timer
+from .tushare_client import TushareClient
 
 __all__ = [
     "HttpClient",
     "FastMcpClient",
+    "TushareClient",
     "camel_to_snake",
     "snake_to_camel",
     "load_env",

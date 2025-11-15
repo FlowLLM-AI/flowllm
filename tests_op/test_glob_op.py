@@ -7,7 +7,7 @@ It can be run directly with: python test_glob_op.py
 import asyncio
 import json
 
-from flowllm.extension.file_tool import GlobOp
+from flowllm.extensions.file_tool import GlobOp
 from flowllm.main import FlowLLMApp
 
 

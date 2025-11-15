@@ -7,7 +7,7 @@ It can be run directly with: python test_write_todos_op.py
 import asyncio
 import json
 
-from flowllm.extension.file_tool import WriteTodosOp
+from flowllm.extensions.file_tool import WriteTodosOp
 from flowllm.main import FlowLLMApp
 
 

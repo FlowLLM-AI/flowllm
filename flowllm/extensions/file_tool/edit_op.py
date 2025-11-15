@@ -7,9 +7,9 @@ It supports creating new files, editing existing files, and replacing multiple o
 from pathlib import Path
 from typing import Optional
 
-from ...core.context import C
-from ...core.op import BaseAsyncToolOp
-from ...core.schema import ToolCall
+from flowllm.core.context import C
+from flowllm.core.op import BaseAsyncToolOp
+from flowllm.core.schema import ToolCall
 
 
 @C.register_op()
