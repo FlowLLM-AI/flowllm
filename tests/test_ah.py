@@ -1,6 +1,6 @@
 """Test module for AH download operation."""
 
-from flowllm.extensions.data.ah_download_op import AhDownloadOp
+from flowllm.extensions.data import AhDownloadOp
 from flowllm.main import FlowLLMApp
 
 
