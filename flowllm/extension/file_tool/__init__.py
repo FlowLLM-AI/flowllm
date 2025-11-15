@@ -5,7 +5,7 @@ It includes ready-to-use operations for:
 
 - EditOp: File editing operation for replacing text within files
 - GlobOp: File search operation for finding files matching glob patterns
-- WriteTodosOp: to do list management operation for tracking task progress
+- WriteTodosOp: To-do list management operation for tracking subtasks
 """
 
 from .edit_op import EditOp
