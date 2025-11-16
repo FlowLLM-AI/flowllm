@@ -1,9 +1,9 @@
 """
-AH股数据修复Op
-负责修复原始数据中的问题：
-1. 处理NaN/null值
-2. 修复价格为0的情况
-3. 修复pre_close缺失导致的change和pct_chg错误
+AH stock data fix operation.
+Fixes issues in raw data:
+1. Handles NaN/null values
+2. Fixes zero prices
+3. Fixes change and pct_chg errors caused by missing pre_close
 """
 
 import os
@@ -13,17 +13,13 @@ import pandas as pd
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.app import FlowLLMApp
-from flowllm.context.service_context import C
-from flowllm.op import BaseOp
-
-FOREX_CODES = ["USDCNH.FXCM", "USDHKD.FXCM"]
-PRICE_COLUMNS = ["close", "open", "high", "low", "pre_close", "vol", "amount"]
+from flowllm.core.context import C
+from flowllm.core.op import BaseOp
 
 
-@C.register_op(register_app="FlowLLM")
+@C.register_op()
 class AhFixOp(BaseOp):
-    """修复AH股原始数据"""
+    """Fix AH stock raw data"""
 
     def __init__(
         self,
@@ -38,45 +34,45 @@ class AhFixOp(BaseOp):
         self.min_date = min_date
 
     def _ensure_output_dir(self) -> None:
-        """确保输出目录存在"""
+        """Ensure output directory exists"""
         os.makedirs(self.output_dir, exist_ok=True)
 
     @staticmethod
     def fix_hk_df(df: pd.DataFrame) -> pd.DataFrame:
         """
-        修复HK股数据的pre_close问题
-        HK数据经常出现pre_close为NaN或0的情况，需要用前一天的close填充
+        Fix pre_close issues in HK stock data.
+        HK data often has NaN or 0 pre_close, fill with previous day's close.
         """
-        # 按时间降序排序
-        df = df.sort_values("trade_date", ascending=False).copy()
+        # Sort by date descending
+        df: pd.DataFrame = df.sort_values(by="trade_date", ascending=False)
 
-        # 计算前一天的close值（时间降序，所以是shift(-1)）
+        # Calculate previous day's close (shift(-1) for descending order)
         df.loc[:, "prev_close"] = df["close"].shift(-1)
 
-        # 找出pre_close有问题的行
+        # Find rows with invalid pre_close
         need_fix = (df["pre_close"].isna()) | (df["pre_close"] == 0.0)
 
-        # 修复pre_close
+        # Fix pre_close
         df.loc[need_fix, "pre_close"] = df.loc[need_fix, "prev_close"]
 
-        # 重新计算change和pct_chg
+        # Recalculate change and pct_chg
         df.loc[need_fix, "change"] = df.loc[need_fix, "close"] - df.loc[need_fix, "pre_close"]
         df.loc[need_fix, "pct_chg"] = (df.loc[need_fix, "close"] / df.loc[need_fix, "pre_close"] - 1) * 100
 
-        # 去掉最后一行（没有前一天的close作为参考）
+        # Remove last row (no previous day reference)
         return df.iloc[:-1].copy()
 
     @staticmethod
     def validate_df(df: pd.DataFrame, name: str) -> bool:
-        """验证数据是否有效（无NaN，无0价格）"""
-        # 检查NaN
+        """Validate data (no NaN, no zero prices)"""
+        # Check NaN
         nan_count = df.isnull().sum().sum()
         if nan_count > 0:
             logger.warning(f"{name}: {nan_count} NaN values")
             return False
 
-        # 检查关键列的0值
-        for col in PRICE_COLUMNS:
+        # Check zero values in key columns
+        for col in ["close", "open", "high", "low", "pre_close", "vol", "amount"]:
             if col in df.columns:
                 zero_count = (df[col] == 0).sum()
                 if zero_count > 0:
@@ -85,25 +81,47 @@ class AhFixOp(BaseOp):
 
         return True
 
+    @staticmethod
+    def validate_basic_df(df: pd.DataFrame, name: str) -> bool:
+        """Validate daily_basic data (check required fields only)"""
+        # Check NaN in required fields
+        required_cols = ["ts_code", "trade_date", "close"]
+        for col in required_cols:
+            if col not in df.columns:
+                logger.warning(f"{name}: missing required column '{col}'")
+                return False
+            nan_count = df[col].isnull().sum()
+            if nan_count > 0:
+                logger.warning(f"{name}: {nan_count} NaN values in required column '{col}'")
+                return False
+
+        # Check zero values in close
+        zero_count = (df["close"] == 0).sum()
+        if zero_count > 0:
+            logger.warning(f"{name}: {zero_count} zero values in 'close'")
+            return False
+
+        return True
+
     def _save_dataframe(self, df: pd.DataFrame, filename: str) -> None:
-        """保存DataFrame到CSV"""
+        """Save DataFrame to CSV"""
         output_path = os.path.join(self.output_dir, filename)
         df.to_csv(output_path, index=False)
 
     def _fix_forex_data(self) -> Dict[str, pd.DataFrame]:
-        """修复汇率数据"""
+        """Fix forex data"""
         logger.info("Fixing forex data...")
         forex_dict = {}
 
-        for code in FOREX_CODES:
+        for code in ["USDCNH.FXCM", "USDHKD.FXCM"]:
             input_path = os.path.join(self.input_dir, f"fx_daily_{code}.csv")
             df = pd.read_csv(input_path)
 
-            # 过滤日期并前向填充（按时间升序排序后前向填充）
+            # Filter by date and forward fill (sort ascending first)
             df = df.loc[df.trade_date > self.min_date].copy()
             df = df.sort_values("trade_date", ascending=True).ffill()
 
-            # 验证并保存
+            # Validate and save
             if self.validate_df(df, f"fx_{code}"):
                 self._save_dataframe(df, f"fx_daily_{code}.csv")
                 forex_dict[code] = df
@@ -114,37 +132,37 @@ class AhFixOp(BaseOp):
         return forex_dict
 
     def _process_forex_ratio(self, forex_dict: Dict[str, pd.DataFrame]) -> pd.DataFrame:
-        """处理汇率比率（CNH/HKD），避免look-ahead bias"""
+        """Process forex ratio (CNH/HKD), avoid look-ahead bias"""
         logger.info("Processing forex ratio...")
 
-        # 提取关键列
+        # Extract key columns
         df_cnh = forex_dict["USDCNH.FXCM"][["trade_date", "bid_close"]].set_index("trade_date")
         df_cnh.columns = ["cnh_close"]
 
         df_hkd = forex_dict["USDHKD.FXCM"][["trade_date", "bid_close"]].set_index("trade_date")
         df_hkd.columns = ["hkd_close"]
 
-        # 合并并只用前向填充（避免未来数据泄露） outer填充
+        # Merge and forward fill only (avoid future data leakage), outer join
         hk_forex_df = df_cnh.join(df_hkd, how="outer").sort_index().ffill()
 
-        # 删除开头的NaN（没有历史数据可填充）
+        # Drop leading NaN (no historical data to fill)
         initial_nan_count = hk_forex_df.isnull().sum().sum()
         if initial_nan_count > 0:
             logger.warning(f"Dropping {initial_nan_count} leading NaN values (no historical data)")
             hk_forex_df = hk_forex_df.dropna()
 
-        # 验证不应再有NaN
+        # Validate no NaN remains
         if hk_forex_df.isnull().sum().sum() > 0:
             raise ValueError("Forex data still has NaN values after forward fill")
 
-        # 计算CNH/HKD比率
+        # Calculate CNH/HKD ratio
         hk_forex_df["close"] = hk_forex_df["cnh_close"] / hk_forex_df["hkd_close"]
 
-        # 最终验证
+        # Final validation
         if hk_forex_df["close"].isnull().sum() > 0:
             raise ValueError("Forex ratio has NaN values in close column")
 
-        # 保存
+        # Save
         output_path = os.path.join(self.output_dir, "hk_forex_ratio.csv")
         hk_forex_df.to_csv(output_path)
         logger.info(
@@ -155,7 +173,7 @@ class AhFixOp(BaseOp):
         return hk_forex_df
 
     def _fix_stock_data(self, ah_df: pd.DataFrame) -> Tuple[int, int, int]:
-        """修复股票数据，返回(成功数量, A股交易日数量, HK交易日数量)"""
+        """Fix stock data, returns (success_count, A-share trading days, HK trading days)"""
         logger.info("Fixing stock data...")
         success_count = 0
         a_date_counter = {}
@@ -164,24 +182,33 @@ class AhFixOp(BaseOp):
         for record in tqdm(ah_df.to_dict(orient="records"), desc="Fixing stocks"):
             hk_code, ts_code, name = record["hk_code"], record["ts_code"], record["name"]
 
-            # 读取A股数据，A股数据的成交额需要乘1K
+            # Read A-share data (amount needs to be multiplied by 1K)
             a_df = pd.read_csv(os.path.join(self.input_dir, f"daily_{ts_code}.csv"))
             a_df = a_df.loc[a_df.trade_date > self.min_date].copy()
 
-            # 读取并修复HK股数据
+            # Read A-share daily_basic data
+            a_basic_df = pd.read_csv(os.path.join(self.input_dir, f"daily_basic_{ts_code}.csv"))
+            a_basic_df = a_basic_df.loc[a_basic_df.trade_date > self.min_date].copy()
+
+            # Read and fix HK stock data
             hk_df = pd.read_csv(os.path.join(self.input_dir, f"hk_daily_{hk_code}.csv"))
             hk_df = hk_df.loc[hk_df.trade_date > self.min_date].copy()
             hk_df = self.fix_hk_df(hk_df)
 
-            # 验证数据有效性
+            # Validate data
             if not self.validate_df(a_df, f"{name}.A") or not self.validate_df(hk_df, f"{name}.HK"):
                 raise RuntimeError(f"Skipping {name} due to invalid data")
 
-            # 保存修复后的数据
+            # Validate daily_basic data
+            if not self.validate_basic_df(a_basic_df, f"{name}.A.basic"):
+                raise RuntimeError(f"Skipping {name} due to invalid daily_basic data")
+
+            # Save fixed data
             self._save_dataframe(a_df, f"daily_{ts_code}.csv")
             self._save_dataframe(hk_df, f"hk_daily_{hk_code}.csv")
+            self._save_dataframe(a_basic_df, f"daily_basic_{ts_code}.csv")
 
-            # 统计日期覆盖
+            # Count date coverage
             hk_dates = hk_df["trade_date"].unique()
             min_hk_date = hk_dates.min()
             a_dates = a_df.loc[a_df.trade_date >= min_hk_date, "trade_date"].unique()
@@ -193,7 +220,7 @@ class AhFixOp(BaseOp):
 
             success_count += 1
 
-        # 输出统计信息
+        # Output statistics
         logger.info(f"Fixed {success_count}/{len(ah_df)} stock pairs")
         if a_date_counter:
             logger.info(
@@ -209,37 +236,26 @@ class AhFixOp(BaseOp):
 
         return success_count, len(a_date_counter), len(hk_date_counter)
 
-    def execute(self) -> None:
-        """执行修复"""
+    def execute(self):
+        """Execute fix operation"""
         self._ensure_output_dir()
 
-        # 读取AH对比数据
+        # Read AH comparison data
         ah_df_path = os.path.join(self.input_dir, "stk_ah_comparison.csv")
         df = pd.read_csv(ah_df_path)
         ah_df = df.loc[df.trade_date == df.trade_date.max(), ["hk_code", "ts_code", "name"]].copy()
         logger.info(f"Loaded {len(ah_df)} AH pairs")
 
-        # 1. 修复汇率数据
+        # 1. Fix forex data
         forex_dict = self._fix_forex_data()
 
-        # 2. 处理汇率比率
+        # 2. Process forex ratio
         self._process_forex_ratio(forex_dict)
 
-        # 3. 修复股票数据
+        # 3. Fix stock data
         stock_count, a_days, hk_days = self._fix_stock_data(ah_df)
 
         logger.info(
-            f"Fix completed - Stocks: {stock_count}, " f"A days: {a_days}, HK days: {hk_days}",
+            f"Fix completed - Stocks: {stock_count}, A days: {a_days}, HK days: {hk_days}",
         )
         logger.info(f"All fixed data saved to {self.output_dir}")
-
-
-def main():
-    """修复AH股数据"""
-    with FlowLLMApp(load_default_config=True) as app:
-        op = AhFixOp(input_dir="data/origin", output_dir="data/fixed")
-        op.call()
-
-
-if __name__ == "__main__":
-    main()
