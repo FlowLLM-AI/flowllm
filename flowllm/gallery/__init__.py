@@ -10,6 +10,7 @@ It includes ready-to-use operations for:
 - MockSearchOp: Mock search operation that uses LLM to generate search results
 - DashscopeSearchOp: Web search operation using Dashscope API for retrieving internet information
 - ReactSearchOp: ReAct (Reasoning and Acting) agent for answering queries using search tools
+- TokenCountOp: Token counting operation for calculating token usage in messages
 """
 
 from .chat_op import ChatOp
@@ -20,6 +21,7 @@ from .gen_system_prompt_op import GenSystemPromptOp
 from .mock_search_op import MockSearchOp
 from .react_search_op import ReactSearchOp
 from .stream_chat_op import StreamChatOp
+from .token_count_op import TokenCountOp
 
 __all__ = [
     "ChatOp",
@@ -30,4 +32,5 @@ __all__ = [
     "MockSearchOp",
     "ReactSearchOp",
     "StreamChatOp",
+    "TokenCountOp",
 ]

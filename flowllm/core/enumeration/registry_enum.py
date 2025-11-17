@@ -12,3 +12,4 @@ class RegistryEnum(str, Enum):
     OP = "op"
     FLOW = "flow"
     SERVICE = "service"
+    TOKEN_COUNTER = "token_counter"

@@ -46,11 +46,20 @@ class FlowConfig(ToolCall):
     cache_expire_hours: float = Field(default=0.1, description="Cache TTL (hours)")
 
 
+class LLMTokenCountConfig(BaseModel):
+    """Configuration for LLM token count estimation."""
+
+    backend: str = Field(default="base")
+    model_name: str = Field(default="")
+    params: dict = Field(default_factory=dict)
+
+
 class LLMConfig(BaseModel):
     """Configuration for LLM (Large Language Model) backend settings."""
 
     backend: str = Field(default="")
     model_name: str = Field(default="")
+    token_count: LLMTokenCountConfig = Field(default_factory=LLMTokenCountConfig)
     params: dict = Field(default_factory=dict)
 
 

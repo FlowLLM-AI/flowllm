@@ -10,15 +10,13 @@ from .service_config import (
     FlowConfig,
     HttpConfig,
     LLMConfig,
+    LLMTokenCountConfig,
     MCPConfig,
     ServiceConfig,
     VectorStoreConfig,
 )
 from .tool_call import ToolAttr, ToolCall
 from .vector_node import VectorNode
-
-# Rebuild FlowStreamChunk after ToolCall is imported to resolve forward references
-FlowStreamChunk.model_rebuild()
 
 __all__ = [
     "FlowRequest",
@@ -31,6 +29,7 @@ __all__ = [
     "FlowConfig",
     "HttpConfig",
     "LLMConfig",
+    "LLMTokenCountConfig",
     "MCPConfig",
     "ServiceConfig",
     "VectorStoreConfig",

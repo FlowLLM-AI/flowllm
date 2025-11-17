@@ -137,6 +137,17 @@ class ServiceContext(BaseContext):
         """
         return self.register(name=name, register_type=RegistryEnum.SERVICE)
 
+    def register_token_counter(self, name: str = ""):
+        """Register a token counter class.
+
+        Args:
+            name: Name to register the class under.
+
+        Returns:
+            Decorator function for class registration.
+        """
+        return self.register(name=name, register_type=RegistryEnum.TOKEN_COUNTER)
+
     def get_model_class(self, name: str, register_type: RegistryEnum):
         """Get a registered model class by name and type.
 
@@ -240,6 +251,20 @@ class ServiceContext(BaseContext):
             AssertionError: If the name is not found in the registry.
         """
         return self.get_model_class(name, RegistryEnum.SERVICE)
+
+    def get_token_counter_class(self, name: str):
+        """Get a registered token counter class.
+
+        Args:
+            name: Name of the registered class.
+
+        Returns:
+            The registered token counter class.
+
+        Raises:
+            AssertionError: If the name is not found in the registry.
+        """
+        return self.get_model_class(name, RegistryEnum.TOKEN_COUNTER)
 
     def get_vector_store(self, name: str = "default"):
         """Get a vector store instance by name.

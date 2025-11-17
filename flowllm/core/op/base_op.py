@@ -16,8 +16,9 @@ from tqdm import tqdm
 from ..context import FlowContext, PromptHandler, C, BaseContext
 from ..embedding_model import BaseEmbeddingModel
 from ..llm import BaseLLM
-from ..schema import LLMConfig, EmbeddingModelConfig
+from ..schema import LLMConfig, EmbeddingModelConfig, Message, ToolCall, LLMTokenCountConfig
 from ..storage import CacheHandler
+from ..token import BaseToken
 from ..utils import Timer, camel_to_snake
 from ..vector_store import BaseVectorStore
 
@@ -610,3 +611,24 @@ class BaseOp(ABC):
             Prompt template string
         """
         return self.prompt.get_prompt(prompt_name=prompt_name)
+
+    def token_count(self, messages: List[Message], tools: List[ToolCall] | None = None, **kwargs) -> int:
+        """Count tokens for the given messages and optional tools.
+
+        Args:
+            messages: List of messages to count tokens for
+            tools: Optional list of tool calls to include in token count
+            **kwargs: Additional keyword arguments passed to the token counter
+
+        Returns:
+            Total token count as an integer
+        """
+        llm_config: LLMConfig = C.service_config.llm[self._llm]
+        token_count_config: LLMTokenCountConfig = llm_config.token_count
+
+        token_count_cls = C.get_token_counter_class(token_count_config.backend)
+        model_name = token_count_config.model_name
+        params = token_count_config.params
+        token_counter: BaseToken = token_count_cls(model_name=model_name, **params)
+
+        return token_counter.token_count(messages, tools, **kwargs)
