@@ -59,6 +59,7 @@ BaseOp（基类Op）
 - 支持缓存功能（`enable_cache`），可以设置过期时间
 - 提供上下文管理（`context`）和计时功能（`timer`）
 - 延迟初始化 LLM、Embedding 模型、向量库等资源
+- 提供 Token 计数能力（`token_count()`），支持多种后端（base、openai、hf 等）准确计算消息和工具的 token 数量
 - 提供组合运算符：`<<`（添加子算子）、`>>`（顺序执行）、`|`（并行执行）
 
 #### 什么时候用它

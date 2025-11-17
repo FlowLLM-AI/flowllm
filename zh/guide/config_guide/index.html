@@ -1021,6 +1021,9 @@
 <span class="w">    </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qwen3-30b-a3b-instruct-2507</span>
 <span class="w">    </span><span class="nt">params</span><span class="p">:</span>
 <span class="w">      </span><span class="nt">temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.6</span>
+<span class="w">    </span><span class="nt">token_count</span><span class="p">:</span><span class="w"> </span><span class="c1"># 可选，配置 token 计数后端</span>
+<span class="w">      </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai</span><span class="w">  </span><span class="c1"># 支持 base、openai、hf 等</span>
+<span class="w">      </span><span class="nt">model_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">qwen3-30b-a3b-instruct-2507</span>
 
 <span class="w">  </span><span class="nt">qwen3_30b_instruct</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">openai_compatible</span>
@@ -1116,6 +1119,10 @@
 <li><code>backend</code>: LLM 后端类型（如 <code>openai_compatible</code>）。</li>
 <li><code>model_name</code>: 具体模型名称。</li>
 <li><code>params</code>: 传递给后端的参数，如 <code>temperature</code> 等。</li>
+<li><code>token_count</code>（可选）：Token 计数配置，用于 <code>self.token_count()</code> 方法。</li>
+<li><code>backend</code>: Token 计数后端类型，支持 <code>base</code>（基于字符数估算）、<code>openai</code>（使用 tiktoken）、<code>hf</code>（使用 HuggingFace tokenizer）等。</li>
+<li><code>model_name</code>: Token 计数使用的模型名称（通常与 LLM 模型名称相同或对应）。</li>
+<li><code>params</code>: 传递给 Token 计数后端的参数（如 <code>use_mirror: true</code> 用于 HuggingFace）。</li>
 </ul>
 </li>
 <li>

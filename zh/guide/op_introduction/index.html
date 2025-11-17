@@ -1092,6 +1092,7 @@
 <li>支持缓存功能（<code>enable_cache</code>），可以设置过期时间</li>
 <li>提供上下文管理（<code>context</code>）和计时功能（<code>timer</code>）</li>
 <li>延迟初始化 LLM、Embedding 模型、向量库等资源</li>
+<li>提供 Token 计数能力（<code>token_count()</code>），支持多种后端（base、openai、hf 等）准确计算消息和工具的 token 数量</li>
 <li>提供组合运算符：<code>&lt;&lt;</code>（添加子算子）、<code>&gt;&gt;</code>（顺序执行）、<code>|</code>（并行执行）</li>
 </ul>
 <h4 id="_5">什么时候用它</h4>
