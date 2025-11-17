@@ -40,6 +40,9 @@ llm:
     model_name: qwen3-30b-a3b-instruct-2507
     params:
       temperature: 0.6
+    token_count: # 可选，配置 token 计数后端
+      backend: openai  # 支持 base、openai、hf 等
+      model_name: qwen3-30b-a3b-instruct-2507
 
   qwen3_30b_instruct:
     backend: openai_compatible
@@ -119,6 +122,10 @@ vector_store:
     - `backend`: LLM 后端类型（如 `openai_compatible`）。
     - `model_name`: 具体模型名称。
     - `params`: 传递给后端的参数，如 `temperature` 等。
+    - `token_count`（可选）：Token 计数配置，用于 `self.token_count()` 方法。
+      - `backend`: Token 计数后端类型，支持 `base`（基于字符数估算）、`openai`（使用 tiktoken）、`hf`（使用 HuggingFace tokenizer）等。
+      - `model_name`: Token 计数使用的模型名称（通常与 LLM 模型名称相同或对应）。
+      - `params`: 传递给 Token 计数后端的参数（如 `use_mirror: true` 用于 HuggingFace）。
 
 - embedding_model
   - 嵌入模型配置集合。

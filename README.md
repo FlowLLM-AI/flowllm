@@ -41,20 +41,20 @@ MCP 的客户端工具中。
 
 项目开发者会在这里分享最近的学习资料。
 
-| 日期         | 标题                                                                                | 描述                                          |
-|------------|-----------------------------------------------------------------------------------|---------------------------------------------|
-| 2025-11-14 | [HaluMem解读](./docs/zh/reading/20251114-halumem.md)                                 | HaluMem: Evaluating Hallucinations in Memory Systems of Agents 解读 |
-| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                       |
-| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 上下文管理指南                                     |
-| 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video |
+| 日期         | 标题                                                                                | 描述                                                                |
+|------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| 2025-11-14 | [HaluMem解读](./docs/zh/reading/20251114-halumem.md)                                | HaluMem: Evaluating Hallucinations in Memory Systems of Agents 解读 |
+| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                                             |
+| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 上下文管理指南                                                           |
+| 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video                       |
 
 ### ⭐ 核心特性
 
-- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。
+- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。此外，FlowLLM 还内置了 Token 计数能力，通过 `self.token_count()` 方法可以准确计算消息和工具的 token 数量，支持多种后端（base、openai、hf 等）。
 
 - **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如 `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用 `flowllm config=your_config` 命令即可启动服务。
 
-- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTful API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
+- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTFul API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
 
 ---
 
@@ -110,6 +110,11 @@ class SimpleChatOp(BaseAsyncOp):
     async def async_execute(self):
         query = self.context.get("query", "")
         messages = [Message(role=Role.USER, content=query)]
+
+        # 使用 token_count 方法计算 token 数量
+        token_num = self.token_count(messages)
+        print(f"Input tokens: {token_num}")
+
         response = await self.llm.achat(messages=messages)
         self.context.response.answer = response.content.strip()
 ```
@@ -144,6 +149,9 @@ llm:
     model_name: qwen3-30b-a3b-instruct-2507
     params:
       temperature: 0.6
+    token_count: # 可选，配置 token 计数后端
+      backend: openai  # 支持 base、openai、hf 等
+      model_name: qwen3-30b-a3b-instruct-2507
 ```
 
 ### 🚀 Step3 启动 MCP 服务

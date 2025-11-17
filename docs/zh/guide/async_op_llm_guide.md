@@ -66,6 +66,12 @@ class QAOp(BaseAsyncOp):
         # 可以添加 system prompt、对话历史等
         messages = [Message(role=Role.USER, content=prompt)]
 
+        # 3.5. 计算 token 数量（可选）
+        # 使用 token_count 方法可以准确计算消息和工具的 token 数量
+        # 支持多种后端（base、openai、hf 等），配置在 llm 的 token_count 中
+        token_num = self.token_count(messages)
+        print(f"Input tokens: {token_num}")
+
         # 4. 定义 callback_fn 处理响应（可选）
         # 用于从 LLM 响应中提取或转换特定格式的内容
         def parse_response(message: Message) -> str:
@@ -146,10 +152,11 @@ if __name__ == "__main__":
 2. **变量替换**：在 prompt 中使用 `{variable_name}`，调用 `prompt_format` 时传入对应变量
 3. **多语言支持**：通过 `_zh`、`_en` 等后缀支持多语言 prompt，系统自动选择
 4. **构建 Messages**：使用 `Message(role=Role.USER/SYSTEM/ASSISTANT, content=...)`
-5. **调用 LLM**：使用 `await self.llm.achat(messages=messages, ...)`
-6. **处理响应**：使用 `callback_fn` 处理或转换响应，返回处理后的结果
-7. **应用上下文**：必须在 `FlowLLMApp()` 上下文里调用
-8. **file_path**：Op 类中必须设置 `file_path = __file__`，用于自动查找 prompt 文件
+5. **Token 计数**：使用 `self.token_count(messages, tools=None)` 计算 token 数量，支持多种后端（base、openai、hf 等）
+6. **调用 LLM**：使用 `await self.llm.achat(messages=messages, ...)`
+7. **处理响应**：使用 `callback_fn` 处理或转换响应，返回处理后的结果
+8. **应用上下文**：必须在 `FlowLLMApp()` 上下文里调用
+9. **file_path**：Op 类中必须设置 `file_path = __file__`，用于自动查找 prompt 文件
 
 ---
 

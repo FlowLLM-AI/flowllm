@@ -49,7 +49,7 @@ Project developers will share their latest learning materials here.
 
 ### ⭐ Core Features
 
-- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods.
+- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods. Additionally, FlowLLM includes built-in token counting capabilities. Use `self.token_count()` to accurately calculate token counts for messages and tools, supporting multiple backends (base, openai, hf, etc.).
 
 - **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
 
@@ -109,6 +109,11 @@ class SimpleChatOp(BaseAsyncOp):
     async def async_execute(self):
         query = self.context.get("query", "")
         messages = [Message(role=Role.USER, content=query)]
+
+        # Use token_count method to calculate token count
+        token_num = self.token_count(messages)
+        print(f"Input tokens: {token_num}")
+
         response = await self.llm.achat(messages=messages)
         self.context.response.answer = response.content.strip()
 ```
@@ -143,6 +148,9 @@ llm:
     model_name: qwen3-30b-a3b-instruct-2507
     params:
       temperature: 0.6
+    token_count: # Optional, configure token counting backend
+      backend: openai  # Supports base, openai, hf, etc.
+      model_name: qwen3-30b-a3b-instruct-2507
 ```
 
 ### 🚀 Step3 Start MCP Service
