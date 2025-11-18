@@ -181,6 +181,7 @@ flowllm \
 - [LLM Op 指南](docs/zh/guide/async_op_llm_guide.md)
 - [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)
 - [Tool Op 指南](docs/zh/guide/async_tool_op_guide.md)
+- [File Tool Op 指南](docs/zh/guide/file_tool_op_guide.md)
 - [Vector Store 指南](docs/zh/guide/vector_store_guide.md)
 
 ### 🔀 Flow 编排

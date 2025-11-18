@@ -180,6 +180,7 @@ After the service starts, refer to the [Client Guide](docs/zh/guide/client_guide
 - [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
 - [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
 - [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
+- [File Tool Op Guide](docs/zh/guide/file_tool_op_guide.md)
 - [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
 
 ### 🔀 Flow Orchestration
