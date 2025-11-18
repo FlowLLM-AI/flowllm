@@ -41,7 +41,7 @@ FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP s
 | Date       | Update Content                                                                                                                      |
 |------------|-------------------------------------------------------------------------------------------------------------------------------------|
 | 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management |
-| 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf.) |
+| 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf). See configuration examples in [default.yaml](flowllm/config/default.yaml) |
 
 ### 📚 Learning Resources
 
@@ -156,8 +156,10 @@ llm:
     params:
       temperature: 0.6
     token_count: # Optional, configure token counting backend
-      backend: openai  # Supports base, openai, hf, etc.
-      model_name: qwen3-30b-a3b-instruct-2507
+      model_name: Qwen/Qwen3-30B-A3B-Instruct-2507
+      backend: hf  # Supports base, openai, hf, etc.
+      params:
+        use_mirror: true
 ```
 
 ### 🚀 Step3 Start MCP Service
