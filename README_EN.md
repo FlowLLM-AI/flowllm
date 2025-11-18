@@ -36,6 +36,13 @@ FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP s
 |-----------------------------------------------|--------------------------------------|
 | [ReMe](https://github.com/agentscope-ai/ReMe) | Memory management toolkit for agents |
 
+### 📢 Recent Updates
+
+| Date       | Update Content                                                                                                                      |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management |
+| 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf.) |
+
 ### 📚 Learning Resources
 
 Project developers will share their latest learning materials here.
