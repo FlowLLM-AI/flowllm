@@ -10,7 +10,7 @@ from .message import Message
 class FlowResponse(BaseModel):
     """Represents a complete flow execution response with answer and messages."""
 
-    answer: str = Field(default="")
+    answer: str | dict | list = Field(default="")
     messages: List[Message] = Field(default_factory=list)
     success: bool = Field(default=True)
     metadata: dict = Field(default_factory=dict)
