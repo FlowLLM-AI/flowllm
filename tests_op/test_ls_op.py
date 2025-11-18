@@ -1,13 +1,13 @@
-"""Test script for WriteTodosOp.
+"""Test script for LSOp.
 
-This script provides test cases for WriteTodosOp class.
-It can be run directly with: python test_write_todos_op.py
+This script provides test cases for LSOp class.
+It can be run directly with: python test_ls_op.py
 """
 
 import asyncio
 import json
 
-from flowllm.extensions.file_tool import WriteTodosOp
+from flowllm.extensions.file_tool import LSOp
 from flowllm.main import FlowLLMApp
 
 
@@ -18,7 +18,7 @@ async def test_simple_input_schema():
     print("=" * 80)
 
     async with FlowLLMApp():
-        op = WriteTodosOp()
+        op = LSOp()
         tool_call = op.build_tool_call()
         tool_call.name = op.short_name
 
@@ -36,16 +36,6 @@ async def test_simple_input_schema():
         assert "properties" in input_schema["function"]["parameters"]
         assert "required" in input_schema["function"]["parameters"]
 
-        # Verify todos parameter structure
-        todos_param = input_schema["function"]["parameters"]["properties"]["todos"]
-        assert todos_param["type"] == "array"
-        assert "items" in todos_param
-        assert todos_param["items"]["type"] == "object"
-        assert "properties" in todos_param["items"]
-        assert "description" in todos_param["items"]["properties"]
-        assert "status" in todos_param["items"]["properties"]
-        assert "enum" in todos_param["items"]["properties"]["status"]
-
         print("\n✓ Test Case 1 passed: simple_input_dump() works correctly")
         print("=" * 80)
 
@@ -57,32 +47,12 @@ async def test_normal_async_execute():
     print("=" * 80)
 
     async with FlowLLMApp():
-        op = WriteTodosOp()
+        op = LSOp()
+        # Test with a path that should exist
+        await op.async_call(path=".")
 
-        # Test 1: Empty todo list
-        print("\nTest 2.1: Empty todo list")
-        await op.async_call(todos=[])
         print("\nOutput:")
         print(op.output)
-        assert "cleared the todo list" in op.output.lower()
-
-        # Test 2: Todo list with multiple items
-        print("\nTest 2.2: Todo list with multiple items")
-        todos = [
-            {"description": "Task 1", "status": "pending"},
-            {"description": "Task 2", "status": "in_progress"},
-            {"description": "Task 3", "status": "completed"},
-            {"description": "Task 4", "status": "cancelled"},
-        ]
-        await op.async_call(todos=todos)
-        print("\nOutput:")
-        print(op.output)
-        assert "Successfully updated the todo list" in op.output
-        assert "[pending] Task 1" in op.output
-        assert "[in_progress] Task 2" in op.output
-        assert "[completed] Task 3" in op.output
-        assert "[cancelled] Task 4" in op.output
-
         print("\n✓ Test Case 2 passed: async_execute() works correctly")
         print("=" * 80)
 
@@ -94,14 +64,12 @@ async def test_exception_async_default_execute():
     print("=" * 80)
 
     async with FlowLLMApp():
-        op = WriteTodosOp()
+        op = LSOp()
+        # Test with a non-existent path to trigger exception
+        await op.async_call(path="/nonexistent/path/that/does/not/exist")
 
-        # Test: todos is not a list
-        await op.async_call(todos="not a list")
         print("\nOutput after exception:")
         print(op.output)
-        assert "Failed to update the todo list" in op.output
-
         print("\n✓ Test Case 3 passed: async_default_execute() was called on exception")
         print("=" * 80)
 

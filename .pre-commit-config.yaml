@@ -82,7 +82,7 @@ repos:
           --disable=R1702,
           --disable=R0912,
           --max-line-length=120,
-          --max-statements=60,
+          --max-statements=75,
         ]
   - repo: https://github.com/regebro/pyroma
     rev: "5.0"

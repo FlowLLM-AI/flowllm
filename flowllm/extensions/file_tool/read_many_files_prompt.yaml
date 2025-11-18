@@ -1,0 +1,15 @@
+tool_desc: |
+  Reads content from multiple files specified by glob patterns or paths and concatenates them into a single output. Files are separated by "--- {filePath} ---" markers. Useful for reading multiple related files at once, such as all files in a directory, all files matching a pattern, or a collection of configuration files.
+
+paths: |
+  Required. An array of glob patterns or file paths to read. Examples: ['src/**/*.ts'], ['README.md', 'docs/'], ['*.py']. Paths are relative to the search directory (or current working directory if not specified).
+
+include: |
+  Optional. Additional glob patterns to include. These are merged with 'paths'. Example: ['*.test.ts'] to add test files.
+
+exclude: |
+  Optional. Glob patterns for files/directories to exclude. Example: ['**/*.log', 'temp/'].
+
+dir_path: |
+  Optional. The absolute path to the directory to search within. If omitted, searches the current working directory.
+

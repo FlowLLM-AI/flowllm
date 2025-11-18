@@ -1,0 +1,15 @@
+tool_desc: |
+  A powerful search tool for finding patterns in files using regular expressions. Supports full regex syntax (e.g., "log.*Error", "function\\s+\\w+"), glob pattern filtering, and result limiting. Ideal for searching code or text content across multiple files.
+
+pattern: |
+  The regular expression pattern to search for in file contents.
+
+path: |
+  Optional: The directory to search in. Defaults to current working directory.
+
+glob: |
+  Optional: Glob pattern to filter files (e.g., "*.js", "*.{ts,tsx}").
+
+limit: |
+  Optional: Maximum number of matching lines to return. Shows all matches if not specified.
+

@@ -13,8 +13,8 @@ import pandas as pd
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.core.context import C
-from flowllm.core.op import BaseOp
+from ...core.context import C
+from ...core.op import BaseOp
 
 
 @C.register_op()

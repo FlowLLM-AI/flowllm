@@ -23,6 +23,10 @@ class WriteTodosOp(BaseAsyncToolOp):
 
     file_path = __file__
 
+    def __init__(self, **kwargs):
+        kwargs.setdefault("raise_exception", False)
+        super().__init__(**kwargs)
+
     def build_tool_call(self) -> ToolCall:
         """Build and return the tool call schema for this operator."""
         tool_params = {

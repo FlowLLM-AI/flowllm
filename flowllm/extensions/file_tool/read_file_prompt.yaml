@@ -1,0 +1,12 @@
+tool_desc: |
+  Reads and returns the content of a specified file. For text files, it can read specific line ranges using the 'offset' and 'limit' parameters. Use offset and limit to paginate through large files.
+
+absolute_path: |
+  The absolute path to the file to read (e.g., '/home/user/project/file.txt'). Relative paths are not supported. You must provide an absolute path.
+
+offset: |
+  Optional: For text files, the 0-based line number to start reading from. Requires 'limit' to be set. Use for paginating through large files.
+
+limit: |
+  Optional: For text files, maximum number of lines to read. Use with 'offset' to paginate through large files. If omitted when offset is provided, reads from offset to the end of the file.
+

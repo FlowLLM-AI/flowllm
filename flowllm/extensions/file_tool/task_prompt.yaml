@@ -1,0 +1,12 @@
+tool_desc: |
+  Delegate tasks to specialized subagents for autonomous execution. This tool enables primary agents to delegate complex, multi-step tasks to specialized agents that can handle them independently.
+
+description: |
+  A short (3-5 word) description of the task to be delegated.
+
+prompt: |
+  The detailed task prompt for the subagent to perform. Should contain all necessary information for the subagent to execute the task autonomously.
+
+subagent_type: |
+  The type of specialized subagent to use for this task. Must match an available subagent type.
+

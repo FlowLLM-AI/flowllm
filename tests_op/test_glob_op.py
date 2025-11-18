@@ -64,7 +64,7 @@ async def test_exception_async_default_execute():
     print("=" * 80)
 
     async with FlowLLMApp():
-        op = GlobOp(raise_exception=False, max_retries=1)
+        op = GlobOp()
         await op.async_call(pattern="*xxxx.py")
 
         print("\nOutput after exception:")

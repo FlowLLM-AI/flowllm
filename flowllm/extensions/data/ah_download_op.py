@@ -7,9 +7,9 @@ import pandas as pd
 from loguru import logger
 from tqdm import tqdm
 
-from flowllm.core.context import C
-from flowllm.core.op import BaseOp
-from flowllm.core.utils import TushareClient
+from ...core.context import C
+from ...core.op import BaseOp
+from ...core.utils import TushareClient
 
 
 @C.register_op()

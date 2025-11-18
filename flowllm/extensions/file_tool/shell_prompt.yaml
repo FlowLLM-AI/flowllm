@@ -1,0 +1,15 @@
+tool_desc: |
+  Executes a shell command and returns its output, error messages, exit codes, and other execution details. Supports both foreground and background execution. For background execution, use is_background=true for long-running processes like development servers, watchers, or daemons.
+
+command: |
+  The exact shell command to execute. On Unix systems, commands are executed as `bash -c <command>`. On Windows, commands are executed as `cmd.exe /c <command>`.
+
+is_background: |
+  Whether to run the command in background. Default is false. Set to true for long-running processes like development servers, watchers, or daemons that should continue running without blocking further commands.
+
+description: |
+  Optional: Brief description of the command for the user. Be specific and concise. Ideally a single sentence. Can be up to 3 sentences for clarity. No line breaks.
+
+directory: |
+  Optional: The absolute path of the directory to run the command in. If not provided, the current working directory is used. Must be a directory within the workspace and must already exist.
+

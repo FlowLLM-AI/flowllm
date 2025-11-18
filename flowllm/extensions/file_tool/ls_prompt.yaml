@@ -1,0 +1,9 @@
+tool_desc: |
+  Lists the names of files and subdirectories directly within a specified directory path. Can optionally ignore entries matching provided glob patterns.
+
+path: |
+  The absolute path to the directory to list (e.g., '/home/user/project/src'). Must be an absolute path.
+
+ignore: |
+  Optional: Array of glob patterns to ignore (e.g., ['*.pyc', '__pycache__', '*.log']).
+

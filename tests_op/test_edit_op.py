@@ -86,7 +86,7 @@ async def test_exception_async_default_execute():
     print("=" * 80)
 
     async with FlowLLMApp():
-        op = EditOp(raise_exception=False, max_retries=1)
+        op = EditOp()
         # Test with a non-existent file (should trigger exception)
         await op.async_call(
             file_path="/nonexistent/path/file.txt",
