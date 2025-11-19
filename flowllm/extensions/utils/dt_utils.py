@@ -1,6 +1,7 @@
-"""日期时间工具函数模块。
+"""Date and time utility functions module.
 
-提供用于处理日期范围、查找特定日期等功能的工具函数。
+This module provides utility functions for working with date ranges, finding specific dates,
+and performing binary search operations on date lists.
 """
 
 from datetime import datetime, timedelta
@@ -8,18 +9,19 @@ from typing import List, Optional
 
 
 def get_monday_fridays(start_str: str, end_str: str) -> List[List[str]]:
-    """获取指定日期范围内所有周一到周五的日期范围列表。
+    """Get all Monday-to-Friday date ranges within the specified date range.
 
-    从开始日期开始，找到第一个周五，然后每隔7天获取一个周一到周五的日期范围，
-    直到结束日期。
+    Starting from the start date, finds the first Friday, then retrieves a Monday-to-Friday
+    date range every 7 days until the end date.
 
     Args:
-        start_str: 开始日期字符串，格式为 "%Y%m%d"（例如："20240101"）
-        end_str: 结束日期字符串，格式为 "%Y%m%d"（例如："20241231"）
+        start_str: Start date string in "%Y%m%d" format (e.g., "20240101")
+        end_str: End date string in "%Y%m%d" format (e.g., "20241231")
 
     Returns:
-        包含周一到周五日期范围的列表，每个元素是一个包含两个日期字符串的列表：
-        [周一日期, 周五日期]。如果开始日期大于结束日期或范围内没有周五，返回空列表。
+        A list of Monday-to-Friday date ranges, where each element is a list containing
+        two date strings: [Monday date, Friday date]. Returns an empty list if the start
+        date is greater than the end date or if there are no Fridays in the range.
     """
     start = datetime.strptime(str(start_str), "%Y%m%d")
     end = datetime.strptime(str(end_str), "%Y%m%d")
@@ -45,14 +47,15 @@ def get_monday_fridays(start_str: str, end_str: str) -> List[List[str]]:
     return result
 
 
-def next_friday_or_same(date_str):
-    """获取给定日期之后的下一个周五，如果当天就是周五则返回当天。
+def next_friday_or_same(date_str: str) -> str:
+    """Get the next Friday after the given date, or return the same date if it's already Friday.
 
     Args:
-        date_str: 日期字符串，格式为 "%Y%m%d"（例如："20240115"）
+        date_str: Date string in "%Y%m%d" format (e.g., "20240115")
 
     Returns:
-        下一个周五或当天的日期字符串，格式为 "%Y%m%d"
+        The next Friday or the same date if it's already Friday, as a date string
+        in "%Y%m%d" format.
     """
     dt = datetime.strptime(date_str, "%Y%m%d")
     days_ahead = (4 - dt.weekday()) % 7
@@ -60,10 +63,23 @@ def next_friday_or_same(date_str):
     return next_fri.strftime("%Y%m%d")
 
 
-def find_dt_less_index(dt: str | int, dt_list: List[str | int]):
-    """
-    Use binary search to find the index of the date that is closest to and less than dt.
-    Time complexity: O(log n)
+def find_dt_less_index(dt: str | int, dt_list: List[str | int]) -> Optional[int]:
+    """Find the index of the date that is closest to and less than or equal to dt using binary search.
+
+    This function performs a binary search to efficiently find the index of the largest date
+    in the sorted list that is less than or equal to the target date.
+
+    Args:
+        dt: Target date as a string or integer
+        dt_list: Sorted list of dates in ascending order (strings or integers)
+
+    Returns:
+        Index of the date that is closest to and less than or equal to dt, or None if
+        dt is less than all dates in the list. Returns the last index if dt is greater
+        than or equal to all dates in the list.
+
+    Note:
+        Time complexity: O(log n)
     """
     if not dt_list:
         return None
