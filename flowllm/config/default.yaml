@@ -43,10 +43,10 @@ flow:
   skill_agent_flow:
     flow_content: |
       skill_op = SkillAgentOp()
-      skill_op.ops.load_skill_metadata = LoadSkillMetadataOp()
-      skill_op.ops.load_skill_op = LoadSkillOp()
-      skill_op.ops.read_reference_file_op = ReadReferenceFileOp()
-      skill_op.ops.run_shell_command_op = RunShellCommandOp()
+      skill_op.ops.load_metadata = LoadSkillMetadataOp()
+      skill_op.ops.load_skill = LoadSkillOp()
+      skill_op.ops.read_reference = ReadReferenceFileOp()
+      skill_op.ops.run_shell = RunShellCommandOp()
       skill_op
     description: "Automatically uses pre-built Skills relevant to the query when needed."
     input_schema:

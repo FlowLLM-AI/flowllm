@@ -57,7 +57,7 @@ class LoadSkillOp(BaseAsyncToolOp):
         skill_path = skill_dir / skill_name / "SKILL.md"
 
         if not skill_path.exists():
-            available = [d.name for d in skill_dir / skill_name.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+            available = [d.name for d in (skill_dir / skill_name).iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
             logger.exception(f"❌ Skill '{skill_name}' not found")
             self.set_output(f"Skill '{skill_name}' not found. Available: {', '.join(available)}")
             return

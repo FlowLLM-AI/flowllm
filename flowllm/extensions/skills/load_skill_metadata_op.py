@@ -4,7 +4,6 @@ This module provides the LoadSkillMetadataOp class which scans the skills
 directory and extracts metadata (name and description) from all SKILL.md files.
 """
 
-import json
 from pathlib import Path
 
 from loguru import logger
@@ -101,4 +100,5 @@ class LoadSkillMetadataOp(BaseAsyncToolOp):
         logger.info(f"✅ Loaded {len(skill_metadata_list)} skill metadata entries")
 
         # Return as JSON string for easy parsing
-        self.set_output(json.dumps(skill_metadata_list, ensure_ascii=False, indent=2))
+        skill_metadata_list = [f"- {x['name']}: {x['description']}" for x in skill_metadata_list]
+        self.set_output("\n".join(skill_metadata_list))

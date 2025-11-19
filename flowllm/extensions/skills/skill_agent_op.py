@@ -55,18 +55,20 @@ class SkillAgentOp(BaseAsyncOp):
         """
         query: str = self.context.query
         skill_dir: str = self.context.skill_dir
-        logger.info(f"UseSkillOp processing query: {query} with access to skills in {skill_dir}")
+        logger.info(f"SkillAgentOp processing query: {query} with access to skills in {skill_dir}")
 
-        load_skill_metadata_op: BaseAsyncToolOp = self.ops.load_skill_metadata_op
-        load_skill_op: BaseAsyncToolOp = self.ops.load_skill_op
-        read_reference_file_op: BaseAsyncToolOp = self.ops.read_reference_file_op
-        run_shell_command_op: BaseAsyncToolOp = self.ops.run_shell_command_op
+        load_metadata_op: BaseAsyncToolOp = self.ops.load_metadata
+        load_skill_op: BaseAsyncToolOp = self.ops.load_skill
+        read_reference_op: BaseAsyncToolOp = self.ops.read_reference
+        run_shell_op: BaseAsyncToolOp = self.ops.run_shell
 
-        await load_skill_metadata_op.async_call()
+        await load_metadata_op.async_call(skill_dir=skill_dir)
+        skill_metadata = load_metadata_op.output
+        logger.info(f"SkillAgentOp loaded skill metadata: {skill_metadata}")
         system_prompt = self.prompt_format(
             "system_prompt",
             skill_dir=skill_dir,
-            skill_metadata=load_skill_metadata_op.output,
+            skill_metadata=skill_metadata,
         )
 
         messages = [
@@ -74,9 +76,7 @@ class SkillAgentOp(BaseAsyncOp):
             Message(role=Role.USER, content=query),
         ]
 
-        tool_op_dict: dict = {
-            op.tool_call.name: op for op in [load_skill_op, read_reference_file_op, run_shell_command_op]
-        }
+        tool_op_dict: dict = {op.tool_call.name: op for op in [load_skill_op, read_reference_op, run_shell_op]}
 
         for i in range(self.max_iterations):
             assistant_message = await self.llm.achat(
@@ -91,11 +91,11 @@ class SkillAgentOp(BaseAsyncOp):
 
             ops: List[BaseAsyncToolOp] = []
             for j, tool in enumerate(assistant_message.tool_calls):
-                op = tool_op_dict[tool.name].copy()
+                op: BaseAsyncToolOp = tool_op_dict[tool.name].copy()
                 op.tool_call.id = tool.id
                 ops.append(op)
                 logger.info(f"{self.name} submit op{j}={op.name} argument={tool.argument_dict}")
-                self.submit_async_task(op.async_call, **tool.argument_dict)
+                self.submit_async_task(op.async_call, skill_dir=skill_dir, **tool.argument_dict)
 
             await self.join_async_task()
 

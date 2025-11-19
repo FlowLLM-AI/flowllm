@@ -42,7 +42,7 @@ class RunShellCommandOp(BaseAsyncToolOp):
                         "required": True,
                     },
                     "timeout": {
-                        "type": "int",
+                        "type": "integer",
                         "description": "timeout for the subprocess",
                         "required": False,
                     },
