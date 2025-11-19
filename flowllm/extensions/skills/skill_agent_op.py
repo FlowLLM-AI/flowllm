@@ -63,12 +63,14 @@ class SkillAgentOp(BaseAsyncOp):
         run_shell_op: BaseAsyncToolOp = self.ops.run_shell
 
         await load_metadata_op.async_call(skill_dir=skill_dir)
-        skill_metadata = load_metadata_op.output
-        logger.info(f"SkillAgentOp loaded skill metadata: {skill_metadata}")
+        skill_metadata_dict: dict = load_metadata_op.output
+
+        skill_metadata_list = [f"- {k}: {v['description']}" for k, v in skill_metadata_dict.items()]
+        logger.info(f"SkillAgentOp loaded skill metadata: {skill_metadata_dict}")
         system_prompt = self.prompt_format(
             "system_prompt",
             skill_dir=skill_dir,
-            skill_metadata=skill_metadata,
+            skill_metadata="\n".join(skill_metadata_list),
         )
 
         messages = [

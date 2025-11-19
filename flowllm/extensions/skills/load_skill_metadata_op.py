@@ -90,15 +90,17 @@ class LoadSkillMetadataOp(BaseAsyncToolOp):
         logger.info(f"🔧 Tool called: load_skill_metadata(path={skill_dir})")
         skill_files = list(skill_dir.rglob("SKILL.md"))
 
-        skill_metadata_list = []
+        skill_metadata_dict = {}
         for skill_file in skill_files:
             content = skill_file.read_text(encoding="utf-8")
             metadata = await self.parse_skill_metadata(content, str(skill_file))
             if metadata:
-                skill_metadata_list.append(metadata)
+                skill_dir = skill_file.parent.as_posix()
+                skill_metadata_dict[metadata["name"]] = {
+                    "description": metadata["description"],
+                    "skill_dir": skill_dir,
+                }
+                logger.info(f"✅ Loaded skill {metadata['name']} metadata skill_dir={skill_dir}")
 
-        logger.info(f"✅ Loaded {len(skill_metadata_list)} skill metadata entries")
-
-        # Return as JSON string for easy parsing
-        skill_metadata_list = [f"- {x['name']}: {x['description']}" for x in skill_metadata_list]
-        self.set_output("\n".join(skill_metadata_list))
+        logger.info(f"✅ Loaded {len(skill_metadata_dict)} skill metadata entries")
+        self.set_output(skill_metadata_dict)
