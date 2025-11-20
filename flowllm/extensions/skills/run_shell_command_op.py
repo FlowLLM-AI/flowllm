@@ -130,25 +130,6 @@ class RunShellCommandOp(BaseAsyncToolOp):
         skill_dir = Path(self.context.skill_metadata_dict[skill_name]["skill_dir"])
         logger.info(f"🔧 run shell command: skill_name={skill_name} skill_dir={skill_dir} command={command}")
 
-        # Auto-install dependencies for Python scripts if pipreqs is available
-        # This helps ensure that Python scripts have their required dependencies
-        # if "py" in command:
-        #     pipreqs_available = shutil.which("pipreqs") is not None
-        #     if pipreqs_available:
-        #         install_cmd = f"cd {skill_dir} && pipreqs . --force && pip install -r requirements.txt"
-        #         proc = await asyncio.create_subprocess_shell(
-        #             install_cmd,
-        #             stdout=asyncio.subprocess.PIPE,
-        #             stderr=asyncio.subprocess.PIPE,
-        #         )
-        #         stdout, stderr = await proc.communicate()
-        #         if proc.returncode != 0:
-        #             logger.warning(f"⚠️ Failed to install dependencies:\n{stdout.decode()}\n{stderr.decode()}")
-        #         else:
-        #             logger.info(f"✅ Dependencies installed successfully.\n{stdout.decode()}\n{stderr.decode()}")
-        #     else:
-        #         logger.info("ℹ️ pipreqs not found, skipping dependency auto-install.")
-
         # Construct the full command to execute in the skill directory
         # This ensures the command runs in the correct context
         full_command = f"cd {skill_dir} && {command}"
