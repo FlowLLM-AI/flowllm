@@ -1,110 +1,206 @@
-"""Skill agent operation for orchestrating skill-based task execution.
+"""Operation for a skill-enabled reactive agent.
 
-This module provides the SkillAgentOp class which coordinates the execution
-of skills by managing tool calls and LLM interactions.
+This module provides the SkillAgentOp class which extends ReactAgentOp to
+automatically use pre-built skills relevant to the query. The agent loads
+skill metadata from a specified skill directory and makes those skills
+available as tools during the reasoning process.
 """
 
+import datetime
 from typing import List
 
 from loguru import logger
 
 from ...core.context import C
 from ...core.enumeration import Role
-from ...core.op import BaseAsyncToolOp, BaseAsyncOp
-from ...core.schema import Message
+from ...core.op import BaseAsyncToolOp
+from ...core.schema import Message, ToolCall
+from ...gallery.agent import ReactAgentOp
 
 
 @C.register_op()
-class SkillAgentOp(BaseAsyncOp):
-    """An agent operation that orchestrates skill-based task execution.
+class SkillAgentOp(ReactAgentOp):
+    """Reactive agent that automatically uses pre-built skills to answer queries.
 
-    This operation manages a conversation loop with an LLM, allowing it to
-    use various skill-related tools (load_skill, read_reference_file,
-    run_shell_command) to complete tasks. It iterates up to max_iterations
-    times, allowing the LLM to make multiple tool calls as needed.
+    This agent extends ReactAgentOp to provide skill-based reasoning. It loads
+    skill metadata from a specified directory and makes those skills available
+    as tools during the agent's reasoning process. The agent can automatically
+    select and use relevant skills based on the user's query.
+
+    The agent:
+    1. Loads skill metadata from the specified skill directory
+    2. Builds a system prompt that includes available skills
+    3. Uses the React (Reasoning and Acting) pattern to iteratively reason
+       and call tools (including skills)
+    4. Automatically passes skill_metadata_dict to skill operations when
+       they are invoked
 
     Attributes:
-        max_iterations: Maximum number of iterations for the agent loop.
+        file_path (str): Path to the operation file, used for prompt loading.
+        Inherits all attributes from ReactAgentOp, including:
+            - llm: The language model to use (default: "qwen3_max_instruct")
+            - max_steps: Maximum number of reasoning steps (default: 5)
+            - tool_call_interval: Delay between tool calls in seconds (default: 1.0)
+            - add_think_tool: Whether to add a thinking tool (default: False)
+
+    Note:
+        - The skill_dir must contain SKILL.md files with valid metadata
+        - Skills are loaded via LoadSkillMetadataOp before the agent starts
+        - The skill_metadata_dict is stored in context and passed to skill operations
     """
 
     file_path: str = __file__
 
-    def __init__(self, llm: str = "qwen3_max_instruct", max_iterations: int = 10, **kwargs):
-        """Initialize the SkillAgentOp.
+    def __init__(
+        self,
+        llm: str = "qwen3_max_instruct",
+        max_steps: int = 5,
+        tool_call_interval: float = 1.0,
+        add_think_tool: bool = False,
+        **kwargs,
+    ):
+        """Initialize the skill agent with configuration.
 
         Args:
-            llm: The LLM model identifier to use for chat interactions.
-            max_iterations: Maximum number of agent loop iterations.
-            **kwargs: Additional arguments passed to the base class.
+            llm: The language model identifier to use for reasoning.
+                Default is "qwen3_max_instruct".
+            max_steps: Maximum number of reasoning steps the agent can take.
+                Default is 5. Note: This is passed as max_retries to the parent.
+            tool_call_interval: Delay in seconds between tool calls to avoid
+                rate limiting. Default is 1.0.
+            add_think_tool: Whether to add a thinking tool that allows the agent
+                to explicitly reason before taking actions. Default is False.
+            **kwargs: Additional keyword arguments passed to the parent class.
         """
-        super().__init__(llm=llm, **kwargs)
-        self.max_iterations: int = max_iterations
+        super().__init__(
+            llm=llm,
+            max_retries=max_steps,
+            tool_call_interval=tool_call_interval,
+            add_think_tool=add_think_tool,
+            **kwargs,
+        )
 
-    async def async_execute(self):
-        """Execute the skill agent operation.
+    def build_tool_call(self) -> ToolCall:
+        """Build the tool call definition for the skill agent.
 
-        This method orchestrates the skill-based task execution by:
-        1. Loading skill metadata
-        2. Setting up the system prompt with available skills
-        3. Running an iterative loop where the LLM can use tools
-        4. Collecting tool outputs and continuing the conversation
-        5. Setting the final response in the context
+        Creates and returns a ToolCall object that defines the skill agent tool.
+        This tool requires both query and skill_dir parameters to identify what
+        to answer and which skills are available.
 
-        The operation stops when the LLM no longer makes tool calls or
-        max_iterations is reached.
+        Returns:
+            ToolCall: A ToolCall object defining the skill agent tool with
+                the following properties:
+                - description: Description of what the tool does
+                - input_schema: A schema requiring:
+                    - "query" (string, required): The user's query to answer
+                    - "skill_dir" (string, required): The directory containing
+                      skill definitions (SKILL.md files)
         """
+        return ToolCall(
+            **{
+                "description": "Automatically uses pre-built Skills relevant to the query when needed.",
+                "input_schema": {
+                    "query": {
+                        "type": "string",
+                        "description": "query",
+                        "required": True,
+                    },
+                    "skill_dir": {
+                        "type": "string",
+                        "description": "skill dir",
+                        "required": True,
+                    },
+                },
+            },
+        )
+
+    async def build_messages(self) -> List[Message]:
+        """Build the initial messages for the agent conversation.
+
+        Loads skill metadata from the specified skill directory and constructs
+        the initial conversation messages. The system prompt includes information
+        about available skills, allowing the agent to understand what tools
+        are at its disposal.
+
+        The method:
+        1. Extracts query and skill_dir from context
+        2. Loads skill metadata using LoadSkillMetadataOp
+        3. Stores the skill_metadata_dict in context for later use
+        4. Formats skill metadata as a list for inclusion in the system prompt
+        5. Builds system and user messages with the current time and skill info
+
+        Returns:
+            List[Message]: A list containing:
+                - A SYSTEM message with the formatted system prompt including:
+                  skill directory, current time, and list of available skills
+                - A USER message containing the user's query
+
+        Note:
+            - The skill_metadata_dict is stored in context.skill_metadata_dict
+              for use by skill operations
+            - The system prompt is formatted using the "system_prompt" template
+              from the operation's prompt file
+            - Current time is formatted as "YYYY-MM-DD HH:MM:SS"
+        """
+        # Extract query and skill directory from context
         query: str = self.context.query
         skill_dir: str = self.context.skill_dir
         logger.info(f"SkillAgentOp processing query: {query} with access to skills in {skill_dir}")
 
-        load_metadata_op: BaseAsyncToolOp = self.ops.load_metadata
-        load_skill_op: BaseAsyncToolOp = self.ops.load_skill
-        read_reference_op: BaseAsyncToolOp = self.ops.read_reference
-        run_shell_op: BaseAsyncToolOp = self.ops.run_shell
+        # Load skill metadata from the skill directory
+        # This populates the skill_metadata_dict with all available skills
+        from .load_skill_metadata_op import LoadSkillMetadataOp
 
-        await load_metadata_op.async_call(skill_dir=skill_dir)
-        skill_metadata_dict: dict = load_metadata_op.output
+        op = LoadSkillMetadataOp()
+        await op.async_call(skill_dir=skill_dir)
+        # Store the skill metadata dictionary in context for use by skill operations
+        self.context.skill_metadata_dict = skill_metadata_dict = op.output
 
+        # Format skill metadata as a list for inclusion in the system prompt
         skill_metadata_list = [f"- {k}: {v['description']}" for k, v in skill_metadata_dict.items()]
         logger.info(f"SkillAgentOp loaded skill metadata: {skill_metadata_dict}")
-        system_prompt = self.prompt_format(
-            "system_prompt",
-            skill_dir=skill_dir,
-            skill_metadata="\n".join(skill_metadata_list),
-        )
 
+        # Get current time for the system prompt
+        now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Build the initial conversation messages
         messages = [
-            Message(role=Role.SYSTEM, content=system_prompt),
+            Message(
+                role=Role.SYSTEM,
+                content=self.prompt_format(
+                    "system_prompt",
+                    skill_dir=skill_dir,
+                    time=now_time,
+                    skill_metadata="\n".join(skill_metadata_list),
+                ),
+            ),
             Message(role=Role.USER, content=query),
         ]
 
-        tool_op_dict: dict = {op.tool_call.name: op for op in [load_skill_op, read_reference_op, run_shell_op]}
+        return messages
 
-        for i in range(self.max_iterations):
-            assistant_message = await self.llm.achat(
-                messages=messages,
-                tools=[x.tool_call for x in tool_op_dict.values()],
-            )
-            messages.append(assistant_message)
-            logger.info(assistant_message.model_dump_json())
+    async def execute_tool(self, op: BaseAsyncToolOp, tool_call: ToolCall):
+        """Execute a tool operation with skill metadata context.
 
-            if not assistant_message.tool_calls:
-                break
+        Overrides the parent class method to automatically pass the
+        skill_metadata_dict to skill operations when they are invoked.
+        This ensures that skill operations have access to the metadata
+        they need to function correctly.
 
-            ops: List[BaseAsyncToolOp] = []
-            for j, tool in enumerate(assistant_message.tool_calls):
-                op: BaseAsyncToolOp = tool_op_dict[tool.name].copy()
-                op.tool_call.id = tool.id
-                ops.append(op)
-                logger.info(f"{self.name} submit op{j}={op.name} argument={tool.argument_dict}")
-                self.submit_async_task(op.async_call, skill_dir=skill_dir, **tool.argument_dict)
+        Args:
+            op: The tool operation to execute (e.g., LoadSkillOp,
+                ReadReferenceFileOp, RunShellCommandOp).
+            tool_call: The tool call object containing the arguments
+                for the operation.
 
-            await self.join_async_task()
-
-            for op in ops:
-                messages.append(Message(role=Role.TOOL, content=op.output, tool_call_id=op.tool_call.id))
-                tool_content = f"[{self.name}.{i}.{op.name}] {op.output[:200]}...\n\n"
-                logger.info(tool_content)
-
-        self.context.response.answer = messages[-1].content
-        self.context.response.metadata["messages"] = [x.simple_dump() for x in messages]
+        Note:
+            - The skill_metadata_dict is automatically passed to all tool
+              operations, allowing them to look up skill directories
+            - Additional arguments from tool_call.argument_dict are also
+              passed to the operation
+            - The operation is executed asynchronously via submit_async_task
+        """
+        self.submit_async_task(
+            op.async_call,
+            skill_metadata_dict=self.context.skill_metadata_dict,
+            **tool_call.argument_dict,
+        )

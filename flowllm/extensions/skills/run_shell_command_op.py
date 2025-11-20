@@ -2,12 +2,14 @@
 
 This module provides the RunShellCommandOp class which executes shell
 commands in a subprocess, with automatic dependency detection and
-installation for script files.
+installation for script files. The command is executed in the skill's
+directory context, allowing scripts to access skill-specific files and
+resources.
 """
 
+import asyncio
 import os
-import re
-import subprocess
+import shutil
 
 from loguru import logger
 
@@ -22,29 +24,63 @@ class RunShellCommandOp(BaseAsyncToolOp):
 
     This tool executes shell commands and can automatically detect and
     install dependencies for script files (Python, JavaScript, Shell).
-    It supports timeout configuration and error handling.
+    The command is executed in the skill's directory context, allowing
+    scripts to access skill-specific files and resources.
+
+    The operation will:
+    1. Extract skill_name and command from input
+    2. Look up the skill directory from skill_metadata_dict
+    3. Change to the skill directory before executing the command
+    4. For Python commands, automatically detect and install dependencies
+       using pipreqs (if available)
+    5. Execute the command in a subprocess and capture stdout/stderr
+    6. Return the combined output
+
+    Returns:
+        str: The combined stdout and stderr output from the command execution.
+            The output is decoded as UTF-8 and stripped of leading/trailing
+            whitespace, with stdout and stderr concatenated with a newline.
+
+    Note:
+        - The skill_name must exist in `self.context.skill_metadata_dict`
+        - The command is executed in the skill's directory using `cd {skill_dir} && {command}`
+        - For Python commands (containing "py"), the tool attempts to auto-install
+          dependencies using pipreqs if it's available in the system PATH
+        - If pipreqs is not available or dependency installation fails, a warning
+          is logged but the command execution continues
+        - The subprocess uses the current environment variables (os.environ.copy())
     """
 
     def build_tool_call(self) -> ToolCall:
         """Build the tool call definition for run_shell_command.
 
+        Creates and returns a ToolCall object that defines the run_shell_command
+        tool. This tool requires both skill_name and command parameters to
+        identify which skill directory to use and what command to execute.
+
         Returns:
-            A ToolCall object defining the run_shell_command tool.
+            ToolCall: A ToolCall object defining the run_shell_command tool with
+                the following properties:
+                - name: "run_shell_command"
+                - description: Description of what the tool does
+                - input_schema: A schema requiring:
+                    - "skill_name" (string, required): The name of the skill
+                    - "command" (string, required): The shell command to execute
         """
         return ToolCall(
             **{
                 "name": "run_shell_command",
                 "description": "run shell command (e.g., 'echo 'hello world'') in a subprocess.",
                 "input_schema": {
+                    "skill_name": {
+                        "type": "string",
+                        "description": "skill name",
+                        "required": True,
+                    },
                     "command": {
                         "type": "string",
                         "description": "shell command",
                         "required": True,
-                    },
-                    "timeout": {
-                        "type": "integer",
-                        "description": "timeout for the subprocess",
-                        "required": False,
                     },
                 },
             },
@@ -53,140 +89,79 @@ class RunShellCommandOp(BaseAsyncToolOp):
     async def async_execute(self):
         """Execute the shell command operation.
 
-        Runs a shell command in a subprocess. If the command contains
-        a script file path, automatically detects the language and
-        installs any required dependencies before execution.
+        Executes a shell command in the specified skill's directory. For Python
+        commands, the method attempts to automatically detect and install
+        dependencies using pipreqs before executing the command.
 
-        Args:
-            command: The shell command to execute.
-            timeout: Optional timeout in seconds for the subprocess.
+        The method:
+        1. Extracts skill_name and command from input_dict
+        2. Looks up the skill directory from skill_metadata_dict
+        3. For Python commands (containing "py"), checks if pipreqs is available
+        4. If pipreqs is available, generates requirements.txt and installs dependencies
+        5. Constructs the full command as `cd {skill_dir} && {command}`
+        6. Executes the command in a subprocess with the current environment
+        7. Captures stdout and stderr output
+        8. Returns the combined output (stdout + stderr)
 
-        The output (stdout) is captured and set as the operation output.
-        If an error occurs, the error output is captured and returned.
+        Returns:
+            None: The result is set via `self.set_output()` with the combined
+                stdout and stderr output from the command execution. The output
+                is decoded as UTF-8 and formatted as: "{stdout}\n{stderr}"
+
+        Raises:
+            KeyError: If skill_name is not found in skill_metadata_dict.
+                This should be handled by ensuring LoadSkillMetadataOp is
+                called before RunShellCommandOp.
+
+        Note:
+            - Dependency auto-installation only occurs for commands containing "py"
+            - If pipreqs is not available, a warning is logged but execution continues
+            - If dependency installation fails, a warning is logged but the command
+              is still executed
+            - The command runs in the skill's directory, allowing access to
+              skill-specific files and resources
+            - Environment variables from the current process are passed to the subprocess
         """
+        # Extract skill name and command from input parameters
+        skill_name = self.input_dict["skill_name"]
         command: str = self.input_dict["command"]
-        timeout: int | None = self.input_dict.get("timeout", None)
+        # Look up the skill directory from the metadata dictionary
+        # This dictionary should be populated by LoadSkillMetadataOp
+        skill_dir = self.context.skill_metadata_dict[skill_name]["skill_dir"]
+        logger.info(f"🔧 run shell command: skill_name={skill_name} skill_dir={skill_dir} command={command}")
 
-        # Extract script path from command
-        script_path = self._extract_script_path(command)
-        if script_path:
-            # Detect language
-            language = self._detect_language(script_path)
-            logger.info(f"Detected language: {language} in the script: {script_path}")
+        # Auto-install dependencies for Python scripts if pipreqs is available
+        # This helps ensure that Python scripts have their required dependencies
+        if "py" in command:
+            pipreqs_available = shutil.which("pipreqs") is not None
+            if pipreqs_available:
+                install_cmd = f"cd {skill_dir} && pipreqs . --force && pip install -r requirements.txt"
+                proc = await asyncio.create_subprocess_shell(
+                    install_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await proc.communicate()
+                if proc.returncode != 0:
+                    logger.warning(f"⚠️ Failed to install dependencies with pipreqs:\n{stderr.decode()}")
+                else:
+                    logger.info("✅ Dependencies installed successfully.")
+            else:
+                logger.info("ℹ️ pipreqs not found, skipping dependency auto-install.")
 
-            # Detect and install dependencies
-            dependencies = self._detect_dependencies(script_path, language)
-            self._install_dependencies(dependencies, script_path, language)
-        else:
-            logger.info("No script detected in the command. Skipping language detection and dependency installation.")
+        # Construct the full command to execute in the skill directory
+        # This ensures the command runs in the correct context
+        full_command = f"cd {skill_dir} && {command}"
+        proc = await asyncio.create_subprocess_shell(
+            full_command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=os.environ.copy(),
+        )
 
-        logger.info(f"Executing command:\n {command}")
-
-        try:
-            output = subprocess.run(
-                command,
-                shell=True,
-                check=True,
-                timeout=timeout,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-            ).stdout.decode()
-
-        except subprocess.CalledProcessError as error:
-            logger.exception(f"❌ Error during command execution: {error}")
-            self.set_output(error.stdout.decode())
-            return
-
-        logger.info(f"✅ Successfully run the shell commands \n{output}")
+        # Wait for the command to complete and capture output
+        stdout, stderr = await proc.communicate()
+        # Combine stdout and stderr output, decoded as UTF-8
+        output = stdout.decode().strip() + "\n" + stderr.decode().strip()
+        logger.info(f"✅ Command executed: skill_name={skill_name}")
         self.set_output(output)
-
-    @staticmethod
-    def _extract_script_path(command: str):
-        """Extract script file path from a shell command.
-
-        Uses regex to find file paths with common script extensions
-        (.py, .js, .jsx, .sh, .bash) in the command string.
-
-        Args:
-            command: The shell command string.
-
-        Returns:
-            The extracted script path if found, None otherwise.
-        """
-        # This regex looks for common script file extensions
-        match = re.search(r"((?:/[\w.-]+)+\.(?:py|js|jsx|sh|bash))", command)
-        return match.group(1) if match else None
-
-    @staticmethod
-    def _detect_language(script_path):
-        """Detect the programming language from a script file extension.
-
-        Args:
-            script_path: Path to the script file.
-
-        Returns:
-            The detected language name ("Python", "JavaScript", "Shell", or "Unknown").
-        """
-        _, ext = os.path.splitext(script_path)
-        ext = ext.lower()
-
-        if ext in [".py"]:
-            return "Python"
-        elif ext in [".js", ".jsx"]:
-            return "JavaScript"
-        elif ext in [".sh", ".bash"]:
-            return "Shell"
-        return "Unknown"
-
-    def _detect_dependencies(self, script_path, language):
-        """Detect dependencies required by a script.
-
-        Args:
-            script_path: Path to the script file.
-            language: The programming language of the script.
-
-        Returns:
-            A list of dependency strings, empty if none found or language not supported.
-        """
-        if language == "Python":
-            return self._detect_python_dependencies(script_path)
-        # Add more language-specific dependency detection methods here
-        return []
-
-    @staticmethod
-    def _detect_python_dependencies(script_path):
-        """Detect Python dependencies using pipreqs.
-
-        Uses pipreqs to analyze the script directory and generate
-        a requirements.txt file, then reads and returns the dependencies.
-
-        Args:
-            script_path: Path to the Python script file.
-
-        Returns:
-            A list of dependency strings from the generated requirements.txt.
-        """
-        # Use pipreqs to generate requirements
-        requirements_path = "requirements.txt"
-        subprocess.run(["pipreqs", os.path.dirname(script_path), "--savepath", requirements_path], check=True)
-        with open(requirements_path, "r", encoding="utf-8") as file:
-            dependencies = file.read().splitlines()
-        os.remove(requirements_path)
-        return dependencies
-
-    @staticmethod
-    def _install_dependencies(dependencies, script_path, language):
-        """Install dependencies for a script.
-
-        Installs the detected dependencies using the appropriate package
-        manager for the given language.
-
-        Args:
-            dependencies: List of dependency strings to install.
-            script_path: Path to the script file (used for working directory).
-            language: The programming language of the script.
-        """
-        if language == "Python":
-            for dep in dependencies:
-                subprocess.run(["pip", "install", dep], check=True, cwd=os.path.dirname(script_path))
-        # Add more language-specific installation methods here

@@ -88,6 +88,10 @@ class ReactAgentOp(BaseAsyncToolOp):
         """Prepare the message history for the LLM."""
         return messages
 
+    async def execute_tool(self, op: BaseAsyncToolOp, tool_call: ToolCall):
+        """Execute a tool operation asynchronously using the provided tool call arguments."""
+        self.submit_async_task(op.async_call, **tool_call.argument_dict)
+
     async def async_execute(self):
         """Main execution loop that alternates LLM calls and tool invocations."""
         from ..think_tool_op import ThinkToolOp
@@ -127,16 +131,16 @@ class ReactAgentOp(BaseAsyncToolOp):
                 op_copy: BaseAsyncToolOp = tool_op_dict[tool_call.name].copy()
                 op_copy.tool_call.id = tool_call.id
                 op_list.append(op_copy)
-                self.submit_async_task(op_copy.async_call, **tool_call.argument_dict)
+                await self.execute_tool(op_copy, tool_call)
                 time.sleep(self.tool_call_interval)
 
             await self.join_async_task()
 
             for j, op in enumerate(op_list):
-                logger.info(f"round{i + 1}.{j} join tool_result={op.output}")
                 tool_result = str(op.output)
                 tool_message = Message(role=Role.TOOL, content=tool_result, tool_call_id=op.tool_call.id)
                 messages.append(tool_message)
+                logger.info(f"round{i + 1}.{j} join tool_result={tool_result[:200]}...\n\n")
 
             if self.add_think_tool:
                 if not has_think_tool_flag:
