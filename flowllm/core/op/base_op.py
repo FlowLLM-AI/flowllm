@@ -105,7 +105,7 @@ class BaseOp(ABC):
         name: str = "",
         async_mode: bool = False,
         max_retries: int = 1,
-        raise_exception: bool = True,
+        raise_exception: bool = False,
         enable_multithread: bool = True,
         language: str = "",
         prompt_path: str = "",
@@ -165,6 +165,8 @@ class BaseOp(ABC):
         self.timer = Timer(name=self.name)
         self.context: FlowContext | None = None
         self._cache: CacheHandler | None = None
+        self.llm_config: LLMConfig | None = None
+        self.embedding_model_config: EmbeddingModelConfig | None = None
 
     @property
     def short_name(self) -> str:
@@ -555,9 +557,9 @@ class BaseOp(ABC):
             BaseLLM instance configured from service config
         """
         if isinstance(self._llm, str):
-            llm_config: LLMConfig = C.service_config.llm[self._llm]
-            llm_cls = C.get_llm_class(llm_config.backend)
-            self._llm = llm_cls(model_name=llm_config.model_name, **llm_config.params)
+            self.llm_config: LLMConfig = C.service_config.llm[self._llm]
+            llm_cls = C.get_llm_class(self.llm_config.backend)
+            self._llm = llm_cls(model_name=self.llm_config.model_name, **self.llm_config.params)
 
         return self._llm
 
@@ -569,11 +571,11 @@ class BaseOp(ABC):
             BaseEmbeddingModel instance configured from service config
         """
         if isinstance(self._embedding_model, str):
-            embedding_model_config: EmbeddingModelConfig = C.service_config.embedding_model[self._embedding_model]
-            embedding_model_cls = C.get_embedding_model_class(embedding_model_config.backend)
+            self.embedding_model_config: EmbeddingModelConfig = C.service_config.embedding_model[self._embedding_model]
+            embedding_model_cls = C.get_embedding_model_class(self.embedding_model_config.backend)
             self._embedding_model = embedding_model_cls(
-                model_name=embedding_model_config.model_name,
-                **embedding_model_config.params,
+                model_name=self.embedding_model_config.model_name,
+                **self.embedding_model_config.params,
             )
 
         return self._embedding_model
@@ -623,7 +625,11 @@ class BaseOp(ABC):
         Returns:
             Total token count as an integer
         """
-        llm_config: LLMConfig = C.service_config.llm[self._llm]
+        if self.llm_config is None:
+            llm_config: LLMConfig = C.service_config.llm[self._llm]
+        else:
+            llm_config = self.llm_config
+
         token_count_config: LLMTokenCountConfig = llm_config.token_count
 
         token_count_cls = C.get_token_counter_class(token_count_config.backend)

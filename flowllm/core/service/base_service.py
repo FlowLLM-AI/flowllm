@@ -56,19 +56,22 @@ class BaseService(ABC):
         prints the logo (optional) and suppresses deprecation warnings. Concrete
         services should call super().run() before their own startup logic.
         """
+        flow_names = []
         for _, flow in C.flow_dict.items():
             assert isinstance(flow, BaseFlow)
             if flow.stream:
                 if self.integrate_stream_flow(flow):
-                    logger.info(f"integrate {flow.name}[stream]")
+                    flow_names.append(flow.name)
 
             elif isinstance(flow, BaseToolFlow):
                 if self.integrate_tool_flow(flow):
-                    logger.info(f"integrate {flow.name}")
+                    flow_names.append(flow.name)
 
             else:
                 if self.integrate_flow(flow):
-                    logger.info(f"integrate {flow.name}")
+                    flow_names.append(flow.name)
+
+        logger.info(f"integrate {','.join(flow_names)}")
 
         import warnings
 

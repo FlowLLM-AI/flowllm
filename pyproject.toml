@@ -78,8 +78,12 @@ token = [
     "tiktoken>=0.5.0",
 ]
 
+skill = [
+    "pipreqs",
+]
+
 full = [
-    "flowllm[dev,reme,fin,token]",
+    "flowllm[dev,reme,fin,token,skill]",
 ]
 
 [tool.setuptools.packages.find]

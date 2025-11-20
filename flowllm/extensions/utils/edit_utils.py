@@ -8,12 +8,33 @@ import re
 
 
 def escape_regex(s: str) -> str:
-    """Escape special regex characters."""
+    """Escape special regex characters in a string.
+
+    This function escapes all special regex characters in the input string so that
+    it can be used as a literal string in a regular expression pattern.
+
+    Args:
+        s: The string containing characters that may need escaping
+
+    Returns:
+        A string with all special regex characters escaped
+    """
     return re.escape(s)
 
 
 def restore_trailing_newline(original: str, modified: str) -> str:
-    """Restore trailing newline to match original."""
+    """Restore trailing newline to match the original string.
+
+    This function ensures that the modified string has the same trailing newline
+    behavior as the original string, preserving the file's newline format.
+
+    Args:
+        original: The original string before modification
+        modified: The modified string that may have lost or gained a trailing newline
+
+    Returns:
+        The modified string with trailing newline adjusted to match the original
+    """
     had_newline = original.endswith("\n")
     if had_newline and not modified.endswith("\n"):
         return modified + "\n"
@@ -27,7 +48,22 @@ def calculate_exact_replacement(
     old_string: str,
     new_string: str,
 ) -> tuple[str, int] | None:
-    """Try exact string replacement."""
+    """Perform exact string replacement in content.
+
+    This function attempts to replace the old_string with new_string using exact
+    matching. It normalizes line endings (converts \\r\\n to \\n) before matching
+    and preserves the original trailing newline behavior.
+
+    Args:
+        content: The original content string to modify
+        old_string: The exact string to find and replace
+        new_string: The replacement string
+
+    Returns:
+        A tuple containing (modified_content, occurrence_count) if the old_string
+        is found, or None if no match is found. The occurrence_count indicates
+        how many times the old_string appears in the content.
+    """
     normalized_content = content
     normalized_old = old_string.replace("\r\n", "\n")
     normalized_new = new_string.replace("\r\n", "\n")
@@ -45,7 +81,23 @@ def calculate_flexible_replacement(
     old_string: str,
     new_string: str,
 ) -> tuple[str, int] | None:
-    """Try flexible replacement ignoring indentation."""
+    """Perform flexible string replacement that ignores indentation differences.
+
+    This function matches and replaces text by comparing line content while ignoring
+    leading whitespace (indentation). It preserves the indentation of the first matched
+    line when applying the replacement, making it useful for code editing where
+    indentation may vary.
+
+    Args:
+        content: The original content string to modify
+        old_string: The string pattern to find (indentation is ignored during matching)
+        new_string: The replacement string (will be indented to match the original)
+
+    Returns:
+        A tuple containing (modified_content, occurrence_count) if matches are found,
+        or None if no match is found. The occurrence_count indicates how many times
+        the pattern was found and replaced.
+    """
     normalized_content = content
     normalized_old = old_string.replace("\r\n", "\n")
     normalized_new = new_string.replace("\r\n", "\n")
@@ -85,7 +137,22 @@ def calculate_regex_replacement(
     old_string: str,
     new_string: str,
 ) -> tuple[str, int] | None:
-    """Try regex-based flexible replacement."""
+    """Perform regex-based flexible replacement with whitespace tolerance.
+
+    This function converts the old_string into a regex pattern by escaping special
+    characters and allowing flexible whitespace between tokens. It's useful for
+    matching code patterns where whitespace may vary. The replacement preserves
+    the indentation of the matched block.
+
+    Args:
+        content: The original content string to modify
+        old_string: The string pattern to find (converted to regex with flexible whitespace)
+        new_string: The replacement string (will be indented to match the original)
+
+    Returns:
+        A tuple containing (modified_content, 1) if a match is found, or None if
+        no match is found. Only the first match is replaced.
+    """
     normalized_old = old_string.replace("\r\n", "\n")
     normalized_new = new_string.replace("\r\n", "\n")
 

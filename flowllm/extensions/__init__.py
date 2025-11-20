@@ -6,12 +6,14 @@ It includes ready-to-use extension packages for:
 - file_tool: File-related operations including editing and searching files
 - data: Data-related operations including downloading stock data
 - utils: Utility functions for date/time operations and other helpers
+- skills: Skill-based operations for managing and executing specialized skills
 """
 
-from . import data, file_tool, utils
+from . import data, file_tool, skills, utils
 
 __all__ = [
     "data",
     "file_tool",
+    "skills",
     "utils",
 ]

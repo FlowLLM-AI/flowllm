@@ -127,6 +127,14 @@ class BaseContext:
         """
         return self._data.keys()
 
+    def values(self):
+        """Get all values in the context.
+
+        Returns:
+            A view object of all values in the context.
+        """
+        return self._data.values()
+
     def update(self, kwargs: dict):
         """Update context with new key-value pairs.
 

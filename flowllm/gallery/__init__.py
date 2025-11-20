@@ -13,24 +13,24 @@ It includes ready-to-use operations for:
 - TokenCountOp: Token counting operation for calculating token usage in messages
 """
 
+from . import agent
 from .chat_op import ChatOp
 from .code_analyse_op import CodeAnalyseOp
 from .dashscope_search_op import DashscopeSearchOp
 from .execute_code_op import ExecuteCodeOp
 from .gen_system_prompt_op import GenSystemPromptOp
 from .mock_search_op import MockSearchOp
-from .react_search_op import ReactSearchOp
 from .stream_chat_op import StreamChatOp
 from .token_count_op import TokenCountOp
 
 __all__ = [
+    "agent",
     "ChatOp",
     "CodeAnalyseOp",
     "DashscopeSearchOp",
     "ExecuteCodeOp",
     "GenSystemPromptOp",
     "MockSearchOp",
-    "ReactSearchOp",
     "StreamChatOp",
     "TokenCountOp",
 ]
