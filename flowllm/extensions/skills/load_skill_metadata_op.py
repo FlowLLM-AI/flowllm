@@ -162,6 +162,7 @@ class LoadSkillMetadataOp(BaseAsyncToolOp):
 
         # Recursively find all SKILL.md files in the skills directory
         skill_files = list(skill_dir.rglob("SKILL.md"))
+        assert skill_files, "No SKILL.md files found in skills directory"
 
         # Build dictionary mapping skill names to their metadata
         skill_metadata_dict = {}

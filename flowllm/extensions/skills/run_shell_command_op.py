@@ -9,6 +9,7 @@ resources.
 
 import asyncio
 import os
+import shutil
 from pathlib import Path
 
 from loguru import logger
@@ -32,7 +33,7 @@ class RunShellCommandOp(BaseAsyncToolOp):
     2. Look up the skill directory from skill_metadata_dict
     3. Change to the skill directory before executing the command
     4. For Python commands, automatically detect and install dependencies
-       using pipreqs (if available)
+       using pipreqs (if available and auto_install_deps parameter is enabled)
     5. Execute the command in a subprocess and capture stdout/stderr
     6. Return the combined output
 
@@ -45,11 +46,23 @@ class RunShellCommandOp(BaseAsyncToolOp):
         - The skill_name must exist in `self.context.skill_metadata_dict`
         - The command is executed in the skill's directory using `cd {skill_dir} && {command}`
         - For Python commands (containing "py"), the tool attempts to auto-install
-          dependencies using pipreqs if it's available in the system PATH
+          dependencies using pipreqs if it's available in the system PATH and
+          the auto_install_deps parameter is enabled
         - If pipreqs is not available or dependency installation fails, a warning
           is logged but the command execution continues
         - The subprocess uses the current environment variables (os.environ.copy())
     """
+
+    def __init__(self, auto_install_deps: bool = False, **kwargs):
+        """Initialize RunShellCommandOp.
+
+        Args:
+            auto_install_deps: If True, enables automatic dependency installation for Python
+                commands. Defaults to False.
+            **kwargs: Additional keyword arguments passed to parent class.
+        """
+        super().__init__(**kwargs)
+        self.auto_install_deps: bool = auto_install_deps
 
     def build_tool_call(self) -> ToolCall:
         """Build the tool call definition for run_shell_command.
@@ -70,7 +83,7 @@ class RunShellCommandOp(BaseAsyncToolOp):
         return ToolCall(
             **{
                 "name": "run_shell_command",
-                "description": "run shell command (e.g., 'echo 'hello world'') in a subprocess.",
+                "description": self.get_prompt("tool_desc"),
                 "input_schema": {
                     "skill_name": {
                         "type": "string",
@@ -115,6 +128,7 @@ class RunShellCommandOp(BaseAsyncToolOp):
 
         Note:
             - Dependency auto-installation only occurs for commands containing "py"
+              and when the auto_install_deps parameter is enabled
             - If pipreqs is not available, a warning is logged but execution continues
             - If dependency installation fails, a warning is logged but the command
               is still executed
@@ -129,6 +143,27 @@ class RunShellCommandOp(BaseAsyncToolOp):
         # This dictionary should be populated by LoadSkillMetadataOp
         skill_dir = Path(self.context.skill_metadata_dict[skill_name]["skill_dir"])
         logger.info(f"🔧 run shell command: skill_name={skill_name} skill_dir={skill_dir} command={command}")
+
+        # Auto-install dependencies for Python scripts if pipreqs is available
+        # This helps ensure that Python scripts have their required dependencies
+        # Only install if auto_install_deps parameter is enabled
+        if self.auto_install_deps:
+            if "py" in command:
+                pipreqs_available = shutil.which("pipreqs") is not None
+                if pipreqs_available:
+                    install_cmd = f"cd {skill_dir} && pipreqs . --force && pip install -r requirements.txt"
+                    proc = await asyncio.create_subprocess_shell(
+                        install_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                    stdout, stderr = await proc.communicate()
+                    if proc.returncode != 0:
+                        logger.warning(f"⚠️ Failed to install dependencies:\n{stdout.decode()}\n{stderr.decode()}")
+                    else:
+                        logger.info(f"✅ Dependencies installed successfully.\n{stdout.decode()}\n{stderr.decode()}")
+                else:
+                    logger.info("ℹ️ pipreqs not found, skipping dependency auto-install.")
 
         # Construct the full command to execute in the skill directory
         # This ensures the command runs in the correct context

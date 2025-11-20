@@ -53,7 +53,7 @@ class SkillAgentOp(ReactAgentOp):
 
     def __init__(
         self,
-        llm: str = "qwen3_max_instruct",
+        llm: str = "qwen3_30b_instruct",
         max_steps: int = 50,
         tool_call_interval: float = 1.0,
         add_think_tool: bool = False,
