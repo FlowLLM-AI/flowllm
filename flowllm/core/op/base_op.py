@@ -105,7 +105,7 @@ class BaseOp(ABC):
         name: str = "",
         async_mode: bool = False,
         max_retries: int = 1,
-        raise_exception: bool = True,
+        raise_exception: bool = False,
         enable_multithread: bool = True,
         language: str = "",
         prompt_path: str = "",

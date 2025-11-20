@@ -16,3 +16,5 @@
     - [ ] github action
     - [ ] contribution guide
 - [ ] ah feature & backtest
+- [ ] Look at the Bollinger Bands range with 95% standard deviation.
+
