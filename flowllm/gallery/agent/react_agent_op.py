@@ -52,7 +52,7 @@ class ReactAgentOp(BaseAsyncToolOp):
             },
         )
 
-    def build_tool_op_dict(self) -> dict:
+    async def build_tool_op_dict(self) -> dict:
         """Collect available tool operators from the execution context."""
         assert isinstance(self.ops, BaseContext), "self.ops must be BaseContext"
         tool_op_dict: Dict[str, BaseAsyncToolOp] = {
@@ -62,7 +62,7 @@ class ReactAgentOp(BaseAsyncToolOp):
             op.language = self.language
         return tool_op_dict
 
-    def build_messages(self) -> List[Message]:
+    async def build_messages(self) -> List[Message]:
         """Build the initial message history for the LLM."""
         if "query" in self.input_dict:
             query: str = self.input_dict["query"]
@@ -93,11 +93,11 @@ class ReactAgentOp(BaseAsyncToolOp):
         from ..think_tool_op import ThinkToolOp
 
         think_op = ThinkToolOp(language=self.language)
-        tool_op_dict = self.build_tool_op_dict()
+        tool_op_dict = await self.build_tool_op_dict()
         if self.add_think_tool:
             tool_op_dict["think_tool"] = think_op
 
-        messages = self.build_messages()
+        messages = await self.build_messages()
 
         for i in range(self.max_steps):
             messages = await self.before_chat(messages)
