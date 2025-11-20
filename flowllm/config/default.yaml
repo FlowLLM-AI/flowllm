@@ -40,7 +40,7 @@ flow:
         description: "user query"
         required: true
 
-  skill_agent_flow:
+  skill_agent:
     flow_content: SkillAgentOp() << [LoadSkillOp(), ReadReferenceFileOp(), RunShellCommandOp()]
 
 llm:

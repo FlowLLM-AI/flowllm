@@ -6,6 +6,8 @@ The skill directory is looked up from the skill metadata dictionary using the
 skill name. If the file is not found, an error message is returned.
 """
 
+from pathlib import Path
+
 from loguru import logger
 
 from ...core.context import C
@@ -112,7 +114,7 @@ class ReadReferenceFileOp(BaseAsyncToolOp):
         """
         skill_name = self.input_dict["skill_name"]
         file_name = self.input_dict["file_name"]
-        skill_dir = self.context.skill_metadata_dict[skill_name]["skill_dir"]
+        skill_dir = Path(self.context.skill_metadata_dict[skill_name]["skill_dir"])
         logger.info(
             f"🔧 Tool called: read_reference_file(skill_name='{skill_name}', file_name='{file_name}') "
             f"with skill_dir={skill_dir}",

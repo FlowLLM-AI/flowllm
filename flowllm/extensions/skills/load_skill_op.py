@@ -7,6 +7,8 @@ SKILL.md file contains YAML frontmatter, only the content after the
 frontmatter is returned; otherwise, the full file content is returned.
 """
 
+from pathlib import Path
+
 from loguru import logger
 
 from ...core.context import C
@@ -108,7 +110,7 @@ class LoadSkillOp(BaseAsyncToolOp):
         skill_name = self.input_dict["skill_name"]
         # Look up the skill directory from the metadata dictionary
         # This dictionary should be populated by LoadSkillMetadataOp
-        skill_dir = self.context.skill_metadata_dict[skill_name]["skill_dir"]
+        skill_dir = Path(self.context.skill_metadata_dict[skill_name]["skill_dir"])
         logger.info(f"🔧 Tool called: load_skill(skill_name='{skill_name}') with skill_dir={skill_dir}")
 
         # Construct the path to the SKILL.md file
@@ -122,21 +124,7 @@ class LoadSkillOp(BaseAsyncToolOp):
             return
 
         # Read the SKILL.md file content
-        content = skill_path.read_text(encoding="utf-8")
+        content: str = skill_path.read_text(encoding="utf-8")
+        self.set_output(content)
 
-        # Split content by YAML frontmatter delimiters to detect frontmatter
-        # Expected format: "---\n...frontmatter...\n---\n...instructions..."
-        # This should result in at least 3 parts: [before, frontmatter, after]
-        parts = content.split("---")
-        if len(parts) < 3:
-            # No YAML frontmatter found, return the full content
-            logger.warning(f"No YAML frontmatter found in skill from {skill_path}")
-            self.set_output(content)
-            return
-
-        # YAML frontmatter detected, return only the content after it
-        # parts[0] = content before first "---" (usually empty)
-        # parts[1] = YAML frontmatter
-        # parts[2] = actual skill instructions content
-        logger.info(f"✅ Loaded skill: {skill_name}")
-        self.set_output(parts[2])
+        logger.info(f"✅ Loaded skill: {skill_name} size={len(content)}")

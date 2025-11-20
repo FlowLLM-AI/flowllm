@@ -30,7 +30,7 @@ async def main():
         print("=" * 50)
         print("Testing skill_agent_flow endpoint...")
         response = await client.execute_flow(
-            "skill_agent_flow",
+            "skill_agent",
             query=query,
             skill_dir=skill_dir,
         )

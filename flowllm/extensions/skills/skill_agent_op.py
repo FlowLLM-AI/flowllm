@@ -54,7 +54,7 @@ class SkillAgentOp(ReactAgentOp):
     def __init__(
         self,
         llm: str = "qwen3_max_instruct",
-        max_steps: int = 5,
+        max_steps: int = 50,
         tool_call_interval: float = 1.0,
         add_think_tool: bool = False,
         **kwargs,
@@ -74,7 +74,7 @@ class SkillAgentOp(ReactAgentOp):
         """
         super().__init__(
             llm=llm,
-            max_retries=max_steps,
+            max_steps=max_steps,
             tool_call_interval=tool_call_interval,
             add_think_tool=add_think_tool,
             **kwargs,
@@ -168,7 +168,6 @@ class SkillAgentOp(ReactAgentOp):
                 role=Role.SYSTEM,
                 content=self.prompt_format(
                     "system_prompt",
-                    skill_dir=skill_dir,
                     time=now_time,
                     skill_metadata="\n".join(skill_metadata_list),
                 ),

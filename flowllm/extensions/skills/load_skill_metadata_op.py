@@ -88,12 +88,6 @@ class LoadSkillMetadataOp(BaseAsyncToolOp):
                 - No YAML frontmatter is found (less than 3 parts after splitting)
                 - The 'name' field is missing or empty
                 - The 'description' field is missing or empty
-
-        Example:
-            >>> content = "---\\nname: my_skill\\ndescription: Does something\\n---\\n..."
-            >>> metadata = await parse_skill_metadata(content, "/path/to/SKILL.md")
-            >>> print(metadata)
-            {'name': 'my_skill', 'description': 'Does something'}
         """
         # Split content by YAML frontmatter delimiters (---)
         # Expected format: "---\n...frontmatter...\n---\n...content..."
