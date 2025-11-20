@@ -137,7 +137,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             return output_keys
 
     @property
-    def output(self) -> str:
+    def output(self):
         """Convenience accessor for the primary output value.
 
         Raises:
