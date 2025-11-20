@@ -41,7 +41,12 @@ class ReactAgentOp(BaseAsyncToolOp):
                     "query": {
                         "type": "string",
                         "description": "query",
-                        "required": True,
+                        "required": False,
+                    },
+                    "messages": {
+                        "type": "array",
+                        "description": "messages",
+                        "required": False,
                     },
                 },
             },
@@ -57,26 +62,38 @@ class ReactAgentOp(BaseAsyncToolOp):
             op.language = self.language
         return tool_op_dict
 
+    def _build_messages(self) -> List[Message]:
+        """Build the initial message history for the LLM."""
+        if "query" in self.input_dict:
+            query: str = self.input_dict["query"]
+            now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            messages = [
+                Message(role=Role.SYSTEM, content=self.prompt_format(prompt_name="system_prompt", time=now_time)),
+                Message(role=Role.USER, content=query),
+            ]
+            logger.info(f"round0.system={messages[0].model_dump_json()}")
+            logger.info(f"round0.user={messages[1].model_dump_json()}")
+
+        elif "messages" in self.input_dict:
+            messages = self.input_dict["messages"]
+            messages = [Message(**x) for x in messages]
+
+            logger.info(f"round0.user={messages[-1].model_dump_json()}")
+        else:
+            raise ValueError("input_dict must contain either 'query' or 'messages'")
+
+        return messages
+
     async def async_execute(self):
         """Main execution loop that alternates LLM calls and tool invocations."""
         from ..think_tool_op import ThinkToolOp
 
         think_op = ThinkToolOp(language=self.language)
-
-        query: str = self.input_dict["query"]
-
         tool_op_dict = self._build_tool_op_dict()
-
         if self.add_think_tool:
             tool_op_dict["think_tool"] = think_op
 
-        now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        messages = [
-            Message(role=Role.SYSTEM, content=self.prompt_format(prompt_name="system_prompt", time=now_time)),
-            Message(role=Role.USER, content=query),
-        ]
-        logger.info(f"round0.system={messages[0].model_dump_json()}")
-        logger.info(f"round0.user={messages[1].model_dump_json()}")
+        messages = self._build_messages()
 
         for i in range(self.max_steps):
             assistant_message: Message = await self.llm.achat(
