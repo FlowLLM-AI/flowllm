@@ -52,7 +52,7 @@ class ReactAgentOp(BaseAsyncToolOp):
             },
         )
 
-    def _build_tool_op_dict(self) -> dict:
+    def build_tool_op_dict(self) -> dict:
         """Collect available tool operators from the execution context."""
         assert isinstance(self.ops, BaseContext), "self.ops must be BaseContext"
         tool_op_dict: Dict[str, BaseAsyncToolOp] = {
@@ -62,7 +62,7 @@ class ReactAgentOp(BaseAsyncToolOp):
             op.language = self.language
         return tool_op_dict
 
-    def _build_messages(self) -> List[Message]:
+    def build_messages(self) -> List[Message]:
         """Build the initial message history for the LLM."""
         if "query" in self.input_dict:
             query: str = self.input_dict["query"]
@@ -84,18 +84,24 @@ class ReactAgentOp(BaseAsyncToolOp):
 
         return messages
 
+    async def before_chat(self, messages: List[Message]):
+        """Prepare the message history for the LLM."""
+        return messages
+
     async def async_execute(self):
         """Main execution loop that alternates LLM calls and tool invocations."""
         from ..think_tool_op import ThinkToolOp
 
         think_op = ThinkToolOp(language=self.language)
-        tool_op_dict = self._build_tool_op_dict()
+        tool_op_dict = self.build_tool_op_dict()
         if self.add_think_tool:
             tool_op_dict["think_tool"] = think_op
 
-        messages = self._build_messages()
+        messages = self.build_messages()
 
         for i in range(self.max_steps):
+            messages = await self.before_chat(messages)
+
             assistant_message: Message = await self.llm.achat(
                 messages=messages,
                 tools=[op.tool_call for op in tool_op_dict.values()],

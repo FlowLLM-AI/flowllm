@@ -48,7 +48,7 @@ class HttpService(BaseService):
         request_model = create_pydantic_model(flow.name)
 
         async def execute_endpoint(request: request_model) -> FlowResponse:
-            return await flow.async_call(**request.model_dump())
+            return await flow.async_call(**request.model_dump(exclude_none=True))
 
         self.app.post(f"/{flow.name}", response_model=FlowResponse)(execute_endpoint)
         return True
@@ -58,7 +58,7 @@ class HttpService(BaseService):
         request_model = create_pydantic_model(flow.name, input_schema=flow.tool_call.input_schema)
 
         async def execute_endpoint(request: request_model) -> FlowResponse:
-            return await flow.async_call(**request.model_dump())
+            return await flow.async_call(**request.model_dump(exclude_none=True))
 
         # include tool description in OpenAPI, parameters are described via request_model fields
         self.app.post(
@@ -74,7 +74,9 @@ class HttpService(BaseService):
 
         async def execute_stream_endpoint(request: request_model) -> StreamingResponse:
             stream_queue = asyncio.Queue()
-            task = asyncio.create_task(flow.async_call(stream_queue=stream_queue, **request.model_dump()))
+            task = asyncio.create_task(
+                flow.async_call(stream_queue=stream_queue, **request.model_dump(exclude_none=True)),
+            )
 
             async def generate_stream() -> AsyncGenerator[bytes, None]:
                 while True:

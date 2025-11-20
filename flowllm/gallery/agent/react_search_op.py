@@ -11,9 +11,9 @@ from ...core.op import BaseAsyncToolOp
 class ReactSearchOp(ReactAgentOp):
     """Agent that guarantees a search tool fallback when none are configured."""
 
-    def _build_tool_op_dict(self) -> dict:
+    def build_tool_op_dict(self) -> dict:
         """Extend parent tools with a default search operator when needed."""
-        tool_op_dict: Dict[str, BaseAsyncToolOp] = super()._build_tool_op_dict()
+        tool_op_dict: Dict[str, BaseAsyncToolOp] = super().build_tool_op_dict()
         if not tool_op_dict:
             from ..dashscope_search_op import DashscopeSearchOp
 

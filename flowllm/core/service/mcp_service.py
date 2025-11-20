@@ -29,7 +29,7 @@ class MCPService(BaseService):
         request_model = create_pydantic_model(flow.name, flow.tool_call.input_schema)
 
         async def execute_tool(**kwargs) -> str:
-            response = await flow.async_call(**request_model(**kwargs).model_dump())
+            response = await flow.async_call(**request_model(**kwargs).model_dump(exclude_none=True))
             return response.answer
 
         # add tool
