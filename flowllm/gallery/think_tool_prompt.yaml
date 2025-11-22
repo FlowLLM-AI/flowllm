@@ -1,5 +1,5 @@
 tool_desc: |
-  Before calling any external tool, invoke this tool to articulate a brief plan.
+  Before calling any external tool or when rethinking and planning is needed, you must invoke this tool for brief reflection.
   The output must cover:
     1. Whether the current context is enough to answer the user directly, plus reasoning.
     2. If not, what information or validation is missing.
@@ -13,7 +13,7 @@ reflection: |
   3) Which tool + params next?
 
 tool_desc_zh: |
-  每次准备调用任何外部工具之前，都必须先调用本工具进行简短思考。
+  每次准备调用任何外部工具之前或者需要重新思考规划，都必须先调用本工具进行简短思考。
   输出需覆盖以下要点：
     1. 评估当前上下文是否足以直接回答用户问题，并解释理由。
     2. 若不能回答，明确缺失的信息或验证步骤。
