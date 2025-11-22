@@ -175,7 +175,7 @@ class BaseOp(ABC):
         Returns:
             Short name without '_op' suffix
         """
-        return self.name.rstrip("_op")
+        return self.name.removesuffix("_op")
 
     @property
     def cache(self):

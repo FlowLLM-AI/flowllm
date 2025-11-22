@@ -15,7 +15,7 @@ async def main():
     This function tests different search operations by executing sample queries
     and printing the results for Tongyi MCP search, BochaAI MCP search, and Tavily search.
     """
-    async with FlowLLMApp("config=search"):
+    async with FlowLLMApp("config=default,search"):
         query = "what is ai?"
 
         from flowllm.gallery.search import TongyiMcpSearchOp

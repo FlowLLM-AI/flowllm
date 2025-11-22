@@ -87,7 +87,6 @@ class ServiceConfig(BaseModel):
     language: str = Field(default="")
     thread_pool_max_workers: int = Field(default=16)
     ray_max_workers: int = Field(default=-1)
-    import_config: str = Field(default="", description="Import the configuration in the same path as the base")
     init_logger: bool = Field(default=True)
     disabled_flows: List[str] = Field(default_factory=list)
     enabled_flows: List[str] = Field(default_factory=list)

@@ -3,7 +3,6 @@
 This module provides a generic parser that can load configurations from YAML files,
 command-line arguments, and programmatic updates, with support for:
 - Dot notation configuration keys (e.g., 'a.b.c=value')
-- Configuration inheritance via import_config
 - Deep merging of multiple configuration sources
 - Automatic type conversion from strings
 """
@@ -25,14 +24,13 @@ class PydanticConfigParser(Generic[T]):
 
     This parser supports loading configurations from multiple sources with a priority order:
     1. Default values from Pydantic model
-    2. YAML configuration files (with recursive import support)
+    2. YAML configuration files
     3. Command-line arguments (dot notation format)
     4. Programmatic updates via update_config()
 
     The parser automatically handles:
     - Type conversion (string to int, float, bool, None, JSON)
     - Deep merging of nested dictionaries
-    - Circular dependency detection in imported configs
     - Dot notation for nested configuration keys
 
     Attributes:
@@ -265,78 +263,19 @@ class PydanticConfigParser(Generic[T]):
 
         return result
 
-    def _load_import_configs_recursive(self, config_dict: dict, visited_configs: set) -> List[dict]:
-        """
-        Recursively load import_config configurations with cycle detection
-
-        Supports importing multiple config files by separating them with commas.
-        Example: import_config: "base.yaml, auth.yaml, database.yaml"
-
-        Args:
-            config_dict: Current configuration dictionary
-            visited_configs: Set of already visited config file paths to detect cycles
-
-        Returns:
-            List of imported configurations in correct merge order (base configs first)
-        """
-        import_config = config_dict.get("import_config", "")
-        if not import_config:
-            return []
-
-        # Support comma-separated config files
-        import_config_list = [config.strip() for config in import_config.split(",") if config.strip()]
-        if not import_config_list:
-            return []
-
-        all_imported_configs = []
-
-        for single_import_config in import_config_list:
-            # Normalize config path
-            if not single_import_config.endswith(".yaml"):
-                single_import_config += ".yaml"
-
-            # Resolve config file path
-            import_config_path = Path(self.current_file).parent / single_import_config
-            if not import_config_path.exists():
-                import_config_path = Path(single_import_config)
-
-            # Convert to absolute path for cycle detection
-            abs_config_path = import_config_path.resolve()
-
-            # Check for circular dependency
-            if str(abs_config_path) in visited_configs:
-                # logger.warning(f"Circular import detected for config: {abs_config_path}")
-                continue
-
-            logger.info(f"flowllm using import_config_path={import_config_path}")
-
-            # Add current config to visited set
-            visited_configs.add(str(abs_config_path))
-
-            # Load the import config
-            import_yaml_config = self.load_from_yaml(import_config_path)
-
-            # Recursively load imports from the imported config
-            nested_imports = self._load_import_configs_recursive(import_yaml_config, visited_configs.copy())
-
-            # Add configs in correct order: deeper imports first, then current import
-            # This ensures that configs closer to the root have higher priority
-            all_imported_configs.extend(nested_imports)
-            all_imported_configs.append(import_yaml_config)
-
-        return all_imported_configs
-
     def parse_args(self, *args) -> T:
         """Parse command line arguments and return validated configuration object.
 
         Parses configuration from multiple sources in priority order:
         1. Default values from Pydantic model
-        2. YAML configuration file (specified via config= or default_config_name)
-        3. Imported configurations (via import_config in YAML, recursively loaded)
-        4. Command-line overrides (dot notation format)
+        2. YAML configuration file(s) (specified via config= or default_config_name)
+            - Supports multiple configs separated by commas: config=default,search
+            - Later configs override earlier ones
+        3. Command-line overrides (dot notation format)
 
         Command-line arguments should be in format:
         - 'config=<filename>' or 'c=<filename>' to specify YAML config file
+        - 'config=<file1>,<file2>' to specify multiple config files (file2 overrides file1)
         - 'key=value' or 'nested.key=value' for configuration overrides
 
         Args:
@@ -358,6 +297,9 @@ class PydanticConfigParser(Generic[T]):
             parser = PydanticConfigParser(AppConfig)
             config = parser.parse_args("config=app.yaml", "server.port=9000")
             print(config.port)  # 9000 (overridden from YAML default)
+
+            # Multiple config files: search.yaml overrides default.yaml
+            config = parser.parse_args("config=default,search")
             ```
         """
         configs_to_merge = []
@@ -366,7 +308,7 @@ class PydanticConfigParser(Generic[T]):
         default_config = self.config_class().model_dump()
         configs_to_merge.append(default_config)
 
-        # 2. YAML configuration file
+        # 2. YAML configuration file(s)
         config = ""
         filter_args = []
         for arg in args:
@@ -385,22 +327,26 @@ class PydanticConfigParser(Generic[T]):
                 config = self.default_config_name
             assert config, "add `config=<config_file>` in cmd!"
 
-        if not config.endswith(".yaml"):
-            config += ".yaml"
+        # Support multiple config files separated by commas
+        # Example: config=default,search (search will override default)
+        config_list = [c.strip() for c in config.split(",") if c.strip()]
 
-        # load pre-built configs
-        config_path = Path(self.current_file).parent / config
-        if not config_path.exists():
-            config_path = Path(config)
-        logger.info(f"load config={config_path}")
+        # Load all config files in order (later configs override earlier ones)
+        for single_config in config_list:
+            if not single_config.endswith(".yaml"):
+                single_config += ".yaml"
 
-        yaml_config = self.load_from_yaml(config_path)
+            # Resolve config file path
+            config_path = Path(self.current_file).parent / single_config
+            if config_path.exists():
+                logger.info(f"load config={config_path}")
+            else:
+                logger.warning(f"config={config_path} not found, try {single_config}")
+                config_path = Path(single_config)
+                assert config_path.exists(), f"config={config_path} not found"
 
-        # load import configs recursively
-        imported_configs = self._load_import_configs_recursive(yaml_config, set())
-        configs_to_merge.extend(imported_configs)
-
-        configs_to_merge.append(yaml_config)
+            yaml_config = self.load_from_yaml(config_path)
+            configs_to_merge.append(yaml_config)
 
         # 3. Command line override configuration
         if args:
