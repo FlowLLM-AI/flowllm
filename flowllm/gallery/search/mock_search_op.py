@@ -5,11 +5,11 @@ import random
 
 from loguru import logger
 
-from ..core.context import C
-from ..core.enumeration import Role
-from ..core.op import BaseAsyncOp
-from ..core.schema import Message
-from ..core.utils import extract_content
+from ...core.context import C
+from ...core.enumeration import Role
+from ...core.op import BaseAsyncOp
+from ...core.schema import Message
+from ...core.utils import extract_content
 
 
 @C.register_op()

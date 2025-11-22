@@ -149,4 +149,4 @@ class ReactAgentOp(BaseAsyncToolOp):
                     tool_op_dict.pop("think_tool")
 
         self.set_output(messages[-1].content)
-        self.context.response.messages = messages
+        self.context.response.metadata["messages"] = messages

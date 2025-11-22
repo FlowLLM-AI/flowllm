@@ -13,7 +13,7 @@ class Message(BaseModel):
     """Represents a message in a conversation with role, content, and optional tool calls."""
 
     role: Role = Field(default=Role.USER)
-    content: str | bytes = Field(default="")
+    content: str | dict = Field(default="")
     reasoning_content: str = Field(default="")
     tool_calls: List[ToolCall] = Field(default_factory=list)
     tool_call_id: str = Field(default="")

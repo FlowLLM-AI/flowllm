@@ -50,6 +50,7 @@ dependencies = [
     "elasticsearch>=8.10.0",
     "chromadb>=0.4.0",
     "qdrant_client>=1.15.1",
+    "tavily-python>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -62,12 +63,12 @@ dev = [
 ]
 
 reme = [
+
 ]
 
 fin = [
     "akshare>=1.9.0",
     "crawl4ai>=0.7.4",
-    "tavily-python>=0.2.0",
 ]
 
 token = [

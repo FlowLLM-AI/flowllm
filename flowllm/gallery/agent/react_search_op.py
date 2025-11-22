@@ -15,7 +15,7 @@ class ReactSearchOp(ReactAgentOp):
         """Extend parent tools with a default search operator when needed."""
         tool_op_dict: Dict[str, BaseAsyncToolOp] = await super().build_tool_op_dict()
         if not tool_op_dict:
-            from ..dashscope_search_op import DashscopeSearchOp
+            from ..search.dashscope_search_op import DashscopeSearchOp
 
             search_op = DashscopeSearchOp()
             tool_op_dict[search_op.tool_call.name] = search_op

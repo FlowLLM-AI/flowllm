@@ -26,8 +26,8 @@ async def main():
             "Fill Sample-Fillable-PDF.pdf with: name='Alice Johnson', select first choice from dropdown, "
             "check options 1 and 3, dependent name='Bob Johnson', age='12'. Save as filled-sample.pdf"
         )
-        query = "把我做一个简单的述职PPT"
-        query = "帮我创建一个写小说的skills"
+        # query = "把我做一个简单的述职PPT"
+        # query = "帮我创建一个写小说的skills"
         skill_dir = "../skills"
         print("=" * 50)
         print("Testing skill_agent_flow endpoint...")

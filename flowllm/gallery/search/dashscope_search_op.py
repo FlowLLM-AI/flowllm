@@ -10,9 +10,9 @@ import os
 import dashscope
 from loguru import logger
 
-from ..core.context import C
-from ..core.op import BaseAsyncToolOp
-from ..core.schema import ToolCall
+from ...core.context import C
+from ...core.op import BaseAsyncToolOp
+from ...core.schema import ToolCall
 
 
 @C.register_op()

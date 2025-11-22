@@ -112,7 +112,7 @@ class Mock6Op(BaseAsyncOp):
         # 保存消息历史和答案
         self.context.set("messages", [m.model_dump() for m in messages])
         self.context.response.answer = response.content
-        self.context.response.messages = messages
+        self.context.response.metadata["messages"] = messages
 
 
 async def main():

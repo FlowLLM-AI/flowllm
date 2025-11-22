@@ -16,7 +16,7 @@ class DashscopeDeepResearchOp(BaseAsyncToolOp):
 
     def __init__(self, api_key: str = None, save_answer: bool = True, **kwargs):
         super().__init__(save_answer=save_answer, **kwargs)
-        self.api_key = api_key or os.getenv("FLOW_DASHSCOPE_API_KEY")
+        self.api_key = api_key or os.getenv("DASHSCOPE_API_KEY")
 
     def build_tool_call(self) -> ToolCall:
         return ToolCall(
