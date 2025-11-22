@@ -59,7 +59,7 @@ class EsVectorStore(LocalVectorStore):
             self.hosts = [self.hosts]
         self._client = Elasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
         self._async_client = AsyncElasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
-        logger.info(f"Elasticsearch client initialized with hosts: {self.hosts}")
+        logger.info(f"Elasticsearch client initialized with hosts={self.hosts} basic_auth={self.basic_auth}")
         return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
