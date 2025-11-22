@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>FlowLLM：让基于LLM的HTTP/MCP服务开发更简单</strong><br>
-  <em><sub>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</sub></em>
+  <strong>FlowLLM: Simplifying LLM-based HTTP/MCP Service Development</strong><br>
+  <em><sub>If you find it useful, please give us a ⭐ Star. Your support drives our continuous improvement.</sub></em>
 </p>
 
 <p align="center">
@@ -15,59 +15,58 @@
 </p>
 
 <p align="center">
-  <a href="./README_EN.md">English</a> | 简体中文
+  English | <a href="./README_ZH.md">简体中文</a>
 </p>
 
 ---
 
-## 📖 简介
+## 📖 Introduction
 
-FlowLLM 将 LLM/Embedding/vector_store 能力封装为 HTTP/MCP 服务，适用于 AI 对话助手、RAG 应用、工作流服务等场景，并可集成到支持
-MCP 的客户端工具中。
+FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP services. It is suitable for AI assistants, RAG applications, and workflow services, and can be integrated into MCP-compatible client tools.
 
-### 🏗️ 架构概览
+### 🏗️ Architecture Overview
 
 <p align="center">
   <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
 </p>
 
-### 🌟 基于FlowLLM的应用
+### 🌟 Applications Based on FlowLLM
 
-| 项目名                                           | 描述            |
-|-----------------------------------------------|---------------|
-| [ReMe](https://github.com/agentscope-ai/ReMe) | 面向智能体的记忆管理工具包 |
+| Project Name                                  | Description                          |
+|-----------------------------------------------|--------------------------------------|
+| [ReMe](https://github.com/agentscope-ai/ReMe) | Memory management toolkit for agents |
 
-### 📢 最近更新
+### 📢 Recent Updates
 
-| 日期         | 更新内容                                                          |
-|------------|---------------------------------------------------------------|
-| 2025-11-15 | 新增 [File Tool Op](docs/zh/guide/file_tool_op_guide.md) 功能，提供 13 个文件操作工具，支持文件读取、写入、编辑、搜索、目录操作、系统命令执行和任务管理等功能 |
-| 2025-11-14 | 新增 Token 计数能力，支持通过 `self.token_count()` 方法准确计算消息和工具的 token 数量，支持多种后端（base、openai、hf），配置示例参考 [default.yaml](flowllm/config/default.yaml) |
+| Date       | Update Content                                                                                                                      |
+|------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management |
+| 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf). See configuration examples in [default.yaml](flowllm/config/default.yaml) |
 
-### 📚 学习资料分享
+### 📚 Learning Resources
 
-项目开发者会在这里分享最近的学习资料。
+Project developers will share their latest learning materials here.
 
-| 日期         | 标题                                                                                | 描述                                                                |
-|------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| 2025-11-14 | [HaluMem解读](./docs/zh/reading/20251114-halumem.md)                                | HaluMem: Evaluating Hallucinations in Memory Systems of Agents 解读 |
-| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                                             |
-| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 上下文管理指南                                                           |
-| 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video                       |
+| Date       | Title                                                                                                  | Description                                            |
+|------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
+| 2025-11-14 | [HaluMem Analysis](./docs/zh/reading/20251114-halumem.md)                                              | HaluMem: Evaluating Hallucinations in Memory Systems of Agents Analysis |
+| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI |
+| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Context Management Guide                               |
+| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video             |
 
-### ⭐ 核心特性
+### ⭐ Core Features
 
-- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。此外，FlowLLM 还内置了 Token 计数能力，通过 `self.token_count()` 方法可以准确计算消息和工具的 token 数量，支持多种后端（base、openai、hf 等）。
+- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods. Additionally, FlowLLM includes built-in token counting capabilities. Use `self.token_count()` to accurately calculate token counts for messages and tools, supporting multiple backends (base, openai, hf, etc.).
 
-- **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如 `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用 `flowllm config=your_config` 命令即可启动服务。
+- **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
 
-- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTFul API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
+- **Automatic Service Generation**: FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides RESTful APIs with synchronous JSON and HTTP Stream responses. The MCP service registers as Model Context Protocol tools for MCP-compatible clients. The CMD service executes a single Op in command-line mode for quick testing and debugging.
 
 ---
 
-## ⚡ 快速开始
+## ⚡ Quick Start
 
-### 📦 Step0 安装
+### 📦 Step0 Installation
 
 #### 📥 From PyPI
 
@@ -83,17 +82,17 @@ cd flowllm
 pip install -e .
 ```
 
-详细安装与配置方法请参考 [安装指南](docs/zh/guide/installation.md)。
+For detailed installation and configuration, refer to the [Installation Guide](docs/zh/guide/installation.md).
 
-### ⚙️ 配置
+### ⚙️ Configuration
 
-创建 `.env` 文件，配置 API Key。你可以从 `example.env` 复制并修改：
+Create a `.env` file and configure your API keys. Copy from `example.env` and modify:
 
 ```bash
 cp example.env .env
 ```
 
-然后在 `.env` 文件中配置你的 API Key：
+Configure your API keys in the `.env` file:
 
 ```bash
 FLOW_LLM_API_KEY=sk-xxxx
@@ -102,9 +101,9 @@ FLOW_EMBEDDING_API_KEY=sk-xxxx
 FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
 ```
 
-详细配置说明请参考 [配置指南](docs/zh/guide/config_guide.md)。
+For detailed configuration, refer to the [Configuration Guide](docs/zh/guide/config_guide.md).
 
-### 🛠️ Step1 构建Op
+### 🛠️ Step1 Build Op
 
 ```python
 from flowllm.core.context import C
@@ -118,7 +117,7 @@ class SimpleChatOp(BaseAsyncOp):
         query = self.context.get("query", "")
         messages = [Message(role=Role.USER, content=query)]
 
-        # 使用 token_count 方法计算 token 数量
+        # Use token_count method to calculate token count
         token_num = self.token_count(messages)
         print(f"Input tokens: {token_num}")
 
@@ -126,11 +125,11 @@ class SimpleChatOp(BaseAsyncOp):
         self.context.response.answer = response.content.strip()
 ```
 
-详细内容请参考 [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)、[LLM Op 指南](docs/zh/guide/async_op_llm_guide.md) 和 [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)（包含 Embedding、VectorStore 和并发执行等高级功能）。
+For details, refer to the [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md), [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md), and [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) (including Embedding, VectorStore, and concurrent execution).
 
-### 📝 Step2 配置config
+### 📝 Step2 Configure Config
 
-以下示例展示如何构建一个 MCP（Model Context Protocol）服务。创建配置文件 `my_mcp_config.yaml`：
+The following example demonstrates building an MCP (Model Context Protocol) service. Create a configuration file `my_mcp_config.yaml`:
 
 ```yaml
 backend: mcp
@@ -156,68 +155,68 @@ llm:
     model_name: qwen3-30b-a3b-instruct-2507
     params:
       temperature: 0.6
-    token_count: # 可选，配置 token 计数后端
+    token_count: # Optional, configure token counting backend
       model_name: Qwen/Qwen3-30B-A3B-Instruct-2507
-      backend: hf  # 支持 base、openai、hf 等
+      backend: hf  # Supports base, openai, hf, etc.
       params:
         use_mirror: true
 ```
 
-### 🚀 Step3 启动 MCP 服务
+### 🚀 Step3 Start MCP Service
 
 ```bash
 flowllm \
   config=my_mcp_config \
-  backend=mcp \  # 可选，覆盖config配置
-  mcp.transport=sse \  # 可选，覆盖config配置
-  mcp.port=8001 \  # 可选，覆盖config配置
-  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # 可选，覆盖config配置
+  backend=mcp \  # Optional, overrides config
+  mcp.transport=sse \  # Optional, overrides config
+  mcp.port=8001 \  # Optional, overrides config
+  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # Optional, overrides config
 ```
 
-服务启动后可以参考[Client Guide](docs/zh/guide/client_guide.md)来使用服务，可以直接获取模型所需要的tool_call。
+After the service starts, refer to the [Client Guide](docs/zh/guide/client_guide.md) to use the service and obtain the tool_call required by the model.
 
 ---
 
-## 📚 详细文档
+## 📚 Detailed Documentation
 
-### 🚀 入门指南
-- [安装指南](docs/zh/guide/installation.md)
-- [配置指南](docs/zh/guide/config_guide.md)
+### 🚀 Getting Started
+- [Installation Guide](docs/zh/guide/installation.md)
+- [Configuration Guide](docs/zh/guide/config_guide.md)
 
-### 🔧 Op 开发
-- [Op 介绍](docs/zh/guide/op_introduction.md)
-- [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)
-- [LLM Op 指南](docs/zh/guide/async_op_llm_guide.md)
-- [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)
-- [Tool Op 指南](docs/zh/guide/async_tool_op_guide.md)
-- [File Tool Op 指南](docs/zh/guide/file_tool_op_guide.md)
-- [Vector Store 指南](docs/zh/guide/vector_store_guide.md)
+### 🔧 Op Development
+- [Op Introduction](docs/zh/guide/op_introduction.md)
+- [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md)
+- [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
+- [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
+- [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
+- [File Tool Op Guide](docs/zh/guide/file_tool_op_guide.md)
+- [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
 
-### 🔀 Flow 编排
-- [Flow 指南](docs/zh/guide/flow_guide.md)
+### 🔀 Flow Orchestration
+- [Flow Guide](docs/zh/guide/flow_guide.md)
 
-### 🌐 服务使用
-- [HTTP 服务指南](docs/zh/guide/http_service_guide.md)
-- [HTTP Stream 指南](docs/zh/guide/http_stream_guide.md)
-- [MCP 服务指南](docs/zh/guide/mcp_service_guide.md)
-- [CMD 服务指南](docs/zh/guide/cmd_service_guide.md)
-- [客户端指南](docs/zh/guide/client_guide.md)
-
----
-
-## 🤝 参与贡献
-
-欢迎各种形式的贡献！具体参与方式请参考 [贡献指南](docs/zh/guide/contribution.md)。
+### 🌐 Service Usage
+- [HTTP Service Guide](docs/zh/guide/http_service_guide.md)
+- [HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)
+- [MCP Service Guide](docs/zh/guide/mcp_service_guide.md)
+- [CMD Service Guide](docs/zh/guide/cmd_service_guide.md)
+- [Client Guide](docs/zh/guide/client_guide.md)
 
 ---
 
-## 📄 许可证
+## 🤝 Contributing
 
-本项目采用 [Apache 2.0](LICENSE) 许可证。
+Contributions of all forms are welcome! For participation methods, refer to the [Contribution Guide](docs/zh/guide/contribution.md).
 
 ---
 
-## Star History
+## 📄 License
+
+This project is licensed under the [Apache 2.0](LICENSE) license.
+
+---
+
+## Star 历史
 
 [![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)
 
@@ -225,6 +224,7 @@ flowllm \
 
 <p align="center">
   <a href="https://github.com/flowllm-ai/flowllm">GitHub</a> •
-  <a href="https://flowllm-ai.github.io/flowllm/">文档</a> •
+  <a href="https://flowllm-ai.github.io/flowllm/">Documentation</a> •
   <a href="https://pypi.org/project/flowllm/">PyPI</a>
 </p>
+
