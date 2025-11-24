@@ -34,6 +34,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         save_answer: bool = True,
         input_schema_mapping: dict = None,
         output_schema_mapping: dict = None,
+        max_print_output_length: int = 200,
         **kwargs,
     ):
         """Initialize the async tool operator.
@@ -44,6 +45,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
             save_answer: If True, write primary output into `response.answer`.
             input_schema_mapping: Optional mapping from input names to context keys.
             output_schema_mapping: Optional mapping from output names to context keys.
+            max_print_output_length: Maximum length of output strings to log.
             **kwargs: Extra arguments forwarded to `BaseAsyncOp`.
         """
         super().__init__(**kwargs)
@@ -53,6 +55,7 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
         self.save_answer: bool = save_answer
         self.input_schema_mapping: dict | None = input_schema_mapping  # map key to context
         self.output_schema_mapping: dict | None = output_schema_mapping  # map key to context
+        self.max_print_output_length: int = max_print_output_length
 
         self._tool_call: ToolCall | None = None
         self.input_dict: dict = {}  # Actual input values extracted from context
@@ -233,10 +236,14 @@ class BaseAsyncToolOp(BaseAsyncOp, metaclass=ABCMeta):
                 self.context.response.answer = json.dumps(self.output_dict, ensure_ascii=False)
 
         if self.enable_print_output:
+            output_str = str(self.output_dict)
+            if len(output_str) > self.max_print_output_length:
+                output_str = f"{output_str[:self.max_print_output_length]}..."
+
             if self.tool_index == 0:
-                logger.info(f"{self.name}.output_dict={self.output_dict}")
+                logger.info(f"{self.name}.output_dict={output_str}")
             else:
-                logger.info(f"{self.name}.{self.tool_index}.output_dict={self.output_dict}")
+                logger.info(f"{self.name}.{self.tool_index}.output_dict={output_str}")
 
     async def async_default_execute(self, e: Exception = None, **kwargs):
         """Fill outputs with a default failure message when execution fails.

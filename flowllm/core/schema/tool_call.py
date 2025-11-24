@@ -62,7 +62,7 @@ class ToolCall(BaseModel):
     }
     output:
     {
-        "index": 0
+        "index": 0,
         "id": "call_6596dafa2a6a46f7a217da",
         "function": {
             "arguments": "{\"location\": \"Beijing\"}",
