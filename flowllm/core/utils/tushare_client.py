@@ -1,7 +1,7 @@
 """Tushare API client."""
 
 import os
-from typing import Optional
+from typing import List
 
 import pandas as pd
 import requests
@@ -32,7 +32,7 @@ class TushareClient:
     def request(
         self,
         api_name: str,
-        fields: Optional[list[str]] = None,
+        fields: List[str] | None = None,
         **kwargs,
     ) -> pd.DataFrame:
         """Request data from API.
@@ -45,7 +45,7 @@ class TushareClient:
         Returns:
             DataFrame with requested data.
         """
-        data_dict = {
+        data_dict: dict = {
             "api_name": api_name,
             "token": self.token,
             "params": {

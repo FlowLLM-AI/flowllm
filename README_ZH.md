@@ -50,6 +50,7 @@ MCP 的客户端工具中。
 
 | 日期         | 标题                                                                                | 描述                                                                |
 |------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| 2025-11-24 | [Mem-PAL：基于日志结构化记忆的个性化助手](./docs/zh/reading/20251124-mem-pal.md)          | Mem-PAL: Memory-Augmented Personalized Assistant with Log-based Structured Memory 解读 |
 | 2025-11-14 | [HaluMem解读](./docs/zh/reading/20251114-halumem.md)                                | HaluMem: Evaluating Hallucinations in Memory Systems of Agents 解读 |
 | 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                                             |
 | 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 上下文管理指南                                                           |
