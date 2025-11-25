@@ -90,26 +90,29 @@ class ToolCall(BaseModel):
         tool_type = data.get("type", "")
         tool_type_dict = data.get(tool_type, {})
 
+        # Create a new dict to avoid modifying the original data
+        result = data.copy()
+
         if "name" in tool_type_dict:
-            data["name"] = tool_type_dict["name"]
+            result["name"] = tool_type_dict["name"]
 
         if "arguments" in tool_type_dict:
-            data["arguments"] = tool_type_dict["arguments"]
+            result["arguments"] = tool_type_dict["arguments"]
 
         if "description" in tool_type_dict:
-            data["description"] = tool_type_dict["description"]
+            result["description"] = tool_type_dict["description"]
 
         if "parameters" in tool_type_dict:
             parameters = tool_type_dict["parameters"]
             properties: dict = parameters.get("properties", {})
             required: list = parameters.get("required", [])
-            data["input_schema"] = {}
+            result["input_schema"] = {}
             for name, param_attrs in properties.items():
                 tool_attr = ToolAttr(**param_attrs)
                 tool_attr.required = name in required
-                data["input_schema"][name] = tool_attr
+                result["input_schema"][name] = tool_attr
 
-        return data
+        return result
 
     @property
     def argument_dict(self) -> dict:
