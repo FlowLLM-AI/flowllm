@@ -29,6 +29,10 @@ class Message(BaseModel):
 
         if self.tool_calls:
             result["tool_calls"] = [x.simple_output_dump() for x in self.tool_calls]
+
+        if self.tool_call_id:
+            result["tool_call_id"] = self.tool_call_id
+
         return result
 
     @property
