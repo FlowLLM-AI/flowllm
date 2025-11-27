@@ -38,22 +38,22 @@ FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP s
 
 ### 📢 Recent Updates
 
-| Date       | Update Content                                                                                                                      |
-|------------|-------------------------------------------------------------------------------------------------------------------------------------|
-| 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management |
+| Date       | Update Content                                                                                                                                                                                                                                                            |
+|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management                                                 |
 | 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf). See configuration examples in [default.yaml](flowllm/config/default.yaml) |
 
 ### 📚 Learning Resources
 
 Project developers will share their latest learning materials here.
 
-| Date       | Title                                                                                                  | Description                                            |
-|------------|--------------------------------------------------------------------------------------------------------|--------------------------------------------------------|
-| 2025-11-24 | [Mem-PAL: Memory-Augmented Personalized Assistant](./docs/zh/reading/20251124-mem-pal.md)             | Mem-PAL: Memory-Augmented Personalized Assistant with Log-based Structured Memory |
-| 2025-11-14 | [HaluMem Analysis](./docs/zh/reading/20251114-halumem.md)                                              | HaluMem: Evaluating Hallucinations in Memory Systems of Agents Analysis |
-| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI |
-| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Context Management Guide                               |
-| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video             |
+| Date       | Title                                                                                                  | Description                                                                       |
+|------------|--------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| 2025-11-24 | [Mem-PAL: Memory-Augmented Personalized Assistant](./docs/zh/reading/20251124-mem-pal.md)              | Mem-PAL: Memory-Augmented Personalized Assistant with Log-based Structured Memory |
+| 2025-11-14 | [HaluMem Analysis](./docs/zh/reading/20251114-halumem.md)                                              | HaluMem: Evaluating Hallucinations in Memory Systems of Agents Analysis           |
+| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI                            |
+| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Context Management Guide                                                          |
+| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video                                        |
 
 ### ⭐ Core Features
 

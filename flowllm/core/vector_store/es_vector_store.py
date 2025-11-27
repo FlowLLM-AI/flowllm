@@ -7,17 +7,15 @@ asynchronous operations using native Elasticsearch clients.
 """
 
 import os
-from typing import List, Tuple, Iterable, Dict, Any, Optional, TYPE_CHECKING
+from typing import List, Tuple, Iterable, Dict, Any, Optional
 
+from elasticsearch import Elasticsearch, AsyncElasticsearch
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
 from ..schema import VectorNode
-
-if TYPE_CHECKING:
-    from elasticsearch import Elasticsearch, AsyncElasticsearch
 
 
 @C.register_vector_store("elasticsearch")
@@ -40,8 +38,8 @@ class EsVectorStore(LocalVectorStore):
 
     hosts: str | List[str] = Field(default_factory=lambda: os.getenv("FLOW_ES_HOSTS", "http://localhost:9200"))
     basic_auth: str | Tuple[str, str] | None = Field(default=None)
-    _client: "Elasticsearch" = PrivateAttr()
-    _async_client: "AsyncElasticsearch" = PrivateAttr()
+    _client: Elasticsearch = PrivateAttr()
+    _async_client: AsyncElasticsearch = PrivateAttr()
 
     @model_validator(mode="after")
     def init_client(self):
@@ -53,8 +51,6 @@ class EsVectorStore(LocalVectorStore):
         Returns:
             self: The initialized instance.
         """
-        from elasticsearch import Elasticsearch, AsyncElasticsearch
-
         if isinstance(self.hosts, str):
             self.hosts = [self.hosts]
         self._client = Elasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)

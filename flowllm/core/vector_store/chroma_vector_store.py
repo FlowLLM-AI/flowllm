@@ -9,17 +9,16 @@ metadata filtering, and provides both synchronous and asynchronous operations.
 import asyncio
 import os
 from functools import partial
-from typing import List, Iterable, Dict, Any, Optional, TYPE_CHECKING
+from typing import List, Iterable, Dict, Any, Optional
 
+from chromadb import Collection, PersistentClient, ClientAPI
+from chromadb.config import Settings
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
 from ..schema import VectorNode
-
-if TYPE_CHECKING:
-    from chromadb import Collection, PersistentClient
 
 # Disable ChromaDB telemetry to avoid PostHog warnings
 os.environ.setdefault("ANONYMIZED_TELEMETRY", "false")
@@ -44,7 +43,7 @@ class ChromaVectorStore(LocalVectorStore):
 
     store_dir: str = Field(default="./chroma_vector_store")
     collections: dict = Field(default_factory=dict)
-    _client: "PersistentClient" = PrivateAttr()
+    _client: ClientAPI = PrivateAttr()
 
     @model_validator(mode="after")
     def init_client(self):
@@ -53,9 +52,6 @@ class ChromaVectorStore(LocalVectorStore):
         Returns:
             Self instance with initialized client.
         """
-        from chromadb import PersistentClient
-        from chromadb.config import Settings
-
         # Disable telemetry to avoid PostHog warnings
         # Use PersistentClient explicitly to avoid singleton conflicts
         self._client = PersistentClient(
@@ -64,7 +60,7 @@ class ChromaVectorStore(LocalVectorStore):
         )
         return self
 
-    def _get_collection(self, workspace_id: str) -> "Collection":
+    def _get_collection(self, workspace_id: str) -> Collection:
         """Get or create a ChromaDB collection for the given workspace.
 
         Args:

@@ -9,19 +9,17 @@ provides native Qdrant async client support for better async performance.
 """
 
 import os
-from typing import List, Iterable, Dict, Any, Optional, TYPE_CHECKING
+import uuid
+from typing import List, Iterable, Dict, Any, Optional
 
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
+from qdrant_client import QdrantClient, AsyncQdrantClient
+from qdrant_client.http.models import Distance, Filter, ScoredPoint
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
 from ..schema import VectorNode
-
-if TYPE_CHECKING:
-    from qdrant_client import QdrantClient, AsyncQdrantClient
-    from qdrant_client.http import models
-    from qdrant_client.http.models import Distance, Filter
 
 
 @C.register_vector_store("qdrant")
@@ -75,9 +73,9 @@ class QdrantVectorStore(LocalVectorStore):
     host: str | None = Field(default_factory=lambda: os.getenv("FLOW_QDRANT_HOST", "localhost"))
     port: int | None = Field(default_factory=lambda: int(os.getenv("FLOW_QDRANT_PORT", "6333")))
     api_key: str | None = Field(default=None)
-    distance: "Distance" = Field(default_factory=lambda: None)
-    _client: "QdrantClient" = PrivateAttr()
-    _async_client: "AsyncQdrantClient" = PrivateAttr()
+    distance: Distance = Field(default=None, description="Distance metric (COSINE, EUCLIDEAN, or DOT)")
+    _client: QdrantClient = PrivateAttr()
+    _async_client: AsyncQdrantClient = PrivateAttr()
 
     @model_validator(mode="after")
     def init_client(self):
@@ -90,9 +88,6 @@ class QdrantVectorStore(LocalVectorStore):
         Returns:
             self: Returns the instance itself for method chaining.
         """
-        from qdrant_client import QdrantClient, AsyncQdrantClient
-        from qdrant_client.http.models import Distance
-
         # Build kwargs for QdrantClient initialization
         client_kwargs = {}
 
@@ -114,7 +109,7 @@ class QdrantVectorStore(LocalVectorStore):
         if self.distance is None:
             self.distance = Distance.COSINE
         elif isinstance(self.distance, str):
-            self.distance = Distance[self.distance]
+            self.distance = Distance(self.distance)
 
         # Log connection info
         if self.url:
@@ -220,7 +215,29 @@ class QdrantVectorStore(LocalVectorStore):
             offset = next_offset
 
     @staticmethod
-    def point2node(point: "models.Record", workspace_id: str) -> VectorNode:
+    def _convert_id_to_uuid(node_id: str) -> str:
+        """Convert a string ID to a UUID string.
+
+        Uses UUID v5 with a fixed namespace to ensure deterministic conversion.
+        If the input is already a valid UUID, returns it as-is.
+
+        Args:
+            node_id: The node ID to convert.
+
+        Returns:
+            A valid UUID string.
+        """
+        try:
+            # Check if it's already a valid UUID
+            uuid.UUID(node_id)
+            return node_id
+        except (ValueError, AttributeError):
+            # Convert string to UUID v5 using a fixed namespace
+            # Using DNS namespace as a standard base
+            return str(uuid.uuid5(uuid.NAMESPACE_DNS, str(node_id)))
+
+    @staticmethod
+    def point2node(point: ScoredPoint, workspace_id: str) -> VectorNode:
         """Convert Qdrant point to VectorNode.
 
         Converts a Qdrant Record object (returned from search or scroll operations)
@@ -233,8 +250,10 @@ class QdrantVectorStore(LocalVectorStore):
         Returns:
             VectorNode: A VectorNode object created from the Qdrant point data.
         """
+        # Use original_id if available, otherwise use the point ID
+        original_id = point.payload.get("original_id", str(point.id))
         node = VectorNode(
-            unique_id=str(point.id),
+            unique_id=original_id,
             workspace_id=workspace_id,
             content=point.payload.get("content", ""),
             metadata=point.payload.get("metadata", {}),
@@ -245,7 +264,7 @@ class QdrantVectorStore(LocalVectorStore):
         return node
 
     @staticmethod
-    def _build_qdrant_filters(filter_dict: Optional[Dict[str, Any]] = None) -> Optional["Filter"]:
+    def _build_qdrant_filters(filter_dict: Optional[Dict[str, Any]] = None) -> Optional[Filter]:
         """Build Qdrant filter from filter_dict.
 
         Converts a filter dictionary into a Qdrant Filter object. Supports:
@@ -270,7 +289,7 @@ class QdrantVectorStore(LocalVectorStore):
             filter_dict = {"age": {"gte": 18, "lte": 65}}
             ```
         """
-        from qdrant_client.http.models import Filter, FieldCondition, MatchValue, Range
+        from qdrant_client.http.models import FieldCondition, MatchValue, Range
 
         if not filter_dict:
             return None
@@ -331,7 +350,7 @@ class QdrantVectorStore(LocalVectorStore):
             top_k: Number of most similar results to return (default: 1).
             filter_dict: Optional dictionary of filters to apply to the search.
                 See _build_qdrant_filters for filter format details.
-            **kwargs: Additional keyword arguments passed to Qdrant's search method.
+            **kwargs: Additional keyword arguments passed to Qdrant's query_points method.
 
         Returns:
             List of VectorNode objects matching the query, sorted by similarity score
@@ -347,9 +366,9 @@ class QdrantVectorStore(LocalVectorStore):
         # Build filters from filter_dict
         qdrant_filter = self._build_qdrant_filters(filter_dict)
 
-        results = self._client.search(
+        response = self._client.query_points(
             collection_name=workspace_id,
-            query_vector=query_vector,
+            query=query_vector,
             limit=top_k,
             query_filter=qdrant_filter,
             with_payload=True,
@@ -358,7 +377,7 @@ class QdrantVectorStore(LocalVectorStore):
         )
 
         nodes: List[VectorNode] = []
-        for scored_point in results:
+        for scored_point in response.points:
             node = self.point2node(scored_point, workspace_id)
             node.metadata["score"] = scored_point.score
             nodes.append(node)
@@ -398,12 +417,13 @@ class QdrantVectorStore(LocalVectorStore):
 
         points = [
             PointStruct(
-                id=node.unique_id,
+                id=self._convert_id_to_uuid(node.unique_id),
                 vector=node.vector,
                 payload={
                     "workspace_id": workspace_id,
                     "content": node.content,
                     "metadata": node.metadata,
+                    "original_id": node.unique_id,  # Store original ID in payload
                 },
             )
             for node in all_nodes
@@ -435,12 +455,15 @@ class QdrantVectorStore(LocalVectorStore):
         if isinstance(node_ids, str):
             node_ids = [node_ids]
 
+        # Convert node IDs to UUIDs
+        uuid_ids = [self._convert_id_to_uuid(node_id) for node_id in node_ids]
+
         from qdrant_client.http import models
 
         self._client.delete(
             collection_name=workspace_id,
             points_selector=models.PointIdsList(
-                points=node_ids,
+                points=uuid_ids,
             ),
             **kwargs,
         )
@@ -513,7 +536,7 @@ class QdrantVectorStore(LocalVectorStore):
             top_k: Number of most similar results to return (default: 1).
             filter_dict: Optional dictionary of filters to apply to the search.
                 See _build_qdrant_filters for filter format details.
-            **kwargs: Additional keyword arguments passed to Qdrant's async search method.
+            **kwargs: Additional keyword arguments passed to Qdrant's async query_points method.
 
         Returns:
             List of VectorNode objects matching the query, sorted by similarity score
@@ -530,9 +553,9 @@ class QdrantVectorStore(LocalVectorStore):
         # Build filters from filter_dict
         qdrant_filter = self._build_qdrant_filters(filter_dict)
 
-        results = await self._async_client.search(
+        response = await self._async_client.query_points(
             collection_name=workspace_id,
-            query_vector=query_vector,
+            query=query_vector,
             limit=top_k,
             query_filter=qdrant_filter,
             with_payload=True,
@@ -541,7 +564,7 @@ class QdrantVectorStore(LocalVectorStore):
         )
 
         nodes: List[VectorNode] = []
-        for scored_point in results:
+        for scored_point in response.points:
             node = self.point2node(scored_point, workspace_id)
             node.metadata["score"] = scored_point.score
             nodes.append(node)
@@ -583,12 +606,13 @@ class QdrantVectorStore(LocalVectorStore):
 
         points = [
             PointStruct(
-                id=node.unique_id,
+                id=self._convert_id_to_uuid(node.unique_id),
                 vector=node.vector,
                 payload={
                     "workspace_id": workspace_id,
                     "content": node.content,
                     "metadata": node.metadata,
+                    "original_id": node.unique_id,  # Store original ID in payload
                 },
             )
             for node in all_nodes
@@ -620,12 +644,15 @@ class QdrantVectorStore(LocalVectorStore):
         if isinstance(node_ids, str):
             node_ids = [node_ids]
 
+        # Convert node IDs to UUIDs
+        uuid_ids = [self._convert_id_to_uuid(node_id) for node_id in node_ids]
+
         from qdrant_client.http import models
 
         await self._async_client.delete(
             collection_name=workspace_id,
             points_selector=models.PointIdsList(
-                points=node_ids,
+                points=uuid_ids,
             ),
             **kwargs,
         )
