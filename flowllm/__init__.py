@@ -14,4 +14,4 @@ enable_extensions = os.getenv("FLOW_ENABLE_EXTENSIONS", "")
 if enable_extensions and enable_extensions.lower() == "true":
     from . import extensions  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
 
-__version__ = "0.2.0.5"
+__version__ = "0.2.0.6"

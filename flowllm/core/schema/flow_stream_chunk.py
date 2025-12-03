@@ -13,7 +13,7 @@ class FlowStreamChunk(BaseModel):
 
     flow_id: str = Field(default="")
     chunk_type: ChunkEnum = Field(default=ChunkEnum.ANSWER)
-    chunk: Union[str, bytes, ToolCall] = Field(
+    chunk: str | dict | list = Field(
         default="",
         description="Chunk content (string, bytes, or object like ToolCall/usage)",
     )

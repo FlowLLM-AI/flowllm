@@ -3,26 +3,80 @@
 import datetime
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .tool_call import ToolCall
 from ..enumeration import Role
+
+
+class ContentBlock(BaseModel):
+    """
+    examples:
+    {
+        "type": "image_url",
+        "image_url": {
+            "url": "https://img.alicdn.com/imgextra/i1/O1CN01gDEY8M1W114Hi3XcN_!!6000000002727-0-tps-1024-406.jpg"
+        },
+    }
+    {
+        "type": "video",
+        "video": [
+            "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241108/xzsgiz/football1.jpg",
+            "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241108/tdescd/football2.jpg",
+            "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241108/zefdja/football3.jpg",
+            "https://help-static-aliyun-doc.aliyuncs.com/file-manage-files/zh-CN/20241108/aedbqh/football4.jpg",
+        ],
+    }
+    {
+        "type": "text",
+        "text": "这道题怎么解答？"
+    }
+    """
+    model_config = ConfigDict(extra="allow")
+
+    type: str = Field(default="")
+    content: str | dict | list = Field(default="")
+
+    @model_validator(mode="before")
+    @classmethod
+    def init_block(cls, data: dict):
+        result = data.copy()
+        content_type = data.get("type", "")
+        result["content"] = data[content_type]
+        return result
+
+    def simple_dump(self) -> dict:
+        result = {
+            "type": self.type,
+            self.type: self.content,
+            **self.model_extra
+        }
+
+        return result
 
 
 class Message(BaseModel):
     """Represents a message in a conversation with role, content, and optional tool calls."""
 
     role: Role = Field(default=Role.USER)
-    content: str | dict = Field(default="")
+    content: str | List[ContentBlock] = Field(default="")
     reasoning_content: str = Field(default="")
     tool_calls: List[ToolCall] = Field(default_factory=list)
     tool_call_id: str = Field(default="")
     time_created: str = Field(default_factory=lambda: datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     metadata: dict = Field(default_factory=dict)
 
-    def simple_dump(self, add_reasoning: bool = False) -> dict:
+    def dump_content(self) -> str | list[dict]:
+        if isinstance(self.content, str):
+            return self.content
+        elif isinstance(self.content, list):
+            return [x.simple_dump() for x in self.content]
+        else:
+            raise ValueError(f"Invalid content type: {type(self.content)}")
+
+    def simple_dump(self, add_reasoning: bool = True) -> dict:
         """Convert Message to a simple dictionary format for API serialization."""
-        result: dict = {"role": self.role.value, "content": self.content}
+        result: dict = {"role": self.role.value, "content": self.dump_content()}
 
         if add_reasoning:
             result["reasoning_content"] = self.reasoning_content
@@ -38,7 +92,7 @@ class Message(BaseModel):
     @property
     def string_buffer(self) -> str:
         """Get a string representation of the message with role and content."""
-        return f"{self.role.value}: {self.content}"
+        return f"{self.role.value}: {self.dump_content()}"
 
 
 class Trajectory(BaseModel):

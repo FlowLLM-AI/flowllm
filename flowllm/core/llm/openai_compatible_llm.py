@@ -7,13 +7,13 @@ operations with robust error handling and retry logic.
 """
 
 import asyncio
+import json
 import os
 import time
 from typing import List, Dict, Optional, Generator, AsyncGenerator
 
 from loguru import logger
 from openai import OpenAI, AsyncOpenAI
-from openai.types import CompletionUsage
 from pydantic import Field, PrivateAttr, model_validator
 
 from .base_llm import BaseLLM
@@ -126,7 +126,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 for chunk in completion:
                     # Handle chunks without choices (usually usage info)
                     if not chunk.choices:
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage)
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage.model_dump())
 
                     else:
                         delta = chunk.choices[0].delta
@@ -174,7 +174,7 @@ class OpenAICompatibleLLM(BaseLLM):
                         if not tool.check_argument():
                             raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool.simple_output_dump())
 
                 return
 
@@ -185,12 +185,10 @@ class OpenAICompatibleLLM(BaseLLM):
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
-                    # If raise_exception=False, yield error and stop retrying
+
                     yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                     return
 
-                # Exponential backoff: wait before next retry attempt
-                # Note: For streaming, we yield error and continue retrying
                 yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                 time.sleep(1 + i)  # Wait before next retry
 
@@ -294,7 +292,7 @@ class OpenAICompatibleLLM(BaseLLM):
                         if not tool.check_argument():
                             raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
-                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
+                        yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool.simple_output_dump())
 
                 return
 
@@ -351,10 +349,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 chunk = stream_chunk.chunk
                 # Display token usage statistics
                 if enable_stream_print:
-                    if isinstance(chunk, CompletionUsage):
-                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>", flush=True)
-                    else:
-                        print(f"\n<usage>{chunk}</usage>", flush=True)
+                    print(f"\n<usage>{json.dumps(chunk, ensure_ascii=False, indent=2)}</usage>", flush=True)
 
             elif stream_chunk.chunk_type is ChunkEnum.THINK:
                 chunk = stream_chunk.chunk
@@ -382,7 +377,7 @@ class OpenAICompatibleLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
+                    print(f"\n<tool>{json.dumps(chunk, ensure_ascii=False, indent=2)}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
@@ -437,10 +432,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 chunk = stream_chunk.chunk
                 # Display token usage statistics
                 if enable_stream_print:
-                    if isinstance(chunk, CompletionUsage):
-                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>", flush=True)
-                    else:
-                        print(f"\n<usage>{chunk}</usage>", flush=True)
+                    print(f"\n<usage>{json.dumps(chunk, ensure_ascii=False, indent=2)}</usage>", flush=True)
 
             elif stream_chunk.chunk_type is ChunkEnum.THINK:
                 chunk = stream_chunk.chunk
@@ -468,7 +460,7 @@ class OpenAICompatibleLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
+                    print(f"\n<tool>{json.dumps(chunk, ensure_ascii=False, indent=2)}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 

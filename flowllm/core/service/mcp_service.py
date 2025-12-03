@@ -28,7 +28,7 @@ class MCPService(BaseService):
         """Register a tool-callable flow as an MCP tool."""
         request_model = create_pydantic_model(flow.name, flow.tool_call.input_schema)
 
-        async def execute_tool(**kwargs) -> str:
+        async def execute_tool(**kwargs):
             response = await flow.async_call(**request_model(**kwargs).model_dump(exclude_none=True))
             return response.answer
 

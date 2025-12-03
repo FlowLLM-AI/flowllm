@@ -8,10 +8,12 @@ code changes.
 """
 
 import asyncio
+import json
 import os
 import time
 from typing import List, Dict, Optional, Generator, AsyncGenerator
 
+from litellm import acompletion, completion
 from loguru import logger
 from pydantic import Field, PrivateAttr, model_validator
 
@@ -112,16 +114,12 @@ class LiteLLM(BaseLLM):
         chunks_to_yield: List[FlowStreamChunk] = []
 
         if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
-            chunks_to_yield.append(
-                FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content),
-            )
+            chunks_to_yield.append(FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content))
             return is_answering, chunks_to_yield
 
         is_answering_now = True if not is_answering else is_answering
         if delta.content is not None:
-            chunks_to_yield.append(
-                FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content),
-            )
+            chunks_to_yield.append(FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content))
 
         if delta.tool_calls is not None:
             for tool_call in delta.tool_calls:
@@ -142,7 +140,7 @@ class LiteLLM(BaseLLM):
     def _validate_and_yield_tools(
         ret_tools: List[ToolCall],
         tools: Optional[List[ToolCall]],
-    ) -> Generator[FlowStreamChunk, None, None]:
+    ):
         """Validate tool calls and yield tool chunks."""
         if not ret_tools:
             return
@@ -153,9 +151,7 @@ class LiteLLM(BaseLLM):
                 continue
 
             if not tool.check_argument():
-                raise ValueError(
-                    f"Tool call {tool.name} argument={tool.arguments} are invalid",
-                )
+                raise ValueError(f"Tool call {tool.name} argument={tool.arguments} are invalid")
 
             yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
 
@@ -184,8 +180,6 @@ class LiteLLM(BaseLLM):
             FlowStreamChunk for each streaming piece.
             FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
-        from litellm import completion
-
         for i in range(self.max_retries):
             try:
                 params = self._litellm_params.copy()
@@ -232,32 +226,12 @@ class LiteLLM(BaseLLM):
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
+
                     yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                     return
 
                 yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                 time.sleep(1 + i)
-
-    @staticmethod
-    async def _avalidate_and_yield_tools(
-        ret_tools: List[ToolCall],
-        tools: Optional[List[ToolCall]],
-    ) -> AsyncGenerator[FlowStreamChunk, None]:
-        """Validate tool calls and yield tool chunks asynchronously."""
-        if not ret_tools:
-            return
-
-        tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
-        for tool in ret_tools:
-            if tool.name not in tool_dict:
-                continue
-
-            if not tool.check_argument():
-                raise ValueError(
-                    f"Tool call {tool.name} argument={tool.arguments} are invalid",
-                )
-
-            yield FlowStreamChunk(chunk_type=ChunkEnum.TOOL, chunk=tool)
 
     async def astream_chat(
         self,
@@ -284,7 +258,6 @@ class LiteLLM(BaseLLM):
             FlowStreamChunk for each streaming piece.
             FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
-        from litellm import acompletion
 
         for i in range(self.max_retries):
             try:
@@ -323,7 +296,7 @@ class LiteLLM(BaseLLM):
                         for chunk_to_yield in chunks_to_yield:
                             yield chunk_to_yield
 
-                async for tool_chunk in self._avalidate_and_yield_tools(ret_tools, tools):
+                for tool_chunk in self._validate_and_yield_tools(ret_tools, tools):
                     yield tool_chunk
 
                 return
@@ -334,6 +307,7 @@ class LiteLLM(BaseLLM):
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
+
                     yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                     return
 
@@ -374,10 +348,7 @@ class LiteLLM(BaseLLM):
             if stream_chunk.chunk_type is ChunkEnum.USAGE:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    if hasattr(chunk, "model_dump_json"):
-                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>", flush=True)
-                    else:
-                        print(f"\n<usage>{chunk}</usage>", flush=True)
+                    print(f"\n<usage>{json.dumps(chunk, ensure_ascii=False, indent=2)}</usage>", flush=True)
 
             elif stream_chunk.chunk_type is ChunkEnum.THINK:
                 chunk = stream_chunk.chunk
@@ -403,7 +374,7 @@ class LiteLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
+                    print(f"\n<tool>{json.dumps(chunk, ensure_ascii=False, indent=2)}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
@@ -453,10 +424,7 @@ class LiteLLM(BaseLLM):
             if stream_chunk.chunk_type is ChunkEnum.USAGE:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    if hasattr(chunk, "model_dump_json"):
-                        print(f"\n<usage>{chunk.model_dump_json(indent=2)}</usage>", flush=True)
-                    else:
-                        print(f"\n<usage>{chunk}</usage>", flush=True)
+                    print(f"\n<usage>{json.dumps(chunk, ensure_ascii=False, indent=2)}</usage>", flush=True)
 
             elif stream_chunk.chunk_type is ChunkEnum.THINK:
                 chunk = stream_chunk.chunk
@@ -482,7 +450,7 @@ class LiteLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.TOOL:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    print(f"\n<tool>{chunk.model_dump_json()}</tool>", flush=True)
+                    print(f"\n<tool>{json.dumps(chunk, ensure_ascii=False, indent=2)}</tool>", flush=True)
 
                 tool_calls.append(chunk)
 
