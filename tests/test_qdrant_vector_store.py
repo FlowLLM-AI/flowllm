@@ -36,7 +36,9 @@ def main():
     workspace_id = "qdrant_rag_nodes_index"
 
     # Option 1: Use default localhost:6333
-    qdrant = QdrantVectorStore(embedding_model=embedding_model, url="http://47.237.23.175:6333")
+    # url = "47.237.23.175"
+    url = "11.160.132.46"
+    qdrant = QdrantVectorStore(embedding_model=embedding_model, url=f"http://{url}:6333")
 
     # Option 2: Specify host and port
     # qdrant = QdrantVectorStore(embedding_model=embedding_model, host="localhost", port=6333)
@@ -136,7 +138,9 @@ async def async_main():
     workspace_id = "async_qdrant_rag_nodes_index"
 
     # Use default localhost:6333
-    qdrant = QdrantVectorStore(embedding_model=embedding_model, url="http://47.237.23.175:6333")
+    # url = "47.237.23.175"
+    url = "11.160.132.46"
+    qdrant = QdrantVectorStore(embedding_model=embedding_model, url=f"http://{url}:6333")
 
     # Clean up and create workspace
     if await qdrant.async_exist_workspace(workspace_id=workspace_id):
