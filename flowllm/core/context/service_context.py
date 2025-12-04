@@ -12,7 +12,7 @@ from .base_context import BaseContext
 from .registry import Registry
 from ..enumeration import RegistryEnum
 from ..schema import ServiceConfig
-from ..utils import singleton, load_env
+from ..utils import singleton
 
 
 @singleton
@@ -56,8 +56,6 @@ class ServiceContext(BaseContext):
         self.external_mcp_tool_call_dict: dict = {}
         self.registry_dict: Dict[RegistryEnum, Registry] = {v: Registry() for v in RegistryEnum.__members__.values()}
         self.flow_dict: dict = {}
-
-        load_env()
 
     def register(self, name: str, register_type: RegistryEnum):
         """Register a model class by name and type.

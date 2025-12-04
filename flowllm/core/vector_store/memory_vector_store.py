@@ -36,6 +36,7 @@ class MemoryVectorStore(LocalVectorStore):
         """
         super().__init__(store_dir=store_dir, **kwargs)
         self._memory_store: Dict[str, Dict[str, VectorNode]] = {}
+        logger.info(f"MemoryVectorStore initialized with store_dir={self.store_dir}")
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """

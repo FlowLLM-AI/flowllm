@@ -56,6 +56,7 @@ class ChromaVectorStore(LocalVectorStore):
             path=self.store_dir,
             settings=Settings(anonymized_telemetry=False),
         )
+        logger.info(f"ChromaDB client initialized with store_dir={self.store_dir}")
 
     def _get_collection(self, workspace_id: str):
         """Get or create a ChromaDB collection for the given workspace.

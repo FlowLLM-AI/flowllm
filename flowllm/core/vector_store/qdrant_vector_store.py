@@ -97,9 +97,9 @@ class QdrantVectorStore(LocalVectorStore):
 
         # Log connection info
         if self.url:
-            logger.debug(f"Qdrant client initialized with url: {self.url}")
+            logger.info(f"Qdrant client initialized with url={self.url}")
         else:
-            logger.debug(f"Qdrant client initialized with host: {self.host}:{self.port}")
+            logger.info(f"Qdrant client initialized with host={self.host} port={self.port}")
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """Check if a collection exists in Qdrant.

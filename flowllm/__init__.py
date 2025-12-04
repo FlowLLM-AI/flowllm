@@ -9,9 +9,6 @@ from .core.utils import load_env  # noqa: E402  # pylint: disable=wrong-import-p
 load_env()
 
 from . import gallery  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
-
-enable_extensions = os.getenv("FLOW_ENABLE_EXTENSIONS", "")
-if enable_extensions and enable_extensions.lower() == "true":
-    from . import extensions  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
+from . import extensions  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
 
 __version__ = "0.2.0.6"
