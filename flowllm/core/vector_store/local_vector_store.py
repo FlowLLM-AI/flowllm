@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import List, Iterable, Optional, Dict, Any
 
 from loguru import logger
-from pydantic import Field, model_validator
 from tqdm import tqdm
 
 from .base_vector_store import BaseVectorStore
@@ -28,7 +27,7 @@ try:
     HAS_FCNTL = True
 except ImportError:
     HAS_FCNTL = False
-    logger.warning("fcntl module not available (Windows system?). File locking will be disabled.")
+    logger.warning("fcntl module not available (Windows). File locking will be disabled.")
 
 
 def _acquire_lock(file_obj, lock_type):
@@ -57,22 +56,18 @@ class LocalVectorStore(BaseVectorStore):
                   Defaults to "./local_vector_store".
     """
 
-    store_dir: str = Field(default="./local_vector_store")
-
-    @model_validator(mode="after")
-    def init_client(self):
+    def __init__(self, store_dir: str = "./local_vector_store", **kwargs):
         """
         Initialize the vector store by creating the storage directory if it doesn't exist.
 
-        This method is automatically called after model validation to ensure
-        the storage directory is ready for use.
-
-        Returns:
-            Self instance with initialized storage directory.
+        Args:
+            store_dir: Directory path where workspace files are stored.
+            **kwargs: Additional keyword arguments passed to BaseVectorStore.
         """
+        super().__init__(**kwargs)
+        self.store_dir = store_dir
         store_path = Path(self.store_dir)
         store_path.mkdir(parents=True, exist_ok=True)
-        return self
 
     @staticmethod
     def _load_from_path(workspace_id: str, path: str | Path, callback_fn=None, **kwargs) -> Iterable:
@@ -92,7 +87,7 @@ class LocalVectorStore(BaseVectorStore):
         """
         workspace_path = Path(path) / f"{workspace_id}.jsonl"
         if not workspace_path.exists():
-            logger.warning(f"workspace_path={workspace_path} is not exists!")
+            logger.warning(f"workspace_path={workspace_path} does not exist!")
             return
 
         with workspace_path.open() as f:
@@ -253,7 +248,7 @@ class LocalVectorStore(BaseVectorStore):
                   or empty dict if workspace doesn't exist.
         """
         if not self.exist_workspace(workspace_id=workspace_id, **kwargs):
-            logger.warning(f"workspace_id={workspace_id} is not exist!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return {}
 
         return self._dump_to_path(
@@ -333,7 +328,7 @@ class LocalVectorStore(BaseVectorStore):
         for node in self.iter_workspace_nodes(workspace_id=src_workspace_id, **kwargs):
             nodes.append(node)
             node_size += 1
-            if len(nodes) >= self.batch_size:
+            if len(nodes) >= 100:
                 self.insert(nodes=nodes, workspace_id=dest_workspace_id, **kwargs)
                 nodes.clear()
 
@@ -508,7 +503,7 @@ class LocalVectorStore(BaseVectorStore):
             **kwargs: Additional keyword arguments to pass to operations.
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):

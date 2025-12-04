@@ -11,10 +11,7 @@ import os
 from functools import partial
 from typing import List, Iterable, Dict, Any, Optional
 
-from chromadb import Collection, PersistentClient, ClientAPI
-from chromadb.config import Settings
 from loguru import logger
-from pydantic import Field, PrivateAttr, model_validator
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
@@ -41,26 +38,26 @@ class ChromaVectorStore(LocalVectorStore):
     using thread pools to execute ChromaDB operations without blocking the event loop.
     """
 
-    store_dir: str = Field(default="./chroma_vector_store")
-    collections: dict = Field(default_factory=dict)
-    _client: ClientAPI = PrivateAttr()
-
-    @model_validator(mode="after")
-    def init_client(self):
+    def __init__(self, store_dir: str = "./chroma_vector_store", **kwargs):
         """Initialize the ChromaDB client with telemetry disabled.
 
-        Returns:
-            Self instance with initialized client.
+        Args:
+            store_dir: Directory path where ChromaDB data is persisted.
+            **kwargs: Additional keyword arguments passed to LocalVectorStore.
         """
+        super().__init__(store_dir=store_dir, **kwargs)
+        self.collections: dict = {}
         # Disable telemetry to avoid PostHog warnings
         # Use PersistentClient explicitly to avoid singleton conflicts
-        self._client = PersistentClient(
+        from chromadb import PersistentClient, ClientAPI
+        from chromadb.config import Settings
+
+        self._client: ClientAPI = PersistentClient(
             path=self.store_dir,
             settings=Settings(anonymized_telemetry=False),
         )
-        return self
 
-    def _get_collection(self, workspace_id: str) -> Collection:
+    def _get_collection(self, workspace_id: str):
         """Get or create a ChromaDB collection for the given workspace.
 
         Args:
@@ -196,7 +193,7 @@ class ChromaVectorStore(LocalVectorStore):
             Returns empty list if workspace doesn't exist.
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return []
 
         collection = self._get_collection(workspace_id)
@@ -267,7 +264,7 @@ class ChromaVectorStore(LocalVectorStore):
             **kwargs: Additional keyword arguments (unused).
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):
@@ -298,7 +295,7 @@ class ChromaVectorStore(LocalVectorStore):
             Returns empty list if workspace doesn't exist.
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return []
 
         # Use async embedding
@@ -380,7 +377,7 @@ class ChromaVectorStore(LocalVectorStore):
             **kwargs: Additional keyword arguments (unused).
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):
