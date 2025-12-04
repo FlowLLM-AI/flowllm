@@ -1,10 +1,7 @@
 """Flow stream chunk schema for streaming responses."""
 
-from typing import Union
-
 from pydantic import Field, BaseModel
 
-from .tool_call import ToolCall
 from ..enumeration import ChunkEnum
 
 

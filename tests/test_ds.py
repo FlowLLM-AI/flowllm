@@ -1,3 +1,5 @@
+"""Test script for DashScope DeepSeek model with streaming and reasoning."""
+
 import os
 
 from openai import OpenAI
@@ -15,14 +17,12 @@ client = OpenAI(
 
 messages = [{"role": "user", "content": "你是谁"}]
 completion = client.chat.completions.create(
-    # 此处以 deepseek-v3.2-exp 为例，可按需更换模型名称为 deepseek-v3.1、deepseek-v3 或 deepseek-r1
     model="deepseek-v3.2-exp",
     messages=messages,
-    # 通过 extra_body 设置 enable_thinking 开启思考模式，该参数仅对 deepseek-v3.2-exp 和 deepseek-v3.1 有效。deepseek-v3 和 deepseek-r1 设定不会报错
     extra_body={"enable_thinking": True},
     stream=True,
     stream_options={
-        "include_usage": True
+        "include_usage": True,
     },
 )
 

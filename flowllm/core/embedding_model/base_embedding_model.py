@@ -9,12 +9,11 @@ from abc import ABC
 from typing import List
 
 from loguru import logger
-from pydantic import BaseModel, Field
 
 from ..schema import VectorNode
 
 
-class BaseEmbeddingModel(BaseModel, ABC):
+class BaseEmbeddingModel(ABC):
     """
     Abstract base class for embedding models.
 
@@ -22,15 +21,31 @@ class BaseEmbeddingModel(BaseModel, ABC):
     including retry logic, error handling, and batch processing capabilities.
     """
 
-    # Model configuration fields
-    model_name: str = Field(default=..., description="Name of the embedding model")
-    dimensions: int = Field(default=..., description="Dimensionality of the embedding vectors")
-    max_retries: int = Field(default=3, description="Maximum number of retry attempts on failure")
-    raise_exception: bool = Field(default=True, description="Whether to raise exceptions after max retries")
-    max_batch_size: int = Field(
-        default=10,
-        description="Maximum batch size for processing (text-embedding-v4 should not exceed 10)",
-    )
+    def __init__(
+        self,
+        model_name: str,
+        dimensions: int,
+        max_retries: int = 3,
+        raise_exception: bool = True,
+        max_batch_size: int = 10,
+        **kwargs,
+    ):
+        """
+        Initialize the embedding model.
+
+        Args:
+            model_name: Name of the embedding model
+            dimensions: Dimensionality of the embedding vectors
+            max_retries: Maximum number of retry attempts on failure
+            raise_exception: Whether to raise exceptions after max retries
+            max_batch_size: Maximum batch size for processing
+        """
+        self.model_name: str = model_name
+        self.dimensions: int = dimensions
+        self.max_retries: int = max_retries
+        self.raise_exception: bool = raise_exception
+        self.max_batch_size: int = max_batch_size
+        self.kwargs: dict = kwargs
 
     def _get_embeddings(self, input_text: str | List[str]):
         """

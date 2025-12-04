@@ -32,6 +32,7 @@ class ContentBlock(BaseModel):
         "text": "这道题怎么解答？"
     }
     """
+
     model_config = ConfigDict(extra="allow")
 
     type: str = Field(default="")
@@ -40,16 +41,18 @@ class ContentBlock(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def init_block(cls, data: dict):
+        """Initialize content block by extracting content based on type field."""
         result = data.copy()
         content_type = data.get("type", "")
         result["content"] = data[content_type]
         return result
 
     def simple_dump(self) -> dict:
+        """Convert ContentBlock to a simple dictionary format."""
         result = {
             "type": self.type,
             self.type: self.content,
-            **self.model_extra
+            **self.model_extra,
         }
 
         return result
@@ -67,6 +70,7 @@ class Message(BaseModel):
     metadata: dict = Field(default_factory=dict)
 
     def dump_content(self) -> str | list[dict]:
+        """Dump message content to string or list of dicts."""
         if isinstance(self.content, str):
             return self.content
         elif isinstance(self.content, list):

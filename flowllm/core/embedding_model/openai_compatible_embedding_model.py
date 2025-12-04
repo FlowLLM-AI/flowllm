@@ -9,7 +9,6 @@ import os
 from typing import Literal, List
 
 from openai import OpenAI, AsyncOpenAI
-from pydantic import Field, PrivateAttr, model_validator
 
 from .base_embedding_model import BaseEmbeddingModel
 from ..context import C
@@ -23,39 +22,53 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
     This class provides an implementation of BaseEmbeddingModel that works with
     OpenAI-compatible embedding APIs, including OpenAI's official API and
     other services that follow the same interface.
+
+    Attributes:
+        api_key: API key for authentication
+        base_url: Base URL for the API endpoint
+        encoding_format: Encoding format for embeddings ("float" or "base64")
     """
 
-    # API configuration fields
-    api_key: str = Field(
-        default_factory=lambda: os.getenv("FLOW_EMBEDDING_API_KEY"),
-        description="API key for authentication",
-    )
-    base_url: str = Field(
-        default_factory=lambda: os.getenv("FLOW_EMBEDDING_BASE_URL"),
-        description="Base URL for the API endpoint",
-    )
-    model_name: str = Field(default="", description="Name of the embedding model to use")
-    dimensions: int = Field(default=1024, description="Dimensionality of the embedding vectors")
-    encoding_format: Literal["float", "base64"] = Field(default="float", description="Encoding format for embeddings")
-
-    # Private OpenAI client instances
-    _client: OpenAI = PrivateAttr()
-    _async_client: AsyncOpenAI = PrivateAttr()
-
-    @model_validator(mode="after")
-    def init_client(self):
+    def __init__(
+        self,
+        model_name: str = "",
+        dimensions: int = 1024,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        encoding_format: Literal["float", "base64"] = "float",
+        max_retries: int = 3,
+        raise_exception: bool = True,
+        max_batch_size: int = 10,
+        **kwargs,
+    ):
         """
-        Initialize the OpenAI clients after model validation.
+        Initialize the OpenAI-compatible embedding model.
 
-        This method is called automatically after Pydantic model validation
-        to set up both sync and async OpenAI clients with the provided API key and base URL.
-
-        Returns:
-            self: The model instance for method chaining
+        Args:
+            model_name: Name of the embedding model to use
+            dimensions: Dimensionality of the embedding vectors
+            api_key: API key for authentication (defaults to FLOW_EMBEDDING_API_KEY env var)
+            base_url: Base URL for the API endpoint (defaults to FLOW_EMBEDDING_BASE_URL env var)
+            encoding_format: Encoding format for embeddings
+            max_retries: Maximum number of retry attempts on failure
+            raise_exception: Whether to raise exceptions after max retries
+            max_batch_size: Maximum batch size for processing
         """
+        super().__init__(
+            model_name=model_name,
+            dimensions=dimensions,
+            max_retries=max_retries,
+            raise_exception=raise_exception,
+            max_batch_size=max_batch_size,
+            **kwargs,
+        )
+        self.api_key = api_key or os.getenv("FLOW_EMBEDDING_API_KEY", "")
+        self.base_url = base_url or os.getenv("FLOW_EMBEDDING_BASE_URL", "")
+        self.encoding_format = encoding_format
+
+        # Initialize OpenAI clients
         self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self._async_client = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
-        return self
 
     def _get_embeddings(self, input_text: str | List[str]):
         """
