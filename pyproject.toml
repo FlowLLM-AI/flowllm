@@ -47,9 +47,6 @@ dependencies = [
     "rich>=13.5.0",
     "pathspec>=0.12.1",
     "litellm>=1.0.0",
-    "elasticsearch>=8.10.0",
-    "chromadb>=0.4.0",
-    "qdrant_client>=1.15.1",
     "tavily-python>=0.2.0",
 ]
 
@@ -60,10 +57,13 @@ dev = [
     "pytest_asyncio>=1.2.0",
     "pre-commit",
     "mkdocs-shadcn",
+    "pipreqs",
 ]
 
 reme = [
-
+    "elasticsearch>=8.10.0",
+    "chromadb>=0.4.0",
+    "qdrant_client>=1.15.1",
 ]
 
 fin = [
@@ -80,7 +80,7 @@ token = [
 ]
 
 skill = [
-    "pipreqs",
+
 ]
 
 full = [
