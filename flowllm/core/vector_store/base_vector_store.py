@@ -12,14 +12,12 @@ from functools import partial
 from pathlib import Path
 from typing import List, Iterable, Dict, Any, Optional
 
-from pydantic import BaseModel, Field
-
 from ..context import C
 from ..embedding_model import BaseEmbeddingModel
 from ..schema import VectorNode
 
 
-class BaseVectorStore(BaseModel, ABC):
+class BaseVectorStore(ABC):
     """Abstract base class for vector store implementations.
 
     This class defines the interface that all vector store implementations must
@@ -31,14 +29,14 @@ class BaseVectorStore(BaseModel, ABC):
         embedding_model: Optional embedding model used for generating embeddings
             from text queries. If None, nodes must be inserted with pre-computed
             embeddings.
-        batch_size: Batch size for bulk operations (default: 1024).
 
     Subclasses must implement all abstract methods to provide the actual vector
     storage functionality.
     """
 
-    embedding_model: BaseEmbeddingModel | None = Field(default=None)
-    batch_size: int = Field(default=1024)
+    def __init__(self, embedding_model: BaseEmbeddingModel | None = None, **kwargs):
+        self.embedding_model: BaseEmbeddingModel | None = embedding_model
+        self.kwargs: dict = kwargs
 
     @abstractmethod
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
@@ -137,9 +135,6 @@ class BaseVectorStore(BaseModel, ABC):
         Args:
             workspace_id: The ID of the workspace to delete.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.delete_workspace, workspace_id, **kwargs))
@@ -150,9 +145,6 @@ class BaseVectorStore(BaseModel, ABC):
         Args:
             workspace_id: The ID of the workspace to create.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.create_workspace, workspace_id, **kwargs))
@@ -189,9 +181,6 @@ class BaseVectorStore(BaseModel, ABC):
             path: The file or directory path where the workspace data should be saved.
             callback_fn: Optional callback function to be called during the dump process.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -222,9 +211,6 @@ class BaseVectorStore(BaseModel, ABC):
             callback_fn: Optional callback function to be called during the load process.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
 
-        Returns:
-            None
-
         Note:
             Either `path` or `nodes` should be provided, but not both.
         """
@@ -248,9 +234,6 @@ class BaseVectorStore(BaseModel, ABC):
             src_workspace_id: The ID of the source workspace to copy from.
             dest_workspace_id: The ID of the destination workspace to copy to.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
@@ -304,9 +287,6 @@ class BaseVectorStore(BaseModel, ABC):
             nodes: A single VectorNode or a list of VectorNode objects to insert.
             workspace_id: The ID of the workspace to insert nodes into.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.insert, nodes, workspace_id, **kwargs))
@@ -318,9 +298,6 @@ class BaseVectorStore(BaseModel, ABC):
             node_ids: A single node ID or a list of node IDs to delete.
             workspace_id: The ID of the workspace containing the nodes to delete.
             **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, partial(self.delete, node_ids, workspace_id, **kwargs))
@@ -329,9 +306,6 @@ class BaseVectorStore(BaseModel, ABC):
         """Async version of close.
 
         Closes the vector store and cleans up resources asynchronously.
-
-        Returns:
-            None
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(C.thread_pool, self.close)

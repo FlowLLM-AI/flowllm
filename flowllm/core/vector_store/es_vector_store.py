@@ -9,9 +9,7 @@ asynchronous operations using native Elasticsearch clients.
 import os
 from typing import List, Tuple, Iterable, Dict, Any, Optional
 
-from elasticsearch import Elasticsearch, AsyncElasticsearch
 from loguru import logger
-from pydantic import Field, PrivateAttr, model_validator
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
@@ -32,31 +30,37 @@ class EsVectorStore(LocalVectorStore):
             the FLOW_ES_HOSTS environment variable or "http://localhost:9200".
         basic_auth: Optional basic authentication credentials as a string or
             tuple of (username, password).
-        _client: Private synchronous Elasticsearch client instance.
-        _async_client: Private asynchronous Elasticsearch client instance.
+        batch_size: Batch size for bulk operations. Defaults to 100.
     """
 
-    hosts: str | List[str] = Field(default_factory=lambda: os.getenv("FLOW_ES_HOSTS", "http://localhost:9200"))
-    basic_auth: str | Tuple[str, str] | None = Field(default=None)
-    _client: Elasticsearch = PrivateAttr()
-    _async_client: AsyncElasticsearch = PrivateAttr()
+    def __init__(
+        self,
+        hosts: str | List[str] = "http://localhost:9200",
+        basic_auth: str | Tuple[str, str] | None = None,
+        batch_size: int = 1024,
+        **kwargs,
+    ):
+        """Initialize Elasticsearch clients.
 
-    @model_validator(mode="after")
-    def init_client(self):
-        """Initialize Elasticsearch clients after model validation.
-
-        This method is called automatically by Pydantic after the model is created.
-        It initializes both synchronous and asynchronous Elasticsearch clients.
-
-        Returns:
-            self: The initialized instance.
+        Args:
+            hosts: Elasticsearch host(s) as a string or list of strings.
+            basic_auth: Optional basic authentication credentials.
+            batch_size: Batch size for bulk operations.
+            **kwargs: Additional keyword arguments passed to LocalVectorStore.
         """
+        super().__init__(**kwargs)
+        self.hosts = hosts or os.getenv("FLOW_ES_HOSTS", "http://localhost:9200")
+        self.basic_auth = basic_auth
+        self.batch_size = batch_size
+
         if isinstance(self.hosts, str):
             self.hosts = [self.hosts]
+
+        from elasticsearch import Elasticsearch, AsyncElasticsearch
+
         self._client = Elasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
         self._async_client = AsyncElasticsearch(hosts=self.hosts, basic_auth=self.basic_auth)
         logger.info(f"Elasticsearch client initialized with hosts={self.hosts} basic_auth={self.basic_auth}")
-        return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """Check if an Elasticsearch index (workspace) exists.
@@ -224,7 +228,7 @@ class EsVectorStore(LocalVectorStore):
             List[VectorNode]: List of matching vector nodes sorted by similarity score.
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return []
 
         query_vector = self.embedding_model.get_embeddings(query)
@@ -305,7 +309,7 @@ class EsVectorStore(LocalVectorStore):
             **kwargs: Additional keyword arguments passed to Elasticsearch bulk API.
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):
@@ -404,7 +408,7 @@ class EsVectorStore(LocalVectorStore):
             List[VectorNode]: List of matching vector nodes sorted by similarity score.
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return []
 
         # Use async embedding
@@ -495,7 +499,7 @@ class EsVectorStore(LocalVectorStore):
             **kwargs: Additional keyword arguments passed to Elasticsearch bulk API.
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):

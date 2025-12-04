@@ -23,11 +23,11 @@ class BaseEmbeddingModel(ABC):
 
     def __init__(
         self,
-        model_name: str,
-        dimensions: int,
+        model_name: str = "",
+        dimensions: int = 1024,
+        max_batch_size: int = 10,
         max_retries: int = 3,
         raise_exception: bool = True,
-        max_batch_size: int = 10,
         **kwargs,
     ):
         """
@@ -36,15 +36,15 @@ class BaseEmbeddingModel(ABC):
         Args:
             model_name: Name of the embedding model
             dimensions: Dimensionality of the embedding vectors
+            max_batch_size: Maximum batch size for processing
             max_retries: Maximum number of retry attempts on failure
             raise_exception: Whether to raise exceptions after max retries
-            max_batch_size: Maximum batch size for processing
         """
         self.model_name: str = model_name
         self.dimensions: int = dimensions
+        self.max_batch_size: int = max_batch_size
         self.max_retries: int = max_retries
         self.raise_exception: bool = raise_exception
-        self.max_batch_size: int = max_batch_size
         self.kwargs: dict = kwargs
 
     def _get_embeddings(self, input_text: str | List[str]):

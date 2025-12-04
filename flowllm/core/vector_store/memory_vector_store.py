@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 
 from loguru import logger
-from pydantic import Field
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
@@ -27,16 +26,15 @@ class MemoryVectorStore(LocalVectorStore):
     Can load previously saved data via load_workspace.
     """
 
-    store_dir: str = Field(default="./memory_vector_store")
-
-    def __init__(self, **data):
+    def __init__(self, store_dir: str = "./memory_vector_store", **kwargs):
         """
         Initialize the memory vector store.
 
         Args:
-            **data: Keyword arguments passed to the parent LocalVectorStore class.
+            store_dir: Directory path where workspace files are stored.
+            **kwargs: Keyword arguments passed to the parent LocalVectorStore class.
         """
-        super().__init__(**data)
+        super().__init__(store_dir=store_dir, **kwargs)
         self._memory_store: Dict[str, Dict[str, VectorNode]] = {}
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
@@ -198,15 +196,13 @@ class MemoryVectorStore(LocalVectorStore):
         src_nodes = list(self._memory_store[src_workspace_id].values())
         node_size = len(src_nodes)
 
-        for i in range(0, node_size, self.batch_size):
-            batch_nodes = src_nodes[i : i + self.batch_size]
-            new_nodes = []
-            for node in batch_nodes:
-                new_node = VectorNode(**node.model_dump())
-                new_node.workspace_id = dest_workspace_id
-                new_nodes.append(new_node)
+        new_nodes = []
+        for node in src_nodes:
+            new_node = VectorNode(**node.model_dump())
+            new_node.workspace_id = dest_workspace_id
+            new_nodes.append(new_node)
 
-            self.insert(nodes=new_nodes, workspace_id=dest_workspace_id, **kwargs)
+        self.insert(nodes=new_nodes, workspace_id=dest_workspace_id, **kwargs)
 
         logger.info(f"Copied {node_size} nodes from {src_workspace_id} to {dest_workspace_id}")
         return {"size": node_size}

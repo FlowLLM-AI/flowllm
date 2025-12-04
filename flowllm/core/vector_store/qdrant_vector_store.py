@@ -13,9 +13,6 @@ import uuid
 from typing import List, Iterable, Dict, Any, Optional
 
 from loguru import logger
-from pydantic import Field, PrivateAttr, model_validator
-from qdrant_client import QdrantClient, AsyncQdrantClient
-from qdrant_client.http.models import Distance, Filter, ScoredPoint
 
 from .local_vector_store import LocalVectorStore
 from ..context import C
@@ -45,52 +42,43 @@ class QdrantVectorStore(LocalVectorStore):
             Can be COSINE, EUCLIDEAN, or DOT.
         _client: Private QdrantClient instance for synchronous operations.
         _async_client: Private AsyncQdrantClient instance for asynchronous operations.
-
-    Example:
-        ```python
-        from flowllm.core.embedding_model import OpenAICompatibleEmbeddingModel
-        from flowllm.core.vector_store import QdrantVectorStore
-
-        embedding_model = OpenAICompatibleEmbeddingModel(...)
-
-        # Local Qdrant instance
-        qdrant = QdrantVectorStore(
-            embedding_model=embedding_model,
-            host="localhost",
-            port=6333
-        )
-
-        # Qdrant Cloud
-        qdrant = QdrantVectorStore(
-            embedding_model=embedding_model,
-            url="https://your-cluster.qdrant.io:6333",
-            api_key="your-api-key"
-        )
-        ```
     """
 
-    url: str | None = Field(default=None)
-    host: str | None = Field(default_factory=lambda: os.getenv("FLOW_QDRANT_HOST", "localhost"))
-    port: int | None = Field(default_factory=lambda: int(os.getenv("FLOW_QDRANT_PORT", "6333")))
-    api_key: str | None = Field(default=None)
-    distance: Distance = Field(default=None, description="Distance metric (COSINE, EUCLIDEAN, or DOT)")
-    _client: QdrantClient = PrivateAttr()
-    _async_client: AsyncQdrantClient = PrivateAttr()
+    def __init__(
+        self,
+        url: str | None = None,
+        host: str | None = None,
+        port: int | None = None,
+        api_key: str | None = None,
+        distance: str | None = None,
+        **kwargs,
+    ):
+        """Initialize Qdrant clients.
 
-    @model_validator(mode="after")
-    def init_client(self):
-        """Initialize Qdrant clients after model validation.
-
-        This method is called automatically by Pydantic after model initialization.
-        It creates both synchronous and asynchronous Qdrant clients based on
-        the provided configuration (url, host, port, api_key).
-
-        Returns:
-            self: Returns the instance itself for method chaining.
+        Args:
+            url: Optional URL for connecting to Qdrant. If provided, host and port are ignored.
+            host: Host address of the Qdrant server (default: localhost from env or "localhost").
+            port: Port number of the Qdrant server (default: 6333 from env or 6333).
+            api_key: Optional API key for authentication (required for Qdrant Cloud).
+            distance: Distance metric for vector similarity (default: COSINE).
+            **kwargs: Additional keyword arguments passed to LocalVectorStore.
         """
+        super().__init__(**kwargs)
+        self.url = url
+        self.host = host or os.getenv("FLOW_QDRANT_HOST", "localhost")
+        self.port = port or int(os.getenv("FLOW_QDRANT_PORT", "6333"))
+        self.api_key = api_key
+
+        # Set default distance to COSINE if not set
+        from qdrant_client.http.models import Distance
+
+        if distance is None:
+            self.distance: Distance = Distance.COSINE
+        else:
+            self.distance: Distance = Distance(distance)
+
         # Build kwargs for QdrantClient initialization
         client_kwargs = {}
-
         if self.url is not None:
             client_kwargs["url"] = self.url
         else:
@@ -102,21 +90,16 @@ class QdrantVectorStore(LocalVectorStore):
         if self.api_key is not None:
             client_kwargs["api_key"] = self.api_key
 
+        from qdrant_client import QdrantClient, AsyncQdrantClient
+
         self._client = QdrantClient(**client_kwargs)
         self._async_client = AsyncQdrantClient(**client_kwargs)
-
-        # Set default distance to COSINE if not set
-        if self.distance is None:
-            self.distance = Distance.COSINE
-        elif isinstance(self.distance, str):
-            self.distance = Distance(self.distance)
 
         # Log connection info
         if self.url:
             logger.debug(f"Qdrant client initialized with url: {self.url}")
         else:
             logger.debug(f"Qdrant client initialized with host: {self.host}:{self.port}")
-        return self
 
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """Check if a collection exists in Qdrant.
@@ -237,7 +220,7 @@ class QdrantVectorStore(LocalVectorStore):
             return str(uuid.uuid5(uuid.NAMESPACE_DNS, str(node_id)))
 
     @staticmethod
-    def point2node(point: ScoredPoint, workspace_id: str) -> VectorNode:
+    def point2node(point, workspace_id: str) -> VectorNode:
         """Convert Qdrant point to VectorNode.
 
         Converts a Qdrant Record object (returned from search or scroll operations)
@@ -264,7 +247,7 @@ class QdrantVectorStore(LocalVectorStore):
         return node
 
     @staticmethod
-    def _build_qdrant_filters(filter_dict: Optional[Dict[str, Any]] = None) -> Optional[Filter]:
+    def _build_qdrant_filters(filter_dict: Optional[Dict[str, Any]] = None):
         """Build Qdrant filter from filter_dict.
 
         Converts a filter dictionary into a Qdrant Filter object. Supports:
@@ -329,6 +312,8 @@ class QdrantVectorStore(LocalVectorStore):
         if not conditions:
             return None
 
+        from qdrant_client.http.models import Filter
+
         return Filter(must=conditions)
 
     def search(
@@ -358,7 +343,7 @@ class QdrantVectorStore(LocalVectorStore):
             similarity score. Returns an empty list if the workspace doesn't exist.
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return []
 
         query_vector = self.embedding_model.get_embeddings(query)
@@ -449,7 +434,7 @@ class QdrantVectorStore(LocalVectorStore):
             without performing any operation.
         """
         if not self.exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):
@@ -544,7 +529,7 @@ class QdrantVectorStore(LocalVectorStore):
             similarity score. Returns an empty list if the workspace doesn't exist.
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return []
 
         # Use async embedding
@@ -638,7 +623,7 @@ class QdrantVectorStore(LocalVectorStore):
             without performing any operation.
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
-            logger.warning(f"workspace_id={workspace_id} is not exists!")
+            logger.warning(f"workspace_id={workspace_id} does not exist!")
             return
 
         if isinstance(node_ids, str):

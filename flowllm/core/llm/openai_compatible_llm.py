@@ -14,7 +14,6 @@ from typing import List, Dict, Optional, Generator, AsyncGenerator
 
 from loguru import logger
 from openai import OpenAI, AsyncOpenAI
-from pydantic import Field, PrivateAttr, model_validator
 
 from .base_llm import BaseLLM
 from ..context import C
@@ -46,32 +45,33 @@ class OpenAICompatibleLLM(BaseLLM):
     content and stored in the Message's reasoning_content field.
     """
 
-    # API configuration
-    api_key: str = Field(
-        default_factory=lambda: os.getenv("FLOW_LLM_API_KEY"),
-        description="API key for authentication",
-    )
-    base_url: str = Field(
-        default_factory=lambda: os.getenv("FLOW_LLM_BASE_URL"),
-        description="Base URL for the API endpoint",
-    )
-    _client: OpenAI = PrivateAttr()
-    _aclient: AsyncOpenAI = PrivateAttr()
-
-    @model_validator(mode="after")
-    def init_client(self):
+    def __init__(
+        self,
+        model_name: str,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        max_retries: int = 5,
+        raise_exception: bool = False,
+        **kwargs,
+    ):
         """
-        Initialize the OpenAI clients after model validation.
+        Initialize the OpenAICompatibleLLM.
 
-        This validator runs after all field validation is complete,
-        ensuring we have valid API credentials before creating the clients.
-
-        Returns:
-            Self for method chaining
+        Args:
+            model_name: Name of the LLM model to use
+            api_key: API key for authentication (defaults to FLOW_LLM_API_KEY env var)
+            base_url: Base URL for the API endpoint (defaults to FLOW_LLM_BASE_URL env var)
+            max_retries: Maximum number of retries on failure (default: 5)
+            raise_exception: Whether to raise exception on final failure (default: False)
+            **kwargs: Additional parameters passed to the API
         """
+        super().__init__(model_name=model_name, max_retries=max_retries, raise_exception=raise_exception, **kwargs)
+        self.api_key: str = api_key or os.getenv("FLOW_LLM_API_KEY", "")
+        self.base_url: str = base_url or os.getenv("FLOW_LLM_BASE_URL", "")
+
+        # Initialize OpenAI clients
         self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
         self._aclient = AsyncOpenAI(api_key=self.api_key, base_url=self.base_url)
-        return self
 
     def stream_chat(
         self,
@@ -95,65 +95,50 @@ class OpenAICompatibleLLM(BaseLLM):
             **kwargs: Additional parameters
 
         Yields:
-            Tuple of (chunk_content, ChunkEnum) for each streaming piece.
-            chunk_content can be a string (for ANSWER/THINK), ToolCall (for TOOL),
-            usage object (for USAGE), or error string (for ERROR).
+            FlowStreamChunk for each streaming piece.
+            FlowStreamChunk contains chunk_type and chunk content.
         """
+        chat_kwargs = {
+            "model": self.model_name,
+            "messages": [x.simple_dump() for x in messages],
+            "stream": True,
+            "tools": [x.simple_input_dump() for x in tools] if tools else None,
+            **self.kwargs,
+            **kwargs,
+        }
+        logger.info(f"OpenAICompatibleLLM.stream_chat: {chat_kwargs}")
+
         for i in range(self.max_retries):
             try:
-                extra_body = {}
-                if self.enable_thinking:
-                    extra_body["enable_thinking"] = True  # qwen3 params
+                completion = self._client.chat.completions.create(**chat_kwargs)
 
-                completion = self._client.chat.completions.create(
-                    model=self.model_name,
-                    messages=[x.simple_dump() for x in messages],
-                    seed=self.seed,
-                    top_p=self.top_p,
-                    stream=True,
-                    stream_options=self.stream_options,
-                    temperature=self.temperature,
-                    extra_body=extra_body,
-                    tools=[x.simple_input_dump() for x in tools] if tools else None,
-                    parallel_tool_calls=self.parallel_tool_calls,
-                )
+                ret_tools: List[ToolCall] = []
+                is_answering: bool = False
 
-                # Initialize tool call tracking
-                ret_tools: List[ToolCall] = []  # Accumulate tool calls across chunks
-                is_answering: bool = False  # Track when model starts answering
-
-                # Process each chunk in the streaming response
                 for chunk in completion:
-                    # Handle chunks without choices (usually usage info)
                     if not chunk.choices:
                         yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage.model_dump())
 
                     else:
                         delta = chunk.choices[0].delta
 
-                        # Handle reasoning/thinking content (model's internal thoughts)
                         if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
                             yield FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content)
 
                         else:
-                            # Mark transition from thinking to answering
                             if not is_answering:
                                 is_answering = True
 
-                            # Handle regular response content
                             if delta.content is not None:
                                 yield FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content)
 
-                            # Handle tool calls (function calling)
                             if delta.tool_calls is not None:
                                 for tool_call in delta.tool_calls:
                                     index = tool_call.index
 
-                                    # Ensure we have enough tool call slots
                                     while len(ret_tools) <= index:
                                         ret_tools.append(ToolCall(index=index))
 
-                                    # Accumulate tool call information across chunks
                                     if tool_call.id:
                                         ret_tools[index].id += tool_call.id
 
@@ -163,11 +148,9 @@ class OpenAICompatibleLLM(BaseLLM):
                                     if tool_call.function and tool_call.function.arguments:
                                         ret_tools[index].arguments += tool_call.function.arguments
 
-                # Yield completed tool calls after streaming finishes
                 if ret_tools:
                     tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
                     for tool in ret_tools:
-                        # Only yield tool calls that correspond to available tools
                         if tool.name not in tool_dict:
                             continue
 
@@ -181,7 +164,6 @@ class OpenAICompatibleLLM(BaseLLM):
             except Exception as e:
                 logger.exception(f"stream chat with model={self.model_name} encounter error with e={e.args}")
 
-                # If this is the last retry attempt, handle final failure
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
@@ -190,7 +172,7 @@ class OpenAICompatibleLLM(BaseLLM):
                     return
 
                 yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
-                time.sleep(1 + i)  # Wait before next retry
+                time.sleep(1 + i)
 
     async def astream_chat(
         self,
@@ -217,61 +199,47 @@ class OpenAICompatibleLLM(BaseLLM):
             FlowStreamChunk for each streaming piece.
             FlowStreamChunk contains chunk_type, chunk content, and metadata.
         """
+        chat_kwargs = {
+            "model": self.model_name,
+            "messages": [x.simple_dump() for x in messages],
+            "stream": True,
+            "tools": [x.simple_input_dump() for x in tools] if tools else None,
+            **self.kwargs,
+            **kwargs,
+        }
+        logger.info(f"OpenAICompatibleLLM.astream_chat: {chat_kwargs}")
+
         for i in range(self.max_retries):
             try:
-                extra_body = {}
-                if self.enable_thinking:
-                    extra_body["enable_thinking"] = True  # qwen3 params
+                completion = await self._aclient.chat.completions.create(**chat_kwargs)
 
-                completion = await self._aclient.chat.completions.create(
-                    model=self.model_name,
-                    messages=[x.simple_dump() for x in messages],
-                    seed=self.seed,
-                    top_p=self.top_p,
-                    stream=True,
-                    stream_options=self.stream_options,
-                    temperature=self.temperature,
-                    extra_body=extra_body,
-                    tools=[x.simple_input_dump() for x in tools] if tools else None,
-                    parallel_tool_calls=self.parallel_tool_calls,
-                )
+                ret_tools: List[ToolCall] = []
+                is_answering: bool = False
 
-                # Initialize tool call tracking
-                ret_tools: List[ToolCall] = []  # Accumulate tool calls across chunks
-                is_answering: bool = False  # Track when model starts answering
-
-                # Process each chunk in the streaming response
                 async for chunk in completion:
-                    # Handle chunks without choices (usually usage info)
                     if not chunk.choices:
                         yield FlowStreamChunk(chunk_type=ChunkEnum.USAGE, chunk=chunk.usage.model_dump())
 
                     else:
                         delta = chunk.choices[0].delta
 
-                        # Handle reasoning/thinking content (model's internal thoughts)
                         if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
                             yield FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content)
 
                         else:
-                            # Mark transition from thinking to answering
                             if not is_answering:
                                 is_answering = True
 
-                            # Handle regular response content
                             if delta.content is not None:
                                 yield FlowStreamChunk(chunk_type=ChunkEnum.ANSWER, chunk=delta.content)
 
-                            # Handle tool calls (function calling)
                             if delta.tool_calls is not None:
                                 for tool_call in delta.tool_calls:
                                     index = tool_call.index
 
-                                    # Ensure we have enough tool call slots
                                     while len(ret_tools) <= index:
                                         ret_tools.append(ToolCall(index=index))
 
-                                    # Accumulate tool call information across chunks
                                     if tool_call.id:
                                         ret_tools[index].id += tool_call.id
 
@@ -281,11 +249,9 @@ class OpenAICompatibleLLM(BaseLLM):
                                     if tool_call.function and tool_call.function.arguments:
                                         ret_tools[index].arguments += tool_call.function.arguments
 
-                # Yield completed tool calls after streaming finishes
                 if ret_tools:
                     tool_dict: Dict[str, ToolCall] = {x.name: x for x in tools} if tools else {}
                     for tool in ret_tools:
-                        # Only yield tool calls that correspond to available tools
                         if tool.name not in tool_dict:
                             continue
 
@@ -297,20 +263,17 @@ class OpenAICompatibleLLM(BaseLLM):
                 return
 
             except Exception as e:
-                logger.exception(f"async stream chat with model={self.model_name} encounter error with e={e.args}")
+                logger.exception(f"stream chat with model={self.model_name} encounter error with e={e.args}")
 
-                # If this is the last retry attempt, handle final failure
                 if i == self.max_retries - 1:
                     if self.raise_exception:
                         raise e
-                    # If raise_exception=False, yield error and stop retrying
+
                     yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
                     return
 
-                # Exponential backoff: wait before next retry attempt
-                # Note: For streaming, we yield error and continue retrying
                 yield FlowStreamChunk(chunk_type=ChunkEnum.ERROR, chunk=str(e))
-                await asyncio.sleep(1 + i)  # Wait before next retry
+                await asyncio.sleep(1 + i)
 
     def _chat(
         self,
@@ -337,24 +300,21 @@ class OpenAICompatibleLLM(BaseLLM):
             Complete Message with all content aggregated from streaming chunks
         """
 
-        enter_think = False  # Whether we've started printing thinking content
-        enter_answer = False  # Whether we've started printing answer content
-        reasoning_content = ""  # Model's internal reasoning
-        answer_content = ""  # Final response content
-        tool_calls = []  # List of tool calls to execute
+        enter_think = False
+        enter_answer = False
+        reasoning_content = ""
+        answer_content = ""
+        tool_calls = []
 
-        # Consume streaming response and aggregate chunks by type
         for stream_chunk in self.stream_chat(messages, tools, **kwargs):
             if stream_chunk.chunk_type is ChunkEnum.USAGE:
                 chunk = stream_chunk.chunk
-                # Display token usage statistics
                 if enable_stream_print:
                     print(f"\n<usage>{json.dumps(chunk, ensure_ascii=False, indent=2)}</usage>", flush=True)
 
             elif stream_chunk.chunk_type is ChunkEnum.THINK:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    # Format thinking/reasoning content
                     if not enter_think:
                         enter_think = True
                         print("<think>\n", end="", flush=True)
@@ -367,7 +327,6 @@ class OpenAICompatibleLLM(BaseLLM):
                 if enable_stream_print:
                     if not enter_answer:
                         enter_answer = True
-                        # Close thinking section if we were in it
                         if enter_think:
                             print("\n</think>", flush=True)
                     print(chunk, end="", flush=True)
@@ -387,7 +346,6 @@ class OpenAICompatibleLLM(BaseLLM):
                     # Display error information
                     print(f"\n<error>{chunk}</error>", flush=True)
 
-        # Construct complete response message
         return Message(
             role=Role.ASSISTANT,
             reasoning_content=reasoning_content,
@@ -420,24 +378,21 @@ class OpenAICompatibleLLM(BaseLLM):
             Complete Message with all content aggregated from streaming chunks
         """
 
-        enter_think = False  # Whether we've started printing thinking content
-        enter_answer = False  # Whether we've started printing answer content
-        reasoning_content = ""  # Model's internal reasoning
-        answer_content = ""  # Final response content
-        tool_calls = []  # List of tool calls to execute
+        enter_think = False
+        enter_answer = False
+        reasoning_content = ""
+        answer_content = ""
+        tool_calls = []
 
-        # Consume async streaming response and aggregate chunks by type
         async for stream_chunk in self.astream_chat(messages, tools, **kwargs):
             if stream_chunk.chunk_type is ChunkEnum.USAGE:
                 chunk = stream_chunk.chunk
-                # Display token usage statistics
                 if enable_stream_print:
                     print(f"\n<usage>{json.dumps(chunk, ensure_ascii=False, indent=2)}</usage>", flush=True)
 
             elif stream_chunk.chunk_type is ChunkEnum.THINK:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    # Format thinking/reasoning content
                     if not enter_think:
                         enter_think = True
                         print("<think>\n", end="", flush=True)
@@ -450,7 +405,6 @@ class OpenAICompatibleLLM(BaseLLM):
                 if enable_stream_print:
                     if not enter_answer:
                         enter_answer = True
-                        # Close thinking section if we were in it
                         if enter_think:
                             print("\n</think>", flush=True)
                     print(chunk, end="", flush=True)
@@ -467,10 +421,8 @@ class OpenAICompatibleLLM(BaseLLM):
             elif stream_chunk.chunk_type is ChunkEnum.ERROR:
                 chunk = stream_chunk.chunk
                 if enable_stream_print:
-                    # Display error information
                     print(f"\n<error>{chunk}</error>", flush=True)
 
-        # Construct complete response message
         return Message(
             role=Role.ASSISTANT,
             reasoning_content=reasoning_content,

@@ -28,35 +28,37 @@ MODEL_NAME_2 = "qwen3-30b-a3b-thinking-2507"
 
 def create_llm():
     """Create a default OpenAICompatibleLLM instance for testing."""
-    return OpenAICompatibleLLM(model_name=MODEL_NAME_1)
+    return OpenAICompatibleLLM(model_name=MODEL_NAME_1, temperature=0)
 
 
 def create_llm_with_thinking():
     """Create an OpenAICompatibleLLM instance with thinking enabled."""
-    return OpenAICompatibleLLM(model_name=MODEL_NAME_2, enable_thinking=True)
+    return OpenAICompatibleLLM(model_name=MODEL_NAME_2, temperature=0)
 
 
 def create_weather_tool():
     """Create a weather tool definition for testing."""
     return ToolCall(
-        type="function",
-        function={
-            "name": "get_current_weather",
-            "description": "Get the current weather in a given location",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "location": {
-                        "type": "string",
-                        "description": "The city and state, e.g. San Francisco, CA",
+        **{
+            "type": "function",
+            "function": {
+                "name": "get_current_weather",
+                "description": "Get the current weather in a given location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The city and state, e.g. San Francisco, CA",
+                        },
+                        "unit": {
+                            "type": "string",
+                            "description": "The temperature unit, either 'celsius' or 'fahrenheit'",
+                            "enum": ["celsius", "fahrenheit"],
+                        },
                     },
-                    "unit": {
-                        "type": "string",
-                        "description": "The temperature unit, either 'celsius' or 'fahrenheit'",
-                        "enum": ["celsius", "fahrenheit"],
-                    },
+                    "required": ["location"],
                 },
-                "required": ["location"],
             },
         },
     )
@@ -65,28 +67,30 @@ def create_weather_tool():
 def create_calculator_tool():
     """Create a calculator tool definition for testing."""
     return ToolCall(
-        type="function",
-        function={
-            "name": "calculator",
-            "description": "Perform basic arithmetic operations",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "operation": {
-                        "type": "string",
-                        "description": "The operation to perform: add, subtract, multiply, or divide",
-                        "enum": ["add", "subtract", "multiply", "divide"],
+        **{
+            "type": "function",
+            "function": {
+                "name": "calculator",
+                "description": "Perform basic arithmetic operations",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "operation": {
+                            "type": "string",
+                            "description": "The operation to perform: add, subtract, multiply, or divide",
+                            "enum": ["add", "subtract", "multiply", "divide"],
+                        },
+                        "a": {
+                            "type": "number",
+                            "description": "The first number",
+                        },
+                        "b": {
+                            "type": "number",
+                            "description": "The second number",
+                        },
                     },
-                    "a": {
-                        "type": "number",
-                        "description": "The first number",
-                    },
-                    "b": {
-                        "type": "number",
-                        "description": "The second number",
-                    },
+                    "required": ["operation", "a", "b"],
                 },
-                "required": ["operation", "a", "b"],
             },
         },
     )
@@ -498,12 +502,12 @@ def main():
     print("\n" + "=" * 60)
     print("Running Async Tests")
     print("=" * 60)
-    # asyncio.run(test_achat_basic())
-    # asyncio.run(test_achat_with_thinking())
-    # asyncio.run(test_achat_with_tools())
-    # asyncio.run(test_achat_multiple_tools())
-    # asyncio.run(test_achat_streaming())
-    # asyncio.run(test_achat_long_conversation())
+    asyncio.run(test_achat_basic())
+    asyncio.run(test_achat_with_thinking())
+    asyncio.run(test_achat_with_tools())
+    asyncio.run(test_achat_multiple_tools())
+    asyncio.run(test_achat_streaming())
+    asyncio.run(test_achat_long_conversation())
     asyncio.run(test_astream_chat_basic())
     asyncio.run(test_astream_chat_with_tools())
     asyncio.run(test_tool_call_async())

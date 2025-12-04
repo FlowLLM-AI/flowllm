@@ -12,14 +12,13 @@ from abc import ABC
 from typing import List, Callable, Optional, Generator, AsyncGenerator, Union, Any
 
 from loguru import logger
-from pydantic import Field, BaseModel
 
 from ..schema import FlowStreamChunk
 from ..schema import Message
 from ..schema import ToolCall
 
 
-class BaseLLM(BaseModel, ABC):
+class BaseLLM(ABC):
     """
     Abstract base class for Large Language Model (LLM) implementations.
 
@@ -29,26 +28,20 @@ class BaseLLM(BaseModel, ABC):
     concerns like retries, error handling, and streaming.
     """
 
-    # Core model configuration
-    model_name: str = Field(..., description="Name of the LLM model to use")
+    def __init__(self, model_name: str, max_retries: int = 5, raise_exception: bool = False, **kwargs):
+        """
+        Initialize the BaseLLM.
 
-    # Generation parameters
-    seed: int = Field(default=42, description="Random seed for reproducible outputs")
-    top_p: float | None = Field(default=None, description="Top-p (nucleus) sampling parameter")
-    stream_options: dict = Field(default={"include_usage": True}, description="Options for streaming responses")
-    temperature: float = Field(default=0.0000001, description="Sampling temperature (low for deterministic outputs)")
-    presence_penalty: float | None = Field(default=None, description="Presence penalty to reduce repetition")
-
-    # Model-specific features
-    enable_thinking: bool = Field(default=False, description="Enable reasoning/thinking mode for supported models")
-
-    # Tool usage configuration
-    tool_choice: Optional[str] = Field(default=None, description="Strategy for tool selection")
-    parallel_tool_calls: bool = Field(default=True, description="Allow multiple tool calls in parallel")
-
-    # Error handling and reliability
-    max_retries: int = Field(default=5, description="Maximum number of retry attempts on failure")
-    raise_exception: bool = Field(default=False, description="Whether to raise exceptions or return default values")
+        Args:
+            model_name: Name of the LLM model to use
+            max_retries: Maximum number of retry attempts on failure
+            raise_exception: Whether to raise exceptions or return default values
+        """
+        self.model_name: str = model_name
+        self.max_retries: int = max_retries
+        self.raise_exception: bool = raise_exception
+        self.kwargs: dict = kwargs
+        # ref: https://help.aliyun.com/zh/model-studio/qwen-api-reference
 
     def stream_chat(
         self,
