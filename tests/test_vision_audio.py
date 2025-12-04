@@ -81,4 +81,4 @@ def run_sync_openai_audio():
 
 if __name__ == "__main__":
     run_sync_openai_image()
-    # run_sync_openai_audio()
+    run_sync_openai_audio()
