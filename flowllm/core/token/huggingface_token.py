@@ -4,7 +4,6 @@ import os
 from typing import Any, List
 
 from loguru import logger
-from pydantic import Field, PrivateAttr
 
 from .base_token import BaseToken
 from ..context import C
@@ -15,15 +14,32 @@ from ..schema import Message, ToolCall
 class HuggingFaceToken(BaseToken):
     """Estimate token usage with `transformers.AutoTokenizer.apply_chat_template`."""
 
-    use_fast: bool = Field(default=False, description="Pass-through flag for `AutoTokenizer.from_pretrained`.")
-    trust_remote_code: bool = Field(default=False, description="Whether to trust remote code when loading tokenizers.")
-    use_mirror: bool = Field(default=True, description="If True, set HF_ENDPOINT to the HuggingFace mirror.")
-    tokenizer_kwargs: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Additional keyword arguments forwarded to `AutoTokenizer.from_pretrained`.",
-    )
+    def __init__(
+        self,
+        model_name: str,
+        *,
+        use_fast: bool = False,
+        trust_remote_code: bool = False,
+        use_mirror: bool = True,
+        **kwargs,
+    ):
+        """Initialize HuggingFace token counter.
 
-    _tokenizer: Any | None = PrivateAttr(default=None)
+        Args:
+            model_name: Name or path of the HuggingFace model.
+            use_fast: Pass-through flag for ``AutoTokenizer.from_pretrained``.
+            trust_remote_code: Whether to trust remote code when loading tokenizers.
+            use_mirror: If ``True``, set ``HF_ENDPOINT`` to the HuggingFace mirror.
+            **kwargs: Extra keyword arguments forwarded to ``BaseToken``.
+        """
+        super().__init__(model_name=model_name, **kwargs)
+
+        self.use_fast: bool = use_fast
+        self.trust_remote_code: bool = trust_remote_code
+        self.use_mirror: bool = use_mirror
+
+        # Lazily initialized tokenizer instance
+        self._tokenizer: Any | None = None
 
     def _ensure_tokenizer(self) -> Any:
         """Lazily create and cache the tokenizer instance."""
@@ -40,7 +56,7 @@ class HuggingFaceToken(BaseToken):
             self.model_name,
             use_fast=self.use_fast,
             trust_remote_code=self.trust_remote_code,
-            **self.tokenizer_kwargs,
+            **self.kwargs,
         )
 
         if tokenizer.chat_template is None:
