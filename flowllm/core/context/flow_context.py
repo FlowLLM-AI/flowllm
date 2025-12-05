@@ -51,6 +51,20 @@ class FlowContext(BaseContext):
         self.response: Optional[FlowResponse] = response if response is not None else FlowResponse()
         self.stream_queue: Optional[asyncio.Queue] = stream_queue
 
+    async def add_stream_string_and_type(self, chunk: str, chunk_type: ChunkEnum):
+        """Add a stream chunk with string content and type to the stream queue.
+
+        Args:
+            chunk: The string content to stream.
+            chunk_type: The type of the chunk.
+
+        Returns:
+            Self for method chaining.
+        """
+        stream_chunk = FlowStreamChunk(flow_id=self.flow_id, chunk_type=chunk_type, chunk=chunk)
+        await self.stream_queue.put(stream_chunk)
+        return self
+
     async def add_stream_chunk(self, stream_chunk: FlowStreamChunk):
         """Add a stream chunk to the stream queue.
 
