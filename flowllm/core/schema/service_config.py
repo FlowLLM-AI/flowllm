@@ -10,7 +10,7 @@ from .tool_call import ToolCall
 class MCPConfig(BaseModel):
     """Configuration for MCP (Model Context Protocol) transport settings."""
 
-    transport: str = Field(default="", description="stdio/http/sse")
+    transport: str = Field(default="")
     host: str = Field(default="0.0.0.0")
     port: int = Field(default=8001)
 

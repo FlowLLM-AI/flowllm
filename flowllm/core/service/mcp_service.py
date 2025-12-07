@@ -50,11 +50,12 @@ class MCPService(BaseService):
         super().run()
         mcp_config = self.service_config.mcp
 
-        if mcp_config.transport == "sse":
-            self.mcp.run(transport="sse", host=mcp_config.host, port=mcp_config.port, show_banner=False)
-        elif mcp_config.transport == "http":
-            self.mcp.run(transport="http", host=mcp_config.host, port=mcp_config.port, show_banner=False)
-        elif mcp_config.transport == "stdio":
+        if mcp_config.transport == "stdio":
             self.mcp.run(transport="stdio", show_banner=False)
         else:
-            raise ValueError(f"unsupported mcp transport: {mcp_config.transport}")
+            assert mcp_config.transport in ["http", "sse", "streamable-http"]
+            self.mcp.run(
+                transport=mcp_config.transport,
+                host=mcp_config.host,
+                port=mcp_config.port,
+                show_banner=False)
