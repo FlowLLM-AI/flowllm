@@ -9,10 +9,9 @@ It includes ready-to-use extension packages for:
 - skills: Skill-based operations for managing and executing specialized skills
 """
 
-from . import data, file_tool, skills, utils
+from . import file_tool, skills, utils
 
 __all__ = [
-    "data",
     "file_tool",
     "skills",
     "utils",

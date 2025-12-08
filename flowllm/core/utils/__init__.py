@@ -32,12 +32,10 @@ from .logo_utils import print_logo
 from .pydantic_config_parser import PydanticConfigParser
 from .pydantic_utils import create_pydantic_model
 from .timer import Timer, timer
-from .tushare_client import TushareClient
 
 __all__ = [
     "HttpClient",
     "FastMcpClient",
-    "TushareClient",
     "camel_to_snake",
     "snake_to_camel",
     "load_env",
