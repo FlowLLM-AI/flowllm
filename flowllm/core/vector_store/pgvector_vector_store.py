@@ -267,22 +267,11 @@ class PgVectorStore(LocalVectorStore):
         import json
 
         # pgvector returns vector as string like '[0.1,0.2,0.3]'
-        # Try JSON parsing first, if fails, parse manually
-        try:
-            vector = json.loads(vector_str)
-        except (json.JSONDecodeError, TypeError):
-            # Fallback: parse manually if format is '[0.1,0.2,0.3]'
-            if isinstance(vector_str, str) and vector_str.startswith("[") and vector_str.endswith("]"):
-                vector = [float(x.strip()) for x in vector_str[1:-1].split(",")]
-            else:
-                vector = vector_str
+        vector = json.loads(vector_str)
         
         # Parse metadata if it's a string (psycopg may return JSONB as string in some cases)
         if isinstance(metadata, str):
-            try:
-                metadata = json.loads(metadata)
-            except (json.JSONDecodeError, TypeError):
-                metadata = {}
+            metadata = json.loads(metadata)
         elif metadata is None:
             metadata = {}
         
@@ -428,21 +417,11 @@ class PgVectorStore(LocalVectorStore):
                 import json
 
                 # pgvector returns vector as string like '[0.1,0.2,0.3]'
-                try:
-                    vector = json.loads(vector_str)
-                except (json.JSONDecodeError, TypeError):
-                    # Fallback: parse manually if format is '[0.1,0.2,0.3]'
-                    if isinstance(vector_str, str) and vector_str.startswith("[") and vector_str.endswith("]"):
-                        vector = [float(x.strip()) for x in vector_str[1:-1].split(",")]
-                    else:
-                        vector = vector_str
+                vector = json.loads(vector_str)
                 
                 # Parse metadata if it's a string (psycopg may return JSONB as string in some cases)
                 if isinstance(metadata, str):
-                    try:
-                        metadata = json.loads(metadata)
-                    except (json.JSONDecodeError, TypeError):
-                        metadata = {}
+                    metadata = json.loads(metadata)
                 elif metadata is None:
                     metadata = {}
                 
@@ -562,15 +541,9 @@ class PgVectorStore(LocalVectorStore):
                 # If it doesn't start with postgresql://, assume it's a standard connection string
                 pass
 
-            try:
-                logger.debug(f"Establishing async PostgreSQL connection: {conn_str}")
-                self._async_conn = await asyncpg.connect(conn_str)
-                logger.debug(f"Async PostgreSQL connection established successfully")
-            except Exception as e:
-                logger.error(f"Failed to establish async PostgreSQL connection to {conn_str}: {e}")
-                import traceback
-                logger.error(traceback.format_exc())
-                raise
+            logger.debug(f"Establishing async PostgreSQL connection: {conn_str}")
+            self._async_conn = await asyncpg.connect(conn_str)
+            logger.debug(f"Async PostgreSQL connection established successfully")
         return self._async_conn
 
     async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
@@ -604,44 +577,12 @@ class PgVectorStore(LocalVectorStore):
             workspace_id: The identifier of the workspace/table to delete.
             **kwargs: Additional keyword arguments (unused).
         """
-        import asyncio
-        
         table_name = self._get_table_name(workspace_id)
-        try:
-            logger.debug(f"Attempting to delete workspace table: {table_name}")
-            conn = await self._get_async_conn()
-            logger.debug(f"Connection established, executing DROP TABLE for {table_name}")
-            
-            # Try to execute DROP TABLE with a short timeout
-            # If it fails due to locks, we'll fall back to sync connection
-            await asyncio.wait_for(
-                conn.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE'),
-                timeout=5.0  # Short timeout, will fallback to sync if needed
-            )
-            logger.info(f"Successfully deleted workspace table: {table_name}")
-        except (asyncio.TimeoutError, Exception) as e:
-            # If async delete fails or times out, try using sync connection instead
-            # This often works because the sync connection can delete tables it has access to
-            # and won't conflict with itself
-            if isinstance(e, asyncio.TimeoutError):
-                logger.warning(f"Async delete timed out for {table_name}, trying sync delete as fallback")
-            else:
-                logger.warning(f"Async delete failed for {table_name}: {e}, trying sync delete as fallback")
-            try:
-                # Use sync connection to delete (it may have better access and won't conflict)
-                with self._conn.cursor() as cur:
-                    cur.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE')
-                    self._conn.commit()
-                logger.info(f"Successfully deleted workspace table {table_name} using sync connection")
-            except Exception as sync_error:
-                error_msg = f"Both async and sync delete failed for workspace {workspace_id} (table: {table_name}). The table may be locked by another connection. Async error: {e}, Sync error: {sync_error}"
-                logger.error(error_msg)
-                raise TimeoutError(error_msg) from e
-        except Exception as e:
-            logger.error(f"Failed to delete workspace {workspace_id} (table: {table_name}): {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-            raise
+        logger.debug(f"Attempting to delete workspace table: {table_name}")
+        conn = await self._get_async_conn()
+        logger.debug(f"Connection established, executing DROP TABLE for {table_name}")
+        await conn.execute(f'DROP TABLE IF EXISTS "{table_name}" CASCADE')
+        logger.info(f"Successfully deleted workspace table: {table_name}")
 
     async def async_create_workspace(self, workspace_id: str, **kwargs):
         """Create a new PostgreSQL table (workspace) with vector field (async).
@@ -776,21 +717,11 @@ class PgVectorStore(LocalVectorStore):
             import json
 
             # pgvector returns vector as string like '[0.1,0.2,0.3]'
-            try:
-                vector = json.loads(vector_str)
-            except (json.JSONDecodeError, TypeError):
-                # Fallback: parse manually if format is '[0.1,0.2,0.3]'
-                if isinstance(vector_str, str) and vector_str.startswith("[") and vector_str.endswith("]"):
-                    vector = [float(x.strip()) for x in vector_str[1:-1].split(",")]
-                else:
-                    vector = vector_str
+            vector = json.loads(vector_str)
             
             # Parse metadata if it's a string (asyncpg may return JSONB as string)
             if isinstance(metadata, str):
-                try:
-                    metadata = json.loads(metadata)
-                except (json.JSONDecodeError, TypeError):
-                    metadata = {}
+                metadata = json.loads(metadata)
             elif metadata is None:
                 metadata = {}
             

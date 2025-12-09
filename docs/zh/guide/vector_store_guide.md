@@ -16,6 +16,7 @@ FlowLLM 提供了多种 Vector Store 实现，适用于不同的使用场景：
 
 - **LocalVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/local_vector_store.py)）：基于本地文件的实现，使用 JSONL 格式持久化存储，适合单机部署和小规模数据
 - **MemoryVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/memory_vector_store.py)）：内存实现，数据存储在内存中，访问速度快，适合临时数据或测试场景
+- **PgVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/pgvector_vector_store.py)）：基于 PostgreSQL 和 pgvector 扩展的实现，支持同步和异步操作，适合已有 PostgreSQL 基础设施的场景
 - **QdrantVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/qdrant_vector_store.py)）：基于 Qdrant 向量数据库，支持高性能向量搜索，适合大规模生产环境
 - **ChromaVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/chroma_vector_store.py)）：基于 ChromaDB 的实现，提供持久化存储和元数据过滤能力
 - **EsVectorStore**（[代码路径](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/es_vector_store.py)）：基于 Elasticsearch 的实现，支持强大的全文搜索和向量搜索组合
@@ -77,6 +78,12 @@ FlowLLM 提供了多种 Vector Store 实现，适用于不同的使用场景：
 
 - **store_dir**：持久化存储目录，默认 `./memory_vector_store`
 
+### PgVectorStore 配置
+
+- **connection_string**：PostgreSQL 连接字符串（同步操作），默认从环境变量 `FLOW_PGVECTOR_CONNECTION_STRING` 读取，或使用 `postgresql://localhost/postgres`
+- **async_connection_string**：PostgreSQL 连接字符串（异步操作，可选），默认从环境变量 `FLOW_PGVECTOR_ASYNC_CONNECTION_STRING` 读取，如果未提供则基于 `connection_string` 自动转换
+- **batch_size**：批量操作大小，默认 `1024`
+
 ### QdrantVectorStore 配置
 
 - **url**：Qdrant 服务地址（可选，用于 Qdrant Cloud 或自定义部署）
@@ -109,7 +116,7 @@ vector_store:
 
 ### 配置字段说明
 
-- **`backend`**（必需）：向量库后端类型，可选值：`local`、`memory`、`chroma`、`qdrant`、`elasticsearch`
+- **`backend`**（必需）：向量库后端类型，可选值：`local`、`memory`、`pgvector`、`chroma`、`qdrant`、`elasticsearch`
 - **`embedding_model`**（必需）：嵌入模型配置名称，引用 `embedding_model` 部分的配置
 - **`params`**（可选）：后端特定参数字典，将传递给向量库构造函数
 
@@ -160,7 +167,54 @@ vector_store:
       store_dir: "./chroma_vector_store"  # ChromaDB 数据目录（可选，默认："./chroma_vector_store"）
 ```
 
-#### 4. QdrantVectorStore 配置
+#### 4. PgVectorStore 配置
+
+基于 PostgreSQL 和 pgvector 扩展的向量存储，支持同步和异步操作，适合已有 PostgreSQL 基础设施的场景。
+
+**代码实现**：[`flowllm/core/vector_store/pgvector_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/pgvector_vector_store.py)
+
+**前置要求**：需要安装 PostgreSQL 并启用 pgvector 扩展。
+
+**基本配置（使用环境变量）：**
+
+```yaml
+vector_store:
+  default:
+    backend: pgvector
+    embedding_model: default
+    params:
+      # connection_string 和 async_connection_string 可通过环境变量配置
+      # FLOW_PGVECTOR_CONNECTION_STRING=postgresql://user:password@localhost/dbname
+      # FLOW_PGVECTOR_ASYNC_CONNECTION_STRING=postgresql://user:password@localhost/dbname
+      batch_size: 1024  # 批量操作大小（可选，默认：1024）
+```
+
+**显式配置连接字符串：**
+
+```yaml
+vector_store:
+  default:
+    backend: pgvector
+    embedding_model: default
+    params:
+      connection_string: "postgresql://user:password@localhost:5432/dbname"  # 同步连接字符串
+      async_connection_string: "postgresql://user:password@localhost:5432/dbname"  # 异步连接字符串（可选）
+      batch_size: 1024
+```
+
+**仅配置同步连接（异步将自动转换）：**
+
+```yaml
+vector_store:
+  default:
+    backend: pgvector
+    embedding_model: default
+    params:
+      connection_string: "postgresql://user:password@localhost:5432/dbname"
+      batch_size: 1024
+```
+
+#### 5. QdrantVectorStore 配置
 
 **代码实现**：[`flowllm/core/vector_store/qdrant_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/qdrant_vector_store.py)
 
@@ -190,7 +244,7 @@ vector_store:
       distance: "COSINE"
 ```
 
-#### 5. EsVectorStore 配置
+#### 6. EsVectorStore 配置
 
 **代码实现**：[`flowllm/core/vector_store/es_vector_store.py`](https://github.com/flowllm-ai/flowllm/blob/main/flowllm/core/vector_store/es_vector_store.py)
 
@@ -257,6 +311,9 @@ vector_store:
 
 部分 Vector Store 支持通过环境变量进行配置，作为 YAML 配置的补充：
 
+- **PgVectorStore**：
+  - `FLOW_PGVECTOR_CONNECTION_STRING` - PostgreSQL 同步连接字符串（默认：`postgresql://localhost/postgres`）
+  - `FLOW_PGVECTOR_ASYNC_CONNECTION_STRING` - PostgreSQL 异步连接字符串（可选，未提供时基于同步连接字符串自动转换）
 - **Elasticsearch**：`FLOW_ES_HOSTS` - Elasticsearch 主机地址
 - **Qdrant**：
   - `FLOW_QDRANT_HOST` - Qdrant 主机（默认：`localhost`）
@@ -277,14 +334,17 @@ vector_store:
 
 - **开发测试**：使用 MemoryVectorStore 或 LocalVectorStore，无需额外服务
 - **小规模应用**：使用 LocalVectorStore 或 ChromaVectorStore，简单易用
-- **生产环境**：使用 QdrantVectorStore 或 EsVectorStore，提供高性能和可扩展性
+- **已有 PostgreSQL 基础设施**：使用 PgVectorStore，利用现有数据库资源，支持同步和异步操作
+- **生产环境**：使用 PgVectorStore、QdrantVectorStore 或 EsVectorStore，提供高性能和可扩展性
 - **混合搜索**：使用 EsVectorStore，结合向量搜索和全文搜索能力
 
 ## 注意事项
 
 - 确保嵌入模型的维度与 Vector Store 配置一致
-- 大规模数据建议使用专业的向量数据库（Qdrant、Elasticsearch）
+- 使用 PgVectorStore 前需要确保 PostgreSQL 已安装并启用 pgvector 扩展（`CREATE EXTENSION vector`）
+- 大规模数据建议使用专业的向量数据库（PgVectorStore、Qdrant、Elasticsearch）
 - 异步接口在异步环境中能提供更好的性能
 - 定期备份重要数据，特别是使用内存存储时
 - 根据数据规模选择合适的批量大小以优化性能
+- PgVectorStore 会自动为每个工作空间创建向量索引（IVFFlat）和元数据索引（GIN），以优化查询性能
 
