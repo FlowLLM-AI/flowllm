@@ -58,4 +58,5 @@ class MCPService(BaseService):
                 transport=mcp_config.transport,
                 host=mcp_config.host,
                 port=mcp_config.port,
-                show_banner=False)
+                show_banner=False,
+            )
