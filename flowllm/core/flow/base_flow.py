@@ -127,7 +127,9 @@ class BaseFlow(ABC):
         cached = self.cache.load(key) if self.cache else None
         if cached is not None:
             logger.info(f"load flow response from cache with params={params}")
-        return cached
+            return FlowResponse(**cached)
+
+        return None
 
     def _maybe_save_cache(self, params: dict, response: FlowResponse):
         """Save a response into cache for non-streaming requests.

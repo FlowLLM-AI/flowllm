@@ -39,9 +39,9 @@ def main():
     embedding_model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
     workspace_id = "rag_nodes_index"
     connection_string = "postgresql://localhost/postgres"
-    
+
     pg = PgVectorStore(connection_string=connection_string, embedding_model=embedding_model)
-    
+
     # Clean up and create workspace
     if pg.exist_workspace(workspace_id=workspace_id):
         pg.delete_workspace(workspace_id=workspace_id)
@@ -153,7 +153,7 @@ async def async_main():
         async_connection_string=async_connection_string,
         embedding_model=embedding_model,
     )
-    
+
     # Clean up and create workspace
     if await pg.async_exist_workspace(workspace_id=workspace_id):
         await pg.async_delete_workspace(workspace_id=workspace_id)
@@ -264,6 +264,7 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Sync test failed: {e}")
         import traceback
+
         traceback.print_exc()
 
     # Run async test
@@ -273,5 +274,5 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"Async test failed: {e}")
         import traceback
-        traceback.print_exc()
 
+        traceback.print_exc()

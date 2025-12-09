@@ -52,10 +52,11 @@ class PgVectorStore(LocalVectorStore):
         """
         super().__init__(**kwargs)
         self.connection_string = connection_string or os.getenv(
-            "FLOW_PGVECTOR_CONNECTION_STRING", "postgresql://localhost/postgres"
+            "FLOW_PGVECTOR_CONNECTION_STRING",
+            "postgresql://localhost/postgres",
         )
         self.async_connection_string = async_connection_string or os.getenv(
-            "FLOW_PGVECTOR_ASYNC_CONNECTION_STRING"
+            "FLOW_PGVECTOR_ASYNC_CONNECTION_STRING",
         )
         self.batch_size = batch_size
 
@@ -68,15 +69,15 @@ class PgVectorStore(LocalVectorStore):
         # Initialize async connection if async_connection_string is provided
         self._async_conn = None
         if self.async_connection_string:
-            import asyncpg
-
             # We'll create the async connection lazily in async methods
             self._async_conn_string = self.async_connection_string
         else:
             # Convert sync connection string to asyncpg format
             if self.connection_string.startswith("postgresql://"):
                 self._async_conn_string = self.connection_string.replace(
-                    "postgresql://", "postgresql+asyncpg://", 1
+                    "postgresql://",
+                    "postgresql+asyncpg://",
+                    1,
                 )
             else:
                 self._async_conn_string = self.connection_string
@@ -87,7 +88,7 @@ class PgVectorStore(LocalVectorStore):
             self._conn.commit()
 
         logger.info(
-            f"PostgreSQL pgvector client initialized with connection_string={self.connection_string}"
+            f"PostgreSQL pgvector client initialized with connection_string={self.connection_string}",
         )
 
     def _get_table_name(self, workspace_id: str) -> str:
@@ -166,7 +167,7 @@ class PgVectorStore(LocalVectorStore):
                     metadata JSONB NOT NULL,
                     vector vector({dimensions}) NOT NULL
                 )
-                """
+                """,
             )
             # Create index for vector similarity search
             cur.execute(
@@ -174,14 +175,14 @@ class PgVectorStore(LocalVectorStore):
                 CREATE INDEX IF NOT EXISTS "{table_name}_vector_idx"
                 ON "{table_name}" USING ivfflat (vector vector_cosine_ops)
                 WITH (lists = 100)
-                """
+                """,
             )
             # Create index for metadata filtering
             cur.execute(
                 f"""
                 CREATE INDEX IF NOT EXISTS "{table_name}_metadata_idx"
                 ON "{table_name}" USING gin (metadata)
-                """
+                """,
             )
             self._conn.commit()
         logger.info(f"Created workspace table: {table_name} with vector({dimensions})")
@@ -201,7 +202,7 @@ class PgVectorStore(LocalVectorStore):
                 WHERE table_schema = 'public'
                 AND table_name LIKE 'workspace_%'
                 ORDER BY table_name
-                """
+                """,
             )
             table_names = [row[0] for row in cur.fetchall()]
             # Remove 'workspace_' prefix
@@ -249,7 +250,6 @@ class PgVectorStore(LocalVectorStore):
             workspace_id: The identifier of the workspace (unused).
         """
         # PostgreSQL doesn't need explicit refresh like Elasticsearch
-        pass
 
     @staticmethod
     def _row2node(row: Tuple, workspace_id: str) -> VectorNode:
@@ -268,13 +268,13 @@ class PgVectorStore(LocalVectorStore):
 
         # pgvector returns vector as string like '[0.1,0.2,0.3]'
         vector = json.loads(vector_str)
-        
+
         # Parse metadata if it's a string (psycopg may return JSONB as string in some cases)
         if isinstance(metadata, str):
             metadata = json.loads(metadata)
         elif metadata is None:
             metadata = {}
-        
+
         node = VectorNode(
             unique_id=unique_id,
             workspace_id=workspace_id_col or workspace_id,
@@ -285,7 +285,10 @@ class PgVectorStore(LocalVectorStore):
         return node
 
     @staticmethod
-    def _build_sql_filters(filter_dict: Optional[Dict[str, Any]] = None, use_async: bool = False) -> Tuple[str, List[Any]]:
+    def _build_sql_filters(
+        filter_dict: Optional[Dict[str, Any]] = None,
+        use_async: bool = False,
+    ) -> Tuple[str, List[Any]]:
         """Build SQL WHERE clause from filter_dict.
 
         Converts a filter dictionary into SQL WHERE conditions.
@@ -306,7 +309,6 @@ class PgVectorStore(LocalVectorStore):
         conditions = []
         params = []
         param_idx = 1
-        placeholder = "$%d" if use_async else "%s"
 
         for key, filter_value in filter_dict.items():
             # Handle nested keys by using JSONB path operators
@@ -394,7 +396,7 @@ class PgVectorStore(LocalVectorStore):
         # Cosine similarity = 1 - cosine distance
         # Convert query_vector to string format for pgvector
         query_vector_str = "[" + ",".join(str(v) for v in query_vector) + "]"
-        
+
         with self._conn.cursor() as cur:
             # Parameter order in SQL: SELECT %s::vector, WHERE %s..., ORDER BY %s::vector, LIMIT %s
             # So parameters should be: [query_vector_str] + filter_params + [query_vector_str, top_k]
@@ -418,13 +420,13 @@ class PgVectorStore(LocalVectorStore):
 
                 # pgvector returns vector as string like '[0.1,0.2,0.3]'
                 vector = json.loads(vector_str)
-                
+
                 # Parse metadata if it's a string (psycopg may return JSONB as string in some cases)
                 if isinstance(metadata, str):
                     metadata = json.loads(metadata)
                 elif metadata is None:
                     metadata = {}
-                
+
                 node = VectorNode(
                     unique_id=unique_id,
                     workspace_id=workspace_id_col or workspace_id,
@@ -437,13 +439,12 @@ class PgVectorStore(LocalVectorStore):
 
             return nodes
 
-    def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, refresh: bool = True, **kwargs):
+    def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
         """Insert vector nodes into the PostgreSQL table.
 
         Args:
             nodes: A single VectorNode or list of VectorNodes to insert.
             workspace_id: The identifier of the workspace to insert into.
-            refresh: Whether to refresh after insertion (default: True, kept for API compatibility).
             **kwargs: Additional keyword arguments (unused).
         """
         if not self.exist_workspace(workspace_id=workspace_id):
@@ -474,7 +475,7 @@ class PgVectorStore(LocalVectorStore):
                         vector_str = "[" + ",".join(str(v) for v in vector_value) + "]"
                     else:
                         vector_str = str(vector_value)
-                    
+
                     values.append(
                         (
                             node.unique_id,
@@ -482,7 +483,7 @@ class PgVectorStore(LocalVectorStore):
                             node.content,
                             json.dumps(node.metadata),
                             vector_str,
-                        )
+                        ),
                     )
 
                 # Use INSERT ... ON CONFLICT for upsert
@@ -502,13 +503,12 @@ class PgVectorStore(LocalVectorStore):
             self._conn.commit()
         logger.info(f"insert nodes.size={len(all_nodes)} into workspace_id={workspace_id}")
 
-    def delete(self, node_ids: str | List[str], workspace_id: str, refresh: bool = True, **kwargs):
+    def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
         """Delete vector nodes from the PostgreSQL table.
 
         Args:
             node_ids: A single node ID or list of node IDs to delete.
             workspace_id: The identifier of the workspace to delete from.
-            refresh: Whether to refresh after deletion (default: True, kept for API compatibility).
             **kwargs: Additional keyword arguments (unused).
         """
         if not self.exist_workspace(workspace_id=workspace_id):
@@ -543,7 +543,7 @@ class PgVectorStore(LocalVectorStore):
 
             logger.debug(f"Establishing async PostgreSQL connection: {conn_str}")
             self._async_conn = await asyncpg.connect(conn_str)
-            logger.debug(f"Async PostgreSQL connection established successfully")
+            logger.debug("Async PostgreSQL connection established successfully")
         return self._async_conn
 
     async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
@@ -607,7 +607,7 @@ class PgVectorStore(LocalVectorStore):
                 metadata JSONB NOT NULL,
                 vector vector({dimensions}) NOT NULL
             )
-            """
+            """,
         )
         # Create index for vector similarity search
         await conn.execute(
@@ -615,14 +615,14 @@ class PgVectorStore(LocalVectorStore):
             CREATE INDEX IF NOT EXISTS "{table_name}_vector_idx"
             ON "{table_name}" USING ivfflat (vector vector_cosine_ops)
             WITH (lists = 100)
-            """
+            """,
         )
         # Create index for metadata filtering
         await conn.execute(
             f"""
             CREATE INDEX IF NOT EXISTS "{table_name}_metadata_idx"
             ON "{table_name}" USING gin (metadata)
-            """
+            """,
         )
         logger.info(f"Created workspace table: {table_name} with vector({dimensions})")
 
@@ -633,7 +633,6 @@ class PgVectorStore(LocalVectorStore):
             workspace_id: The identifier of the workspace (unused).
         """
         # PostgreSQL doesn't need explicit refresh like Elasticsearch
-        pass
 
     async def async_search(
         self,
@@ -686,7 +685,7 @@ class PgVectorStore(LocalVectorStore):
                 new_placeholder = f"${param_offset + i + 1}"
                 adjusted_where = adjusted_where.replace(old_placeholder, new_placeholder)
             where_sql = f"WHERE {adjusted_where}" if adjusted_where else ""
-        
+
         # Calculate the last parameter index for top_k
         top_k_param_idx = 1 + len(filter_params) + 1  # $1 (query_vector) + filter_params + 1
 
@@ -700,7 +699,7 @@ class PgVectorStore(LocalVectorStore):
             ORDER BY vector <=> $1::vector
             LIMIT ${top_k_param_idx}
             """
-        
+
         # Parameter order: query_vector ($1), filter_params ($2, $3, ...), top_k ($last)
         rows = await conn.fetch(query_sql, query_vector_str, *filter_params, top_k)
 
@@ -718,13 +717,13 @@ class PgVectorStore(LocalVectorStore):
 
             # pgvector returns vector as string like '[0.1,0.2,0.3]'
             vector = json.loads(vector_str)
-            
+
             # Parse metadata if it's a string (asyncpg may return JSONB as string)
             if isinstance(metadata, str):
                 metadata = json.loads(metadata)
             elif metadata is None:
                 metadata = {}
-            
+
             node = VectorNode(
                 unique_id=unique_id,
                 workspace_id=workspace_id_col or workspace_id,
@@ -741,7 +740,6 @@ class PgVectorStore(LocalVectorStore):
         self,
         nodes: VectorNode | List[VectorNode],
         workspace_id: str,
-        refresh: bool = True,
         **kwargs,
     ):
         """Insert vector nodes into the PostgreSQL table (async).
@@ -749,7 +747,6 @@ class PgVectorStore(LocalVectorStore):
         Args:
             nodes: A single VectorNode or list of VectorNodes to insert.
             workspace_id: The identifier of the workspace to insert into.
-            refresh: Whether to refresh after insertion (default: True, kept for API compatibility).
             **kwargs: Additional keyword arguments (unused).
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
@@ -802,13 +799,12 @@ class PgVectorStore(LocalVectorStore):
 
         logger.info(f"async insert nodes.size={len(all_nodes)} into workspace_id={workspace_id}")
 
-    async def async_delete(self, node_ids: str | List[str], workspace_id: str, refresh: bool = True, **kwargs):
+    async def async_delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
         """Delete vector nodes from the PostgreSQL table (async).
 
         Args:
             node_ids: A single node ID or list of node IDs to delete.
             workspace_id: The identifier of the workspace to delete from.
-            refresh: Whether to refresh after deletion (default: True, kept for API compatibility).
             **kwargs: Additional keyword arguments (unused).
         """
         if not await self.async_exist_workspace(workspace_id=workspace_id):
@@ -836,4 +832,3 @@ class PgVectorStore(LocalVectorStore):
         if self._async_conn:
             await self._async_conn.close()
             self._async_conn = None
-
