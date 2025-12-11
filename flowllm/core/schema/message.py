@@ -61,6 +61,7 @@ class ContentBlock(BaseModel):
 class Message(BaseModel):
     """Represents a message in a conversation with role, content, and optional tool calls."""
 
+    name: str | None = Field(default=None)
     role: Role = Field(default=Role.USER)
     content: str | List[ContentBlock] = Field(default="")
     reasoning_content: str = Field(default="")
