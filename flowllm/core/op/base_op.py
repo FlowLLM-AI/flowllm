@@ -591,6 +591,15 @@ class BaseOp(ABC):
             self._vector_store = C.get_vector_store(self._vector_store)
         return self._vector_store
 
+    @property
+    def service_config_metadata(self) -> dict:
+        """Get the service config metadata for this operation.
+
+        Returns:
+            Service config metadata
+        """
+        return C.service_config.metadata
+
     def prompt_format(self, prompt_name: str, **kwargs) -> str:
         """Format a prompt template with provided variables.
 
