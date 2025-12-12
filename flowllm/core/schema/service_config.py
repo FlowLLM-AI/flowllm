@@ -99,3 +99,4 @@ class ServiceConfig(BaseModel):
     llm: Dict[str, LLMConfig] = Field(default_factory=dict)
     embedding_model: Dict[str, EmbeddingModelConfig] = Field(default_factory=dict)
     vector_store: Dict[str, VectorStoreConfig] = Field(default_factory=dict)
+    metadata: dict = Field(default_factory=dict)
