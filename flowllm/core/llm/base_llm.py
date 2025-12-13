@@ -260,3 +260,9 @@ class BaseLLM(ABC):
                 await asyncio.sleep(1 + i)
 
         return default_value
+
+    def close(self):
+        """Close the client connection or clean up resources."""
+
+    async def async_close(self):
+        """Asynchronously close the client connection or clean up resources."""

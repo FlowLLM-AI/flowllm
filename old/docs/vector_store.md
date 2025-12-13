@@ -76,7 +76,7 @@ store.delete(node_ids: str | List[str], workspace_id: str, **kwargs)
 store.search(query: str, workspace_id: str, top_k: int = 1, **kwargs) -> List[VectorNode]
 
 # Iterate through workspace nodes
-for node in store.iter_workspace_nodes(workspace_id: str, **kwargs):
+for node in store.list_workspace_nodes(workspace_id: str, **kwargs):
     # Process each node
 ```
 
@@ -617,7 +617,7 @@ for result in filtered_results:
 
 # Iterate through all nodes
 print("\nAll nodes in workspace:")
-for node in vector_store.iter_workspace_nodes(workspace_id, limit=100):
+for node in vector_store.list_workspace_nodes(workspace_id, limit=100):
     print(f"ID: {node.unique_id}, Content: {node.content[:50]}...")
 
 # Update a node (delete + insert)
@@ -719,7 +719,7 @@ asyncio.run(async_example())
 1. **Batch Operations** - Insert multiple nodes at once for better performance
 2. **Use Async** - For high-concurrency scenarios, use async methods
 3. **Optimize Filters** - Use indexed metadata fields for faster filtering
-4. **Pagination** - Use `iter_workspace_nodes()` with appropriate `limit` for large collections
+4. **Pagination** - Use `list_workspace_nodes()` with appropriate `limit` for large collections
 5. **Distance Metric** - Choose appropriate distance metric for your use case (COSINE for normalized vectors)
 
 ### 5. ⚡ MemoryVectorStore (`backend=memory`)

@@ -30,7 +30,7 @@ class RAGSearchOp(BaseAsyncOp):
         assert query, "query 不能为空"
 
         # 2. 使用 Embedding 生成查询向量（一行代码示意 emb）
-        query_vector = await self.embedding_model.get_embeddings_async(query)
+        query_vector = await self.embedding_model.async_get_embeddings(query)
 
         # 3. 使用 VectorStore 进行语义搜索（一行代码示意 vectorstore）
         nodes = await self.vector_store.async_search(query=query, workspace_id=workspace_id, top_k=top_k)

@@ -105,7 +105,7 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
         else:
             raise RuntimeError(f"unsupported type={type(input_text)}")
 
-    async def _get_embeddings_async(self, input_text: str | List[str]):
+    async def _async_get_embeddings(self, input_text: str | List[str]):
         """
         Get embeddings asynchronously from the OpenAI-compatible API.
 
@@ -139,3 +139,11 @@ class OpenAICompatibleEmbeddingModel(BaseEmbeddingModel):
 
         else:
             raise RuntimeError(f"unsupported type={type(input_text)}")
+
+    def close(self):
+        """Close the OpenAI clients and clean up resources."""
+        self._client.close()
+
+    async def async_close(self):
+        """Asynchronously close the OpenAI clients and clean up resources."""
+        await self._async_client.close()

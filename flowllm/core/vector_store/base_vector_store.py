@@ -10,9 +10,10 @@ import asyncio
 from abc import ABC, abstractmethod
 from functools import partial
 from pathlib import Path
-from typing import List, Iterable, Dict, Any, Optional
+from typing import List, Dict, Any, Optional
+from types import TracebackType
 
-from ..context import C
+from ..context.service_context import C
 from ..embedding_model import BaseEmbeddingModel
 from ..schema import VectorNode
 
@@ -35,59 +36,169 @@ class BaseVectorStore(ABC):
     """
 
     def __init__(self, embedding_model: BaseEmbeddingModel | None = None, **kwargs):
+        # Initialize the vector store with an optional embedding model
         self.embedding_model: BaseEmbeddingModel | None = embedding_model
         self.kwargs: dict = kwargs
+
+    @staticmethod
+    async def _run_sync_in_executor(sync_func, *args, **kwargs):
+        """Run a synchronous function in a thread pool executor.
+
+        This utility method is useful for wrapping synchronous I/O operations
+        (like file reads/writes) in async methods to avoid blocking the event loop.
+
+        Args:
+            sync_func: The synchronous function to execute.
+            *args: Positional arguments to pass to the function.
+            **kwargs: Keyword arguments to pass to the function.
+
+        Returns:
+            The return value of the synchronous function.
+        """
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(C.thread_pool, partial(sync_func, *args, **kwargs))
+
+    def get_node_embeddings(self, nodes: VectorNode | List[VectorNode]) -> List[VectorNode]:
+        """Generate embeddings for nodes using the embedding model.
+
+        Args:
+            nodes: Single VectorNode or list of VectorNodes to generate embeddings for.
+
+        Returns:
+            List[VectorNode]: List of VectorNodes with generated embeddings.
+
+        Raises:
+            ValueError: If embedding_model is None.
+        """
+        if self.embedding_model is None:
+            raise ValueError("embedding_model is None. Cannot generate embeddings without an embedding model.")
+        return self.embedding_model.get_node_embeddings(nodes)
+
+    async def async_get_node_embeddings(self, nodes: VectorNode | List[VectorNode]) -> List[VectorNode]:
+        """Asynchronously generate embeddings for nodes using the embedding model.
+
+        Args:
+            nodes: Single VectorNode or list of VectorNodes to generate embeddings for.
+
+        Returns:
+            List[VectorNode]: List of VectorNodes with generated embeddings.
+
+        Raises:
+            ValueError: If embedding_model is None.
+        """
+        if self.embedding_model is None:
+            raise ValueError("embedding_model is None. Cannot generate embeddings without an embedding model.")
+        return await self.embedding_model.async_get_node_embeddings(nodes)
+
+    def get_embeddings(self, query: str | List[str]):
+        """Generate embeddings for text queries using the embedding model.
+
+        Args:
+            query: Single string or list of strings to generate embeddings for.
+
+        Returns:
+            Embeddings for the input query/queries.
+
+        Raises:
+            ValueError: If embedding_model is None.
+        """
+        if self.embedding_model is None:
+            raise ValueError("embedding_model is None. Cannot generate embeddings without an embedding model.")
+        return self.embedding_model.get_embeddings(query)
+
+    async def async_get_embeddings(self, query: str | List[str]):
+        """Asynchronously generate embeddings for text queries using the embedding model.
+
+        Args:
+            query: Single string or list of strings to generate embeddings for.
+
+        Returns:
+            Embeddings for the input query/queries.
+
+        Raises:
+            ValueError: If embedding_model is None.
+        """
+        if self.embedding_model is None:
+            raise ValueError("embedding_model is None. Cannot generate embeddings without an embedding model.")
+        return await self.embedding_model.async_get_embeddings(query)
 
     @abstractmethod
     def exist_workspace(self, workspace_id: str, **kwargs) -> bool:
         """Check if a workspace exists in the vector store."""
-        raise NotImplementedError
 
     @abstractmethod
-    def delete_workspace(self, workspace_id: str, **kwargs) -> None:
+    async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
+        """Asynchronously check if a workspace exists in the vector store."""
+
+    @abstractmethod
+    def delete_workspace(self, workspace_id: str, **kwargs):
         """Delete a workspace from the vector store."""
-        raise NotImplementedError
 
     @abstractmethod
-    def create_workspace(self, workspace_id: str, **kwargs) -> None:
+    async def async_delete_workspace(self, workspace_id: str, **kwargs):
+        """Asynchronously delete a workspace from the vector store."""
+
+    @abstractmethod
+    def create_workspace(self, workspace_id: str, **kwargs):
         """Create a new workspace in the vector store."""
-        raise NotImplementedError
 
     @abstractmethod
-    def iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
-        """Iterate over all nodes in a workspace."""
-        raise NotImplementedError
+    async def async_create_workspace(self, workspace_id: str, **kwargs):
+        """Asynchronously create a new workspace in the vector store."""
 
     @abstractmethod
-    def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs) -> None:
+    def list_workspace_nodes(self, workspace_id: str, **kwargs) -> List[VectorNode]:
+        """List all nodes in a workspace."""
+
+    @abstractmethod
+    async def async_list_workspace_nodes(self, workspace_id: str, **kwargs) -> List[VectorNode]:
+        """Asynchronously list all nodes in a workspace."""
+
+    @abstractmethod
+    def dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
         """Dump workspace data to a file or path."""
-        raise NotImplementedError
+
+    @abstractmethod
+    async def async_dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
+        """Asynchronously dump workspace data to a file or path."""
 
     @abstractmethod
     def load_workspace(
         self,
         workspace_id: str,
         path: str | Path = "",
-        nodes: Optional[List[VectorNode]] = None,
+        nodes: List[VectorNode] | None = None,
         callback_fn=None,
         **kwargs,
-    ) -> None:
+    ):
         """Load workspace data from a file or path, or from provided nodes."""
-        raise NotImplementedError
 
     @abstractmethod
-    def copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs) -> None:
+    async def async_load_workspace(
+        self,
+        workspace_id: str,
+        path: str | Path = "",
+        nodes: List[VectorNode] | None = None,
+        callback_fn=None,
+        **kwargs,
+    ):
+        """Asynchronously load workspace data from a file or path, or from provided nodes."""
+
+    @abstractmethod
+    def copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):
         """Copy one workspace to another."""
-        raise NotImplementedError
+
+    @abstractmethod
+    async def async_copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):
+        """Asynchronously copy one workspace to another."""
 
     @abstractmethod
     def list_workspace(self, **kwargs) -> List[str]:
-        """List all existing workspaces.
+        """List all existing workspaces."""
 
-        Returns:
-            List[str]: A list of workspace identifiers available in this vector store.
-        """
-        raise NotImplementedError
+    @abstractmethod
+    async def async_list_workspace(self, **kwargs) -> List[str]:
+        """Asynchronously list all existing workspaces."""
 
     @abstractmethod
     def search(
@@ -98,214 +209,89 @@ class BaseVectorStore(ABC):
         filter_dict: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> List[VectorNode]:
-        """Search for similar vectors in the workspace."""
-        raise NotImplementedError
+        """Search for similar vectors in the workspace.
 
-    @abstractmethod
-    def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs) -> None:
-        """Insert nodes into the workspace."""
-        raise NotImplementedError
-
-    @abstractmethod
-    def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs) -> None:
-        """Delete nodes from the workspace by their IDs."""
-        raise NotImplementedError
-
-    def close(self) -> None:
-        """Close the vector store and clean up resources. Default implementation does nothing."""
-
-    # Async versions of all methods
-
-    async def async_exist_workspace(self, workspace_id: str, **kwargs) -> bool:
-        """Async version of exist_workspace.
+        When query is empty (empty string or None), the search degrades to a
+        filter-only search without vector similarity ranking. In this case,
+        results are returned based solely on filter_dict criteria, up to top_k
+        items, without similarity scores.
 
         Args:
-            workspace_id: The ID of the workspace to check.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
+            query: Text query to search for. If empty/None, performs filter-only
+                search without vector similarity.
+            workspace_id: Identifier of the workspace to search in.
+            top_k: Number of top results to return. Defaults to 1.
+            filter_dict: Optional dictionary of filters to apply to nodes.
+            **kwargs: Additional keyword arguments for implementation-specific options.
 
         Returns:
-            True if the workspace exists, False otherwise.
+            List[VectorNode]: List of matching nodes. When query is provided,
+                nodes are sorted by similarity score (highest first) with a
+                "score" key in metadata. When query is empty, nodes are returned
+                in storage order without scores.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(C.thread_pool, partial(self.exist_workspace, workspace_id, **kwargs))
 
-    async def async_delete_workspace(self, workspace_id: str, **kwargs) -> None:
-        """Async version of delete_workspace.
-
-        Args:
-            workspace_id: The ID of the workspace to delete.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(C.thread_pool, partial(self.delete_workspace, workspace_id, **kwargs))
-
-    async def async_create_workspace(self, workspace_id: str, **kwargs) -> None:
-        """Async version of create_workspace.
-
-        Args:
-            workspace_id: The ID of the workspace to create.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(C.thread_pool, partial(self.create_workspace, workspace_id, **kwargs))
-
-    async def async_iter_workspace_nodes(self, workspace_id: str, **kwargs) -> Iterable[VectorNode]:
-        """Async version of iter_workspace_nodes.
-
-        Args:
-            workspace_id: The ID of the workspace to iterate nodes from.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Returns:
-            An iterable of VectorNode objects from the workspace.
-
-        Note:
-            This method returns an iterable, not an async iterator. The iteration happens
-            synchronously in a thread pool executor.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            C.thread_pool,
-            partial(
-                self.iter_workspace_nodes,
-                workspace_id,
-                **kwargs,
-            ),
-        )
-
-    async def async_dump_workspace(self, workspace_id: str, path: str | Path = "", callback_fn=None, **kwargs):
-        """Async version of dump_workspace.
-
-        Args:
-            workspace_id: The ID of the workspace to dump.
-            path: The file or directory path where the workspace data should be saved.
-            callback_fn: Optional callback function to be called during the dump process.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            C.thread_pool,
-            partial(
-                self.dump_workspace,
-                workspace_id,
-                path,
-                callback_fn,
-                **kwargs,
-            ),
-        )
-
-    async def async_load_workspace(
-        self,
-        workspace_id: str,
-        path: str | Path = "",
-        nodes: List[VectorNode] = None,
-        callback_fn=None,
-        **kwargs,
-    ):
-        """Async version of load_workspace.
-
-        Args:
-            workspace_id: The ID of the workspace to load data into.
-            path: The file or directory path to load workspace data from.
-            nodes: Optional list of VectorNode objects to load directly.
-            callback_fn: Optional callback function to be called during the load process.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-
-        Note:
-            Either `path` or `nodes` should be provided, but not both.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            C.thread_pool,
-            partial(
-                self.load_workspace,
-                workspace_id,
-                path,
-                nodes,
-                callback_fn,
-                **kwargs,
-            ),
-        )
-
-    async def async_copy_workspace(self, src_workspace_id: str, dest_workspace_id: str, **kwargs):
-        """Async version of copy_workspace.
-
-        Args:
-            src_workspace_id: The ID of the source workspace to copy from.
-            dest_workspace_id: The ID of the destination workspace to copy to.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            C.thread_pool,
-            partial(
-                self.copy_workspace,
-                src_workspace_id,
-                dest_workspace_id,
-                **kwargs,
-            ),
-        )
-
+    @abstractmethod
     async def async_search(
         self,
         query: str,
         workspace_id: str,
         top_k: int = 1,
-        filter_dict: dict = None,
+        filter_dict: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> List[VectorNode]:
-        """Async version of search.
+        """Search for similar vectors in the workspace.
 
-        Args:
-            query: The search query string. Will be embedded using the embedding_model
-                if one is configured.
-            workspace_id: The ID of the workspace to search in.
-            top_k: The number of most similar results to return (default: 1).
-            filter_dict: Optional dictionary of filters to apply to the search.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
+        Async version of search(). When query is empty, degrades to filter-only
+        search without vector similarity ranking.
 
-        Returns:
-            A list of VectorNode objects matching the query, sorted by similarity.
+        See search() for full documentation.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            C.thread_pool,
-            partial(
-                self.search,
-                query,
-                workspace_id,
-                top_k,
-                filter_dict,
-                **kwargs,
-            ),
-        )
 
+    @abstractmethod
+    def insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
+        """Insert nodes into the workspace."""
+
+    @abstractmethod
     async def async_insert(self, nodes: VectorNode | List[VectorNode], workspace_id: str, **kwargs):
-        """Async version of insert.
+        """Asynchronously insert nodes into the workspace."""
 
-        Args:
-            nodes: A single VectorNode or a list of VectorNode objects to insert.
-            workspace_id: The ID of the workspace to insert nodes into.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(C.thread_pool, partial(self.insert, nodes, workspace_id, **kwargs))
+    @abstractmethod
+    def delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
+        """Delete nodes from the workspace by their IDs."""
 
+    @abstractmethod
     async def async_delete(self, node_ids: str | List[str], workspace_id: str, **kwargs):
-        """Async version of delete.
+        """Asynchronously delete nodes from the workspace by their IDs."""
 
-        Args:
-            node_ids: A single node ID or a list of node IDs to delete.
-            workspace_id: The ID of the workspace containing the nodes to delete.
-            **kwargs: Additional keyword arguments passed to the underlying implementation.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(C.thread_pool, partial(self.delete, node_ids, workspace_id, **kwargs))
+    def close(self):
+        """Close the vector store and clean up resources."""
 
     async def async_close(self):
-        """Async version of close.
+        """Asynchronously close the vector store and clean up resources."""
 
-        Closes the vector store and cleans up resources asynchronously.
-        """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(C.thread_pool, self.close)
+    def __enter__(self) -> "BaseVectorStore":
+        """Allow usage as a synchronous context manager."""
+        return self
+
+    async def __aenter__(self) -> "BaseVectorStore":
+        """Allow usage as an asynchronous context manager."""
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
+        """Ensure resources close when exiting a sync context."""
+        self.close()
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> bool | None:
+        """Ensure resources close when exiting an async context."""
+        await self.async_close()
