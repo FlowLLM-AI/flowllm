@@ -62,7 +62,7 @@ class BaseEmbeddingModel(ABC):
         """
         raise NotImplementedError
 
-    async def _get_embeddings_async(self, input_text: str | List[str]):
+    async def _async_get_embeddings(self, input_text: str | List[str]):
         """
         Abstract async method to get embeddings from the model.
 
@@ -104,7 +104,7 @@ class BaseEmbeddingModel(ABC):
         # Return None if all retries failed and raise_exception is False
         return None
 
-    async def get_embeddings_async(self, input_text: str | List[str]):
+    async def async_get_embeddings(self, input_text: str | List[str]):
         """
         Get embeddings asynchronously with retry logic and error handling.
 
@@ -120,7 +120,7 @@ class BaseEmbeddingModel(ABC):
         # Retry loop with exponential backoff potential
         for i in range(self.max_retries):
             try:
-                return await self._get_embeddings_async(input_text)
+                return await self._async_get_embeddings(input_text)
 
             except Exception as e:
                 logger.exception(f"embedding model name={self.model_name} encounter error with e={e.args}")
@@ -173,7 +173,7 @@ class BaseEmbeddingModel(ABC):
         else:
             raise TypeError(f"unsupported type={type(nodes)}")
 
-    async def get_node_embeddings_async(self, nodes: VectorNode | List[VectorNode]):
+    async def async_get_node_embeddings(self, nodes: VectorNode | List[VectorNode]):
         """
         Generate embeddings asynchronously for VectorNode objects and update their vector fields.
 
@@ -191,7 +191,7 @@ class BaseEmbeddingModel(ABC):
         """
         # Handle single VectorNode
         if isinstance(nodes, VectorNode):
-            nodes.vector = await self.get_embeddings_async(nodes.content)
+            nodes.vector = await self.async_get_embeddings(nodes.content)
             return nodes
 
         # Handle list of VectorNodes with batch processing
@@ -201,7 +201,7 @@ class BaseEmbeddingModel(ABC):
             for i in range(0, len(nodes), self.max_batch_size):
                 batch_nodes = nodes[i : i + self.max_batch_size]
                 batch_content = [node.content for node in batch_nodes]
-                batch_tasks.append(self.get_embeddings_async(batch_content))
+                batch_tasks.append(self.async_get_embeddings(batch_content))
 
             # Execute all batch tasks concurrently
             batch_results = await asyncio.gather(*batch_tasks)
@@ -220,3 +220,9 @@ class BaseEmbeddingModel(ABC):
 
         else:
             raise TypeError(f"unsupported type={type(nodes)}")
+
+    def close(self):
+        """Close the client connection or clean up resources."""
+
+    async def async_close(self):
+        """Asynchronously close the client connection or clean up resources."""

@@ -43,12 +43,12 @@ async def async_main():
     model = OpenAICompatibleEmbeddingModel(dimensions=64, model_name="text-embedding-v4")
 
     # Test async single text embedding
-    res1 = await model.get_embeddings_async(
+    res1 = await model.async_get_embeddings(
         "The clothes are of good quality and look good, definitely worth the wait. I love them.",
     )
 
     # Test async batch text embedding
-    res2 = await model.get_embeddings_async(["aa", "bb"])
+    res2 = await model.async_get_embeddings(["aa", "bb"])
 
     print("Async results:")
     print(res1)
