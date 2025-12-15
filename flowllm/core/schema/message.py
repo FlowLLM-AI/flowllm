@@ -6,7 +6,7 @@ from typing import List
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .tool_call import ToolCall
-from ..enumeration import Role
+from ..enumeration import Role, ContentBlockType
 
 
 class ContentBlock(BaseModel):
@@ -35,7 +35,7 @@ class ContentBlock(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    type: str = Field(default="")
+    type: ContentBlockType = Field(default="")
     content: str | dict | list = Field(default="")
 
     @model_validator(mode="before")
@@ -44,14 +44,15 @@ class ContentBlock(BaseModel):
         """Initialize content block by extracting content based on type field."""
         result = data.copy()
         content_type = data.get("type", "")
-        result["content"] = data[content_type]
+        if content_type and content_type in data:
+            result["content"] = data[content_type]
         return result
 
     def simple_dump(self) -> dict:
         """Convert ContentBlock to a simple dictionary format."""
         result = {
-            "type": self.type,
-            self.type: self.content,
+            "type": self.type.value,
+            self.type.value: self.content,
             **self.model_extra,
         }
 
