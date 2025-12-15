@@ -429,3 +429,9 @@ class OpenAICompatibleLLM(BaseLLM):
             content=answer_content,
             tool_calls=tool_calls,
         )
+
+    def close(self):
+        self._client.close()
+
+    async def async_close(self):
+        await self._aclient.close()
