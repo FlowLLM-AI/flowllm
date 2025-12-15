@@ -6,7 +6,7 @@ from typing import List
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .tool_call import ToolCall
-from ..enumeration import Role, ContentBlockType
+from ..enumeration import Role
 
 
 class ContentBlock(BaseModel):
@@ -35,7 +35,7 @@ class ContentBlock(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    type: ContentBlockType = Field(default="")
+    type: str = Field(default="")
     content: str | dict | list = Field(default="")
 
     @model_validator(mode="before")
@@ -51,8 +51,8 @@ class ContentBlock(BaseModel):
     def simple_dump(self) -> dict:
         """Convert ContentBlock to a simple dictionary format."""
         result = {
-            "type": self.type.value,
-            self.type.value: self.content,
+            "type": self.type,
+            self.type: self.content,
             **self.model_extra,
         }
 
@@ -94,11 +94,6 @@ class Message(BaseModel):
             result["tool_call_id"] = self.tool_call_id
 
         return result
-
-    @property
-    def string_buffer(self) -> str:
-        """Get a string representation of the message with role and content."""
-        return f"{self.role.value}: {self.dump_content()}"
 
 
 class Trajectory(BaseModel):
