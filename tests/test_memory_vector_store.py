@@ -317,6 +317,24 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
         assert results[0].unique_id == target_unique_id, f"Result should have unique_id={target_unique_id}"
         logger.info(f"Found node: {results[0].model_dump(exclude={'vector'})}")
 
+    def test_search_with_id_list(self, workspace_id: str):
+        """Test vector search by multiple unique_ids with list filter."""
+        logger.info("=" * 20 + " SEARCH BY ID LIST TEST " + "=" * 20)
+        target_unique_ids = [f"{self.workspace_prefix}_node1", f"{self.workspace_prefix}_node2"]
+        filter_dict = {"unique_id": target_unique_ids}
+        results = self.client.search(
+            "",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict,
+        )
+        logger.info(f"Search by ID list returned {len(results)} results")
+        assert len(results) == 2, f"Should return exactly 2 results, got {len(results)}"
+        result_ids = {r.unique_id for r in results}
+        assert result_ids == set(target_unique_ids), f"Result unique_ids should match {target_unique_ids}"
+        for r in results:
+            logger.info(f"Found node: {r.model_dump(exclude={'vector'})}")
+
     def test_update(self, workspace_id: str):
         """Test node update (insert with existing unique_id)."""
         logger.info("=" * 20 + " UPDATE TEST " + "=" * 20)
@@ -447,6 +465,7 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
             self.test_search(workspace_id)
             self.test_search_with_filter(workspace_id)
             self.test_search_with_id(workspace_id)
+            self.test_search_with_id_list(workspace_id)
             self.test_update(workspace_id)
             self.test_delete(workspace_id)
             self.test_list_workspace_nodes(workspace_id)
@@ -545,6 +564,24 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
         assert len(results) == 1, "Should return exactly one result"
         assert results[0].unique_id == target_unique_id, f"Result should have unique_id={target_unique_id}"
         logger.info(f"Found node: {results[0].model_dump(exclude={'vector'})}")
+
+    async def test_search_with_id_list(self, workspace_id: str):
+        """Test async vector search by multiple unique_ids with list filter."""
+        logger.info("ASYNC - " + "=" * 20 + " SEARCH BY ID LIST TEST " + "=" * 20)
+        target_unique_ids = [f"{self.workspace_prefix}_node1", f"{self.workspace_prefix}_node2"]
+        filter_dict = {"unique_id": target_unique_ids}
+        results = await self.client.async_search(
+            "",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict,
+        )
+        logger.info(f"Search by ID list returned {len(results)} results")
+        assert len(results) == 2, f"Should return exactly 2 results, got {len(results)}"
+        result_ids = {r.unique_id for r in results}
+        assert result_ids == set(target_unique_ids), f"Result unique_ids should match {target_unique_ids}"
+        for r in results:
+            logger.info(f"Found node: {r.model_dump(exclude={'vector'})}")
 
     async def test_update(self, workspace_id: str):
         """Test async node update (insert with existing unique_id)."""
@@ -678,6 +715,7 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
             await self.test_search(workspace_id)
             await self.test_search_with_filter(workspace_id)
             await self.test_search_with_id(workspace_id)
+            await self.test_search_with_id_list(workspace_id)
             await self.test_update(workspace_id)
             await self.test_delete(workspace_id)
             await self.test_list_workspace_nodes(workspace_id)

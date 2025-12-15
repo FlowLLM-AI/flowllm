@@ -190,9 +190,26 @@ class QdrantVectorStore(MemoryVectorStore):
         for key, filter_value in filter_dict.items():
             # Handle special keys that are stored at payload root level
             if key == "unique_id":
-                qdrant_key = "original_id"
+                # unique_id is stored as original_id in Qdrant payload
+                # Support both single value and list of values
+                if isinstance(filter_value, list):
+                    conditions.append(
+                        FieldCondition(
+                            key="original_id",
+                            match=MatchAny(any=filter_value),
+                        ),
+                    )
+                else:
+                    conditions.append(
+                        FieldCondition(
+                            key="original_id",
+                            match=MatchValue(value=filter_value),
+                        ),
+                    )
+                continue
+
             # Handle nested keys by prefixing with metadata.
-            elif not key.startswith("metadata."):
+            if not key.startswith("metadata."):
                 qdrant_key = f"metadata.{key}"
             else:
                 qdrant_key = key
