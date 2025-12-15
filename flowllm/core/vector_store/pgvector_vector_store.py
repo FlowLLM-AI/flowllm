@@ -218,6 +218,16 @@ class PgVectorStore(MemoryVectorStore):
                     param_idx += 1
                 if range_conditions:
                     conditions.append(f"({' AND '.join(range_conditions)})")
+            elif isinstance(filter_value, list):
+                # List filter: use IN clause for OR logic
+                if use_async:
+                    placeholders = ", ".join(f"${param_idx + i}" for i in range(len(filter_value)))
+                    conditions.append(f"{jsonb_path} IN ({placeholders})")
+                else:
+                    placeholders = ", ".join(["%s"] * len(filter_value))
+                    conditions.append(f"{jsonb_path} IN ({placeholders})")
+                params.extend([str(v) for v in filter_value])
+                param_idx += len(filter_value)
             else:
                 # Term filter: direct value comparison
                 if use_async:

@@ -158,6 +158,9 @@ class EsVectorStore(MemoryVectorStore):
                     range_conditions["lt"] = filter_value["lt"]
                 if range_conditions:
                     filters.append({"range": {es_key: range_conditions}})
+            elif isinstance(filter_value, list):
+                # List filter: use terms query for OR logic
+                filters.append({"terms": {es_key: filter_value}})
             else:
                 # Term filter: direct value comparison
                 filters.append({"term": {es_key: filter_value}})

@@ -167,6 +167,15 @@ class SampleDataGenerator:
             VectorNode(
                 unique_id=f"{id_prefix}node3",
                 workspace_id=workspace_id,
+                content="Machine learning is a subset of artificial intelligence.",
+                metadata={
+                    "node_type": "tech_new",
+                    "category": "ML",
+                },
+            ),
+            VectorNode(
+                unique_id=f"{id_prefix}node4",
+                workspace_id=workspace_id,
                 content="I love eating delicious seafood, especially fresh fish.",
                 metadata={
                     "node_type": "food",
@@ -174,7 +183,7 @@ class SampleDataGenerator:
                 },
             ),
             VectorNode(
-                unique_id=f"{id_prefix}node4",
+                unique_id=f"{id_prefix}node5",
                 workspace_id=workspace_id,
                 content="Deep learning uses neural networks with multiple layers.",
                 metadata={
@@ -277,17 +286,17 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
     def test_search_with_filter(self, workspace_id: str):
         """Test vector search with filter."""
         logger.info("=" * 20 + " FILTER SEARCH TEST " + "=" * 20)
-        filter_dict = {"metadata.node_type": "tech"}
+        filter_dict = {"metadata.node_type": ["tech", "tech_new"]}
         results = self.client.search(
             "What is artificial intelligence?",
             workspace_id=workspace_id,
             top_k=5,
             filter_dict=filter_dict,
         )
-        logger.info(f"Filtered search returned {len(results)} results (node_type=tech)")
+        logger.info(f"Filtered search returned {len(results)} results (node_type in [tech, tech_new])")
         for i, r in enumerate(results, 1):
             logger.info(f"Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
-            assert r.metadata.get("node_type") == "tech", "All results should have node_type=tech"
+            assert r.metadata.get("node_type") in ["tech", "tech_new"], "All results should have node_type in [tech, tech_new]"
 
     def test_search_with_id(self, workspace_id: str):
         """Test vector search by unique_id with empty query."""
@@ -503,17 +512,17 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
     async def test_search_with_filter(self, workspace_id: str):
         """Test async vector search with filter."""
         logger.info("ASYNC - " + "=" * 20 + " FILTER SEARCH TEST " + "=" * 20)
-        filter_dict = {"metadata.node_type": "tech"}
+        filter_dict = {"metadata.node_type": ["tech", "tech_new"]}
         results = await self.client.async_search(
             "What is artificial intelligence?",
             workspace_id=workspace_id,
             top_k=5,
             filter_dict=filter_dict,
         )
-        logger.info(f"Filtered search returned {len(results)} results (node_type=tech)")
+        logger.info(f"Filtered search returned {len(results)} results (node_type in [tech, tech_new])")
         for i, r in enumerate(results, 1):
             logger.info(f"Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
-            assert r.metadata.get("node_type") == "tech", "All results should have node_type=tech"
+            assert r.metadata.get("node_type") in ["tech", "tech_new"], "All results should have node_type in [tech, tech_new]"
 
     async def test_search_with_id(self, workspace_id: str):
         """Test async vector search by unique_id with empty query."""

@@ -181,7 +181,7 @@ class QdrantVectorStore(MemoryVectorStore):
             filter_dict = {"age": {"gte": 18, "lte": 65}}
             ```
         """
-        from qdrant_client.http.models import FieldCondition, MatchValue, Range
+        from qdrant_client.http.models import FieldCondition, MatchAny, MatchValue, Range
 
         if not filter_dict:
             return None
@@ -215,6 +215,14 @@ class QdrantVectorStore(MemoryVectorStore):
                             range=Range(**range_conditions),
                         ),
                     )
+            elif isinstance(filter_value, list):
+                # List filter: use MatchAny for OR logic
+                conditions.append(
+                    FieldCondition(
+                        key=qdrant_key,
+                        match=MatchAny(any=filter_value),
+                    ),
+                )
             else:
                 # Term filter: direct value comparison
                 conditions.append(

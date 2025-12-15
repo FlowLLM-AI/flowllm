@@ -87,6 +87,7 @@ class ChromaVectorStore(MemoryVectorStore):
                 - Term filters: {"key": "value"} -> exact match
                 - Range filters: {"key": {"gte": 1, "lte": 10}} -> range query
                 - unique_id: Filters by document ID (stored separately from metadata)
+                - Keys can use "metadata." prefix (will be stripped for ChromaDB)
 
         Returns:
             Tuple of (where_clause, ids_filter):
@@ -108,6 +109,12 @@ class ChromaVectorStore(MemoryVectorStore):
                     ids_filter = [filter_value]
                 continue
 
+            # Strip "metadata." prefix if present (ChromaDB stores metadata fields directly)
+            if key.startswith("metadata."):
+                chroma_key = key[len("metadata."):]
+            else:
+                chroma_key = key
+
             if isinstance(filter_value, dict):
                 # Range filter: {"gte": 1, "lte": 10}
                 range_conditions = {}
@@ -120,10 +127,13 @@ class ChromaVectorStore(MemoryVectorStore):
                 if "lt" in filter_value:
                     range_conditions["$lt"] = filter_value["lt"]
                 if range_conditions:
-                    where_conditions[key] = range_conditions
+                    where_conditions[chroma_key] = range_conditions
+            elif isinstance(filter_value, list):
+                # List filter: use $in operator for OR logic
+                where_conditions[chroma_key] = {"$in": filter_value}
             else:
                 # Term filter: direct value comparison
-                where_conditions[key] = filter_value
+                where_conditions[chroma_key] = filter_value
 
         return (where_conditions if where_conditions else None, ids_filter)
 

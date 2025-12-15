@@ -228,6 +228,10 @@ class MemoryVectorStore(BaseVectorStore):
                     range_match = False
                 if not range_match:
                     return False
+            elif isinstance(filter_value, list):
+                # List filter: value must match any item in the list (OR logic)
+                if value not in filter_value:
+                    return False
             else:
                 # Term filter: direct value comparison
                 if value != filter_value:
