@@ -296,7 +296,10 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
         logger.info(f"Filtered search returned {len(results)} results (node_type in [tech, tech_new])")
         for i, r in enumerate(results, 1):
             logger.info(f"Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
-            assert r.metadata.get("node_type") in ["tech", "tech_new"], "All results should have node_type in [tech, tech_new]"
+            assert r.metadata.get("node_type") in [
+                "tech",
+                "tech_new",
+            ], "All results should have node_type in [tech, tech_new]"
 
     def test_search_with_id(self, workspace_id: str):
         """Test vector search by unique_id with empty query."""
@@ -522,7 +525,10 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
         logger.info(f"Filtered search returned {len(results)} results (node_type in [tech, tech_new])")
         for i, r in enumerate(results, 1):
             logger.info(f"Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
-            assert r.metadata.get("node_type") in ["tech", "tech_new"], "All results should have node_type in [tech, tech_new]"
+            assert r.metadata.get("node_type") in [
+                "tech",
+                "tech_new",
+            ], "All results should have node_type in [tech, tech_new]"
 
     async def test_search_with_id(self, workspace_id: str):
         """Test async vector search by unique_id with empty query."""

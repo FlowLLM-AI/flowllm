@@ -111,7 +111,7 @@ class ChromaVectorStore(MemoryVectorStore):
 
             # Strip "metadata." prefix if present (ChromaDB stores metadata fields directly)
             if key.startswith("metadata."):
-                chroma_key = key[len("metadata."):]
+                chroma_key = key[len("metadata.") :]
             else:
                 chroma_key = key
 
