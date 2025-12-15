@@ -106,7 +106,7 @@ class OpenAICompatibleLLM(BaseLLM):
             **self.kwargs,
             **kwargs,
         }
-        logger.info(f"OpenAICompatibleLLM.stream_chat: {chat_kwargs}")
+        logger.info(f"OpenAICompatibleLLM.stream_chat: {k: v for k, v in chat_kwargs.items() if k != 'messages'}")
 
         for i in range(self.max_retries):
             try:
@@ -207,7 +207,7 @@ class OpenAICompatibleLLM(BaseLLM):
             **self.kwargs,
             **kwargs,
         }
-        logger.info(f"OpenAICompatibleLLM.astream_chat: {chat_kwargs}")
+        logger.info(f"OpenAICompatibleLLM.astream_chat: {k: v for k, v in chat_kwargs.items() if k != 'messages'}")
 
         for i in range(self.max_retries):
             try:

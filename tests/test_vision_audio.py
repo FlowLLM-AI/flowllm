@@ -14,7 +14,7 @@ def run_sync_openai_image():
             return base64.b64encode(image_file.read()).decode("utf-8")
 
     # 将xxxx/eagle.png替换为你本地图像的绝对路径
-    base64_image = encode_image("/Users/yuli/workspace/ReMe/20251128144329.jpg")
+    base64_image = encode_image("/Users/yuli/Documents/20251128144329.jpg")
 
     llm = OpenAICompatibleLLM(model_name="qwen3-vl-plus")
     messages = [
@@ -50,7 +50,7 @@ def run_sync_openai_audio():
             return base64.b64encode(audio_file.read()).decode("utf-8")
 
     # 请将 ABSOLUTE_PATH/welcome.mp3 替换为本地音频的绝对路径
-    audio_file_path = "/Users/yuli/workspace/ReMe/recordings/111.wav"
+    audio_file_path = "/Users/yuli/Documents/111.wav"
     base64_audio = encode_audio(audio_file_path)
 
     messages = [

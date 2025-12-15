@@ -110,7 +110,7 @@ class LiteLLM(BaseLLM):
             **self.kwargs,
             **kwargs,
         }
-        logger.info(f"LiteLLM.stream_chat: {chat_kwargs}")
+        logger.info(f"LiteLLM.stream_chat: {k: v for k, v in chat_kwargs.items() if k != 'messages'}")
 
         for i in range(self.max_retries):
             try:
@@ -216,7 +216,7 @@ class LiteLLM(BaseLLM):
             **self.kwargs,
             **kwargs,
         }
-        logger.info(f"LiteLLM.astream_chat: {chat_kwargs}")
+        logger.info(f"LiteLLM.astream_chat: {k: v for k, v in chat_kwargs.items() if k != 'messages'}")
 
         for i in range(self.max_retries):
             try:
