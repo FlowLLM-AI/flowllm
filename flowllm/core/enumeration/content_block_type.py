@@ -9,3 +9,4 @@ class ContentBlockType(str, Enum):
     TEXT = "text"
     IMAGE_URL = "image_url"
     AUDIO = "audio"
+    VIDEO = "video"
