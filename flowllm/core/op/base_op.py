@@ -6,6 +6,7 @@ asynchronous execution, caching, retries, and operation composition.
 """
 
 import copy
+import inspect
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Callable, List, Union
@@ -78,8 +79,6 @@ class BaseOp(ABC):
         ```
     """
 
-    file_path: str = __file__
-
     def __new__(cls, *args, **kwargs):
         """Create a new instance and save initialization arguments for copying.
 
@@ -149,7 +148,9 @@ class BaseOp(ABC):
         self.raise_exception: bool = raise_exception
         self.enable_multithread: bool = enable_multithread
         self.language: str = language or C.language
-        default_prompt_path: str = self.file_path.replace("op.py", "prompt.yaml")
+
+        subclass_file_path: str = inspect.getfile(self.__class__)
+        default_prompt_path: str = subclass_file_path.replace("op.py", "prompt.yaml")
         self.prompt_path: Path = Path(prompt_path if prompt_path else default_prompt_path)
         self.prompt = PromptHandler(language=self.language).load_prompt_by_file(self.prompt_path)
         self._llm: BaseLLM | str = llm

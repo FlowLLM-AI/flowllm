@@ -50,8 +50,6 @@ import json
 
 @C.register_op()
 class QAOp(BaseAsyncOp):
-    file_path: str = __file__  # 必须设置，用于自动查找 prompt 文件
-
     async def async_execute(self):
         """执行问答逻辑"""
         # 1. 读取输入
@@ -156,7 +154,6 @@ if __name__ == "__main__":
 6. **调用 LLM**：使用 `await self.llm.achat(messages=messages, ...)`
 7. **处理响应**：使用 `callback_fn` 处理或转换响应，返回处理后的结果
 8. **应用上下文**：必须在 `FlowLLMApp()` 上下文里调用
-9. **file_path**：Op 类中必须设置 `file_path = __file__`，用于自动查找 prompt 文件
 
 ---
 

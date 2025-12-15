@@ -20,8 +20,6 @@ class ReadFileOp(BaseAsyncToolOp):
     For text files, it can read specific line ranges using offset and limit.
     """
 
-    file_path = __file__
-
     def __init__(self, **kwargs):
         kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)
