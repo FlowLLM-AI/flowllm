@@ -23,7 +23,7 @@ class CacheHandler:
     - Recording and managing update timestamps
     """
 
-    def __init__(self, cache_dir: str = "cache"):
+    def __init__(self, cache_dir: Union[str, Path] = "cache"):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.metadata_file = self.cache_dir / "metadata.json"
