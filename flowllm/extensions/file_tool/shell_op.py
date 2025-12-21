@@ -23,8 +23,6 @@ class ShellOp(BaseAsyncToolOp):
     Supports both foreground and background execution.
     """
 
-    file_path = __file__
-
     def __init__(self, **kwargs):
         kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)

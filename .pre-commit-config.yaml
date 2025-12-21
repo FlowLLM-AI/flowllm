@@ -81,6 +81,7 @@ repos:
           --disable=C3001,
           --disable=R1702,
           --disable=R0912,
+          --disable=R0915,
           --max-line-length=120,
           --max-statements=75,
         ]

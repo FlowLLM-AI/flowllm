@@ -15,8 +15,6 @@ from flowllm.core.op import BaseAsyncOp
 
 @C.register_op()
 class EchoOp(BaseAsyncOp):
-    file_path: str = __file__
-
     async def async_execute(self):
         text = self.context.get("text", "")
         self.context.response.answer = f"echo: {text}"

@@ -17,8 +17,6 @@ class ExitPlanModeOp(BaseAsyncToolOp):
     to the user for approval before proceeding with implementation.
     """
 
-    file_path = __file__
-
     def __init__(self, **kwargs):
         kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)

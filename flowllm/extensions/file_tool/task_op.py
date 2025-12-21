@@ -16,8 +16,6 @@ class TaskOp(BaseAsyncToolOp):
     This operation delegates tasks to specialized subagents for autonomous execution.
     """
 
-    file_path = __file__
-
     def __init__(self, **kwargs):
         kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)

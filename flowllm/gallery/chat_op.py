@@ -17,8 +17,6 @@ class ChatOp(BaseAsyncOp):
     and system_prompt to be present in the context.
     """
 
-    file_path: str = __file__
-
     def __init__(
         self,
         llm: str = "qwen3_30b_instruct",

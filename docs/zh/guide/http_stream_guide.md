@@ -16,8 +16,6 @@ from flowllm.core.schema import FlowStreamChunk, Message
 
 @C.register_op()
 class StreamChatOp(BaseAsyncOp):
-    file_path: str = __file__
-
     async def async_execute(self):
         messages = self.context.messages
         system_prompt = self.context.system_prompt

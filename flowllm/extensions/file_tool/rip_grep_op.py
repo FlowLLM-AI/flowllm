@@ -22,8 +22,6 @@ class RipGrepOp(BaseAsyncToolOp):
     Supports glob pattern filtering and result limiting.
     """
 
-    file_path = __file__
-
     def __init__(self, **kwargs):
         kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)

@@ -15,7 +15,6 @@ from flowllm.core.op import BaseAsyncOp
 @C.register_op()
 class MockSearchOp(BaseAsyncOp):
     """Mock search operation that uses LLM to generate realistic search results."""
-    file_path: str = __file__
 
     async def async_execute(self):
         query = self.context.query
