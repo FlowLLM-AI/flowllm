@@ -189,46 +189,12 @@ class BaseOp(ABC):
             self._cache = CacheHandler(self.cache_path.format(op_name=self.short_name))
         return self._cache
 
-    def save_load_cache(self, key: str, fn: Callable, **kwargs):
-        """Save or load from cache.
-
-        If caching is enabled, checks cache first. If not found, executes the
-        function and saves the result. Otherwise, executes the function directly.
-
-        Args:
-            key: Cache key for storing/retrieving the result
-            fn: Function to execute if cache miss
-            **kwargs: Additional arguments for cache load operation
-
-        Returns:
-            Cached result if available, otherwise result from function execution
-        """
-        if self.enable_cache:
-            result = self.cache.load(key, **kwargs)
-            if result is None:
-                result = fn()
-                self.cache.save(key, result, expire_hours=self.cache_expire_hours)
-            else:
-                logger.info(f"load {key} from cache")
-        else:
-            result = fn()
-
-        return result
-
     def before_execute(self):
         """Hook method called before execute(). Override in subclasses.
 
         This method is called automatically by `call()` before executing
         the main `execute()` method. Use this to perform any setup,
         validation, or preprocessing needed before execution.
-
-        Example:
-            ```python
-            def before_execute(self):
-                # Validate inputs
-                if not self.context.get("input"):
-                    raise ValueError("Input is required")
-        ```
         """
 
     def after_execute(self):
@@ -237,22 +203,11 @@ class BaseOp(ABC):
         This method is called automatically by `call()` after successfully
         executing the main `execute()` method. Use this to perform any
         cleanup, post-processing, or result transformation.
-
-        Example:
-            ```python
-            def after_execute(self):
-                # Post-process results
-                if self.context.response:
-                    self.context.response.answer = self.context.response.answer.upper()
-        ```
         """
 
     @abstractmethod
     def execute(self):
         """Main execution method. Must be implemented in subclasses.
-
-        Returns:
-            Execution result
         """
 
     def default_execute(self, e: Exception = None, **kwargs):
@@ -261,24 +216,10 @@ class BaseOp(ABC):
         This method is called when `execute()` fails and `raise_exception`
         is False. It provides a fallback mechanism to return a default result
         instead of raising an exception.
-
-        Args:
-            e: The exception that was raised during execution (if any)
-            **kwargs: Additional keyword arguments
-
-        Returns:
-            Default execution result
-
-        Example:
-            ```python
-            def default_execute(self, e: Exception = None, **kwargs):
-                logger.warning(f"Execution failed: {e}, returning default result")
-                return {"status": "error", "message": str(e)}
-            ```
         """
 
     @staticmethod
-    def build_context(context: FlowContext = None, **kwargs):
+    def build_context(context: FlowContext = None, **kwargs) -> FlowContext:
         """Build or update a flow context.
 
         Args:
@@ -593,7 +534,7 @@ class BaseOp(ABC):
         return self._vector_store
 
     @property
-    def service_config_metadata(self) -> dict:
+    def service_metadata(self) -> dict:
         """Get the service config metadata for this operation.
 
         Returns:

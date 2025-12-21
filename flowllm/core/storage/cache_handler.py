@@ -30,6 +30,23 @@ class CacheHandler:
         self.metadata = {}
         self._load_metadata()
 
+    def set_cache_dir(self, cache_dir: Union[str, Path]):
+        """
+        Set a new cache directory and reload metadata
+        
+        Args:
+            cache_dir: New cache directory path
+        """
+        new_cache_dir = Path(cache_dir)
+        new_cache_dir.mkdir(parents=True, exist_ok=True)
+        
+        self.cache_dir = new_cache_dir
+        self.metadata_file = self.cache_dir / "metadata.json"
+        self.metadata = {}
+        self._load_metadata()
+        
+        logger.info(f"Cache directory changed to: {self.cache_dir}")
+
     def _load_metadata(self):
         """Load metadata"""
         if self.metadata_file.exists():
