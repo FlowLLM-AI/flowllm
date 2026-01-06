@@ -9,8 +9,6 @@ from ..core.schema import ToolCall
 class ThinkToolOp(BaseAsyncToolOp):
     """Utility operation that prompts the model for explicit reflection text."""
 
-    file_path = __file__
-
     def __init__(self, add_output_reflection: bool = False, **kwargs):
         super().__init__(**kwargs)
         self.add_output_reflection: bool = add_output_reflection

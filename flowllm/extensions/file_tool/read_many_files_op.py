@@ -24,8 +24,6 @@ class ReadManyFilesOp(BaseAsyncToolOp):
     and concatenates them with separators.
     """
 
-    file_path = __file__
-
     def __init__(self, **kwargs):
         kwargs.setdefault("raise_exception", False)
         super().__init__(**kwargs)

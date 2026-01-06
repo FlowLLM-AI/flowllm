@@ -106,7 +106,12 @@ class OpenAICompatibleLLM(BaseLLM):
             **self.kwargs,
             **kwargs,
         }
-        log_kwargs = {k: v for k, v in chat_kwargs.items() if k != "messages"}
+        log_kwargs: Dict[str, object] = {}
+        for k, v in chat_kwargs.items():
+            if k in ["messages", "tools"]:
+                log_kwargs[k] = len(v) if v is not None else 0
+            else:
+                log_kwargs[k] = v
         logger.info(f"OpenAICompatibleLLM.stream_chat: {log_kwargs}")
 
         for i in range(self.max_retries):
@@ -208,7 +213,12 @@ class OpenAICompatibleLLM(BaseLLM):
             **self.kwargs,
             **kwargs,
         }
-        log_kwargs = {k: v for k, v in chat_kwargs.items() if k != "messages"}
+        log_kwargs: Dict[str, object] = {}
+        for k, v in chat_kwargs.items():
+            if k in ["messages", "tools"]:
+                log_kwargs[k] = len(v) if v is not None else 0
+            else:
+                log_kwargs[k] = v
         logger.info(f"OpenAICompatibleLLM.astream_chat: {log_kwargs}")
 
         for i in range(self.max_retries):

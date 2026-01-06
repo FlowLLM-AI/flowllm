@@ -168,12 +168,23 @@ class PgVectorStore(MemoryVectorStore):
             # Handle special keys that are stored as direct columns
             if key == "unique_id":
                 # unique_id is a direct column, not in metadata JSONB
-                if use_async:
-                    conditions.append(f"unique_id = ${param_idx}")
+                # Support both single value and list of values
+                if isinstance(filter_value, list):
+                    if use_async:
+                        placeholders = ", ".join(f"${param_idx + i}" for i in range(len(filter_value)))
+                        conditions.append(f"unique_id IN ({placeholders})")
+                    else:
+                        placeholders = ", ".join(["%s"] * len(filter_value))
+                        conditions.append(f"unique_id IN ({placeholders})")
+                    params.extend([str(v) for v in filter_value])
+                    param_idx += len(filter_value)
                 else:
-                    conditions.append("unique_id = %s")
-                params.append(str(filter_value))
-                param_idx += 1
+                    if use_async:
+                        conditions.append(f"unique_id = ${param_idx}")
+                    else:
+                        conditions.append("unique_id = %s")
+                    params.append(str(filter_value))
+                    param_idx += 1
                 continue
 
             # Strip "metadata." prefix if present (since we're already accessing metadata column)

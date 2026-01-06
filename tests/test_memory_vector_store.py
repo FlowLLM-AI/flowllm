@@ -153,6 +153,12 @@ class SampleDataGenerator:
                 metadata={
                     "node_type": "tech",
                     "category": "AI",
+                    "source": "research",
+                    "priority": "high",
+                    "year": 2023,
+                    "department": "engineering",
+                    "language": "english",
+                    "status": "published",
                 },
             ),
             VectorNode(
@@ -162,6 +168,12 @@ class SampleDataGenerator:
                 metadata={
                     "node_type": "tech",
                     "category": "ML",
+                    "source": "research",
+                    "priority": "high",
+                    "year": 2022,
+                    "department": "engineering",
+                    "language": "english",
+                    "status": "published",
                 },
             ),
             VectorNode(
@@ -171,6 +183,12 @@ class SampleDataGenerator:
                 metadata={
                     "node_type": "tech_new",
                     "category": "ML",
+                    "source": "blog",
+                    "priority": "medium",
+                    "year": 2024,
+                    "department": "marketing",
+                    "language": "chinese",
+                    "status": "draft",
                 },
             ),
             VectorNode(
@@ -180,6 +198,12 @@ class SampleDataGenerator:
                 metadata={
                     "node_type": "food",
                     "category": "preference",
+                    "source": "personal",
+                    "priority": "low",
+                    "year": 2023,
+                    "department": "lifestyle",
+                    "language": "english",
+                    "status": "published",
                 },
             ),
             VectorNode(
@@ -189,6 +213,12 @@ class SampleDataGenerator:
                 metadata={
                     "node_type": "tech",
                     "category": "DL",
+                    "source": "research",
+                    "priority": "high",
+                    "year": 2024,
+                    "department": "engineering",
+                    "language": "chinese",
+                    "status": "review",
                 },
             ),
         ]
@@ -286,6 +316,7 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
     def test_search_with_filter(self, workspace_id: str):
         """Test vector search with filter."""
         logger.info("=" * 20 + " FILTER SEARCH TEST " + "=" * 20)
+        # Test 1: Filter by node_type only
         filter_dict = {"metadata.node_type": ["tech", "tech_new"]}
         results = self.client.search(
             "What is artificial intelligence?",
@@ -300,6 +331,57 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
                 "tech",
                 "tech_new",
             ], "All results should have node_type in [tech, tech_new]"
+
+        # Test 2: Filter by both node_type and source (multiple metadata keys)
+        logger.info("=" * 20 + " MULTI-KEY FILTER SEARCH TEST " + "=" * 20)
+        filter_dict_multi = {
+            "metadata.node_type": ["tech", "tech_new"],
+            "metadata.source": "research",
+        }
+        results_multi = self.client.search(
+            "What is artificial intelligence?",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict_multi,
+        )
+        logger.info(
+            f"Multi-key filtered search returned {len(results_multi)} results "
+            f"(node_type in [tech, tech_new] AND source=research)"
+        )
+        for i, r in enumerate(results_multi, 1):
+            logger.info(f"Multi-key Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
+            assert r.metadata.get("node_type") in [
+                "tech",
+                "tech_new",
+            ], "All results should have node_type in [tech, tech_new]"
+            assert r.metadata.get("source") == "research", "All results should have source=research"
+
+        # Test 3: Filter by both node_type and language with list values for both
+        logger.info("=" * 20 + " MULTI-KEY LIST FILTER SEARCH TEST " + "=" * 20)
+        filter_dict_multi_list = {
+            "metadata.node_type": ["tech", "tech_new"],
+            "metadata.language": ["english", "chinese"],
+        }
+        results_multi_list = self.client.search(
+            "What is artificial intelligence?",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict_multi_list,
+        )
+        logger.info(
+            f"Multi-key list filtered search returned {len(results_multi_list)} results "
+            f"(node_type in [tech, tech_new] AND language in [english, chinese])"
+        )
+        for i, r in enumerate(results_multi_list, 1):
+            logger.info(f"Multi-key List Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
+            assert r.metadata.get("node_type") in [
+                "tech",
+                "tech_new",
+            ], "All results should have node_type in [tech, tech_new]"
+            assert r.metadata.get("language") in [
+                "english",
+                "chinese",
+            ], "All results should have language in [english, chinese]"
 
     def test_search_with_id(self, workspace_id: str):
         """Test vector search by unique_id with empty query."""
@@ -316,6 +398,24 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
         assert len(results) == 1, "Should return exactly one result"
         assert results[0].unique_id == target_unique_id, f"Result should have unique_id={target_unique_id}"
         logger.info(f"Found node: {results[0].model_dump(exclude={'vector'})}")
+
+    def test_search_with_id_list(self, workspace_id: str):
+        """Test vector search by multiple unique_ids with list filter."""
+        logger.info("=" * 20 + " SEARCH BY ID LIST TEST " + "=" * 20)
+        target_unique_ids = [f"{self.workspace_prefix}_node1", f"{self.workspace_prefix}_node2"]
+        filter_dict = {"unique_id": target_unique_ids}
+        results = self.client.search(
+            "",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict,
+        )
+        logger.info(f"Search by ID list returned {len(results)} results")
+        assert len(results) == 2, f"Should return exactly 2 results, got {len(results)}"
+        result_ids = {r.unique_id for r in results}
+        assert result_ids == set(target_unique_ids), f"Result unique_ids should match {target_unique_ids}"
+        for r in results:
+            logger.info(f"Found node: {r.model_dump(exclude={'vector'})}")
 
     def test_update(self, workspace_id: str):
         """Test node update (insert with existing unique_id)."""
@@ -447,6 +547,7 @@ class SyncVectorStoreTest(BaseVectorStoreTest):
             self.test_search(workspace_id)
             self.test_search_with_filter(workspace_id)
             self.test_search_with_id(workspace_id)
+            self.test_search_with_id_list(workspace_id)
             self.test_update(workspace_id)
             self.test_delete(workspace_id)
             self.test_list_workspace_nodes(workspace_id)
@@ -515,6 +616,7 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
     async def test_search_with_filter(self, workspace_id: str):
         """Test async vector search with filter."""
         logger.info("ASYNC - " + "=" * 20 + " FILTER SEARCH TEST " + "=" * 20)
+        # Test 1: Filter by node_type only
         filter_dict = {"metadata.node_type": ["tech", "tech_new"]}
         results = await self.client.async_search(
             "What is artificial intelligence?",
@@ -529,6 +631,57 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
                 "tech",
                 "tech_new",
             ], "All results should have node_type in [tech, tech_new]"
+
+        # Test 2: Filter by both node_type and source (multiple metadata keys)
+        logger.info("ASYNC - " + "=" * 20 + " MULTI-KEY FILTER SEARCH TEST " + "=" * 20)
+        filter_dict_multi = {
+            "metadata.node_type": ["tech", "tech_new"],
+            "metadata.source": "research",
+        }
+        results_multi = await self.client.async_search(
+            "What is artificial intelligence?",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict_multi,
+        )
+        logger.info(
+            f"Multi-key filtered search returned {len(results_multi)} results "
+            f"(node_type in [tech, tech_new] AND source=research)"
+        )
+        for i, r in enumerate(results_multi, 1):
+            logger.info(f"Multi-key Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
+            assert r.metadata.get("node_type") in [
+                "tech",
+                "tech_new",
+            ], "All results should have node_type in [tech, tech_new]"
+            assert r.metadata.get("source") == "research", "All results should have source=research"
+
+        # Test 3: Filter by both node_type and language with list values for both
+        logger.info("ASYNC - " + "=" * 20 + " MULTI-KEY LIST FILTER SEARCH TEST " + "=" * 20)
+        filter_dict_multi_list = {
+            "metadata.node_type": ["tech", "tech_new"],
+            "metadata.language": ["english", "chinese"],
+        }
+        results_multi_list = await self.client.async_search(
+            "What is artificial intelligence?",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict_multi_list,
+        )
+        logger.info(
+            f"Multi-key list filtered search returned {len(results_multi_list)} results "
+            f"(node_type in [tech, tech_new] AND language in [english, chinese])"
+        )
+        for i, r in enumerate(results_multi_list, 1):
+            logger.info(f"Multi-key List Filtered Result {i}: {r.model_dump(exclude={'vector'})}")
+            assert r.metadata.get("node_type") in [
+                "tech",
+                "tech_new",
+            ], "All results should have node_type in [tech, tech_new]"
+            assert r.metadata.get("language") in [
+                "english",
+                "chinese",
+            ], "All results should have language in [english, chinese]"
 
     async def test_search_with_id(self, workspace_id: str):
         """Test async vector search by unique_id with empty query."""
@@ -545,6 +698,24 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
         assert len(results) == 1, "Should return exactly one result"
         assert results[0].unique_id == target_unique_id, f"Result should have unique_id={target_unique_id}"
         logger.info(f"Found node: {results[0].model_dump(exclude={'vector'})}")
+
+    async def test_search_with_id_list(self, workspace_id: str):
+        """Test async vector search by multiple unique_ids with list filter."""
+        logger.info("ASYNC - " + "=" * 20 + " SEARCH BY ID LIST TEST " + "=" * 20)
+        target_unique_ids = [f"{self.workspace_prefix}_node1", f"{self.workspace_prefix}_node2"]
+        filter_dict = {"unique_id": target_unique_ids}
+        results = await self.client.async_search(
+            "",
+            workspace_id=workspace_id,
+            top_k=5,
+            filter_dict=filter_dict,
+        )
+        logger.info(f"Search by ID list returned {len(results)} results")
+        assert len(results) == 2, f"Should return exactly 2 results, got {len(results)}"
+        result_ids = {r.unique_id for r in results}
+        assert result_ids == set(target_unique_ids), f"Result unique_ids should match {target_unique_ids}"
+        for r in results:
+            logger.info(f"Found node: {r.model_dump(exclude={'vector'})}")
 
     async def test_update(self, workspace_id: str):
         """Test async node update (insert with existing unique_id)."""
@@ -678,6 +849,7 @@ class AsyncVectorStoreTest(BaseVectorStoreTest):
             await self.test_search(workspace_id)
             await self.test_search_with_filter(workspace_id)
             await self.test_search_with_id(workspace_id)
+            await self.test_search_with_id_list(workspace_id)
             await self.test_update(workspace_id)
             await self.test_delete(workspace_id)
             await self.test_list_workspace_nodes(workspace_id)
@@ -785,12 +957,16 @@ if __name__ == "__main__":
     if args[0] == "--all":
         # Test all vector stores
         run_tests(store_types=valid_store_types)
+        # Clean up test files after testing
+        delete_test_files()
     elif args[0] == "delete":
         # Delete all test-generated files
         delete_test_files()
     elif args[0] in valid_store_types:
         # Test specific vector store
         run_tests(store_types=[args[0]])
+        # Clean up test files after testing
+        delete_test_files()
     else:
         print(f"Unknown argument: {args[0]}")
         print_usage()
