@@ -123,7 +123,7 @@ class OpenAICompatibleLLM(BaseLLM):
                     else:
                         delta = chunk.choices[0].delta
 
-                        if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                        if hasattr(delta, "reasoning_content") and delta.reasoning_content:
                             yield FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content)
 
                         else:
@@ -225,7 +225,7 @@ class OpenAICompatibleLLM(BaseLLM):
                     else:
                         delta = chunk.choices[0].delta
 
-                        if hasattr(delta, "reasoning_content") and delta.reasoning_content is not None:
+                        if hasattr(delta, "reasoning_content") and delta.reasoning_content:
                             yield FlowStreamChunk(chunk_type=ChunkEnum.THINK, chunk=delta.reasoning_content)
 
                         else:
