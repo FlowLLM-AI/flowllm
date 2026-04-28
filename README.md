@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/flowllm-ai-flowllm-badge.png)](https://mseep.ai/app/flowllm-ai-flowllm)
+
 <p align="center">
   <img src="docs/figure/logo.png" alt="FlowLLM Logo" width="50%">
 </p>
