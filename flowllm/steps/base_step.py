@@ -101,16 +101,16 @@ class BaseStep(ComponentMixin, ABC):
         return instance
 
     def __init__(
-            self,
-            name: str | None = None,
-            backend: str = "",
-            app_context: "ApplicationContext | None" = None,
-            language: str = "",
-            prompt_dict: dict[str, str] | None = None,
-            input_mapping: dict[str, str] | None = None,
-            output_mapping: dict[str, str] | None = None,
-            dispatch_steps: list[_DispatchStep] | None = None,
-            **kwargs,
+        self,
+        name: str | None = None,
+        backend: str = "",
+        app_context: "ApplicationContext | None" = None,
+        language: str = "",
+        prompt_dict: dict[str, str] | None = None,
+        input_mapping: dict[str, str] | None = None,
+        output_mapping: dict[str, str] | None = None,
+        dispatch_steps: list[_DispatchStep] | None = None,
+        **kwargs,
     ):
         super().__init__(name=name, backend=backend, app_context=app_context, **kwargs)
         self.language = language or (self.app_context.app_config.language if self.app_context is not None else "")

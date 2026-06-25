@@ -75,9 +75,9 @@ class BypassAnalysisBash(Bash):
     """
 
     async def check_permissions(
-            self,
-            _tool_input: dict[str, Any],
-            _context: PermissionContext,
+        self,
+        _tool_input: dict[str, Any],
+        _context: PermissionContext,
     ) -> PermissionDecision:
         """Bypass Bash static analysis and let the permission engine decide."""
         return PermissionDecision(
@@ -290,15 +290,15 @@ class AsAgentWrapper(BaseAgentWrapper):
             )
 
         for event_cls, chunk_type, attr in (
-                (TextBlockStartEvent, ChunkEnum.CONTENT, None),
-                (TextBlockDeltaEvent, ChunkEnum.CONTENT, "delta"),
-                (TextBlockEndEvent, ChunkEnum.CONTENT, None),
-                (ThinkingBlockStartEvent, ChunkEnum.THINK, None),
-                (ThinkingBlockDeltaEvent, ChunkEnum.THINK, "delta"),
-                (ThinkingBlockEndEvent, ChunkEnum.THINK, None),
-                (DataBlockStartEvent, ChunkEnum.DATA, None),
-                (DataBlockDeltaEvent, ChunkEnum.DATA, "data"),
-                (DataBlockEndEvent, ChunkEnum.DATA, None),
+            (TextBlockStartEvent, ChunkEnum.CONTENT, None),
+            (TextBlockDeltaEvent, ChunkEnum.CONTENT, "delta"),
+            (TextBlockEndEvent, ChunkEnum.CONTENT, None),
+            (ThinkingBlockStartEvent, ChunkEnum.THINK, None),
+            (ThinkingBlockDeltaEvent, ChunkEnum.THINK, "delta"),
+            (ThinkingBlockEndEvent, ChunkEnum.THINK, None),
+            (DataBlockStartEvent, ChunkEnum.DATA, None),
+            (DataBlockDeltaEvent, ChunkEnum.DATA, "data"),
+            (DataBlockEndEvent, ChunkEnum.DATA, None),
         ):
             if isinstance(event, event_cls):
                 kwargs = {"block_id": event.block_id, "chunk": getattr(event, attr) if attr else ""}

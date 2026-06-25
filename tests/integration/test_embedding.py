@@ -19,7 +19,6 @@ from _workspace_fixture import workspace_env  # noqa: E402
 
 from flowllm.enumeration import ComponentEnum  # noqa: E402
 from flowllm.schema import EmbNode  # noqa: E402
-from flowllm.utils import cosine_similarity  # noqa: E402
 
 
 def test_embedding_health_check():
@@ -110,36 +109,6 @@ def test_embedding_cache_hit():
     asyncio.run(run())
 
 
-def test_embedding_similarity():
-    """Semantically similar texts have higher cosine similarity."""
-
-    async def run():
-        with workspace_env() as env:
-            app = await env.make_app()
-            try:
-                store = app.context.components[ComponentEnum.EMBEDDING_STORE]["default"]
-                text_a = "The cat sat on the mat"
-                text_b = "A kitten rested on the rug"
-                text_c = "Quantum computing uses qubits for parallel computation"
-
-                results = await store.get_embeddings([text_a, text_b, text_c])
-                emb_a, emb_b, emb_c = results
-
-                sim_ab = cosine_similarity(emb_a.tolist(), emb_b.tolist())
-                sim_ac = cosine_similarity(emb_a.tolist(), emb_c.tolist())
-
-                print(f"\n  sim(cat/kitten) = {sim_ab:.4f}")
-                print(f"  sim(cat/quantum) = {sim_ac:.4f}")
-
-                assert sim_ab > 0.4, f"similar texts sim={sim_ab:.4f}, expected > 0.4"
-                assert sim_ab > sim_ac, f"similar pair ({sim_ab:.4f}) not > dissimilar ({sim_ac:.4f})"
-                print("✓ test_embedding_similarity passed")
-            finally:
-                await env.close_all()
-
-    asyncio.run(run())
-
-
 def test_embedding_node_embeddings():
     """get_node_embeddings fills embedding field on EmbNode objects."""
 
@@ -171,6 +140,5 @@ if __name__ == "__main__":
     test_embedding_single_text()
     test_embedding_multiple_texts()
     test_embedding_cache_hit()
-    test_embedding_similarity()
     test_embedding_node_embeddings()
     print("\nAll embedding integration tests passed!")

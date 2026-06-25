@@ -14,11 +14,11 @@ class RuntimeContext:
     """
 
     def __init__(
-            self,
-            response: Response | None = None,
-            stream_queue: asyncio.Queue | None = None,
-            stop_event: asyncio.Event | None = None,
-            **kwargs,
+        self,
+        response: Response | None = None,
+        stream_queue: asyncio.Queue | None = None,
+        stop_event: asyncio.Event | None = None,
+        **kwargs,
     ):
         self.response: Response = response or Response()
         self.stream_queue: asyncio.Queue | None = stream_queue

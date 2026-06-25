@@ -29,13 +29,13 @@ class BackgroundJob(BaseJob):
     """
 
     def __init__(
-            self,
-            supervisor: bool = True,
-            backoff_base: float = 1.0,
-            backoff_cap: float = 60.0,
-            close_timeout: float = 5.0,
-            attempt_reset_after: float = 60.0,
-            **kwargs,
+        self,
+        supervisor: bool = True,
+        backoff_base: float = 1.0,
+        backoff_cap: float = 60.0,
+        close_timeout: float = 5.0,
+        attempt_reset_after: float = 60.0,
+        **kwargs,
     ):
         # Background jobs are long-running loops, not request-shaped callables —
         # forced off so they never get registered as service tools.
@@ -78,7 +78,7 @@ class BackgroundJob(BaseJob):
 
     def _backoff_delay(self, attempt: int) -> float:
         """Exponential backoff with ±50% jitter, capped at backoff_cap."""
-        capped = min(self.backoff_base * (2 ** attempt), self.backoff_cap)
+        capped = min(self.backoff_base * (2**attempt), self.backoff_cap)
         return min(capped * (0.5 + random.random()), self.backoff_cap)
 
     async def _wait_or_stop(self, delay: float) -> None:

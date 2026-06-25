@@ -89,11 +89,11 @@ def _init_stdlib(log_dir: str, level: str, log_to_console: bool, log_to_file: bo
 
 
 def get_logger(
-        log_dir: str = "logs",
-        level: str = "INFO",
-        log_to_console: bool = True,
-        log_to_file: bool = True,
-        force_init: bool = False,
+    log_dir: str = "logs",
+    level: str = "INFO",
+    log_to_console: bool = True,
+    log_to_file: bool = True,
+    force_init: bool = False,
 ):
     """Return the global logger, initializing sinks on first call (or when force_init)."""
     global _logger

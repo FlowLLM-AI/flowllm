@@ -39,9 +39,9 @@ class ComponentRegistry:
         return cls
 
     def register(
-            self,
-            cls_or_name: type[T] | str,
-            name: str | None = None,
+        self,
+        cls_or_name: type[T] | str,
+        name: str | None = None,
     ) -> Callable[[type[T]], type[T]] | type[T]:
         """Register a component class directly, or return a decorator that does so."""
         # Direct call: register(MyClass) or register(MyClass, "alias").

@@ -1,14 +1,14 @@
 """Shared integration-test fixture: build a workspace test environment.
 
-    from _workspace_fixture import workspace_env
+from _workspace_fixture import workspace_env
 
-    async def run():
-        with workspace_env() as env:
-            app = await env.make_app()
-            try:
-                ...
-            finally:
-                await env.close_all()
+async def run():
+    with workspace_env() as env:
+        app = await env.make_app()
+        try:
+            ...
+        finally:
+            await env.close_all()
 """
 
 from __future__ import annotations

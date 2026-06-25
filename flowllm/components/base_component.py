@@ -20,11 +20,11 @@ class ComponentMixin:
     component_type = ComponentEnum.BASE
 
     def __init__(
-            self,
-            name: str | None = None,
-            backend: str = "",
-            app_context: "ApplicationContext | None" = None,
-            **kwargs,
+        self,
+        name: str | None = None,
+        backend: str = "",
+        app_context: "ApplicationContext | None" = None,
+        **kwargs,
     ) -> None:
         self.name: str = name or self.__class__.__name__
         self.backend: str = backend
@@ -60,11 +60,11 @@ class Dependency:
     __slots__ = ("ctype", "name", "default_factory", "optional")
 
     def __init__(
-            self,
-            ctype: ComponentEnum,
-            name: str,
-            default_factory: Callable[[], Any] | None = None,
-            optional: bool = True,
+        self,
+        ctype: ComponentEnum,
+        name: str,
+        default_factory: Callable[[], Any] | None = None,
+        optional: bool = True,
     ) -> None:
         self.ctype = ctype
         self.name = name
@@ -88,11 +88,11 @@ class BaseComponent(ComponentMixin, ABC):
     component_type = ComponentEnum.BASE
 
     def __init__(
-            self,
-            name: str | None = None,
-            backend: str = "",
-            app_context: "ApplicationContext | None" = None,
-            **kwargs,
+        self,
+        name: str | None = None,
+        backend: str = "",
+        app_context: "ApplicationContext | None" = None,
+        **kwargs,
     ) -> None:
         super().__init__(name=name, backend=backend, app_context=app_context, **kwargs)
 
@@ -111,11 +111,11 @@ class BaseComponent(ComponentMixin, ABC):
 
     @staticmethod
     def bind(
-            name: str | None,
-            base_cls: type[T],
-            *,
-            default_factory: Callable[[], T] | None = None,
-            optional: bool = True,
+        name: str | None,
+        base_cls: type[T],
+        *,
+        default_factory: Callable[[], T] | None = None,
+        optional: bool = True,
     ) -> T | None:
         """Declare a dependency on another component.
 

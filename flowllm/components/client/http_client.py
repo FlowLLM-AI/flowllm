@@ -18,11 +18,11 @@ class HttpClient(BaseClient):
     """HTTP client that auto-adapts to JSON or SSE endpoints via Content-Type."""
 
     def __init__(
-            self,
-            host: str | None = None,
-            port: int | None = None,
-            timeout: float = 30.0,
-            **kwargs,
+        self,
+        host: str | None = None,
+        port: int | None = None,
+        timeout: float = 30.0,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -64,7 +64,7 @@ class HttpClient(BaseClient):
                 async for line in resp.aiter_lines():
                     if not line.startswith("data:"):
                         continue
-                    data_str = line[len("data:"):]
+                    data_str = line[len("data:") :]
                     if data_str.strip() == "[DONE]":
                         return
                     try:

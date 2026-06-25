@@ -19,11 +19,11 @@ class BaseEmbeddingStore(BaseComponent):
     component_type = ComponentEnum.EMBEDDING_STORE
 
     def __init__(
-            self,
-            max_batch_size: int = 10,
-            max_input_length: int = 8192,
-            max_retries: int = 3,
-            **kwargs,
+        self,
+        max_batch_size: int = 10,
+        max_input_length: int = 8192,
+        max_retries: int = 3,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.max_batch_size = max_batch_size

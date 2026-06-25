@@ -298,12 +298,12 @@ class CcAgentWrapper(BaseAgentWrapper):
     @classmethod
     # pylint: disable=too-many-return-statements
     def _raw_event_to_chunk(
-            cls,
-            raw: dict,
-            session_id: str | None = None,
-            block_ids: dict[int, str] | None = None,
-            block_types: dict[int, str] | None = None,
-            tool_call_names: dict[int, str] | None = None,
+        cls,
+        raw: dict,
+        session_id: str | None = None,
+        block_ids: dict[int, str] | None = None,
+        block_types: dict[int, str] | None = None,
+        tool_call_names: dict[int, str] | None = None,
     ) -> StreamChunk | None:
         """Convert a raw Anthropic streaming event dict to a StreamChunk.
 
@@ -406,11 +406,11 @@ class CcAgentWrapper(BaseAgentWrapper):
 
     @classmethod
     def _message_content_to_chunks(
-            cls,
-            msg: Any,
-            session_id: str | None = None,
-            visible_tool_call_ids: set[str] | None = None,
-            include_text: bool = False,
+        cls,
+        msg: Any,
+        session_id: str | None = None,
+        visible_tool_call_ids: set[str] | None = None,
+        include_text: bool = False,
     ) -> list[StreamChunk]:
         """Convert non-partial SDK message content blocks into stream chunks.
 
@@ -576,10 +576,10 @@ class CcAgentWrapper(BaseAgentWrapper):
                     # via StreamEvents.  Still surface tool-result blocks if the
                     # SDK includes any in a regular assistant message.
                     for chunk in self._message_content_to_chunks(
-                            msg,
-                            current_session_id,
-                            visible_tool_call_ids,
-                            include_text=not emitted_content,
+                        msg,
+                        current_session_id,
+                        visible_tool_call_ids,
+                        include_text=not emitted_content,
                     ):
                         if chunk.chunk_type == ChunkEnum.CONTENT and chunk.chunk:
                             emitted_content = True

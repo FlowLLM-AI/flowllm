@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from ..schema import ApplicationConfig
 
 
-def get_version(package_name: str) -> str:
+def _get_version(package_name: str) -> str:
     """Return installed package version, or empty string if not installed."""
     try:
         return importlib.metadata.version(package_name)
@@ -76,7 +76,7 @@ def print_logo(app_config: "ApplicationConfig"):
             host = extra.get("host", "localhost")
             port = extra.get("port", 8000)
             info_table.add_row("🔗", "URL:", f"http://{host}:{port}")
-            info_table.add_row("📚", "FastAPI:", Text(get_version("fastapi"), style="dim"))
+            info_table.add_row("📚", "FastAPI:", Text(_get_version("fastapi"), style="dim"))
         case "mcp":
             transport = extra.get("transport", "stdio")
             info_table.add_row("🚌", "Transport:", transport)
@@ -87,9 +87,9 @@ def print_logo(app_config: "ApplicationConfig"):
                 if transport == "sse":
                     url += "/sse"
                 info_table.add_row("🔗", "URL:", url)
-            info_table.add_row("📚", "FastMCP:", Text(get_version("fastmcp"), style="dim"))
+            info_table.add_row("📚", "FastMCP:", Text(_get_version("fastmcp"), style="dim"))
 
-    info_table.add_row("🚀", "FlowLLM:", Text(get_version("flowllm"), style="dim"))
+    info_table.add_row("🚀", "FlowLLM:", Text(_get_version("flowllm"), style="dim"))
 
     panel = Panel(
         Group(logo_text, info_table),

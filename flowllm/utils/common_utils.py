@@ -10,8 +10,8 @@ from ..schema import StreamChunk
 
 
 def _format_chunk(
-        chunk: StreamChunk,
-        output_format: Literal["str", "bytes", "chunk"],
+    chunk: StreamChunk,
+    output_format: Literal["str", "bytes", "chunk"],
 ) -> str | bytes | StreamChunk:
     """Render a StreamChunk in the requested transport format."""
     if output_format == "chunk":
@@ -21,10 +21,10 @@ def _format_chunk(
 
 
 async def execute_stream_task(
-        stream_queue: asyncio.Queue[StreamChunk],
-        task: asyncio.Task[Any],
-        task_name: str | None = None,
-        output_format: Literal["str", "bytes", "chunk"] = "str",
+    stream_queue: asyncio.Queue[StreamChunk],
+    task: asyncio.Task[Any],
+    task_name: str | None = None,
+    output_format: Literal["str", "bytes", "chunk"] = "str",
 ) -> AsyncGenerator[str | bytes | StreamChunk, None]:
     """Yield chunks from stream_queue while monitoring task; cancels task on exit.
 

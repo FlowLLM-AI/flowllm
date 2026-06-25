@@ -29,9 +29,9 @@ class PromptHandler:
     # ----- Loading -------------------------------------------------------
 
     def load_prompt_by_file(
-            self,
-            prompt_file_path: str | Path | None = None,
-            overwrite: bool = True,
+        self,
+        prompt_file_path: str | Path | None = None,
+        overwrite: bool = True,
     ) -> "PromptHandler":
         """Load prompts from a YAML or JSON file; silently skip on any error."""
         if prompt_file_path is None:

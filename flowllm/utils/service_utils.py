@@ -59,7 +59,7 @@ def _scan_flowllm_procs() -> list[tuple[int, str, int]]:
     return procs
 
 
-async def locate_flowllm() -> tuple[str, int, int | None] | None:
+async def _locate_flowllm() -> tuple[str, int, int | None] | None:
     """Find a running flowllm: try default port, then scanned processes."""
     if await find_flowllm(FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT) == "flowllm":
         return FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT, _pid_on_port(FLOWLLM_DEFAULT_PORT)
@@ -89,7 +89,7 @@ def precheck_start(svc_config: dict | None) -> bool:
 
 def cli_find_flowllm() -> None:
     """Handle `flowllm find_flowllm`: print HOST/PORT/PID or a hint to start flowllm."""
-    found = asyncio.run(locate_flowllm())
+    found = asyncio.run(_locate_flowllm())
     if not found:
         print("flowllm not started. Try: flowllm start", file=sys.stderr)
         sys.exit(1)

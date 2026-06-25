@@ -43,12 +43,12 @@ class MCPClient(BaseClient):
     """
 
     def __init__(
-            self,
-            transport: str | Any = "sse",
-            host: str | None = None,
-            port: int | None = None,
-            timeout: float = 30.0,
-            **kwargs,
+        self,
+        transport: str | Any = "sse",
+        host: str | None = None,
+        port: int | None = None,
+        timeout: float = 30.0,
+        **kwargs,
     ):
         super().__init__(**kwargs)
 

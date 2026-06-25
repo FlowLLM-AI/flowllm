@@ -88,13 +88,13 @@ class Application(BaseComponent):
             )
 
     def _instantiate(
-            self,
-            ctype: ComponentEnum,
-            cfg: ComponentConfig,
-            *,
-            label: str,
-            expected_type: type[T],
-            name: str | None = None,
+        self,
+        ctype: ComponentEnum,
+        cfg: ComponentConfig,
+        *,
+        label: str,
+        expected_type: type[T],
+        name: str | None = None,
     ) -> T:
         """Resolve cfg.backend through the registry and construct the instance.
 
@@ -147,7 +147,7 @@ class Application(BaseComponent):
 
     @staticmethod
     def _build_dependency_graph(
-            nodes: dict[_NodeKey, BaseComponent],
+        nodes: dict[_NodeKey, BaseComponent],
     ) -> tuple[dict[_NodeKey, int], dict[_NodeKey, list[_NodeKey]]]:
         """Compute in-degree and adjacency lists; raise if a required dep is missing."""
         in_degree: dict[_NodeKey, int] = dict.fromkeys(nodes, 0)
@@ -230,10 +230,10 @@ class Application(BaseComponent):
         stream_queue: asyncio.Queue = asyncio.Queue()
         task = asyncio.create_task(self.context.jobs[name](stream_queue=stream_queue, **kwargs))
         async for chunk in execute_stream_task(
-                stream_queue=stream_queue,
-                task=task,
-                task_name=name,
-                output_format="chunk",
+            stream_queue=stream_queue,
+            task=task,
+            task_name=name,
+            output_format="chunk",
         ):
             assert isinstance(chunk, StreamChunk)
             yield chunk

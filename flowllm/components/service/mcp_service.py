@@ -20,11 +20,11 @@ class MCPService(BaseService):
     """Expose non-stream jobs as MCP tools over stdio, SSE, or streamable-http."""
 
     def __init__(
-            self,
-            transport: Transport = "sse",
-            host: str = FLOWLLM_DEFAULT_HOST,
-            port: int = FLOWLLM_DEFAULT_PORT,
-            **kwargs,
+        self,
+        transport: Transport = "sse",
+        host: str = FLOWLLM_DEFAULT_HOST,
+        port: int = FLOWLLM_DEFAULT_PORT,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.transport: Transport = transport

@@ -22,12 +22,12 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
     """
 
     def __init__(
-            self,
-            as_embedding: str = "default",
-            max_cache_size: int = 10000,
-            enable_cache: bool = True,
-            cache_version: str = "v1",
-            **kwargs,
+        self,
+        as_embedding: str = "default",
+        max_cache_size: int = 10000,
+        enable_cache: bool = True,
+        cache_version: str = "v1",
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.as_embedding = self.bind(as_embedding, BaseAsEmbedding, optional=False)
@@ -99,7 +99,7 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
 
     async def _fill_misses(self, misses: list[Miss], results: list[np.ndarray | None], **kwargs) -> None:
         size = self.max_batch_size
-        batches = [misses[i: i + size] for i in range(0, len(misses), size)]
+        batches = [misses[i : i + size] for i in range(0, len(misses), size)]
         for batch in batches:
             for idx, key, emb in await self._compute_batch(batch, **kwargs):
                 results[idx] = emb
@@ -126,7 +126,7 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
                     return result
             except (TimeoutError, ConnectionError, OSError):
                 if attempt < self.max_retries - 1:
-                    await asyncio.sleep(2 ** attempt)
+                    await asyncio.sleep(2**attempt)
             except Exception:
                 self.logger.exception("Embedding request failed")
                 return None

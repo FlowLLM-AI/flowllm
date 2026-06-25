@@ -7,7 +7,7 @@ _LOADED = False
 _LOADED_VALUES: dict[str, str] = {}
 
 
-def parse_env_file(path: str | Path) -> dict[str, str]:
+def _parse_env_file(path: str | Path) -> dict[str, str]:
     """Parse a simple KEY=VALUE env file and return a key/value dict."""
     path = Path(path)
     values: dict[str, str] = {}
@@ -47,13 +47,13 @@ def load_env(path: str | Path | None = None, *, override: bool = True) -> dict[s
     if path:
         path = Path(path)
         if path.exists():
-            return _load_values(parse_env_file(path), override=override)
+            return _load_values(_parse_env_file(path), override=override)
         return {}
 
     for directory in [Path.cwd(), *Path.cwd().parents[:5]]:
         env_path = directory / ".env"
         if env_path.exists():
-            _LOADED_VALUES = _load_values(parse_env_file(env_path), override=override)
+            _LOADED_VALUES = _load_values(_parse_env_file(env_path), override=override)
             _LOADED = True
             return dict(_LOADED_VALUES)
     return {}
