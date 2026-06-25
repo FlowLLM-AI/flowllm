@@ -1,231 +1,260 @@
 <p align="center">
-  <img src="docs/figure/logo.png" alt="FlowLLM Logo" width="50%">
+ <img src="docs/figure/reme_logo.png" alt="ReMe Logo" width="50%">
 </p>
 
 <p align="center">
-  <strong>FlowLLM: Simplifying LLM-based HTTP/MCP Service Development</strong><br>
-  <em><sub>If you find it useful, please give us a ⭐ Star. Your support drives our continuous improvement.</sub></em>
+  <a href="https://pypi.org/project/reme-ai/"><img src="https://img.shields.io/badge/python-3.11+-blue" alt="Python Version"></a>
+  <a href="https://pypi.org/project/reme-ai/"><img src="https://img.shields.io/pypi/v/reme-ai.svg?logo=pypi" alt="PyPI Version"></a>
+  <a href="https://pepy.tech/project/reme-ai/"><img src="https://img.shields.io/pypi/dm/reme-ai" alt="PyPI Downloads"></a>
+  <a href="https://github.com/agentscope-ai/ReMe"><img src="https://img.shields.io/github/commit-activity/m/agentscope-ai/ReMe?style=flat-square" alt="GitHub commit activity"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
+  <a href="./README.md"><img src="https://img.shields.io/badge/English-Click-yellow" alt="English"></a>
+  <a href="./README_ZH.md"><img src="https://img.shields.io/badge/简体中文-点击查看-orange" alt="简体中文"></a>
+  <a href="https://github.com/agentscope-ai/ReMe"><img src="https://img.shields.io/github/stars/agentscope-ai/ReMe?style=social" alt="GitHub Stars"></a>
+  <a href="https://deepwiki.com/agentscope-ai/ReMe"><img src="https://img.shields.io/badge/DeepWiki-Ask_Devin-navy.svg" alt="DeepWiki"></a>
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python Version"></a>
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/pypi-0.2.0.0-blue?logo=pypi" alt="PyPI Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
-  <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/stars/flowllm-ai/flowllm?style=social" alt="GitHub Stars"></a>
+<a href="https://trendshift.io/repositories/20528" target="_blank"><img src="https://trendshift.io/api/badge/repositories/20528" alt="agentscope-ai%2FReMe | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
 
 <p align="center">
-  English | <a href="./README_ZH.md">简体中文</a>
+  <strong>A memory management toolkit for AI agents — Remember Me, Refine Me.</strong><br>
 </p>
 
----
+> Previous versions: [0.3.x](https://github.com/agentscope-ai/ReMe/tree/reme_v3) ·
+> [0.2.x](https://github.com/agentscope-ai/ReMe/tree/v0.2.0.6) ·
+> [MemoryScope](https://github.com/agentscope-ai/ReMe/tree/memoryscope_branch)
 
-## 📖 Introduction
+🧠 ReMe is a memory management toolkit for **AI agents**. It turns conversations and resources into readable, editable, and searchable file-based long-term memory.
 
-FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP services. It is suitable for AI assistants, RAG applications, and workflow services, and can be integrated into MCP-compatible client tools.
+## ✨ Core Ideas
 
-### 🏗️ Architecture Overview
+- **Memory as File**: Markdown files with frontmatter and wikilinks serve as memory nodes that both users and agents can read and write directly.
+- **Self-evolving knowledge base**: Auto Memory, Auto Resource, and Auto Dream progressively transform conversations and resources into long-term Markdown memories, while automatically building wikilink relationships.
+- **Progressive hybrid search**: ReMe combines wikilinks, BM25, and embeddings for hybrid retrieval across keyword matching, semantic recall, and relationship expansion.
+- **Agent-friendly integration**: SKILL.md + CLI integration makes it easy for different agents to read, write, maintain, and reuse memory.
 
 <p align="center">
-  <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
+  <img src="docs/figure/design-philosophy.svg" alt="ReMe Design Philosophy" width="92%">
 </p>
 
-### 🌟 Applications Based on FlowLLM
+<details>
+<summary><b>Use Cases</b></summary>
 
-| Project Name                                  | Description                          |
-|-----------------------------------------------|--------------------------------------|
-| [ReMe](https://github.com/agentscope-ai/ReMe) | Memory management toolkit for agents |
+<br>
 
-### 📢 Recent Updates
+- **Personal assistants**: Provide long-term memory for agents such as [QwenPaw](https://github.com/agentscope-ai/QwenPaw).
+- **Coding assistants**: Preserve coding style, project background, and workflow experience across sessions.
+- **Knowledge QA**: Progressively transform resources and conversations into a searchable, traceable, and linked Markdown knowledge base.
+- **Task automation**: Reuse successful paths, lessons from failures, and operation procedures from past tasks.
+</details>
 
-| Date       | Update Content                                                                                                                                                                                                                                                            |
-|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management                                                 |
-| 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf). See configuration examples in [default.yaml](flowllm/config/default.yaml) |
+## 🚀 Quick Start
 
-### 📚 Learning Resources
+### Installation
 
-Project developers will share their latest learning materials here.
+ReMe requires Python 3.11+.
 
-| Date       | Title                                                                                                  | Description                                                                       |
-|------------|--------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| 2025-11-24 | [Mem-PAL: Memory-Augmented Personalized Assistant](./docs/zh/reading/20251124-mem-pal.md)              | Mem-PAL: Memory-Augmented Personalized Assistant with Log-based Structured Memory |
-| 2025-11-14 | [HaluMem Analysis](./docs/zh/reading/20251114-halumem.md)                                              | HaluMem: Evaluating Hallucinations in Memory Systems of Agents Analysis           |
-| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI                            |
-| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Context Management Guide                                                          |
-| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video                                        |
-
-### ⭐ Core Features
-
-- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods. Additionally, FlowLLM includes built-in token counting capabilities. Use `self.token_count()` to accurately calculate token counts for messages and tools, supporting multiple backends (base, openai, hf, etc.).
-
-- **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
-
-- **Automatic Service Generation**: FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides RESTful APIs with synchronous JSON and HTTP Stream responses. The MCP service registers as Model Context Protocol tools for MCP-compatible clients. The CMD service executes a single Op in command-line mode for quick testing and debugging.
-
----
-
-## ⚡ Quick Start
-
-### 📦 Step0 Installation
-
-#### 📥 From PyPI
+Install from pip:
 
 ```bash
-pip install flowllm
+pip install "reme-ai[core]"
 ```
 
-#### 🔧 From Source
+Install from source:
 
 ```bash
-git clone https://github.com/flowllm-ai/flowllm.git
-cd flowllm
-pip install -e .
+git clone https://github.com/agentscope-ai/ReMe.git
+cd ReMe
+pip install -e ".[core]"
 ```
 
-For detailed installation and configuration, refer to the [Installation Guide](docs/zh/guide/installation.md).
+### Environment Variables
 
-### ⚙️ Configuration
-
-Create a `.env` file and configure your API keys. Copy from `example.env` and modify:
+Configure environment variables:
 
 ```bash
-cp example.env .env
+cat > .env <<'EOF'
+EMBEDDING_API_KEY=sk-xxx
+EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_API_KEY=sk-xxx
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+EOF
 ```
 
-Configure your API keys in the `.env` file:
+### Start the Service
 
 ```bash
-FLOW_LLM_API_KEY=sk-xxxx
-FLOW_LLM_BASE_URL=https://xxxx/v1
-FLOW_EMBEDDING_API_KEY=sk-xxxx
-FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
+reme start
 ```
 
-For detailed configuration, refer to the [Configuration Guide](docs/zh/guide/config_guide.md).
-
-### 🛠️ Step1 Build Op
-
-```python
-from flowllm.core.context import C
-from flowllm.core.op import BaseAsyncOp
-from flowllm.core.schema import Message
-from flowllm.core.enumeration import Role
-
-@C.register_op()
-class SimpleChatOp(BaseAsyncOp):
-    async def async_execute(self):
-        query = self.context.get("query", "")
-        messages = [Message(role=Role.USER, content=query)]
-
-        # Use token_count method to calculate token count
-        token_num = self.token_count(messages)
-        print(f"Input tokens: {token_num}")
-
-        response = await self.llm.achat(messages=messages)
-        self.context.response.answer = response.content.strip()
-```
-
-For details, refer to the [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md), [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md), and [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) (including Embedding, VectorStore, and concurrent execution).
-
-### 📝 Step2 Configure Config
-
-The following example demonstrates building an MCP (Model Context Protocol) service. Create a configuration file `my_mcp_config.yaml`:
-
-```yaml
-backend: mcp
-
-mcp:
-  transport: sse
-  host: "0.0.0.0"
-  port: 8001
-
-flow:
-  demo_mcp_flow:
-    flow_content: MockSearchOp()
-    description: "Search results for a given query."
-    input_schema:
-      query:
-        type: string
-        description: "User query"
-        required: true
-
-llm:
-  default:
-    backend: openai_compatible
-    model_name: qwen3-30b-a3b-instruct-2507
-    params:
-      temperature: 0.6
-    token_count: # Optional, configure token counting backend
-      model_name: Qwen/Qwen3-30B-A3B-Instruct-2507
-      backend: hf  # Supports base, openai, hf, etc.
-      params:
-        use_mirror: true
-```
-
-### 🚀 Step3 Start MCP Service
+The default service address is `127.0.0.1:2333`. If the port is occupied, specify another port:
 
 ```bash
-flowllm \
-  config=my_mcp_config \
-  backend=mcp \  # Optional, overrides config
-  mcp.transport=sse \  # Optional, overrides config
-  mcp.port=8001 \  # Optional, overrides config
-  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # Optional, overrides config
+reme start service.port=8181
+# reme start workspace_dir=/tmp/reme-demo service.port=8181
 ```
 
-After the service starts, refer to the [Client Guide](docs/zh/guide/client_guide.md) to use the service and obtain the tool_call required by the model.
+After startup, check the service status. If you use a custom port, replace `2333` in the URL below with that port.
 
----
+```bash
+reme version
+curl -s http://127.0.0.1:2333/version -H 'Content-Type: application/json' -d '{}'
+```
 
-## 📚 Detailed Documentation
+### Agent Integration
 
-### 🚀 Getting Started
-- [Installation Guide](docs/zh/guide/installation.md)
-- [Configuration Guide](docs/zh/guide/config_guide.md)
+ReMe integrates with supported agent frameworks through **SKILL.md + CLI + hooks (optional)**. A typical integration looks like this:
 
-### 🔧 Op Development
-- [Op Introduction](docs/zh/guide/op_introduction.md)
-- [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md)
-- [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
-- [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
-- [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
-- [File Tool Op Guide](docs/zh/guide/file_tool_op_guide.md)
-- [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
+- Add the [memory skill](skills/reme_memory/SKILL.md) to the agent and grant the agent permission to call the CLI.
+- Call `auto_memory` and `proactive` from agent hooks as needed, so conversations are automatically consolidated into daily memories and proactive reminders can be read at the right time.
+- `auto_index` and `auto_resource` are triggered by file monitoring to maintain indexes and process resources.
+- `auto_dream` is triggered by a scheduled task to further organize daily memories into reusable long-term digest memories.
 
-### 🔀 Flow Orchestration
-- [Flow Guide](docs/zh/guide/flow_guide.md)
+QwenPaw 2.0 will integrate the new ReMe version. A Claude Code plugin will also be released later to reduce manual integration work.
 
-### 🌐 Service Usage
-- [HTTP Service Guide](docs/zh/guide/http_service_guide.md)
-- [HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)
-- [MCP Service Guide](docs/zh/guide/mcp_service_guide.md)
-- [CMD Service Guide](docs/zh/guide/cmd_service_guide.md)
-- [Client Guide](docs/zh/guide/client_guide.md)
+For more details, see the [Quick Start](docs/zh/quick_start.md).
 
----
+## 📁 Memory System
 
-## 🤝 Contributing
+> Memory as File, File as Memory.
 
-Contributions of all forms are welcome! For participation methods, refer to the [Contribution Guide](docs/zh/guide/contribution.md).
+ReMe treats **memory as files**, progressively processing raw conversations and external resources from `session/` and `resource/` into `daily/`, then consolidating them into reusable long-term knowledge nodes under `digest/`.
 
----
+### Directory Structure
 
-## 📄 License
-
-This project is licensed under the [Apache 2.0](LICENSE) license.
-
----
-
-## Star 历史
-
-[![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)
-
----
+```text
+<workspace_dir>/
+├── metadata/       # Persistent system state such as indexes, graphs, and catalogs
+├── session/        # Raw conversations and agent sessions
+│   ├── dialog/
+│   │   └── <session_id>.jsonl
+│   ├── agentscope/
+│   └── claude_code/
+├── resource/            # External raw materials
+│   └── YYYY-MM-DD/
+│       └── <resource>.<ext>
+├── daily/               # Lightly processed memory: daily facts, conversation summaries, resource readings
+│   ├── YYYY-MM-DD.md
+│   └── YYYY-MM-DD/
+│       ├── <session_id>.md
+│       ├── <resource_stem>.md
+│       └── interests.yaml
+└── digest/              # Long-term memory: personal facts, procedural experience, knowledge nodes
+    ├── personal/
+    ├── procedure/
+    └── wiki/
+```
 
 <p align="center">
-  <a href="https://github.com/flowllm-ai/flowllm">GitHub</a> •
-  <a href="https://flowllm-ai.github.io/flowllm/">Documentation</a> •
-  <a href="https://pypi.org/project/flowllm/">PyPI</a>
+  <img src="docs/figure/reme-overview.svg" alt="ReMe file-based memory system overview" width="92%">
 </p>
 
+### Automatic Memory Flow
+
+ReMe's automatic memory flow gradually turns raw conversations and resources into searchable, traceable, and reusable file-based memory. During normal operation, background watchers maintain indexes and process resources, agent hooks trigger conversation memory, and long-term consolidation plus proactive reminders run through scheduled tasks or on-demand calls.
+
+<details>
+<summary><b>Automatic Memory Capabilities</b></summary>
+
+<br>
+
+| Capability                                    | How it runs                                      | Purpose                                                                                                                                  | Main parameters                                      |
+|-----------------------------------------------|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------|
+| [`auto_index`](docs/zh/memory_search.md)      | Background maintenance via `index_update_loop`   | Scans on startup and continuously watches Markdown/JSONL changes in `daily/`, `digest/`, and `resource/`; updates chunk, BM25, embedding, and wikilink graph indexes. | Config: `watch_dirs`, `watch_suffixes`               |
+| [`auto_memory`](docs/zh/auto_memory.md)       | Agent after-reply hook; also callable on demand  | Saves raw conversation text and turns long-term valuable information into `daily/<date>/<session_id>.md` memory cards.                   | Required: `messages`; optional: `session_id`, `memory_hint` |
+| [`auto_resource`](docs/zh/auto_resource.md)   | Automatically triggered by resource watching; also callable on demand | Reads resource changes under `resource/<date>/` and creates or updates LLM-named daily resource cards linked by `source_resource`.       | Required: `changes`; each item may include `path`, `file_path`, `change` |
+| [`auto_dream`](docs/zh/auto_dream.md)         | Scheduled by `dream_cron`; also callable on demand | Scans daily input for a given date, extracts long-term memory units, integrates them into `digest/`, and writes `daily/<date>/interests.yaml`. | `date`, `hint`, `topic_count`, `topic_diversity_days` |
+| [`proactive`](docs/zh/proactive.md)           | Read on demand before agent proactive reminders  | Reads `interests.yaml` generated by `auto_dream` and exposes topics worth attention to the upper-level agent; the caller decides whether to remind the user. | `date`, `include_content`                            |
+
+</details>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/figure/memory-as-file.svg" alt="Memory as File" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/figure/auto-memory-resource.svg" alt="Auto Memory and Resource" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/figure/auto-dream-and-proactive.svg" alt="Auto Dream and Proactive" width="100%">
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/figure/auto-index-and-memory-search.svg" alt="Auto Index and Memory Search" width="100%">
+    </td>
+  </tr>
+</table>
+
+### Workspace Operation Interface
+
+ReMe operates the workspace through a unified CLI / Service Job interface. Agents usually only need retrieval, read, write, edit, and automatic memory commands. Lower-level indexing, frontmatter, and file operation commands are mainly for maintenance, debugging, or advanced integration.
+
+<details>
+<summary><b>Workspace Operation Interface</b></summary>
+
+<br>
+
+| Category       | name                                 | Description                                                                 | Parameters                                             |
+|----------------|--------------------------------------|-----------------------------------------------------------------------------|--------------------------------------------------------|
+| System status  | `version`                            | Returns the ReMe package version.                                           | None                                                   |
+| System status  | `health_check`                       | Returns a health-check summary for ReMe components.                         | None                                                   |
+| System status  | `help`                               | Lists registered jobs and their metadata.                                   | None                                                   |
+| Retrieval/read | [`search`](docs/zh/memory_search.md) | Performs hybrid retrieval in the workspace with vector recall, BM25, and RRF fusion. | Required: `query`; optional: `limit`, `min_score`      |
+| Retrieval/read | `node_search`                        | Recalls similar digest nodes by candidate abstraction name and description, mainly for `auto_dream` deduplication or association. | Required: `query`; optional: `limit`                   |
+| Retrieval/read | `traverse`                           | Traverses the wikilink graph from a specified path.                         | Required: `path`; optional: `depth`, `direction`       |
+| Retrieval/read | `read`                               | Reads a Markdown file under the workspace.                                      | Required: `path`; optional: `start_line`, `end_line`   |
+| Retrieval/read | `read_image`                         | Reads an image file under the workspace and returns base64.                     | Required: `path`                                      |
+| Index          | `reindex`                            | Clears file-store indexes and rebuilds indexes from existing files.         | Config: `watch_dirs`, `watch_suffixes`                 |
+| Daily          | `daily_list`                         | Lists notes for a day.                                                      | `date`                                                 |
+| Daily          | `daily_reindex`                      | Rebuilds the day-index page `daily/<date>.md`.                              | `date`                                                 |
+| Metadata       | `frontmatter_read`                   | Reads file frontmatter.                                                     | Required: `path`                                      |
+| Metadata       | `frontmatter_update`                 | Merges key-values into file frontmatter.                                    | Required: `path`, `metadata`                           |
+| Metadata       | `frontmatter_delete`                 | Deletes specified keys from file frontmatter.                               | Required: `path`, `keys`                               |
+| File operation | `stat`                               | Gets workspace path status, including size, mtime, existence, and file/directory type. | Required: `path`                                      |
+| File operation | `list`                               | Lists files under a workspace path.                                             | `path`, `recursive`, `limit`                           |
+| File operation | `write`                              | Creates or overwrites a Markdown file and writes name/description frontmatter. | Required: `path`, `name`, `description`, `content`; optional: `metadata` |
+| File operation | `edit`                               | Performs full-text find-and-replace on a Markdown file.                     | Required: `path`, `old`, `new`                         |
+| File operation | `move`                               | Moves or renames a workspace file and rewrites inbound wikilinks by default.    | Required: `src_path`, `dst_path`; optional: `overwrite`, `retarget` |
+| File operation | `delete`                             | Deletes a workspace file or folder and returns inbound wikilinks that still exist. | Required: `path`                                      |
+
+</details>
+
+## 🤝 Community and Support
+
+- **Issues and requests**: Check [Open Issues](https://github.com/agentscope-ai/ReMe/issues) first. If there is no related discussion, open a new issue with background, expected behavior, and impact scope.
+- **Code contributions**: Before making changes, read the [contribution guide](docs/zh/contributing.md) and [code framework](docs/zh/framework.md), and follow the CLI / Service / Application / Job / Step / Component layering.
+- **Documentation contributions**: For user-visible installation, configuration, invocation, or behavior changes, update `docs/zh/` or `README.md` accordingly.
+- **Commit convention**: Conventional Commits are recommended, for example `feat(search): add link expansion option` or `docs(zh): update quick start`.
+- **Pre-submit checks**: Before submitting a PR, try to run `pre-commit run --all-files` and `pytest`. If tests depending on LLMs, embeddings, or external services cannot run, explain that in the PR.
+- **Get help**: Use [GitHub Issues](https://github.com/agentscope-ai/ReMe/issues) for bugs and feature requests. Project documentation is available at [https://reme.agentscope.io/](https://reme.agentscope.io/).
+
+### Contributors
+
+Thanks to everyone who has contributed to ReMe:
+
+<a href="https://github.com/agentscope-ai/ReMe/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=agentscope-ai/ReMe" alt="Contributors" />
+</a>
+
+## 📄 Citation
+
+```bibtex
+@software{AgentscopeReMe2026,
+  title = {AgentscopeReMe: Memory Management Kit for Agents},
+  author = {ReMe Team},
+  url = {https://reme.agentscope.io},
+  year = {2026}
+}
+```
+
+## ⚖️ License
+
+This project is open source under the Apache License 2.0. See [LICENSE](./LICENSE) for details.
+
+## 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=agentscope-ai/ReMe&type=Date)](https://www.star-history.com/#agentscope-ai/ReMe&Date)

@@ -1,110 +1,81 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "flowllm"
 dynamic = ["version"]
-description = "FlowLLM: Simplifying LLM-based HTTP/MCP Service Development"
+description = "FlowLLM: Build LLM applications with ease."
+readme = "README.md"
 authors = [
     { name = "jinli.yl", email = "jinli.yl@alibaba-inc.com" },
 ]
-license = {file = "LICENSE"}
-readme = "README.md"
-keywords = ["llm", "ai", "flow", "framework", "openai", "chatgpt", "language-model", "mcp", "http"]
-requires-python = ">=3.10"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+keywords = ["llm", "memory", "agent", "agentscope", "ai", "mcp", "flowllm"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Software Development :: Libraries :: Application Frameworks",
-    "Typing :: Typed",
 ]
 
 dependencies = [
-    "dashscope>=1.13.0",
-    "fastapi>=0.104.0",
-    "fastmcp>=0.1.0",
-    "httpx>=0.25.0",
-    "loguru>=0.7.0",
-    "numpy>=1.24.0",
-    "pandas>=2.0.0",
-    "openai>=1.3.0",
-    "pydantic>=2.0.0",
-    "PyYAML>=6.0.0",
-    "requests>=2.31.0",
-    "tqdm>=4.66.0",
-    "urllib3>=2.0.0",
-    "uvicorn[standard]>=0.23.0",
-    "pyfiglet>=0.8.0",
-    "rich>=13.5.0",
-    "pathspec>=0.12.1",
-    "litellm>=1.0.0",
-    "tavily-python>=0.2.0",
+    "aiofiles>=24.1.0",
+    "croniter>=2.0",
+    "fastapi>=0.135.1",
+    "fastmcp>=3.1.0",
+    "httpx>=0.28.1",
+    "loguru>=0.7.3",
+    "mistletoe>=1.5.1",
+    "numpy>=2.2.6",
+    "openai>=2.26.0",
+    "pydantic>=2.12.5",
+    "python-frontmatter>=1.1.0",
+    "pyyaml>=6.0.3",
+    "rich>=14.3.3",
+    "uvicorn>=0.41.0",
+    "watchfiles>=1.1.1",
+    "zstandard>=0.23.0",
 ]
 
 [project.optional-dependencies]
-
+core = [
+    "agentscope>=2.0.2",
+    "faiss-cpu>=1.13.2",
+    "jieba>=0.42.1",
+    "rjieba>=0.2.1",
+    "neo4j>=6.2.0",
+    "networkx>=3.4.2",
+    "claude-agent-sdk>=0.2.91",
+]
 dev = [
-    "pytest>=8.4.2",
-    "pytest_asyncio>=1.2.0",
     "pre-commit",
-    "mkdocs-shadcn",
-    "pipreqs",
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
 ]
-
-reme = [
-    "elasticsearch>=8.10.0",
-    "chromadb>=0.4.0",
-    "qdrant_client>=1.15.1",
-    "pgvector>=0.4.2"
-]
-
-fin = [
-    "akshare>=1.9.0",
-    "crawl4ai>=0.7.4",
-]
-
-token = [
-#    "modelscope>=1.10.0",
-#    "diffusers>=0.21.0",
-#    "peft>=0.6.0",
-    "transformers>=4.35.0",
-    "tiktoken>=0.5.0",
-]
-
-skill = [
-
-]
-
 full = [
-    "flowllm[dev,reme,fin,token,skill]",
+    "flowllm[core]",
+    "flowllm[dev]",
 ]
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["flowllm*"]
-
-[tool.setuptools.package-data]
-flowllm = [
-    "**/*.yaml",
-]
-
-[tool.setuptools.dynamic]
-version = {attr = "flowllm.__version__"}
 
 [project.urls]
 Homepage = "https://github.com/flowllm-ai/flowllm"
-Documentation = "https://flowllm-ai.github.io/flowllm/"
 Repository = "https://github.com/flowllm-ai/flowllm"
 
 [project.scripts]
-flowllm = "flowllm.main:main"
+flowllm = "flowllm.application:main"
 
+[tool.setuptools]
+packages = { find = { where = ["."], include = ["flowllm*"] } }
+include-package-data = true
+
+[tool.setuptools.package-data]
+"*" = ["py.typed", "**/*.yaml", "**/*.json"]
+
+[tool.setuptools.dynamic]
+version = { attr = "flowllm.__version__" }
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"

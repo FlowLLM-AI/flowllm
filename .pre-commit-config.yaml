@@ -3,35 +3,25 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-ast
-        exclude: ^old/
       - id: check-yaml
-        exclude: ^old/
       - id: check-xml
-        exclude: ^old/
       - id: check-toml
-        exclude: ^old/
       - id: check-json
-        exclude: ^old/
       - id: detect-private-key
-        exclude: ^old/
       - id: trailing-whitespace
-        exclude: ^old/
   - repo: https://github.com/asottile/add-trailing-comma
     rev: v4.0.0
     hooks:
       - id: add-trailing-comma
-        exclude: ^old/
   - repo: https://github.com/psf/black
     rev: 25.9.0
     hooks:
     - id: black
-      exclude: ^old/
       args: [--line-length=120]
   - repo: https://github.com/PyCQA/flake8
     rev: 7.3.0
     hooks:
       - id: flake8
-        exclude: ^old/
         args: [
           "--extend-ignore=E203",
           "--max-line-length=120"
@@ -42,8 +32,7 @@ repos:
       - id: pylint
         exclude:
             (?x)(
-                ^old/
-                | ^docs
+                ^docs
                 | pb2\.py$
                 | grpc\.py$
                 | \.demo$
@@ -54,6 +43,7 @@ repos:
           --disable=W0511,
           --disable=W0718,
           --disable=W0122,
+          --disable=W1203,
           --disable=C0103,
           --disable=R0913,
           --disable=R0917,
@@ -81,8 +71,9 @@ repos:
           --disable=C3001,
           --disable=R1702,
           --disable=R0912,
+          --max-statements=120,
           --max-line-length=120,
-          --max-statements=75,
+          --max-module-lines=1500,
         ]
   - repo: https://github.com/regebro/pyroma
     rev: "5.0"

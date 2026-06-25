@@ -1,14 +1,24 @@
-"""FlowLLM: A library for managing LLM flows and contexts."""
+"""FlowLLM package."""
 
-import os
+__version__ = "0.3.0.0"
 
-os.environ.setdefault("FLOW_APP_NAME", "FlowLLM")
+from . import config
+from . import constants
+from . import enumeration
+from . import schema
+from . import steps
+from . import utils
+from .application import Application
+from .components import BaseComponent
 
-from .core.utils import load_env  # noqa: E402  # pylint: disable=wrong-import-position
-
-load_env()
-
-from . import gallery  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
-# from . import extensions  # noqa: E402, F401  # pylint: disable=wrong-import-position,unused-import
-
-__version__ = "0.2.0.10"
+__all__ = [
+    "Application",
+    "BaseComponent",
+    # submodules
+    "config",
+    "constants",
+    "enumeration",
+    "schema",
+    "steps",
+    "utils",
+]
