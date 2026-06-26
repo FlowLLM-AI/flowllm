@@ -1,6 +1,8 @@
 """Unit tests for CLI call_server function."""
 
 from flowllm import application as flowllm_module
+from flowllm.lite import cli as lite_cli
+from flowllm.utils import env_utils
 
 
 def test_call_server_passes_client_kwargs_to_client(monkeypatch, capsys):
@@ -44,3 +46,17 @@ def test_call_server_passes_client_kwargs_to_client(monkeypatch, capsys):
     assert seen["action"] == "search"
     assert seen["payload"] == {"query": "hello"}
     assert capsys.readouterr().out == "ok\n"
+
+
+def test_lite_main_loads_env_at_start(monkeypatch, tmp_path, capsys):
+    """Verify lite CLI loads .env before handling arguments."""
+    (tmp_path / ".env").write_text("FLOWLLM_LITE_TEST_ENV=loaded\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("FLOWLLM_LITE_TEST_ENV", raising=False)
+    monkeypatch.setattr(env_utils, "_LOADED", False)
+    monkeypatch.setattr(env_utils, "_LOADED_VALUES", {})
+
+    lite_cli.main(["--help"])
+
+    assert capsys.readouterr().out.startswith("Usage: fl")
+    assert env_utils.os.environ["FLOWLLM_LITE_TEST_ENV"] == "loaded"

@@ -30,9 +30,11 @@ dependencies = [
     "httpx>=0.28.1",
     "loguru>=0.7.3",
     "numpy>=2.2.6",
+    "pandas>=2.0",
     "pydantic>=2.12.5",
     "pyyaml>=6.0.3",
     "rich>=14.3.3",
+    "tushare>=1.4",
     "uvicorn>=0.41.0",
 ]
 
