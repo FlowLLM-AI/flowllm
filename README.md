@@ -29,16 +29,16 @@ long-lived components with **Service, Job, Step, and Component**.
 - **Pluggable components**: Extend Steps, Services, Clients, LLMs, Embeddings, Embedding Stores, and Agent Wrappers
   through registry `R`.
 
+<p align="center">
+  <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
+</p>
+
 ## 🆕 Minimal CLI Flow
 
 FlowLLM also includes `flowllm.lite`, a tiny local CLI flow runner for scripts that do not need the full service
 framework.
 It maps `fl --action --field value` to a Pydantic config and a small ordered `BaseFlow`.
 See [FlowLLM Lite](flowllm/lite/README.md) for the full minimal CLI flow design.
-
-<p align="center">
-  <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
-</p>
 
 ## 🚀 Quick Start
 
