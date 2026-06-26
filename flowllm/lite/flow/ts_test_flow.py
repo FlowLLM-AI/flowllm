@@ -228,11 +228,7 @@ class TushareFlow(BaseFlow[TushareConfig]):
             )
 
     def filter_daily_validation_codes(self, codes: list[str]) -> list[str]:
-        suffixes = [
-            item.strip()
-            for item in self.config.daily_validation_exclude_suffixes.split(",")
-            if item.strip()
-        ]
+        suffixes = [item.strip() for item in self.config.daily_validation_exclude_suffixes.split(",") if item.strip()]
         return [code for code in codes if not suffixes or not code.endswith(tuple(suffixes))]
 
     def download_daily(self) -> None:
