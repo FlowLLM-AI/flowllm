@@ -51,8 +51,9 @@ def test_send_dingtalk_text_message(monkeypatch):
     monkeypatch.setenv("DING_DAILY_API_TOKEN", "daily-token")
     monkeypatch.setattr(dingtalk_utils, "load_env", lambda: {})
 
-    def fake_post(_url, json, _timeout):
+    def fake_post(_url, json, timeout):
         seen["json"] = json
+        seen["timeout"] = timeout
         return FakeResponse()
 
     monkeypatch.setattr(dingtalk_utils.httpx, "post", fake_post)
@@ -60,6 +61,7 @@ def test_send_dingtalk_text_message(monkeypatch):
     dingtalk_utils.send_dingtalk_message("Ignored", "hello", msgtype="text")
 
     assert seen["json"] == {"msgtype": "text", "text": {"content": "hello"}}
+    assert seen["timeout"] == 10.0
 
 
 def test_send_dingtalk_message_requires_token(monkeypatch):
