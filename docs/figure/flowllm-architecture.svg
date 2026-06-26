@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">FlowLLM clean architecture diagram</title>
+  <desc id="desc">A clean English architecture diagram for FlowLLM with Application at the center and Service, Jobs, Steps, Components, and Workspace around it.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbfdff"/>
+      <stop offset="0.35" stop-color="#f9fdfb"/>
+      <stop offset="0.7" stop-color="#fffbf8"/>
+      <stop offset="1" stop-color="#fbf9ff"/>
+    </linearGradient>
+    <linearGradient id="centerGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4f7ff"/>
+      <stop offset="0.55" stop-color="#faf3ff"/>
+      <stop offset="1" stop-color="#fff7fb"/>
+    </linearGradient>
+    <linearGradient id="serviceGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#effcf7"/>
+      <stop offset="0.55" stop-color="#f1fbff"/>
+      <stop offset="1" stop-color="#f4f7ff"/>
+    </linearGradient>
+    <linearGradient id="workflowGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="0.58" stop-color="#fff4ee"/>
+      <stop offset="1" stop-color="#fff1f7"/>
+    </linearGradient>
+    <linearGradient id="runtimeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2fdff"/>
+      <stop offset="0.55" stop-color="#f3faff"/>
+      <stop offset="1" stop-color="#f8f6ff"/>
+    </linearGradient>
+    <linearGradient id="pillGradA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fffd"/>
+      <stop offset="1" stop-color="#f2faff"/>
+    </linearGradient>
+    <linearGradient id="pillGradB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffaf5"/>
+      <stop offset="1" stop-color="#fff4fa"/>
+    </linearGradient>
+    <radialGradient id="washA" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#dbeafe" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#bae6fd" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="washB" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#fce7f3" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#fbcfe8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="washC" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#dcfce7" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#bbf7d0" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="-8%" y="-14%" width="116%" height="136%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <filter id="smallShadow" x="-12%" y="-20%" width="124%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      text {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      }
+      .title { font-size: 34px; font-weight: 800; fill: #172033; }
+      .subtitle { font-size: 15px; fill: #64748b; }
+      .section { font-size: 12px; font-weight: 800; fill: #64748b; letter-spacing: 1.5px; }
+      .card-title { font-size: 18px; font-weight: 800; fill: #172033; }
+      .card-text { font-size: 13px; fill: #64748b; }
+      .pill-title { font-size: 14px; font-weight: 760; fill: #172033; }
+      .pill-text { font-size: 11.5px; fill: #64748b; }
+      .center { filter: url(#shadow); }
+      .card { stroke: rgba(71, 85, 105, 0.16); stroke-width: 1; filter: url(#smallShadow); }
+      .pill { stroke: rgba(71, 85, 105, 0.18); stroke-width: 1; }
+      .ring { fill: none; stroke: rgba(100, 116, 139, 0.20); stroke-width: 1.4; }
+      .soft-dot { opacity: 0.55; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="720" fill="url(#background)"/>
+  <circle class="soft-dot" cx="170" cy="138" r="112" fill="url(#washA)"/>
+  <circle class="soft-dot" cx="1040" cy="165" r="128" fill="url(#washB)"/>
+  <circle class="soft-dot" cx="238" cy="618" r="128" fill="url(#washC)"/>
+  <circle class="soft-dot" cx="956" cy="616" r="108" fill="url(#washA)"/>
+
+  <text class="title" x="600" y="58" text-anchor="middle">FlowLLM Architecture</text>
+  <text class="subtitle" x="600" y="86" text-anchor="middle">A config-driven runtime for exposing composable LLM workflows through service backends.</text>
+
+  <ellipse class="ring" cx="600" cy="390" rx="438" ry="220"/>
+  <ellipse class="ring" cx="600" cy="390" rx="300" ry="150"/>
+
+  <g class="center">
+    <rect x="438" y="282" width="324" height="216" rx="28" fill="url(#centerGrad)" stroke="rgba(71, 85, 105, 0.18)"/>
+    <text class="section" x="600" y="326" text-anchor="middle">CORE</text>
+    <text class="card-title" x="600" y="362" text-anchor="middle">Application</text>
+    <text class="card-text" x="600" y="389" text-anchor="middle">loads config, wires components,</text>
+    <text class="card-text" x="600" y="409" text-anchor="middle">starts lifecycle, and runs jobs</text>
+
+    <rect class="pill" x="478" y="438" width="108" height="38" rx="19" fill="url(#pillGradA)"/>
+    <text class="pill-title" x="532" y="462" text-anchor="middle">Context</text>
+    <rect class="pill" x="614" y="438" width="108" height="38" rx="19" fill="url(#pillGradB)"/>
+    <text class="pill-title" x="668" y="462" text-anchor="middle">Registry</text>
+  </g>
+
+  <g transform="translate(94,178)">
+    <rect class="card" x="0" y="0" width="262" height="152" rx="22" fill="url(#serviceGrad)"/>
+    <circle cx="218" cy="34" r="34" fill="#dbeafe" opacity="0.28"/>
+    <circle cx="236" cy="68" r="18" fill="#dcfce7" opacity="0.32"/>
+    <text class="section" x="32" y="38">ENTRY</text>
+    <text class="card-title" x="32" y="72">Clients</text>
+    <text class="card-text" x="32" y="101">flowllm CLI</text>
+    <text class="card-text" x="32" y="123">HTTP client · MCP client</text>
+  </g>
+
+  <g transform="translate(844,178)">
+    <rect class="card" x="0" y="0" width="262" height="152" rx="22" fill="url(#serviceGrad)"/>
+    <circle cx="216" cy="34" r="34" fill="#ddd6fe" opacity="0.24"/>
+    <circle cx="236" cy="72" r="18" fill="#d1fae5" opacity="0.32"/>
+    <text class="section" x="32" y="38">SERVICE</text>
+    <text class="card-title" x="32" y="72">Backends</text>
+    <text class="card-text" x="32" y="101">FastAPI HTTP routes</text>
+    <text class="card-text" x="32" y="123">FastMCP tools</text>
+  </g>
+
+  <g transform="translate(94,474)">
+    <rect class="card" x="0" y="0" width="262" height="152" rx="22" fill="url(#workflowGrad)"/>
+    <circle cx="216" cy="34" r="34" fill="#fef3c7" opacity="0.34"/>
+    <circle cx="236" cy="72" r="18" fill="#fce7f3" opacity="0.30"/>
+    <text class="section" x="32" y="38">WORKFLOW</text>
+    <text class="card-title" x="32" y="72">Jobs</text>
+    <text class="card-text" x="32" y="101">base · stream</text>
+    <text class="card-text" x="32" y="123">background · cron</text>
+  </g>
+
+  <g transform="translate(844,474)">
+    <rect class="card" x="0" y="0" width="262" height="152" rx="22" fill="url(#workflowGrad)"/>
+    <circle cx="216" cy="34" r="34" fill="#fee2e2" opacity="0.32"/>
+    <circle cx="236" cy="72" r="18" fill="#dbeafe" opacity="0.28"/>
+    <text class="section" x="32" y="38">EXECUTION</text>
+    <text class="card-title" x="32" y="72">Steps</text>
+    <text class="card-text" x="32" y="101">BaseStep.execute()</text>
+    <text class="card-text" x="32" y="123">context mappings · dispatch</text>
+  </g>
+
+  <g transform="translate(450,130)">
+    <rect class="card" x="0" y="0" width="300" height="98" rx="22" fill="url(#runtimeGrad)"/>
+    <text class="section" x="34" y="36">CONFIG</text>
+    <text class="card-title" x="34" y="68">YAML + .env + CLI overrides</text>
+  </g>
+
+  <g transform="translate(450,552)">
+    <rect class="card" x="0" y="0" width="300" height="98" rx="22" fill="url(#runtimeGrad)"/>
+    <text class="section" x="34" y="36">RUNTIME</text>
+    <text class="card-title" x="34" y="68">RuntimeContext + Response</text>
+  </g>
+
+  <g transform="translate(390,240)">
+    <rect class="pill" x="0" y="0" width="138" height="44" rx="22" fill="url(#pillGradA)"/>
+    <text class="pill-title" x="69" y="20" text-anchor="middle">AS LLM</text>
+    <text class="pill-text" x="69" y="35" text-anchor="middle">model wrapper</text>
+  </g>
+
+  <g transform="translate(672,240)">
+    <rect class="pill" x="0" y="0" width="138" height="44" rx="22" fill="url(#pillGradA)"/>
+    <text class="pill-title" x="69" y="20" text-anchor="middle">Embedding</text>
+    <text class="pill-text" x="69" y="35" text-anchor="middle">model + store</text>
+  </g>
+
+  <g transform="translate(390,496)">
+    <rect class="pill" x="0" y="0" width="138" height="44" rx="22" fill="url(#pillGradB)"/>
+    <text class="pill-title" x="69" y="20" text-anchor="middle">Agent</text>
+    <text class="pill-text" x="69" y="35" text-anchor="middle">wrapper</text>
+  </g>
+
+  <g transform="translate(672,496)">
+    <rect class="pill" x="0" y="0" width="138" height="44" rx="22" fill="url(#pillGradB)"/>
+    <text class="pill-title" x="69" y="20" text-anchor="middle">Workspace</text>
+    <text class="pill-text" x="69" y="35" text-anchor="middle">metadata/session</text>
+  </g>
+
+  <text class="subtitle" x="600" y="688" text-anchor="middle">Service surfaces are thin; workflow behavior lives in jobs and steps; reusable state lives in components.</text>
+</svg>
