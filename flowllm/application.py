@@ -1,0 +1,268 @@
+"""Main application entry point."""
+
+import asyncio
+import heapq
+import sys
+from pathlib import Path
+from typing import AsyncGenerator, TypeVar
+
+from . import __version__
+from .components import BaseComponent, ApplicationContext, R
+from .components.job import BackgroundJob, BaseJob, CronJob, StreamJob
+from .components.service import BaseService
+from .config import parse_args, resolve_app_config
+from .enumeration import ComponentEnum
+from .schema import ComponentConfig, Response, StreamChunk
+from .utils import cli_find_flowllm, execute_stream_task, load_env, precheck_start, print_logo, get_logger
+
+T = TypeVar("T", bound=BaseComponent)
+_NodeKey = tuple[ComponentEnum, str]
+
+
+class Application(BaseComponent):
+    """Wires components from config and runs jobs against them."""
+
+    def __init__(self, **kwargs) -> None:
+        self.context = ApplicationContext(**kwargs)
+        self._started_components: list[BaseComponent] = []
+
+        self._setup_workspace_directories()
+
+        if self.config.enable_logo:
+            print_logo(self.config)
+        logger = get_logger(log_to_console=self.config.log_to_console, log_to_file=self.config.log_to_file)
+        logger.info(f"Initializing {self.config.app_name} Application v{__version__}")
+        super().__init__()
+
+        self._init_service()
+        self._init_components()
+        self._init_jobs()
+
+    @property
+    def config(self):
+        """Application config from context."""
+        return self.context.app_config
+
+    # Wiring
+
+    def _setup_workspace_directories(self) -> None:
+        """Create workspace directories if missing."""
+        cfg = self.config
+        workspace_path = Path(cfg.workspace_dir).absolute()
+        workspace_path.mkdir(parents=True, exist_ok=True)
+        for subdir in [cfg.metadata_dir, cfg.session_dir]:
+            if subdir:
+                (workspace_path / subdir).mkdir(parents=True, exist_ok=True)
+
+    def _init_service(self) -> None:
+        """Instantiate the service backend."""
+        self.context.service = self._instantiate(
+            ComponentEnum.SERVICE,
+            self.config.service,
+            label="Service",
+            expected_type=BaseService,
+        )
+
+    def _init_components(self) -> None:
+        """Instantiate all configured components."""
+        for ctype, group in self.config.components.items():
+            self.context.components[ctype] = {}
+            for name, cfg in group.items():
+                self.context.components[ctype][name] = self._instantiate(
+                    ctype,
+                    cfg,
+                    label=f"Component '{name}'",
+                    expected_type=BaseComponent,
+                    name=name,
+                )
+
+    def _init_jobs(self) -> None:
+        """Instantiate all configured jobs."""
+        for name, cfg in self.config.jobs.items():
+            self.context.jobs[name] = self._instantiate(
+                ComponentEnum.JOB,
+                cfg,
+                label=f"Job '{name}'",
+                expected_type=BaseJob,
+                name=name,
+            )
+
+    def _instantiate(
+        self,
+        ctype: ComponentEnum,
+        cfg: ComponentConfig,
+        *,
+        label: str,
+        expected_type: type[T],
+        name: str | None = None,
+    ) -> T:
+        """Resolve backend from registry and construct an instance."""
+        if not cfg.backend:
+            raise ValueError(f"{label} is missing the required 'backend' field")
+        backend_cls = R.get(ctype, cfg.backend)
+        if backend_cls is None:
+            raise ValueError(f"Unregistered backend '{cfg.backend}' for {label}")
+
+        params = cfg.model_dump()
+        params["app_context"] = self.context
+        if name is not None:
+            params.setdefault("name", name)
+        instance = backend_cls(**params)
+        if not isinstance(instance, expected_type):
+            got, want = type(instance).__name__, expected_type.__name__
+            raise TypeError(f"{label} backend '{cfg.backend}' produced {got}, expected {want} subclass")
+        return instance
+
+    # Dependency ordering
+
+    def _topological_order(self) -> list[BaseComponent]:
+        """Return components in dependency order (Kahn's algorithm)."""
+        nodes: dict[_NodeKey, BaseComponent] = {
+            (ctype, name): comp for ctype, group in self.context.components.items() for name, comp in group.items()
+        }
+        in_degree, dependents = self._build_dependency_graph(nodes)
+
+        ready = [k for k, d in in_degree.items() if d == 0]
+        heapq.heapify(ready)
+        ordered: list[BaseComponent] = []
+        while ready:
+            key = heapq.heappop(ready)
+            ordered.append(nodes[key])
+            for downstream in dependents[key]:
+                in_degree[downstream] -= 1
+                if in_degree[downstream] == 0:
+                    heapq.heappush(ready, downstream)
+
+        if len(ordered) != len(nodes):
+            unresolved = [f"{k[0].value}:{k[1]}" for k, d in in_degree.items() if d > 0]
+            raise ValueError(f"Circular dependency detected among: {unresolved}")
+        return ordered
+
+    @staticmethod
+    def _build_dependency_graph(
+        nodes: dict[_NodeKey, BaseComponent],
+    ) -> tuple[dict[_NodeKey, int], dict[_NodeKey, list[_NodeKey]]]:
+        """Build in-degree and adjacency lists."""
+        in_degree: dict[_NodeKey, int] = dict.fromkeys(nodes, 0)
+        dependents: dict[_NodeKey, list[_NodeKey]] = {k: [] for k in nodes}
+        for key, comp in nodes.items():
+            for dep in comp.dependencies:
+                dep_key = (dep.ctype, dep.name)
+                if dep_key in nodes:
+                    dependents[dep_key].append(key)
+                    in_degree[key] += 1
+                elif not dep.optional:
+                    raise ValueError(
+                        f"Component {key[0].value}:{key[1]} depends on unregistered {dep.ctype.value}:{dep.name}",
+                    )
+        return in_degree, dependents
+
+    # Lifecycle
+
+    async def _start(self) -> None:
+        """Start components, then jobs as base > stream > background > cron."""
+        try:
+            components = self._topological_order()
+            jobs = list(self.context.jobs.values())
+            base_jobs = [j for j in jobs if not isinstance(j, (StreamJob, BackgroundJob))]
+            stream_jobs = [j for j in jobs if isinstance(j, StreamJob)]
+            background_jobs = [j for j in jobs if isinstance(j, BackgroundJob) and not isinstance(j, CronJob)]
+            cron_jobs = [j for j in jobs if isinstance(j, CronJob)]
+            for c in components + base_jobs + stream_jobs + background_jobs + cron_jobs:
+                await self._start_one(c)
+        except Exception:
+            await self._close()
+            raise
+
+    async def _start_one(self, c: BaseComponent) -> None:
+        """Start one component and track it for shutdown."""
+        try:
+            if isinstance(c, BackgroundJob):
+                self.logger.info(f"Starting background job: {c.name}")
+            await c.start()
+            self._started_components.append(c)
+        except Exception as e:
+            self.logger.exception(f"Failed to start {c.component_type.value}:{c.name}: {e}")
+            raise
+
+    async def _close(self) -> None:
+        """Close in reverse start order."""
+        for c in reversed(self._started_components):
+            try:
+                await c.close()
+            except Exception as e:
+                self.logger.exception(f"Failed to close {c.component_type.value}:{c.name}: {e}")
+        self._started_components.clear()
+
+    async def update_component(self, component_enum: ComponentEnum | str, name: str, /, **kwargs) -> BaseComponent:
+        """Update an existing component's attributes."""
+        component_enum = ComponentEnum(component_enum)
+        group = self.context.components.get(component_enum)
+        if not group or name not in group:
+            raise KeyError(f"Component '{name}' not found in {component_enum.value}")
+
+        component = group[name]
+        for key, value in kwargs.items():
+            if not hasattr(component, key):
+                raise AttributeError(f"Component {component_enum.value}:{name} has no attribute '{key}'")
+            setattr(component, key, value)
+        return component
+
+    # Job execution
+
+    async def run_job(self, name: str, /, **kwargs) -> Response:
+        """Execute a job by name and return its Response."""
+        if name not in self.context.jobs:
+            raise KeyError(f"Job '{name}' not found")
+        return await self.context.jobs[name](**kwargs)
+
+    async def run_stream_job(self, name: str, /, **kwargs) -> AsyncGenerator[StreamChunk, None]:
+        """Execute a streaming job, yielding chunks."""
+        if name not in self.context.jobs:
+            raise KeyError(f"Job '{name}' not found")
+        stream_queue: asyncio.Queue = asyncio.Queue()
+        task = asyncio.create_task(self.context.jobs[name](stream_queue=stream_queue, **kwargs))
+        async for chunk in execute_stream_task(
+            stream_queue=stream_queue,
+            task=task,
+            task_name=name,
+            output_format="chunk",
+        ):
+            assert isinstance(chunk, StreamChunk)
+            yield chunk
+
+    def run_app(self):
+        """Serve the application via the configured service."""
+        assert isinstance(self.context.service, BaseService)
+        self.context.service.run_app(app=self)
+
+
+_CLIENT_KWARGS = {"host", "port", "timeout", "transport", "command", "args"}
+
+
+async def call_server(action: str, **kwargs):
+    """Call the appropriate server component."""
+    backend: str = kwargs.pop("backend", "http")
+    client_kwargs = {key: kwargs.pop(key) for key in list(kwargs) if key in _CLIENT_KWARGS}
+    client_cls = R.get(ComponentEnum.CLIENT, backend)
+    if client_cls is None:
+        raise ValueError(f"Unknown client backend: {backend!r}")
+    async with client_cls(**client_kwargs) as client:
+        async for chunk in client(action=action, **kwargs):
+            print(chunk, end="", flush=True)
+        print()
+
+
+def main():
+    """CLI entry point."""
+    action, kwargs = parse_args(*sys.argv[1:])
+    if action == "start":
+        load_env()
+        kwargs = resolve_app_config(**kwargs)
+        if not precheck_start(kwargs.get("service")):
+            return
+        Application(**kwargs).run_app()
+    elif action == "find_flowllm":
+        cli_find_flowllm()
+    else:
+        asyncio.run(call_server(action, **kwargs))

@@ -1,0 +1,87 @@
+"""MCP client for FlowLLM services."""
+
+import json
+import os
+from collections.abc import AsyncGenerator
+from typing import Any
+
+from fastmcp import Client
+from fastmcp.client import SSETransport, StdioTransport, StreamableHttpTransport
+from fastmcp.client.client import CallToolResult
+
+from .base_client import BaseClient
+from ..component_registry import R
+from ...constants import FLOWLLM_SERVICE_INFO, FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
+
+_TRANSPORT_MAP = {"sse": SSETransport, "stdio": StdioTransport, "streamable-http": StreamableHttpTransport}
+
+
+@R.register("mcp")
+class MCPClient(BaseClient):
+    """MCP client via fastmcp; supports sse, stdio, streamable-http transports."""
+
+    def __init__(
+        self,
+        transport: str | Any = "sse",
+        host: str | None = None,
+        port: int | None = None,
+        timeout: float = 30.0,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        if isinstance(transport, str) and transport not in _TRANSPORT_MAP:
+            raise ValueError(f"Unknown transport: {transport!r}, expected one of {list(_TRANSPORT_MAP)}")
+        if isinstance(transport, str) and transport != "stdio":
+            if not (host and port):
+                if service_info := os.environ.get(FLOWLLM_SERVICE_INFO):
+                    try:
+                        data = json.loads(service_info)
+                        host, port = data["host"], data["port"]
+                    except Exception:
+                        self.logger.warning(f"Invalid service info: {service_info}")
+                        host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
+                else:
+                    host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
+            self.host, self.port = host, port
+        self.transport = transport
+        self.timeout = timeout
+
+    def _build_transport(self):
+        if not isinstance(self.transport, str):
+            return self.transport
+        cls = _TRANSPORT_MAP[self.transport]
+        if self.transport == "stdio":
+            return cls(command=self.kwargs.get("command", ""), args=self.kwargs.get("args", []))
+        path = "/sse" if self.transport == "sse" else "/mcp"
+        return cls(url=f"http://{self.host}:{self.port}{path}")
+
+    # pylint: disable=unnecessary-dunder-call
+    async def _start(self) -> None:
+        if self.client is None:
+            self.client = Client(self._build_transport(), timeout=self.timeout)
+            await self.client.__aenter__()
+
+    # pylint: disable=invalid-overridden-method
+    async def _execute(self, action: str, payload: dict) -> AsyncGenerator[str, None]:
+        if self.client is None:
+            raise RuntimeError("Client not initialized. Call _start() first.")
+        result: CallToolResult = await self.client.call_tool(action, payload)
+        yield self._extract_text(result)
+
+    async def list_actions(self) -> list[dict]:
+        if self.client is None:
+            raise RuntimeError("Client not initialized. Call _start() first.")
+        return [tool.model_dump() for tool in await self.client.list_tools()]
+
+    # pylint: disable=unnecessary-dunder-call
+    async def _close(self) -> None:
+        if self.client is not None:
+            await self.client.__aexit__(None, None, None)
+            self.client = None
+
+    @staticmethod
+    def _extract_text(result: CallToolResult) -> str:
+        for block in result.content:
+            if hasattr(block, "text"):
+                return block.text
+        return str(result.content)

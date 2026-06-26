@@ -1,25 +1,54 @@
-.vscode
-.env*
+# OS / editor
 .DS_Store
-.idea
+.idea/
+.vscode/
+*.code-workspace
+
+# Local environment
+.env
+.env.*
+!.env.example
+!example.env
+.venv/
 venv/
-.ipynb_checkpoints
-.__pycache__
-__pycache__
-*.log
-tmp*
-temp*
-private*
+env/
+private*/
+
+# Python caches / test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Packaging / build outputs
+build/
 dist/
-nohup*
+*.egg-info/
+
+# Logs / temporary files
+*.log
+nohup.out
+nohup*.out
 log/
-**/logs/*
+logs/
+runs/
+tmp*/
+temp*/
 .trash/
-runs
-logs
-*.egg-info/*
-build/*
-**/cache/**
-*.pdf
-*.csv
-site/*
+
+# FlowLLM runtime data
+.flowllm/
+vault/
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation build outputs
+docs/_build/
+site/

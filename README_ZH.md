@@ -3,229 +3,250 @@
 </p>
 
 <p align="center">
-  <strong>FlowLLM：让基于LLM的HTTP/MCP服务开发更简单</strong><br>
-  <em><sub>如果觉得有用，欢迎给个 ⭐ Star，您的支持是我们持续改进的动力</sub></em>
-</p>
-
-<p align="center">
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python Version"></a>
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/pypi-0.2.0.0-blue?logo=pypi" alt="PyPI Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
+  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.11+-blue" alt="Python Version"></a>
+  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/pypi/v/flowllm.svg?logo=pypi" alt="PyPI Version"></a>
+  <a href="https://pepy.tech/project/flowllm/"><img src="https://img.shields.io/pypi/dm/flowllm" alt="PyPI Downloads"></a>
+  <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/commit-activity/m/flowllm-ai/flowllm?style=flat-square" alt="GitHub commit activity"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
+  <a href="./README.md"><img src="https://img.shields.io/badge/English-Click-yellow" alt="English"></a>
+  <a href="./README_ZH.md"><img src="https://img.shields.io/badge/简体中文-点击查看-orange" alt="简体中文"></a>
   <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/stars/flowllm-ai/flowllm?style=social" alt="GitHub Stars"></a>
+  <a href="https://deepwiki.com/flowllm-ai/flowllm"><img src="https://img.shields.io/badge/DeepWiki-Ask_Devin-navy.svg" alt="DeepWiki"></a>
 </p>
 
 <p align="center">
-  <a href="./README.md">English</a> | 简体中文
+  <strong>FlowLLM: 轻松构建 LLM 应用。</strong><br>
 </p>
 
----
+FlowLLM 是一个配置驱动的 LLM 应用框架，用 **Service、Job、Step、Component** 组织工作流、服务入口和长期组件。
 
-## 📖 简介
+## 核心特性
 
-FlowLLM 将 LLM/Embedding/vector_store 能力封装为 HTTP/MCP 服务，适用于 AI 对话助手、RAG 应用、工作流服务等场景，并可集成到支持
-MCP 的客户端工具中。
-
-### 🏗️ 架构概览
+- **配置驱动**：默认从 `flowllm/config/default.yaml` 启动，支持配置文件和 dot notation 覆盖。
+- **统一链路**：`CLI / Client -> Service -> Application -> Job -> Step -> Component`。
+- **多种 Job 形态**：支持同步、流式、后台和定时任务，并可通过 HTTP 或 MCP 暴露。
+- **可插拔组件**：通过注册表 `R` 扩展 Step、Service、Client、LLM、Embedding、Embedding Store 和 Agent Wrapper。
 
 <p align="center">
-  <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
+  <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
 </p>
 
-### 🌟 基于FlowLLM的应用
+## 快速开始
 
-| 项目名                                           | 描述            |
-|-----------------------------------------------|---------------|
-| [ReMe](https://github.com/agentscope-ai/ReMe) | 面向智能体的记忆管理工具包 |
+### 安装
 
-### 📢 最近更新
+FlowLLM 要求 Python 3.11+。
 
-| 日期         | 更新内容                                                          |
-|------------|---------------------------------------------------------------|
-| 2025-11-15 | 新增 [File Tool Op](docs/zh/guide/file_tool_op_guide.md) 功能，提供 13 个文件操作工具，支持文件读取、写入、编辑、搜索、目录操作、系统命令执行和任务管理等功能 |
-| 2025-11-14 | 新增 Token 计数能力，支持通过 `self.token_count()` 方法准确计算消息和工具的 token 数量，支持多种后端（base、openai、hf），配置示例参考 [default.yaml](flowllm/config/default.yaml) |
-
-### 📚 学习资料分享
-
-项目开发者会在这里分享最近的学习资料。
-
-| 日期         | 标题                                                                                | 描述                                                                |
-|------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------|
-| 2025-11-24 | [Mem-PAL：基于日志结构化记忆的个性化助手](./docs/zh/reading/20251124-mem-pal.md)          | Mem-PAL: Memory-Augmented Personalized Assistant with Log-based Structured Memory 解读 |
-| 2025-11-14 | [HaluMem解读](./docs/zh/reading/20251114-halumem.md)                                | HaluMem: Evaluating Hallucinations in Memory Systems of Agents 解读 |
-| 2025-11-13 | [Gemini CLI 上下文管理机制](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Gemini CLI 的多层上下文管理策略                                             |
-| 2025-11-10 | [上下文管理指南](./docs/zh/reading/20251110-manus-context-report.md)                     | 上下文管理指南                                                           |
-| 2025-11-10 | [LangChain&Manus视频资料](./docs/zh/reading/20251110-manus-context-raw.md)            | LangChain & Manus Context Management  Video                       |
-
-### ⭐ 核心特性
-
-- **简单易用的 Op 开发**：继承 BaseOp 或 BaseAsyncOp 基类，实现业务逻辑即可。FlowLLM提供了延迟初始化的 LLM、Embedding 模型和向量库，开发者只需通过 `self.llm`、`self.embedding_model`、`self.vector_store` 即可轻松使用这些资源。同时FlowLLM提供了完整的 Prompt 模板管理能力，通过 `prompt_format()` 和 `get_prompt()` 方法进行格式化和使用。此外，FlowLLM 还内置了 Token 计数能力，通过 `self.token_count()` 方法可以准确计算消息和工具的 token 数量，支持多种后端（base、openai、hf 等）。
-
-- **灵活的 Flow 编排**：通过 YAML 配置文件将 Op 组合成 Flow，支持灵活的编排方式。`>>` 表示串行组合，`|` 表示并行组合，例如 `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` 可构建复杂的工作流。定义输入输出 Schema 后，使用 `flowllm config=your_config` 命令即可启动服务。
-
-- **自动生成服务**：配置完成后，FlowLLM 会自动生成 HTTP、MCP 和 CMD 服务。HTTP 服务提供标准的 RESTFul API，支持同步 JSON 响应和 HTTP Stream 流式响应。MCP 服务会自动注册为 Model Context Protocol 工具，可集成到支持 MCP 的客户端中。CMD 服务支持命令行模式执行单个 Op，适合快速测试和调试。
-
----
-
-## ⚡ 快速开始
-
-### 📦 Step0 安装
-
-#### 📥 From PyPI
-
-```bash
-pip install flowllm
-```
-
-#### 🔧 From Source
+从源码安装开发依赖：
 
 ```bash
 git clone https://github.com/flowllm-ai/flowllm.git
 cd flowllm
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-详细安装与配置方法请参考 [安装指南](docs/zh/guide/installation.md)。
-
-### ⚙️ 配置
-
-创建 `.env` 文件，配置 API Key。你可以从 `example.env` 复制并修改：
+如果需要 Claude Code wrapper，再安装可选依赖：
 
 ```bash
-cp example.env .env
+pip install -e ".[claude-code]"
 ```
 
-然后在 `.env` 文件中配置你的 API Key：
+需要完整可选依赖时：
 
 ```bash
-FLOW_LLM_API_KEY=sk-xxxx
-FLOW_LLM_BASE_URL=https://xxxx/v1
-FLOW_EMBEDDING_API_KEY=sk-xxxx
-FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
+pip install -e ".[full]"
 ```
 
-详细配置说明请参考 [配置指南](docs/zh/guide/config_guide.md)。
+### 启动服务
 
-### 🛠️ Step1 构建Op
-
-```python
-from flowllm.core.context import C
-from flowllm.core.op import BaseAsyncOp
-from flowllm.core.schema import Message
-from flowllm.core.enumeration import Role
-
-@C.register_op()
-class SimpleChatOp(BaseAsyncOp):
-    async def async_execute(self):
-        query = self.context.get("query", "")
-        messages = [Message(role=Role.USER, content=query)]
-
-        # 使用 token_count 方法计算 token 数量
-        token_num = self.token_count(messages)
-        print(f"Input tokens: {token_num}")
-
-        response = await self.llm.achat(messages=messages)
-        self.context.response.answer = response.content.strip()
+```bash
+flowllm start
 ```
 
-详细内容请参考 [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)、[LLM Op 指南](docs/zh/guide/async_op_llm_guide.md) 和 [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)（包含 Embedding、VectorStore 和并发执行等高级功能）。
+默认服务地址是 `127.0.0.1:2333`，默认 workspace 是 `.flowllm/`。启动时会自动创建：
 
-### 📝 Step2 配置config
+```text
+.flowllm/
+├── metadata/
+└── session/
+```
 
-以下示例展示如何构建一个 MCP（Model Context Protocol）服务。创建配置文件 `my_mcp_config.yaml`：
+可以用命令行覆盖配置：
+
+```bash
+flowllm start service.port=8181 enable_logo=false
+flowllm start workspace_dir=/tmp/flowllm-demo service.host=127.0.0.1 service.port=8181
+```
+
+更多启动和调用示例见 [快速开始](docs/zh/quick_start.md)。
+
+## 调用 Job
+
+启动服务后，CLI 的非 `start` 命令会通过 client 调用服务端同名 Job：
+
+```bash
+flowllm version
+flowllm health_check
+flowllm help
+flowllm demo query="Hello FlowLLM" min_score=0.8
+flowllm add a=1 b=2
+```
+
+HTTP 入口是 `POST /<job_name>`：
+
+```bash
+curl -s http://127.0.0.1:2333/add \
+  -H 'Content-Type: application/json' \
+  -d '{"a":1,"b":2}'
+```
+
+流式 Job 返回 SSE：
+
+```bash
+flowllm stream_demo query="Hi" repeat=3 interval=0.05
+
+curl -N http://127.0.0.1:2333/stream_demo \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"Hi","repeat":3,"interval":0.05}'
+```
+
+内置 Job：
+
+| Job | backend | 说明 |
+| --- | --- | --- |
+| `version` | `base` | 返回 FlowLLM 包版本。 |
+| `health_check` | `base` | 返回组件健康检查摘要。 |
+| `help` | `base` | 列出已注册 Job 及其 metadata。 |
+| `demo` | `base` | 两步 echo 示例。 |
+| `add` | `base` | 两数相加示例。 |
+| `stream_demo` | `stream` | 将输入按字符流式输出。 |
+
+## 配置
+
+默认配置位于 `flowllm/config/default.yaml`。配置根节点包括应用参数、服务、Job 和 Component：
 
 ```yaml
-backend: mcp
+service:
+  backend: http
 
-mcp:
-  transport: sse
-  host: "0.0.0.0"
-  port: 8001
-
-flow:
-  demo_mcp_flow:
-    flow_content: MockSearchOp()
-    description: "Search results for a given query."
-    input_schema:
-      query:
-        type: string
-        description: "User query"
-        required: true
-
-llm:
-  default:
-    backend: openai_compatible
-    model_name: qwen3-30b-a3b-instruct-2507
-    params:
-      temperature: 0.6
-    token_count: # 可选，配置 token 计数后端
-      model_name: Qwen/Qwen3-30B-A3B-Instruct-2507
-      backend: hf  # 支持 base、openai、hf 等
-      params:
-        use_mirror: true
+jobs:
+  add:
+    backend: base
+    description: "add two numbers"
+    steps:
+      - backend: add_step
 ```
 
-### 🚀 Step3 启动 MCP 服务
+可通过 `.env` 覆盖模型和 embedding 相关变量：
 
 ```bash
-flowllm \
-  config=my_mcp_config \
-  backend=mcp \  # 可选，覆盖config配置
-  mcp.transport=sse \  # 可选，覆盖config配置
-  mcp.port=8001 \  # 可选，覆盖config配置
-  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # 可选，覆盖config配置
+cat > .env <<'EOF'
+LLM_BACKEND=openai
+LLM_MODEL_NAME=qwen3.7-plus
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+
+EMBEDDING_BACKEND=openai
+EMBEDDING_MODEL_NAME=text-embedding-v4
+EMBEDDING_API_KEY=your_api_key
+EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+EOF
 ```
 
-服务启动后可以参考[Client Guide](docs/zh/guide/client_guide.md)来使用服务，可以直接获取模型所需要的tool_call。
+也可以指定 YAML 或 JSON 配置文件：
 
----
+```bash
+flowllm start config=/path/to/app.yaml
+```
 
-## 📚 详细文档
+配置解析支持 `${VAR}`、`${VAR:-default}`、bool、数字、JSON list/dict 和 `null` 自动转换。
 
-### 🚀 入门指南
-- [安装指南](docs/zh/guide/installation.md)
-- [配置指南](docs/zh/guide/config_guide.md)
+## 代码框架
 
-### 🔧 Op 开发
-- [Op 介绍](docs/zh/guide/op_introduction.md)
-- [简单 Op 指南](docs/zh/guide/async_op_minimal_guide.md)
-- [LLM Op 指南](docs/zh/guide/async_op_llm_guide.md)
-- [高级 Op 指南](docs/zh/guide/async_op_advance_guide.md)
-- [Tool Op 指南](docs/zh/guide/async_tool_op_guide.md)
-- [File Tool Op 指南](docs/zh/guide/file_tool_op_guide.md)
-- [Vector Store 指南](docs/zh/guide/vector_store_guide.md)
+FlowLLM 的核心分层如下：
 
-### 🔀 Flow 编排
-- [Flow 指南](docs/zh/guide/flow_guide.md)
+```text
+CLI / Client -> Service -> Application -> Job -> Step -> Component
+```
 
-### 🌐 服务使用
-- [HTTP 服务指南](docs/zh/guide/http_service_guide.md)
-- [HTTP Stream 指南](docs/zh/guide/http_stream_guide.md)
-- [MCP 服务指南](docs/zh/guide/mcp_service_guide.md)
-- [CMD 服务指南](docs/zh/guide/cmd_service_guide.md)
-- [客户端指南](docs/zh/guide/client_guide.md)
+| 层级 | 作用 |
+| --- | --- |
+| `Application` | 加载配置，创建 workspace，装配 Service、Component 和 Job，并按依赖顺序启动生命周期。 |
+| `Service` | 将可服务的 Job 暴露为 HTTP 路由或 MCP 工具。 |
+| `Job` | 外部可调用能力或后台流程的编排单元，按顺序执行 Step。 |
+| `Step` | 工作流原子操作，读写 `RuntimeContext`、`Response` 和流式队列。 |
+| `Component` | 长期存在的基础设施，例如 LLM、Embedding、Embedding Store、Agent Wrapper。 |
+| `Registry` | 全局注册表 `R`，按 `(component_type, backend_name)` 查找实现。 |
 
----
+新增 Step 的最小示例：
 
-## 🤝 参与贡献
+```python
+from flowllm.components import R
+from flowllm.steps import BaseStep
 
-欢迎各种形式的贡献！具体参与方式请参考 [贡献指南](docs/zh/guide/contribution.md)。
 
----
+@R.register("reverse_step")
+class ReverseStep(BaseStep):
+    async def execute(self):
+        text = self.context.get("text", "")
+        self.context.response.answer = text[::-1]
+        return self.context.response
+```
 
-## 📄 许可证
+然后在配置中声明 Job：
 
-本项目采用 [Apache 2.0](LICENSE) 许可证。
+```yaml
+jobs:
+  reverse:
+    backend: base
+    description: "reverse text"
+    parameters:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+        - text
+    steps:
+      - backend: reverse_step
+```
 
----
+新增实现后要确保模块在包的 `__init__.py` 中被 import，否则注册装饰器不会执行。更多细节见 [代码框架](docs/zh/framework.md)。
 
-## Star History
+## MCP 服务
+
+将 service backend 改成 `mcp` 后，FlowLLM 会把非流式、`enable_serve: true` 的 Job 暴露为 MCP tool。`StreamJob` 不会被 MCP Service 暴露。
+
+```yaml
+service:
+  backend: mcp
+  transport: sse
+  host: 127.0.0.1
+  port: 2333
+```
+
+MCP transport 支持 `stdio`、`sse` 和 `streamable-http`。
+
+## 文档
+
+- [快速开始](docs/zh/quick_start.md)
+- [代码框架](docs/zh/framework.md)
+- [开源与贡献](docs/zh/contributing.md)
+- [FlowLLM 开发 Skill](skills/flowllm_dev/SKILL.md)
+
+## 开源与贡献
+
+FlowLLM 使用 Apache 2.0 许可证。贡献前请阅读 [贡献指南](docs/zh/contributing.md) 和 [开发 Skill](skills/flowllm_dev/SKILL.md)，并尽量运行：
+
+```bash
+pre-commit run --all-files
+pytest
+```
+
+## License
+
+This project is open source under the Apache License 2.0. See [LICENSE](./LICENSE) for details.
+
+## Star 历史
 
 [![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)
-
----
-
-<p align="center">
-  <a href="https://github.com/flowllm-ai/flowllm">GitHub</a> •
-  <a href="https://flowllm-ai.github.io/flowllm/">文档</a> •
-  <a href="https://pypi.org/project/flowllm/">PyPI</a>
-</p>

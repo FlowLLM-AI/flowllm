@@ -3,229 +3,250 @@
 </p>
 
 <p align="center">
-  <strong>FlowLLM: Simplifying LLM-based HTTP/MCP Service Development</strong><br>
-  <em><sub>If you find it useful, please give us a ⭐ Star. Your support drives our continuous improvement.</sub></em>
-</p>
-
-<p align="center">
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.10+-blue" alt="Python Version"></a>
-  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/pypi-0.2.0.0-blue?logo=pypi" alt="PyPI Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
+  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/badge/python-3.11+-blue" alt="Python Version"></a>
+  <a href="https://pypi.org/project/flowllm/"><img src="https://img.shields.io/pypi/v/flowllm.svg?logo=pypi" alt="PyPI Version"></a>
+  <a href="https://pepy.tech/project/flowllm/"><img src="https://img.shields.io/pypi/dm/flowllm" alt="PyPI Downloads"></a>
+  <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/commit-activity/m/flowllm-ai/flowllm?style=flat-square" alt="GitHub commit activity"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-black" alt="License"></a>
+  <a href="./README.md"><img src="https://img.shields.io/badge/English-Click-yellow" alt="English"></a>
+  <a href="./README_ZH.md"><img src="https://img.shields.io/badge/简体中文-点击查看-orange" alt="简体中文"></a>
   <a href="https://github.com/flowllm-ai/flowllm"><img src="https://img.shields.io/github/stars/flowllm-ai/flowllm?style=social" alt="GitHub Stars"></a>
+  <a href="https://deepwiki.com/flowllm-ai/flowllm"><img src="https://img.shields.io/badge/DeepWiki-Ask_Devin-navy.svg" alt="DeepWiki"></a>
 </p>
 
 <p align="center">
-  English | <a href="./README_ZH.md">简体中文</a>
+  <strong>FlowLLM: Build LLM applications with ease.</strong><br>
 </p>
 
----
+FlowLLM is a configuration-driven LLM application framework that organizes workflows, service entrypoints, and long-lived components with **Service, Job, Step, and Component**.
 
-## 📖 Introduction
+## Core Features
 
-FlowLLM encapsulates LLM, Embedding, and vector_store capabilities as HTTP/MCP services. It is suitable for AI assistants, RAG applications, and workflow services, and can be integrated into MCP-compatible client tools.
-
-### 🏗️ Architecture Overview
+- **Configuration-driven**: Starts from `flowllm/config/default.yaml`, with config files and dot-notation overrides.
+- **Unified path**: `CLI / Client -> Service -> Application -> Job -> Step -> Component`.
+- **Flexible Jobs**: Supports sync, streaming, background, and scheduled tasks exposed through HTTP or MCP.
+- **Pluggable components**: Extend Steps, Services, Clients, LLMs, Embeddings, Embedding Stores, and Agent Wrappers through registry `R`.
 
 <p align="center">
-  <img src="docs/figure/framework.png" alt="FlowLLM Framework" width="100%">
+  <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
 </p>
 
-### 🌟 Applications Based on FlowLLM
+## Quick Start
 
-| Project Name                                  | Description                          |
-|-----------------------------------------------|--------------------------------------|
-| [ReMe](https://github.com/agentscope-ai/ReMe) | Memory management toolkit for agents |
+### Installation
 
-### 📢 Recent Updates
+FlowLLM requires Python 3.11+.
 
-| Date       | Update Content                                                                                                                                                                                                                                                            |
-|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 2025-11-15 | Added [File Tool Op](docs/zh/guide/file_tool_op_guide.md) feature with 13 file operation tools, supporting file reading, writing, editing, searching, directory operations, system command execution, and task management                                                 |
-| 2025-11-14 | Added Token counting capability, supporting accurate calculation of token counts for messages and tools via `self.token_count()` method, with support for multiple backends (base, openai, hf). See configuration examples in [default.yaml](flowllm/config/default.yaml) |
-
-### 📚 Learning Resources
-
-Project developers will share their latest learning materials here.
-
-| Date       | Title                                                                                                  | Description                                                                       |
-|------------|--------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
-| 2025-11-24 | [Mem-PAL: Memory-Augmented Personalized Assistant](./docs/zh/reading/20251124-mem-pal.md)              | Mem-PAL: Memory-Augmented Personalized Assistant with Log-based Structured Memory |
-| 2025-11-14 | [HaluMem Analysis](./docs/zh/reading/20251114-halumem.md)                                              | HaluMem: Evaluating Hallucinations in Memory Systems of Agents Analysis           |
-| 2025-11-13 | [Gemini CLI Context Management Mechanism](./docs/zh/reading/20251113-gemini-cli-context-management.md) | Multi-layer Context Management Strategy for Gemini CLI                            |
-| 2025-11-10 | [Context Management Guide](./docs/zh/reading/20251110-manus-context-report.md)                         | Context Management Guide                                                          |
-| 2025-11-10 | [LangChain&Manus Video Materials](./docs/zh/reading/20251110-manus-context-raw.md)                     | LangChain & Manus Context Management Video                                        |
-
-### ⭐ Core Features
-
-- **Simple Op Development**: Inherit from `BaseOp` or `BaseAsyncOp` and implement your business logic. FlowLLM provides lazy-initialized LLM, Embedding models, and vector stores accessible via `self.llm`, `self.embedding_model`, and `self.vector_store`. It also offers prompt template management through `prompt_format()` and `get_prompt()` methods. Additionally, FlowLLM includes built-in token counting capabilities. Use `self.token_count()` to accurately calculate token counts for messages and tools, supporting multiple backends (base, openai, hf, etc.).
-
-- **Flexible Flow Orchestration**: Compose Ops into Flows via YAML configuration. `>>` denotes serial composition; `|` denotes parallel composition. For example, `SearchOp() >> (AnalyzeOp() | TranslateOp()) >> FormatOp()` builds complex workflows. Define input/output schemas and start the service with `flowllm config=your_config`.
-
-- **Automatic Service Generation**: FlowLLM automatically generates HTTP, MCP, and CMD services. The HTTP service provides RESTful APIs with synchronous JSON and HTTP Stream responses. The MCP service registers as Model Context Protocol tools for MCP-compatible clients. The CMD service executes a single Op in command-line mode for quick testing and debugging.
-
----
-
-## ⚡ Quick Start
-
-### 📦 Step0 Installation
-
-#### 📥 From PyPI
-
-```bash
-pip install flowllm
-```
-
-#### 🔧 From Source
+Install development dependencies from source:
 
 ```bash
 git clone https://github.com/flowllm-ai/flowllm.git
 cd flowllm
-pip install -e .
+pip install -e ".[dev]"
 ```
 
-For detailed installation and configuration, refer to the [Installation Guide](docs/zh/guide/installation.md).
-
-### ⚙️ Configuration
-
-Create a `.env` file and configure your API keys. Copy from `example.env` and modify:
+Install the optional Claude Code wrapper when needed:
 
 ```bash
-cp example.env .env
+pip install -e ".[claude-code]"
 ```
 
-Configure your API keys in the `.env` file:
+Install all optional dependencies:
 
 ```bash
-FLOW_LLM_API_KEY=sk-xxxx
-FLOW_LLM_BASE_URL=https://xxxx/v1
-FLOW_EMBEDDING_API_KEY=sk-xxxx
-FLOW_EMBEDDING_BASE_URL=https://xxxx/v1
+pip install -e ".[full]"
 ```
 
-For detailed configuration, refer to the [Configuration Guide](docs/zh/guide/config_guide.md).
+### Start the Service
 
-### 🛠️ Step1 Build Op
-
-```python
-from flowllm.core.context import C
-from flowllm.core.op import BaseAsyncOp
-from flowllm.core.schema import Message
-from flowllm.core.enumeration import Role
-
-@C.register_op()
-class SimpleChatOp(BaseAsyncOp):
-    async def async_execute(self):
-        query = self.context.get("query", "")
-        messages = [Message(role=Role.USER, content=query)]
-
-        # Use token_count method to calculate token count
-        token_num = self.token_count(messages)
-        print(f"Input tokens: {token_num}")
-
-        response = await self.llm.achat(messages=messages)
-        self.context.response.answer = response.content.strip()
+```bash
+flowllm start
 ```
 
-For details, refer to the [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md), [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md), and [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md) (including Embedding, VectorStore, and concurrent execution).
+The default service address is `127.0.0.1:2333`, and the default workspace is `.flowllm/`. Startup automatically creates:
 
-### 📝 Step2 Configure Config
+```text
+.flowllm/
+├── metadata/
+└── session/
+```
 
-The following example demonstrates building an MCP (Model Context Protocol) service. Create a configuration file `my_mcp_config.yaml`:
+You can override configuration from the command line:
+
+```bash
+flowllm start service.port=8181 enable_logo=false
+flowllm start workspace_dir=/tmp/flowllm-demo service.host=127.0.0.1 service.port=8181
+```
+
+See the [Quick Start](docs/en/quick_start.md) for more startup and invocation examples.
+
+## Calling Jobs
+
+After the service starts, CLI commands other than `start` call server-side Jobs with the same name through the client:
+
+```bash
+flowllm version
+flowllm health_check
+flowllm help
+flowllm demo query="Hello FlowLLM" min_score=0.8
+flowllm add a=1 b=2
+```
+
+The HTTP entry point is `POST /<job_name>`:
+
+```bash
+curl -s http://127.0.0.1:2333/add \
+  -H 'Content-Type: application/json' \
+  -d '{"a":1,"b":2}'
+```
+
+Streaming Jobs return SSE:
+
+```bash
+flowllm stream_demo query="Hi" repeat=3 interval=0.05
+
+curl -N http://127.0.0.1:2333/stream_demo \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"Hi","repeat":3,"interval":0.05}'
+```
+
+Built-in Jobs:
+
+| Job | Backend | Description |
+| --- | --- | --- |
+| `version` | `base` | Returns the FlowLLM package version. |
+| `health_check` | `base` | Returns a component health-check summary. |
+| `help` | `base` | Lists registered Jobs and their metadata. |
+| `demo` | `base` | Two-step echo example. |
+| `add` | `base` | Adds two numbers. |
+| `stream_demo` | `stream` | Streams the input text character by character. |
+
+## Configuration
+
+The default configuration is located at `flowllm/config/default.yaml`. Root configuration sections include application parameters, service, Jobs, and Components:
 
 ```yaml
-backend: mcp
+service:
+  backend: http
 
-mcp:
-  transport: sse
-  host: "0.0.0.0"
-  port: 8001
-
-flow:
-  demo_mcp_flow:
-    flow_content: MockSearchOp()
-    description: "Search results for a given query."
-    input_schema:
-      query:
-        type: string
-        description: "User query"
-        required: true
-
-llm:
-  default:
-    backend: openai_compatible
-    model_name: qwen3-30b-a3b-instruct-2507
-    params:
-      temperature: 0.6
-    token_count: # Optional, configure token counting backend
-      model_name: Qwen/Qwen3-30B-A3B-Instruct-2507
-      backend: hf  # Supports base, openai, hf, etc.
-      params:
-        use_mirror: true
+jobs:
+  add:
+    backend: base
+    description: "add two numbers"
+    steps:
+      - backend: add_step
 ```
 
-### 🚀 Step3 Start MCP Service
+You can override model and embedding variables through `.env`:
 
 ```bash
-flowllm \
-  config=my_mcp_config \
-  backend=mcp \  # Optional, overrides config
-  mcp.transport=sse \  # Optional, overrides config
-  mcp.port=8001 \  # Optional, overrides config
-  llm.default.model_name=qwen3-30b-a3b-thinking-2507  # Optional, overrides config
+cat > .env <<'EOF'
+LLM_BACKEND=openai
+LLM_MODEL_NAME=qwen3.7-plus
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+
+EMBEDDING_BACKEND=openai
+EMBEDDING_MODEL_NAME=text-embedding-v4
+EMBEDDING_API_KEY=your_api_key
+EMBEDDING_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+EOF
 ```
 
-After the service starts, refer to the [Client Guide](docs/zh/guide/client_guide.md) to use the service and obtain the tool_call required by the model.
+You can also specify a YAML or JSON configuration file:
 
----
+```bash
+flowllm start config=/path/to/app.yaml
+```
 
-## 📚 Detailed Documentation
+Configuration parsing supports `${VAR}`, `${VAR:-default}`, booleans, numbers, JSON lists and dictionaries, and automatic `null` conversion.
 
-### 🚀 Getting Started
-- [Installation Guide](docs/zh/guide/installation.md)
-- [Configuration Guide](docs/zh/guide/config_guide.md)
+## Code Framework
 
-### 🔧 Op Development
-- [Op Introduction](docs/zh/guide/op_introduction.md)
-- [Simple Op Guide](docs/zh/guide/async_op_minimal_guide.md)
-- [LLM Op Guide](docs/zh/guide/async_op_llm_guide.md)
-- [Advanced Op Guide](docs/zh/guide/async_op_advance_guide.md)
-- [Tool Op Guide](docs/zh/guide/async_tool_op_guide.md)
-- [File Tool Op Guide](docs/zh/guide/file_tool_op_guide.md)
-- [Vector Store Guide](docs/zh/guide/vector_store_guide.md)
+FlowLLM's core layering is:
 
-### 🔀 Flow Orchestration
-- [Flow Guide](docs/zh/guide/flow_guide.md)
+```text
+CLI / Client -> Service -> Application -> Job -> Step -> Component
+```
 
-### 🌐 Service Usage
-- [HTTP Service Guide](docs/zh/guide/http_service_guide.md)
-- [HTTP Stream Guide](docs/zh/guide/http_stream_guide.md)
-- [MCP Service Guide](docs/zh/guide/mcp_service_guide.md)
-- [CMD Service Guide](docs/zh/guide/cmd_service_guide.md)
-- [Client Guide](docs/zh/guide/client_guide.md)
+| Layer | Role |
+| --- | --- |
+| `Application` | Loads configuration, creates the workspace, assembles Service, Components, and Jobs, and starts lifecycles in dependency order. |
+| `Service` | Exposes servable Jobs as HTTP routes or MCP tools. |
+| `Job` | Orchestrates externally callable capabilities or background processes by executing Steps in order. |
+| `Step` | Atomic workflow operation that reads and writes `RuntimeContext`, `Response`, and streaming queues. |
+| `Component` | Long-lived infrastructure such as LLMs, Embeddings, Embedding Stores, and Agent Wrappers. |
+| `Registry` | Global registry `R`, which looks up implementations by `(component_type, backend_name)`. |
 
----
+Minimal example for adding a Step:
 
-## 🤝 Contributing
+```python
+from flowllm.components import R
+from flowllm.steps import BaseStep
 
-Contributions of all forms are welcome! For participation methods, refer to the [Contribution Guide](docs/zh/guide/contribution.md).
 
----
+@R.register("reverse_step")
+class ReverseStep(BaseStep):
+    async def execute(self):
+        text = self.context.get("text", "")
+        self.context.response.answer = text[::-1]
+        return self.context.response
+```
 
-## 📄 License
+Then declare the Job in configuration:
 
-This project is licensed under the [Apache 2.0](LICENSE) license.
+```yaml
+jobs:
+  reverse:
+    backend: base
+    description: "reverse text"
+    parameters:
+      type: object
+      properties:
+        text:
+          type: string
+      required:
+        - text
+    steps:
+      - backend: reverse_step
+```
 
----
+After adding an implementation, make sure the module is imported in the package `__init__.py`; otherwise, the registration decorator will not run. See the [code framework](docs/en/framework.md) for details.
 
-## Star 历史
+## MCP Service
+
+When the service backend is set to `mcp`, FlowLLM exposes non-streaming Jobs with `enable_serve: true` as MCP tools. `StreamJob` is not exposed by MCP Service.
+
+```yaml
+service:
+  backend: mcp
+  transport: sse
+  host: 127.0.0.1
+  port: 2333
+```
+
+MCP transport supports `stdio`, `sse`, and `streamable-http`.
+
+## Documentation
+
+- [Quick Start](docs/en/quick_start.md)
+- [Code Framework](docs/en/framework.md)
+- [Contributing](docs/en/contributing.md)
+- [FlowLLM Development Skill](skills/flowllm_dev/SKILL.md)
+
+## Open Source and Contributing
+
+FlowLLM is licensed under Apache 2.0. Before contributing, read the [contribution guide](docs/en/contributing.md) and [development skill](skills/flowllm_dev/SKILL.md), then run:
+
+```bash
+pre-commit run --all-files
+pytest
+```
+
+## License
+
+This project is open source under the Apache License 2.0. See [LICENSE](./LICENSE) for details.
+
+## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)
-
----
-
-<p align="center">
-  <a href="https://github.com/flowllm-ai/flowllm">GitHub</a> •
-  <a href="https://flowllm-ai.github.io/flowllm/">Documentation</a> •
-  <a href="https://pypi.org/project/flowllm/">PyPI</a>
-</p>
-

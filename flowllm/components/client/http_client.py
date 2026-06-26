@@ -1,0 +1,116 @@
+"""HTTP client for FlowLLM services."""
+
+import json
+import os
+from collections.abc import AsyncGenerator
+
+import httpx
+
+from .base_client import BaseClient
+from ..component_registry import R
+from ...constants import FLOWLLM_SERVICE_INFO, FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
+from ...enumeration import ChunkEnum
+from ...schema import StreamChunk
+
+
+@R.register("http")
+class HttpClient(BaseClient):
+    """HTTP client that auto-adapts to JSON or SSE via Content-Type."""
+
+    def __init__(self, host: str | None = None, port: int | None = None, timeout: float = 30.0, **kwargs):
+        super().__init__(**kwargs)
+        if not (host and port):
+            if service_info := os.environ.get(FLOWLLM_SERVICE_INFO):
+                try:
+                    data = json.loads(service_info)
+                    host, port = data["host"], data["port"]
+                except Exception:
+                    self.logger.warning(f"Invalid service info: {service_info}")
+                    host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
+            else:
+                host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
+        self.base_url = f"http://{host}:{port}"
+        self.timeout = timeout
+
+    async def _start(self) -> None:
+        if self.client is None:
+            self.client = httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout)
+
+    async def _iter_stream_chunks(self, action: str, payload: dict) -> AsyncGenerator[StreamChunk, None]:
+        """Yield StreamChunks; auto-detects JSON vs SSE."""
+        if self.client is None:
+            raise RuntimeError("Client not initialized. Call _start() first.")
+        async with self.client.stream("POST", f"/{action}", json=payload) as resp:
+            resp.raise_for_status()
+            ctype = resp.headers.get("content-type", "")
+            if ctype.startswith("text/event-stream"):
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data:"):
+                        continue
+                    data_str = line[len("data:") :]
+                    if data_str.strip() == "[DONE]":
+                        return
+                    try:
+                        data = json.loads(data_str)
+                    except json.JSONDecodeError:
+                        continue
+                    chunk = StreamChunk(**data)
+                    if chunk.chunk_type == ChunkEnum.ERROR:
+                        raise RuntimeError(str(chunk.chunk))
+                    if chunk.done:
+                        return
+                    yield chunk
+            else:
+                yield StreamChunk(chunk_type=ChunkEnum.CONTENT, chunk=(await resp.aread()).decode())
+
+    async def stream_chunks(self, action: str, **kwargs) -> AsyncGenerator[StreamChunk, None]:
+        """Yield StreamChunks from an action endpoint."""
+        async for chunk in self._iter_stream_chunks(action, kwargs):
+            yield chunk
+
+    async def list_actions(self) -> list[dict]:
+        if self.client is None:
+            raise RuntimeError("Client not initialized. Call _start() first.")
+        resp = await self.client.get("/openapi.json")
+        resp.raise_for_status()
+        spec = resp.json()
+        actions: list[dict] = []
+        for path, methods in spec.get("paths", {}).items():
+            for method, op in methods.items():
+                actions.append({"action": path.lstrip("/"), "method": method.upper(), **op})
+        return actions
+
+    @staticmethod
+    def _format_for_display(text: str) -> str:
+        """Render JSON as CLI-friendly text; pass through unrecognized payloads."""
+        try:
+            data = json.loads(text)
+        except (ValueError, json.JSONDecodeError):
+            return text
+        if not (isinstance(data, dict) and isinstance(data.get("answer"), str)):
+            return json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else text
+        d = dict(data)
+        answer, success, metadata = d.pop("answer"), d.pop("success", None), d.pop("metadata", None)
+        parts = [answer]
+        status_pieces = []
+        if success is not None:
+            status_pieces.append("✅" if success else "❌")
+        if metadata:
+            status_pieces.append(json.dumps(metadata, ensure_ascii=False))
+        if status_pieces:
+            parts.append(" ".join(status_pieces))
+        if d:
+            parts.append(json.dumps(d, indent=2, ensure_ascii=False))
+        return "\n".join(parts)
+
+    # pylint: disable=invalid-overridden-method
+    async def _execute(self, action: str, payload: dict) -> AsyncGenerator[str, None]:
+        async for chunk in self._iter_stream_chunks(action, payload):
+            chunk_payload = chunk.chunk
+            text = chunk_payload if isinstance(chunk_payload, str) else json.dumps(chunk_payload, ensure_ascii=False)
+            yield self._format_for_display(text)
+
+    async def _close(self) -> None:
+        if self.client is not None:
+            await self.client.aclose()
+            self.client = None

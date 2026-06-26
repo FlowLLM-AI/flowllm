@@ -1,0 +1,156 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="760" viewBox="0 0 1180 760" role="img" aria-labelledby="title desc">
+  <title id="title">FlowLLM framework architecture</title>
+  <desc id="desc">A concise architecture diagram for FlowLLM showing entry clients, service backends, application wiring, jobs, steps, runtime context, reusable components, and workspace state.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7fafc"/>
+      <stop offset="0.54" stop-color="#f3f7f5"/>
+      <stop offset="1" stop-color="#f8f3ef"/>
+    </linearGradient>
+    <linearGradient id="entryGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dff4f0"/>
+      <stop offset="1" stop-color="#dcecf8"/>
+    </linearGradient>
+    <linearGradient id="appGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8e7fb"/>
+      <stop offset="1" stop-color="#f3e8f5"/>
+    </linearGradient>
+    <linearGradient id="runGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0d7"/>
+      <stop offset="1" stop-color="#f9dfd3"/>
+    </linearGradient>
+    <linearGradient id="compGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e4f3df"/>
+      <stop offset="1" stop-color="#dff0f5"/>
+    </linearGradient>
+    <filter id="shadow" x="-8%" y="-16%" width="116%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#1f2937" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      text {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      }
+      .title { font-size: 34px; font-weight: 800; fill: #132033; }
+      .subtitle { font-size: 15px; fill: #64748b; }
+      .band-title { font-size: 18px; font-weight: 800; fill: #1e293b; }
+      .band-note { font-size: 12px; fill: #64748b; }
+      .node-title { font-size: 14px; font-weight: 750; fill: #172033; }
+      .node-text { font-size: 12px; fill: #65758b; }
+      .tiny { font-size: 11px; fill: #718096; }
+      .panel { fill: #ffffff; stroke: rgba(71, 85, 105, 0.16); stroke-width: 1; filter: url(#shadow); }
+      .node { fill: #ffffff; stroke: rgba(71, 85, 105, 0.22); stroke-width: 1; }
+      .label { font-size: 11px; font-weight: 800; fill: #64748b; letter-spacing: 1.2px; }
+    </style>
+  </defs>
+
+  <rect width="1180" height="760" fill="url(#bg)"/>
+  <text class="title" x="590" y="56" text-anchor="middle">FlowLLM Framework</text>
+  <text class="subtitle" x="590" y="84" text-anchor="middle">Config-driven application wiring: Service exposes Jobs, Jobs run Steps, Steps use RuntimeContext and Components.</text>
+
+  <g transform="translate(48,126)">
+    <rect class="panel" x="0" y="0" width="1084" height="96" rx="18"/>
+    <rect x="0" y="0" width="188" height="96" rx="18" fill="url(#entryGrad)"/>
+    <text class="band-title" x="34" y="40">Entry Layer</text>
+    <text class="band-note" x="34" y="62">CLI / Client</text>
+
+    <rect class="node" x="248" y="24" width="150" height="48" rx="12"/>
+    <text class="node-title" x="323" y="45" text-anchor="middle">flowllm CLI</text>
+    <text class="node-text" x="323" y="63" text-anchor="middle">start / action</text>
+
+    <rect class="node" x="466" y="24" width="150" height="48" rx="12"/>
+    <text class="node-title" x="541" y="45" text-anchor="middle">HTTP Client</text>
+    <text class="node-text" x="541" y="63" text-anchor="middle">JSON / SSE</text>
+
+    <rect class="node" x="684" y="24" width="150" height="48" rx="12"/>
+    <text class="node-title" x="759" y="45" text-anchor="middle">MCP Client</text>
+    <text class="node-text" x="759" y="63" text-anchor="middle">tool calls</text>
+
+    <text class="tiny" x="986" y="50" text-anchor="middle">action -&gt; Job</text>
+  </g>
+
+  <g transform="translate(48,262)">
+    <rect class="panel" x="0" y="0" width="1084" height="122" rx="18"/>
+    <rect x="0" y="0" width="188" height="122" rx="18" fill="url(#appGrad)"/>
+    <text class="band-title" x="34" y="48">Service &amp; Wiring</text>
+    <text class="band-note" x="34" y="70">Service / App</text>
+
+    <rect class="node" x="234" y="24" width="164" height="72" rx="13"/>
+    <text class="node-title" x="316" y="49" text-anchor="middle">HTTP Service</text>
+    <text class="node-text" x="316" y="68" text-anchor="middle">FastAPI</text>
+    <text class="node-text" x="316" y="86" text-anchor="middle">POST /job</text>
+
+    <rect class="node" x="432" y="24" width="164" height="72" rx="13"/>
+    <text class="node-title" x="514" y="49" text-anchor="middle">MCP Service</text>
+    <text class="node-text" x="514" y="68" text-anchor="middle">FastMCP</text>
+    <text class="node-text" x="514" y="86" text-anchor="middle">non-stream tools</text>
+
+    <rect class="node" x="650" y="17" width="190" height="86" rx="14"/>
+    <text class="node-title" x="745" y="44" text-anchor="middle">Application</text>
+    <text class="node-text" x="745" y="64" text-anchor="middle">config + wiring</text>
+    <text class="node-text" x="745" y="82" text-anchor="middle">lifecycle + run_job</text>
+
+    <rect class="node" x="884" y="24" width="150" height="72" rx="13"/>
+    <text class="node-title" x="959" y="49" text-anchor="middle">Registry R</text>
+    <text class="node-text" x="959" y="68" text-anchor="middle">@R.register</text>
+    <text class="node-text" x="959" y="86" text-anchor="middle">backend lookup</text>
+  </g>
+
+  <g transform="translate(48,426)">
+    <rect class="panel" x="0" y="0" width="1084" height="142" rx="18"/>
+    <rect x="0" y="0" width="188" height="142" rx="18" fill="url(#runGrad)"/>
+    <text class="band-title" x="34" y="58">Execution Layer</text>
+    <text class="band-note" x="34" y="80">Job / Step</text>
+
+    <rect class="node" x="234" y="25" width="190" height="92" rx="14"/>
+    <text class="node-title" x="329" y="52" text-anchor="middle">Jobs</text>
+    <text class="node-text" x="329" y="73" text-anchor="middle">base · stream</text>
+    <text class="node-text" x="329" y="91" text-anchor="middle">background · cron</text>
+
+    <rect class="node" x="472" y="25" width="190" height="92" rx="14"/>
+    <text class="node-title" x="567" y="52" text-anchor="middle">Steps</text>
+    <text class="node-text" x="567" y="73" text-anchor="middle">common / custom</text>
+    <text class="node-text" x="567" y="91" text-anchor="middle">BaseStep.execute()</text>
+
+    <rect class="node" x="710" y="25" width="190" height="92" rx="14"/>
+    <text class="node-title" x="805" y="52" text-anchor="middle">RuntimeContext</text>
+    <text class="node-text" x="805" y="73" text-anchor="middle">data + Response</text>
+    <text class="node-text" x="805" y="91" text-anchor="middle">stream_queue</text>
+
+    <rect class="node" x="948" y="25" width="96" height="92" rx="14"/>
+    <text class="node-title" x="996" y="61" text-anchor="middle">Response</text>
+    <text class="node-text" x="996" y="82" text-anchor="middle">JSON / SSE</text>
+  </g>
+
+  <g transform="translate(48,610)">
+    <rect class="panel" x="0" y="0" width="1084" height="96" rx="18"/>
+    <rect x="0" y="0" width="188" height="96" rx="18" fill="url(#compGrad)"/>
+    <text class="band-title" x="34" y="40">Components &amp; State</text>
+    <text class="band-note" x="34" y="62">Components</text>
+
+    <rect class="node" x="234" y="24" width="134" height="48" rx="12"/>
+    <text class="node-title" x="301" y="45" text-anchor="middle">AS LLM</text>
+    <text class="node-text" x="301" y="63" text-anchor="middle">ChatModel</text>
+
+    <rect class="node" x="400" y="24" width="134" height="48" rx="12"/>
+    <text class="node-title" x="467" y="45" text-anchor="middle">Embedding</text>
+    <text class="node-text" x="467" y="63" text-anchor="middle">model + store</text>
+
+    <rect class="node" x="566" y="24" width="134" height="48" rx="12"/>
+    <text class="node-title" x="633" y="45" text-anchor="middle">Agent Wrapper</text>
+    <text class="node-text" x="633" y="63" text-anchor="middle">AgentScope / CC</text>
+
+    <rect class="node" x="732" y="24" width="134" height="48" rx="12"/>
+    <text class="node-title" x="799" y="45" text-anchor="middle">Config</text>
+    <text class="node-text" x="799" y="63" text-anchor="middle">YAML + .env</text>
+
+    <rect class="node" x="898" y="24" width="134" height="48" rx="12"/>
+    <text class="node-title" x="965" y="45" text-anchor="middle">Workspace</text>
+    <text class="node-text" x="965" y="63" text-anchor="middle">metadata / session</text>
+  </g>
+
+  <text class="label" x="78" y="116">REQUEST SURFACE</text>
+  <text class="label" x="78" y="252">SERVICE REGISTRATION</text>
+  <text class="label" x="78" y="416">WORKFLOW EXECUTION</text>
+  <text class="label" x="78" y="600">REUSABLE RUNTIME</text>
+  <text class="tiny" x="590" y="736" text-anchor="middle">Boot path: config -&gt; registry lookup -&gt; application wiring -&gt; service endpoints. Request path: client -&gt; service -&gt; job -&gt; steps -&gt; response.</text>
+</svg>
