@@ -23,6 +23,7 @@ classifiers = [
 dependencies = [
     "agentscope>=2.0.2",
     "aiofiles>=24.1.0",
+    "claude-agent-sdk>=0.2.91",
     "croniter>=2.0",
     "fastapi>=0.135.1",
     "fastmcp>=3.1.0",
@@ -36,17 +37,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-claude-code = [
-    "claude-agent-sdk>=0.2.91",
-]
 dev = [
     "pre-commit",
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
-]
-full = [
-    "flowllm[claude-code]",
-    "flowllm[dev]",
 ]
 
 [project.urls]
@@ -55,6 +49,7 @@ Repository = "https://github.com/flowllm-ai/flowllm"
 
 [project.scripts]
 flowllm = "flowllm.application:main"
+fl = "flowllm.lite.cli:main"
 
 [tool.setuptools]
 packages = { find = { where = ["."], include = ["flowllm*"] } }
