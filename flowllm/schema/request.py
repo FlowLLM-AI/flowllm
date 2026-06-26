@@ -1,10 +1,10 @@
-"""Request schema for service endpoints."""
+"""Service request schema."""
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class Request(BaseModel):
-    """Incoming service request; extra fields are allowed for endpoint-specific payloads."""
+    """Incoming service request with extra fields for endpoint payloads."""
 
     model_config = ConfigDict(extra="allow")
 

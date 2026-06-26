@@ -1,8 +1,4 @@
-"""Integration tests: session state persistence and forking in AsAgentWrapper.
-
-Requires LLM_API_KEY (and optionally LLM_BASE_URL / LLM_MODEL_NAME) in the
-environment or a .env file at the repo root. Hits the real LLM API.
-"""
+"""Integration tests for session persistence and forking in AgentWrapper."""
 
 import asyncio
 import sys
@@ -18,7 +14,7 @@ from flowllm.enumeration import ComponentEnum  # noqa: E402
 
 
 async def _run_session_persistence() -> None:
-    """Two consecutive replies with the same session_id should share context."""
+    """Same session_id across replies should share context."""
     with workspace_env() as env:
         app = await env.make_app()
         try:
@@ -26,7 +22,6 @@ async def _run_session_persistence() -> None:
 
             sid = "test-persist-session"
 
-            # First call: establish session
             _, msg_1 = await wrapper.reply(
                 "My favorite color is blue. Remember that.",
                 session_id=sid,
@@ -36,13 +31,11 @@ async def _run_session_persistence() -> None:
             print(f"\n[session_persist] reply 1: {text_1!r}")
             assert text_1, "Empty first reply"
 
-            # Verify session file was created
             files_after_1 = env.session_state_files()
             print(f"[session_persist] session files after reply 1: {files_after_1}")
             assert len(files_after_1) == 1, f"Expected 1 session file, got {len(files_after_1)}"
             assert sid in files_after_1[0].name
 
-            # Second call: same session_id — agent should have previous context
             _, msg_2 = await wrapper.reply(
                 "What is my favorite color?",
                 session_id=sid,
@@ -58,7 +51,7 @@ async def _run_session_persistence() -> None:
 
 
 async def _run_fork_session() -> None:
-    """fork_session=True should create a new session file with a new session_id."""
+    """fork_session=True creates a new session file with a different ID."""
     with workspace_env() as env:
         app = await env.make_app()
         try:
@@ -66,7 +59,6 @@ async def _run_fork_session() -> None:
 
             sid = "test-fork-origin"
 
-            # Establish original session
             await wrapper.reply(
                 "The secret number is 42.",
                 session_id=sid,
@@ -75,7 +67,6 @@ async def _run_fork_session() -> None:
             files_before_fork = env.session_state_files()
             assert len(files_before_fork) == 1
 
-            # Fork the session
             forked_sid, msg_fork = await wrapper.reply(
                 "What is the secret number?",
                 session_id=sid,
@@ -86,14 +77,12 @@ async def _run_fork_session() -> None:
             print(f"\n[fork_session] forked reply: {text_fork!r}")
             assert "42" in text_fork, f"Forked session should recall '42', got: {text_fork!r}"
 
-            # Verify: original file still exists + new forked file created
             files_after_fork = env.session_state_files()
             print(f"[fork_session] session files after fork: {[f.name for f in files_after_fork]}")
             assert (
                 len(files_after_fork) == 2
             ), f"Expected 2 session files (original + fork), got {len(files_after_fork)}"
 
-            # Forked session_id should differ from the original
             assert forked_sid != sid, f"Forked session_id should differ from original, got {forked_sid!r}"
 
             original_file = files_before_fork[0]
@@ -105,7 +94,7 @@ async def _run_fork_session() -> None:
 
 
 async def _run_no_session_id() -> None:
-    """When session_id is empty, no session file should be created."""
+    """No session_id means no session file created."""
     with workspace_env() as env:
         app = await env.make_app()
         try:

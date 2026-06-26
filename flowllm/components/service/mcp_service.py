@@ -31,22 +31,15 @@ class MCPService(BaseService):
         self.host: str = host
         self.port: int = port
 
-    # ----- BaseService contract ------------------------------------------
-
     def build_service(self, app: "Application") -> None:
-        self.service = FastMCP(
-            name=app.config.app_name,
-            lifespan=self._lifespan(app, self.host, self.port),
-        )
+        self.service = FastMCP(name=app.config.app_name, lifespan=self._lifespan(app, self.host, self.port))
 
     def add_job(self, job: BaseJob) -> bool:
-        """Register a non-stream job as an MCP tool; StreamJobs are unsupported."""
         if isinstance(job, StreamJob):
             return False
 
         async def execute_tool(**kwargs):
-            response = await job(**kwargs)
-            return response.answer
+            return (await job(**kwargs)).answer
 
         self.service.add_tool(
             FunctionTool(
@@ -59,9 +52,7 @@ class MCPService(BaseService):
         return True
 
     def start_service(self, app: "Application") -> None:
-        """Run the MCP server; bind host/port only for network transports."""
         transport_kwargs: dict = {}
         if self.transport != "stdio":
-            transport_kwargs["host"] = self.host
-            transport_kwargs["port"] = self.port
+            transport_kwargs.update(host=self.host, port=self.port)
         self.service.run(transport=self.transport, show_banner=False, **transport_kwargs)

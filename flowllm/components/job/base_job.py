@@ -42,7 +42,6 @@ class BaseJob(BaseComponent):
         self.step_specs.clear()
 
     def _resolve_step(self, raw: ComponentConfig | dict) -> tuple[type["BaseStep"], dict]:
-        """Validate a step config and look up its class via the registry."""
         config = raw if isinstance(raw, ComponentConfig) else ComponentConfig(**raw)
         if not config.backend:
             raise ValueError("Step is missing the required 'backend' field")
@@ -54,11 +53,9 @@ class BaseJob(BaseComponent):
         return step_cls, params
 
     def _build_steps(self) -> list["BaseStep"]:
-        # dict(params) copies kwargs so steps cannot mutate the shared spec.
         return [step_cls(**dict(params)) for step_cls, params in self.step_specs]
 
     async def __call__(self, **kwargs) -> Response:
-        """Run all steps in order, capturing any failure into the response."""
         merged = {**self.kwargs, **kwargs}
         context = RuntimeContext(**merged)
         try:

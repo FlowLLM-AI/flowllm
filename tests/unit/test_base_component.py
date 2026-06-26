@@ -1,4 +1,4 @@
-"""Tests for BaseComponent, Dependency, and ComponentMixin."""
+"""Unit tests for BaseComponent lifecycle and dependency injection."""
 
 # pylint: disable=protected-access,missing-function-docstring,missing-class-docstring,attribute-defined-outside-init
 
@@ -12,7 +12,7 @@ from flowllm.components.base_component import BaseComponent, ComponentMixin, Dep
 from flowllm.enumeration import ComponentEnum
 
 
-# -- Test subclasses ----------------------------------------------------------
+# Test subclasses
 
 
 class StubComponent(BaseComponent):
@@ -44,7 +44,7 @@ class FailCloseComponent(StubComponent):
         raise RuntimeError("close failed")
 
 
-# -- Dependency ---------------------------------------------------------------
+# Dependency
 
 
 def test_dependency_repr_optional():
@@ -64,7 +64,7 @@ def test_dependency_getattr_raises():
         _ = dep.some_method
 
 
-# -- bind ---------------------------------------------------------------------
+# bind
 
 
 def test_bind_returns_none_for_empty_name():
@@ -112,7 +112,7 @@ def test_bind_optional_flag():
     assert dep.optional is False
 
 
-# -- dependencies property ----------------------------------------------------
+# dependencies property
 
 
 def test_dependencies_lists_unresolved():
@@ -124,7 +124,7 @@ def test_dependencies_lists_unresolved():
     assert len(deps) == 2
 
 
-# -- lifecycle ----------------------------------------------------------------
+# lifecycle
 
 
 def test_start_close_idempotent():
@@ -188,7 +188,7 @@ def test_close_closes_owned_when_parent_close_fails():
     asyncio.run(run())
 
 
-# -- standalone resolution ----------------------------------------------------
+# standalone resolution
 
 
 def test_resolve_standalone_optional_becomes_none():
@@ -230,7 +230,7 @@ def test_resolve_standalone_required_no_factory_keeps_placeholder():
     asyncio.run(run())
 
 
-# -- owned component lifecycle cascade ----------------------------------------
+# owned lifecycle cascade
 
 
 def test_owned_components_started_and_closed():
@@ -251,7 +251,7 @@ def test_owned_components_started_and_closed():
     asyncio.run(run())
 
 
-# -- context-bound resolution -------------------------------------------------
+# context-bound resolution
 
 
 def test_resolve_from_context():
@@ -300,7 +300,7 @@ def test_resolve_from_context_required_missing_raises():
     asyncio.run(run())
 
 
-# -- ComponentMixin paths -----------------------------------------------------
+# ComponentMixin paths
 
 
 def test_workspace_path_no_context():
@@ -329,7 +329,7 @@ def test_to_workspace_relative_outside_workspace():
     assert result == "/some/other/path"
 
 
-# -- workspace metadata paths -----------------------------------------------------
+# workspace metadata paths
 
 
 def test_workspace_metadata_path_no_context():

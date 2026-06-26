@@ -13,34 +13,12 @@ from .base_client import BaseClient
 from ..component_registry import R
 from ...constants import FLOWLLM_SERVICE_INFO, FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
 
-_TRANSPORT_MAP = {
-    "sse": SSETransport,
-    "stdio": StdioTransport,
-    "streamable-http": StreamableHttpTransport,
-}
+_TRANSPORT_MAP = {"sse": SSETransport, "stdio": StdioTransport, "streamable-http": StreamableHttpTransport}
 
 
 @R.register("mcp")
 class MCPClient(BaseClient):
-    """MCP client that communicates with FlowLLM MCP service via fastmcp.Client.
-
-    Usage:
-        # SSE (default)
-        client = MCPClient(host="localhost", port=8000)
-        async with client:
-            async for text in client(action="my_tool", query="hello"):
-                print(text)
-
-        # Streamable HTTP
-        client = MCPClient(transport="streamable-http", host="localhost", port=8000)
-
-        # Stdio
-        client = MCPClient(transport="stdio", command="python", args=["server.py"])
-
-        # Custom transport object
-        from fastmcp.client import SSETransport
-        client = MCPClient(transport=SSETransport(url="http://host:port/sse"))
-    """
+    """MCP client via fastmcp; supports sse, stdio, streamable-http transports."""
 
     def __init__(
         self,
@@ -51,42 +29,31 @@ class MCPClient(BaseClient):
         **kwargs,
     ):
         super().__init__(**kwargs)
-
         if isinstance(transport, str) and transport not in _TRANSPORT_MAP:
             raise ValueError(f"Unknown transport: {transport!r}, expected one of {list(_TRANSPORT_MAP)}")
-
         if isinstance(transport, str) and transport != "stdio":
             if not (host and port):
                 if service_info := os.environ.get(FLOWLLM_SERVICE_INFO):
                     try:
                         data = json.loads(service_info)
-                        host = data["host"]
-                        port = data["port"]
+                        host, port = data["host"], data["port"]
                     except Exception:
                         self.logger.warning(f"Invalid service info: {service_info}")
                         host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
                 else:
                     host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
-            self.host = host
-            self.port = port
-
+            self.host, self.port = host, port
         self.transport = transport
         self.timeout = timeout
 
     def _build_transport(self):
         if not isinstance(self.transport, str):
             return self.transport
-
         cls = _TRANSPORT_MAP[self.transport]
-
         if self.transport == "stdio":
-            command = self.kwargs.get("command", "")
-            args = self.kwargs.get("args", [])
-            return cls(command=command, args=args)
-
+            return cls(command=self.kwargs.get("command", ""), args=self.kwargs.get("args", []))
         path = "/sse" if self.transport == "sse" else "/mcp"
-        url = f"http://{self.host}:{self.port}{path}"
-        return cls(url=url)
+        return cls(url=f"http://{self.host}:{self.port}{path}")
 
     # pylint: disable=unnecessary-dunder-call
     async def _start(self) -> None:
@@ -98,16 +65,13 @@ class MCPClient(BaseClient):
     async def _execute(self, action: str, payload: dict) -> AsyncGenerator[str, None]:
         if self.client is None:
             raise RuntimeError("Client not initialized. Call _start() first.")
-
         result: CallToolResult = await self.client.call_tool(action, payload)
         yield self._extract_text(result)
 
     async def list_actions(self) -> list[dict]:
-        """Return raw MCP Tool dumps; each dict gets an `action` key (the tool name)."""
         if self.client is None:
             raise RuntimeError("Client not initialized. Call _start() first.")
-        tools = await self.client.list_tools()
-        return [tool.model_dump() for tool in tools]
+        return [tool.model_dump() for tool in await self.client.list_tools()]
 
     # pylint: disable=unnecessary-dunder-call
     async def _close(self) -> None:

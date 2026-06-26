@@ -1,4 +1,4 @@
-"""Logger utilities supporting both loguru and standard logging backends."""
+"""Logger utilities (loguru / stdlib)."""
 
 import logging
 import os
@@ -95,7 +95,7 @@ def get_logger(
     log_to_file: bool = True,
     force_init: bool = False,
 ):
-    """Return the global logger, initializing sinks on first call (or when force_init)."""
+    """Return the global logger, initializing on first call."""
     global _logger
 
     if _logger is not None and not force_init:

@@ -1,4 +1,4 @@
-"""Application configuration models."""
+"""Application configuration schema."""
 
 import os
 
@@ -8,7 +8,7 @@ from ..enumeration import ComponentEnum
 
 
 class ComponentConfig(BaseModel):
-    """Base config for a component; extra fields allowed for backend-specific options."""
+    """Base component config with extra fields for backend-specific options."""
 
     model_config = ConfigDict(extra="allow")
 
@@ -16,7 +16,7 @@ class ComponentConfig(BaseModel):
 
 
 class JobConfig(ComponentConfig):
-    """Config for a job — an ordered sequence of step components. Keyed by name in ApplicationConfig.jobs."""
+    """Config for a job: an ordered sequence of steps."""
 
     description: str = Field(default="", description="Human-readable description")
     parameters: dict = Field(default_factory=dict, description="Job-level parameters")
@@ -25,15 +25,12 @@ class JobConfig(ComponentConfig):
 
 
 class ApplicationConfig(BaseModel):
-    """Root config for the FlowLLM application."""
+    """Root application config."""
 
     app_name: str = Field(default=os.getenv("APP_NAME", "FlowLLM"), description="Application display name")
     workspace_dir: str = Field(default=".flowllm", description="Workspace root directory for runtime files")
     metadata_dir: str = Field(default="metadata", description="Subdirectory for FlowLLM persistent state")
     session_dir: str = Field(default="session", description="Subdirectory for persisted agent sessions")
-    resource_dir: str = Field(default="resource", description="Subdirectory for external assets")
-    daily_dir: str = Field(default="daily", description="Subdirectory for daily memory")
-    digest_dir: str = Field(default="digest", description="Subdirectory for digest memory")
     enable_logo: bool = Field(default=True, description="Show ASCII logo on startup")
     timezone: str | None = Field(default="Asia/Shanghai", description="IANA timezone; None uses local time")
     language: str = Field(default="", description="Default language for LLM interactions")

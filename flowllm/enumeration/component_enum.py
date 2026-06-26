@@ -1,10 +1,10 @@
-"""Component enumeration module."""
+"""Component type enumeration."""
 
 from enum import Enum
 
 
 class ComponentEnum(str, Enum):
-    """Enumeration of component types for dependency injection and registration."""
+    """Component types for dependency injection."""
 
     BASE = "base"
 

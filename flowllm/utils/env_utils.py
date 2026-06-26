@@ -8,7 +8,7 @@ _LOADED_VALUES: dict[str, str] = {}
 
 
 def _parse_env_file(path: str | Path) -> dict[str, str]:
-    """Parse a simple KEY=VALUE env file and return a key/value dict."""
+    """Parse a KEY=VALUE env file."""
     path = Path(path)
     values: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -33,12 +33,7 @@ def _load_values(values: dict[str, str], *, override: bool) -> dict[str, str]:
 
 
 def load_env(path: str | Path | None = None, *, override: bool = True) -> dict[str, str]:
-    """Load .env from given path, or search cwd and up to 5 parents.
-
-    Returns the key/value pairs loaded into ``os.environ``. Repeated calls without
-    an explicit path are idempotent and return the values loaded by the first
-    successful call.
-    """
+    """Load .env from given path or search cwd and parents."""
     global _LOADED
     global _LOADED_VALUES
     if path is None and _LOADED:

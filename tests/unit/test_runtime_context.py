@@ -10,7 +10,7 @@ from flowllm.components.runtime_context import RuntimeContext
 from flowllm.enumeration import ChunkEnum
 
 
-# -- dict-like access ---------------------------------------------------------
+# dict-like access
 
 
 def test_getitem_setitem():
@@ -53,7 +53,7 @@ def test_update_merges_and_returns_self():
     assert ctx["c"] == 3
 
 
-# -- from_context -------------------------------------------------------------
+# from_context
 
 
 def test_from_context_creates_new_when_none():
@@ -69,7 +69,7 @@ def test_from_context_reuses_existing():
     assert reused["b"] == 2
 
 
-# -- apply_mapping ------------------------------------------------------------
+# apply_mapping
 
 
 def test_apply_mapping_copies_values():
@@ -92,7 +92,7 @@ def test_apply_mapping_empty_is_noop():
     assert result is ctx
 
 
-# -- streaming ----------------------------------------------------------------
+# streaming
 
 
 def test_stream_property():
@@ -141,7 +141,7 @@ def test_add_stream_done():
     asyncio.run(run())
 
 
-# -- response -----------------------------------------------------------------
+# response
 
 
 def test_default_response():

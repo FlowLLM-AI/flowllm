@@ -1,4 +1,4 @@
-"""Cron-scheduled background job that runs its configured steps."""
+"""Cron-scheduled background job."""
 
 import datetime
 from zoneinfo import ZoneInfo
@@ -11,7 +11,7 @@ from ...schema import Response
 
 @R.register("cron")
 class CronJob(BackgroundJob):
-    """Run this job's own steps on a cron expression."""
+    """Run steps on a cron schedule."""
 
     def __init__(self, cron: str, **kwargs):
         super().__init__(**kwargs)
@@ -25,14 +25,11 @@ class CronJob(BackgroundJob):
         await super()._start()
 
     def _next_fire_delay(self) -> float:
-        tz_name = None
-        if self.app_context is not None:
-            tz_name = self.app_context.app_config.timezone
-        now = datetime.datetime.now(ZoneInfo(tz_name)) if tz_name else datetime.datetime.now()
         from croniter import croniter
 
-        nxt = croniter(self.cron_expr, now).get_next(datetime.datetime)
-        return max(0.0, (nxt - now).total_seconds())
+        tz_name = self.app_context.app_config.timezone if self.app_context else None
+        now = datetime.datetime.now(ZoneInfo(tz_name)) if tz_name else datetime.datetime.now()
+        return max(0.0, (croniter(self.cron_expr, now).get_next(datetime.datetime) - now).total_seconds())
 
     async def _execute_steps(self) -> Response:
         context = RuntimeContext(**self.kwargs)
@@ -50,6 +47,4 @@ class CronJob(BackgroundJob):
                 await self._execute_steps()
             except Exception as exc:
                 self.logger.exception(f"Cron job '{self.name}' failed: {exc}")
-        response = Response()
-        response.success = True
-        return response
+        return Response(success=True)

@@ -1,4 +1,4 @@
-"""Response schema for service endpoints and LLM calls."""
+"""Service response schema."""
 
 from typing import Any
 
@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Response(BaseModel):
-    """Standard response envelope; extra fields allowed for endpoint-specific output."""
+    """Standard response envelope with extra fields for endpoint output."""
 
     model_config = ConfigDict(extra="allow")
 

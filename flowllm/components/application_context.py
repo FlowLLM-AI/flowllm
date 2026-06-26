@@ -1,4 +1,4 @@
-"""Application context: shared state container for components, jobs, and service."""
+"""Application context: shared state for components, jobs, and service."""
 
 from typing import TYPE_CHECKING, Any
 
@@ -12,18 +12,10 @@ if TYPE_CHECKING:
 
 
 class ApplicationContext:
-    """Passive state container holding parsed config and wired components.
-
-    The Application class performs the actual wiring (registry lookups and
-    component instantiation); this class only stores the results so that
-    components, jobs, and the service can find each other at runtime.
-    """
+    """Passive state container holding parsed config and wired components."""
 
     def __init__(self, **kwargs):
-        # Parse raw kwargs into a typed, validated config object.
         self.app_config: ApplicationConfig = ApplicationConfig(**kwargs)
-
-        # Populated by Application during initialization.
         self.service: "BaseService | None" = None
         self.components: dict[ComponentEnum, dict[str, "BaseComponent"]] = {}
         self.jobs: dict[str, "BaseJob"] = {}

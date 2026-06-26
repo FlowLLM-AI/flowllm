@@ -1,7 +1,6 @@
 """Return the package version."""
 
 from ..base_step import BaseStep
-
 from ...components import R
 
 

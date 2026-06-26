@@ -1,14 +1,14 @@
-"""Tests for the FlowLLM CLI entry helpers."""
+"""Unit tests for CLI call_server function."""
 
 from flowllm import application as flowllm_module
 
 
 def test_call_server_passes_client_kwargs_to_client(monkeypatch, capsys):
-    """CLI helper forwards connection options to the selected client."""
+    """Verify call_server separates client kwargs from action payload."""
     seen = {}
 
     class FakeClient:
-        """Async client stub that records call arguments."""
+        """Mock client for testing call_server."""
 
         def __init__(self, **kwargs):
             seen["client_kwargs"] = kwargs

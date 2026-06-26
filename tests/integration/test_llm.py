@@ -1,8 +1,4 @@
-"""Integration tests: drive Agent through LLMDemoStep + Application wiring.
-
-Requires LLM_API_KEY (and optionally LLM_BASE_URL / LLM_MODEL_NAME) in the
-environment or a .env file at the repo root. Hits the real Anthropic API.
-"""
+"""Integration tests for LLMDemoStep + Agent through Application wiring."""
 
 import asyncio
 import sys
@@ -21,25 +17,19 @@ from flowllm.steps.common.llm_demo import LLMDemoStep  # noqa: E402
 
 
 class MathResult(BaseModel):
-    """Structured output for a math computation."""
+    """Schema for math evaluation results."""
 
-    expression: str = Field(description="The math expression that was evaluated")
-    result: float = Field(description="The numeric result")
-    explanation: str = Field(description="Brief explanation of the computation")
+    expression: str = Field(description="The math expression evaluated")
+    result: float = Field(description="Numeric result")
+    explanation: str = Field(description="Brief explanation")
 
 
 class SentimentAnalysis(BaseModel):
-    """Structured output for sentiment analysis."""
+    """Schema for sentiment analysis results."""
 
-    sentiment: Literal["positive", "negative", "neutral"] = Field(
-        description="The overall sentiment of the text",
-    )
-    confidence: float = Field(
-        description="Confidence score between 0 and 1",
-    )
-    key_phrases: list[str] = Field(
-        description="Key phrases that indicate the sentiment",
-    )
+    sentiment: Literal["positive", "negative", "neutral"] = Field(description="Overall sentiment")
+    confidence: float = Field(description="Confidence 0-1")
+    key_phrases: list[str] = Field(description="Key phrases indicating sentiment")
 
 
 async def _run_basic_chat(app) -> None:

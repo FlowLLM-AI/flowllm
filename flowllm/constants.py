@@ -6,11 +6,10 @@ FLOWLLM_DEFAULT_HOST = "127.0.0.1"
 
 FLOWLLM_DEFAULT_PORT = 2333
 
-# CRUD steps: file IO limits and truncation marker (shared across CRUD steps).
+# File IO limits and truncation marker.
 DEFAULT_MAX_BYTES = 50 * 1024
 MAX_FILE_READ_BYTES = 200 * 1024 * 1024
 TRUNCATION_NOTICE_MARKER = "<<TRUNCATION_NOTICE>>"
 
-# read_image step: oversized images above this threshold return path & metadata
-# only (no base64) to keep LLM context budgets safe.
+# Oversized images return path & metadata only (no base64).
 DEFAULT_MAX_IMAGE_BYTES = 5 * 1024 * 1024

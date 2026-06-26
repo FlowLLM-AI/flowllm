@@ -43,7 +43,7 @@ def _pid_on_port(port: int) -> int | None:
 
 
 def _scan_flowllm_procs() -> list[tuple[int, str, int]]:
-    """List running 'flowllm ... start' processes as (pid, host, port)."""
+    """List running flowllm start processes."""
     procs: list[tuple[int, str, int]] = []
     for line in _sh(["pgrep", "-af", "flowllm.* start"]).splitlines():
         parts = line.split()
@@ -60,7 +60,7 @@ def _scan_flowllm_procs() -> list[tuple[int, str, int]]:
 
 
 async def _locate_flowllm() -> tuple[str, int, int | None] | None:
-    """Find a running flowllm: try default port, then scanned processes."""
+    """Find a running flowllm instance."""
     if await find_flowllm(FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT) == "flowllm":
         return FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT, _pid_on_port(FLOWLLM_DEFAULT_PORT)
     for pid, host, port in _scan_flowllm_procs():
@@ -70,7 +70,7 @@ async def _locate_flowllm() -> tuple[str, int, int | None] | None:
 
 
 def precheck_start(svc_config: dict | None) -> bool:
-    """Pre-flight check for `start`: False if flowllm is up, exits 1 on port conflict."""
+    """Pre-flight check before starting."""
     host = (svc_config or {}).get("host") or FLOWLLM_DEFAULT_HOST
     port = (svc_config or {}).get("port") or FLOWLLM_DEFAULT_PORT
     port = int(port)
@@ -88,7 +88,7 @@ def precheck_start(svc_config: dict | None) -> bool:
 
 
 def cli_find_flowllm() -> None:
-    """Handle `flowllm find_flowllm`: print HOST/PORT/PID or a hint to start flowllm."""
+    """Print running flowllm HOST/PORT/PID."""
     found = asyncio.run(_locate_flowllm())
     if not found:
         print("flowllm not started. Try: flowllm start", file=sys.stderr)

@@ -1,4 +1,4 @@
-"""Tests for flowllm common steps with only local dependencies."""
+"""Tests for common steps."""
 
 # pylint: disable=protected-access
 
@@ -15,12 +15,12 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resou
 
 
 def _run(coro):
-    """Run an async coroutine on a fresh isolated event loop."""
+    """Run a coroutine synchronously."""
     asyncio.run(coro)
 
 
 def test_add_step_coerces_numeric_inputs():
-    """add accepts numeric strings as numbers, not string concatenation."""
+    """Numeric strings are coerced, not concatenated."""
 
     async def run():
         step = AddStep()
@@ -34,7 +34,7 @@ def test_add_step_coerces_numeric_inputs():
 
 
 def test_add_step_rejects_invalid_inputs():
-    """invalid add arguments should return a failed response instead of throwing or concatenating."""
+    """Invalid arguments return a failed response."""
 
     async def run():
         step = AddStep()
@@ -47,7 +47,7 @@ def test_add_step_rejects_invalid_inputs():
 
 
 class _FakeAgentWrapper(BaseAgentWrapper):
-    """Capture reply kwargs without calling a real model."""
+    """Captures reply kwargs without a real model."""
 
     def __init__(self):
         super().__init__()
@@ -59,7 +59,7 @@ class _FakeAgentWrapper(BaseAgentWrapper):
 
 
 def test_llm_demo_always_registers_add_tool():
-    """LLM demo always passes the add job as a tool."""
+    """Add job is always registered as a tool."""
 
     async def run():
         wrapper = _FakeAgentWrapper()
@@ -74,10 +74,10 @@ def test_llm_demo_always_registers_add_tool():
 
 
 def test_file_graph_health_reports_neo4j_cached_counts():
-    """Neo4j file graph health should not be reported as an empty local graph."""
+    """Neo4j graph reports cached counts correctly."""
 
     class FakeNeo4jGraph:
-        """Minimal Neo4j graph stub with cached health counters."""
+        """Neo4j graph stub with cached counters."""
 
         is_started = True
         _driver = object()

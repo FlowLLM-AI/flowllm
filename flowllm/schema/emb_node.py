@@ -1,4 +1,4 @@
-"""Embedding node — base record carrying text and its vector."""
+"""Embedding node: text record with optional vector."""
 
 from uuid import uuid4
 
@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer, field_valid
 
 
 class EmbNode(BaseModel):
-    """A text record with an optional embedding vector and metadata."""
+    """Text record with optional embedding vector."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -20,15 +20,13 @@ class EmbNode(BaseModel):
     @classmethod
     def validate_embedding(cls, v):
         """Coerce list/tuple to float16 ndarray."""
-        # Coerce list/tuple inputs into a float16 ndarray for compact storage.
         if v is None:
             return v
         return np.array(v, dtype=np.float16)
 
     @field_serializer("embedding")
     def serialize_embedding(self, v: np.ndarray | None, _info):
-        """Serialize ndarray to a JSON-friendly list."""
-        # ndarray is not JSON-serializable; emit a plain list.
+        """Serialize ndarray to list for JSON."""
         if v is None:
             return None
         return v.tolist()

@@ -1,8 +1,4 @@
-"""Integration tests: stream Agent output through StreamLLMDemoStep.
-
-Requires LLM_API_KEY (and optionally LLM_BASE_URL / LLM_MODEL_NAME) in the
-environment or a .env file at the repo root. Hits the real LLM API.
-"""
+"""Integration tests for streaming output through StreamLLMDemoStep."""
 
 import asyncio
 import sys
@@ -19,8 +15,7 @@ from flowllm.schema import StreamChunk  # noqa: E402
 from flowllm.steps.common.stream_llm_demo import StreamLLMDemoStep  # noqa: E402
 from flowllm.utils.common_utils import execute_stream_task  # noqa: E402
 
-# StreamLLMDemoStep always advertises the ``add`` job as a tool. That job only
-# ships in demo.yaml, so inject it into the default config the fixture loads.
+# Inject the ``add`` job that StreamLLMDemoStep expects.
 ADD_JOB = {
     "backend": "base",
     "description": "add two numbers",
@@ -37,7 +32,7 @@ ADD_JOB = {
 
 
 async def _test_stream_llm_basic_chat():
-    """StreamLLMDemoStep streams text chunks via add_stream_string."""
+    """Streams text chunks for a basic chat query."""
     with workspace_env() as env:
         app = await env.make_app(jobs={"add": ADD_JOB})
         try:
@@ -62,7 +57,6 @@ async def _test_stream_llm_basic_chat():
 
             response = task.result()
 
-            # Should have received multiple CONTENT chunks for a longer response
             content_chunks = [c for c in chunks if c.chunk_type == ChunkEnum.CONTENT]
             print(f"\n\n[stream_basic] got {len(content_chunks)} CONTENT chunks")
             assert len(content_chunks) > 1, "Expected multiple CONTENT chunks for streaming"
@@ -72,7 +66,6 @@ async def _test_stream_llm_basic_chat():
             assert text, "Empty assistant response"
             assert "2" in text, f"Expected '2' in response, got: {text!r}"
 
-            # Concatenated stream text should match the final answer
             streamed_text = "".join(c.chunk for c in content_chunks)
             assert streamed_text.strip() == text, f"Stream text mismatch: {streamed_text!r} vs {text!r}"
             print("✓ test_stream_llm_basic_chat passed")
@@ -81,7 +74,7 @@ async def _test_stream_llm_basic_chat():
 
 
 async def _test_stream_llm_with_tool():
-    """StreamLLMDemoStep streams tool call events when tools are used."""
+    """Streams tool call and result events when tools are used."""
     with workspace_env() as env:
         app = await env.make_app(jobs={"add": ADD_JOB})
         try:
@@ -133,7 +126,7 @@ async def _test_stream_llm_with_tool():
 
 
 async def _test_stream_llm_fallback_no_stream():
-    """Without stream_queue, still uses streaming under the hood for real-time output."""
+    """Streaming still works without explicit stream_queue setup."""
     with workspace_env() as env:
         app = await env.make_app(jobs={"add": ADD_JOB})
         try:
@@ -171,22 +164,22 @@ async def _test_stream_llm_fallback_no_stream():
 
 
 def test_stream_llm_basic_chat():
-    """StreamLLMDemoStep streams text chunks via add_stream_string."""
+    """Streams text chunks for basic chat."""
     asyncio.run(_test_stream_llm_basic_chat())
 
 
 def test_stream_llm_with_tool():
-    """StreamLLMDemoStep streams tool call events when tools are used."""
+    """Streams tool call events when tools are used."""
     asyncio.run(_test_stream_llm_with_tool())
 
 
 def test_stream_llm_fallback_no_stream():
-    """Without stream_queue, falls back to non-streaming reply."""
+    """Fallback behavior without explicit stream setup."""
     asyncio.run(_test_stream_llm_fallback_no_stream())
 
 
 async def _demo_stream_print():
-    """Real-time streaming print demo — ask a longer question to see chunked output."""
+    """Demo: real-time streaming print with a longer query."""
     with workspace_env() as env:
         app = await env.make_app(jobs={"add": ADD_JOB})
         try:

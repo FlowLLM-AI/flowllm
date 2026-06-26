@@ -16,44 +16,43 @@ if TYPE_CHECKING:
 
 
 class BaseAgentWrapper(BaseComponent):
-    """Abstract base for agent wrapper components with swappable backends."""
+    """Abstract base for agent wrappers with swappable backends."""
 
     component_type = ComponentEnum.AGENT_WRAPPER
 
     def set_system_prompt(self, prompt: str) -> "BaseAgentWrapper":
-        """Set the agent's system prompt. Returns self for chaining."""
+        """Set the system prompt."""
         self.kwargs["system_prompt"] = prompt
         return self
 
     def add_job_tools(self, job_tools: list[str]) -> "BaseAgentWrapper":
-        """Append job names as tools to the agent. Returns self for chaining."""
+        """Append job tools by name."""
         self.kwargs.setdefault("job_tools", []).extend(job_tools)
         return self
 
     def add_skills(self, skills: list[str] | str) -> "BaseAgentWrapper":
-        """Set agent skill names. Returns self for chaining."""
+        """Set skills configuration."""
         self.kwargs["skills"] = skills
         return self
 
     @property
     def project_path(self) -> Path:
-        """Project root that contains shared assets such as skills."""
+        """Root path of the project."""
         return self.workspace_path
 
     @property
     def project_skills_root(self) -> Path:
-        """Project-level skills directory shared by agent backends."""
+        """Skills directory under project root."""
         return self.project_path / "skills"
 
     def set_output_schema(self, schema: dict | type[BaseModel]) -> "BaseAgentWrapper":
-        """Set a JSON schema for structured output. Accepts dict or BaseModel class. Returns self for chaining."""
+        """Set structured output schema."""
         if isinstance(schema, type) and issubclass(schema, BaseModel):
             schema = schema.model_json_schema()
         self.kwargs["output_schema"] = schema
         return self
 
     def _resolve_job_tools(self, job_tools: list[str]) -> list["BaseJob"]:
-        """Resolve job name strings to BaseJob instances via app_context."""
         if not job_tools:
             return []
         if self.app_context is None:
@@ -66,17 +65,15 @@ class BaseAgentWrapper(BaseComponent):
         return resolved
 
     def _merged_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
-        """Merge component defaults with call-time kwargs; call-time values win."""
         return {**self.kwargs, **kwargs}
 
     @staticmethod
     def _chunk(chunk_type: ChunkEnum = ChunkEnum.CONTENT, **kwargs: Any) -> StreamChunk:
-        """Create a StreamChunk with a short backend-friendly call site."""
         return StreamChunk(chunk_type=chunk_type, **kwargs)
 
     @abstractmethod
     async def reply(self, inputs: Any, **kwargs) -> dict:
-        """Send inputs to the agent and return a dict with session_id and last_message."""
+        """Send inputs and return dict with session_id and last_message."""
 
     async def reply_stream(self, inputs: Any, **kwargs) -> AsyncGenerator[StreamChunk, None]:
-        """Stream agent events as unified StreamChunk objects."""
+        """Stream agent events as StreamChunk objects."""

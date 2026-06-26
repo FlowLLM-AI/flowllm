@@ -1,9 +1,4 @@
-"""Integration tests: drive embedding store through Application wiring.
-
-Requires EMBEDDING_API_KEY (and optionally EMBEDDING_BACKEND / EMBEDDING_BASE_URL /
-EMBEDDING_MODEL_NAME) in the environment or a .env file at the repo root.
-Hits the real embedding API.
-"""
+"""Integration tests for embedding store through Application wiring."""
 
 import asyncio
 import sys
@@ -22,7 +17,7 @@ from flowllm.schema import EmbNode  # noqa: E402
 
 
 def test_embedding_health_check():
-    """health_check() returns True with a working API key."""
+    """health_check() returns True with a valid API key."""
 
     async def run():
         with workspace_env() as env:
@@ -40,7 +35,7 @@ def test_embedding_health_check():
 
 
 def test_embedding_single_text():
-    """Single text produces a valid embedding vector."""
+    """Single text returns a valid embedding vector."""
 
     async def run():
         with workspace_env() as env:
@@ -61,7 +56,7 @@ def test_embedding_single_text():
 
 
 def test_embedding_multiple_texts():
-    """Batch embedding returns correct count and shapes."""
+    """Batch embedding returns correct count and shape."""
 
     async def run():
         with workspace_env() as env:
@@ -84,7 +79,7 @@ def test_embedding_multiple_texts():
 
 
 def test_embedding_cache_hit():
-    """Same text returns cached result on second call."""
+    """Repeated text returns cached result."""
 
     async def run():
         with workspace_env() as env:
@@ -110,7 +105,7 @@ def test_embedding_cache_hit():
 
 
 def test_embedding_node_embeddings():
-    """get_node_embeddings fills embedding field on EmbNode objects."""
+    """get_node_embeddings populates embedding on EmbNode objects."""
 
     async def run():
         with workspace_env() as env:

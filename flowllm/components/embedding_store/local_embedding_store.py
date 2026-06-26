@@ -16,10 +16,7 @@ Miss = tuple[int, str, str]  # (result_index, text, cache_key)
 
 @R.register("local")
 class LocalEmbeddingStore(BaseEmbeddingStore):
-    """Embedding store with LRU cache, disk persistence, and serial batching.
-
-    Delegates actual embedding computation to a bound ``as_embedding`` component.
-    """
+    """LRU-cached embedding store with disk persistence; delegates to as_embedding."""
 
     def __init__(
         self,
@@ -39,13 +36,13 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
 
     @property
     def dimensions(self) -> int:
-        """Return the embedding dimension size."""
+        """Embedding vector dimensionality."""
         assert self.as_embedding is not None, "embedding component not bound"
         return self.as_embedding.dimensions
 
     @property
     def cache_path(self) -> Path:
-        """Return the path to the disk cache file."""
+        """Path to the on-disk cache file."""
         return self.component_metadata_path / f"{self.name}_{self.cache_version}.npz"
 
     async def _start(self) -> None:
@@ -56,7 +53,7 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
         await self.dump()
 
     async def health_check(self, timeout: float = 5.0) -> bool:
-        tag = f"[EMBEDDING HEALTH CHECK] name={self.name} workspace_dir={self.workspace_path}"
+        tag = f"[EMBEDDING HEALTH CHECK] name={self.name}"
         try:
             result = await asyncio.wait_for(self.as_embedding(["ping"]), timeout=timeout)
             if not result or result[0] is None:
@@ -71,16 +68,12 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
             self.logger.error(f"{tag} -> FAIL {type(e).__name__}: {e}")
         return self.is_healthy
 
-    # -- Public API --
-
     async def get_embeddings(self, input_text: list[str], **kwargs) -> list[np.ndarray | None]:
         texts = [self._truncate(t) for t in input_text]
         results, misses = self._partition_by_cache(texts)
         if misses:
             await self._fill_misses(misses, results, **kwargs)
         return results
-
-    # -- Batching --
 
     def _truncate(self, text: str) -> str:
         return text if len(text) <= self.max_input_length else text[: self.max_input_length]
@@ -98,10 +91,8 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
         return results, misses
 
     async def _fill_misses(self, misses: list[Miss], results: list[np.ndarray | None], **kwargs) -> None:
-        size = self.max_batch_size
-        batches = [misses[i : i + size] for i in range(0, len(misses), size)]
-        for batch in batches:
-            for idx, key, emb in await self._compute_batch(batch, **kwargs):
+        for i in range(0, len(misses), self.max_batch_size):
+            for idx, key, emb in await self._compute_batch(misses[i : i + self.max_batch_size], **kwargs):
                 results[idx] = emb
                 self._cache_put(key, emb)
 
@@ -112,10 +103,8 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
             return []
         out: list[tuple[int, str, np.ndarray]] = []
         for (idx, _text, key), raw in zip(batch, embeddings):
-            if raw is None:
-                continue
-            emb = self._normalize_dim(np.asarray(raw, dtype=np.float16))
-            out.append((idx, key, emb))
+            if raw is not None:
+                out.append((idx, key, self._normalize_dim(np.asarray(raw, dtype=np.float16))))
         return out
 
     async def _call_with_retry(self, texts: list[str], **kwargs) -> list[list[float] | None] | None:
@@ -139,8 +128,6 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
             return np.pad(emb, (0, self.dimensions - len(emb)))
         return emb[: self.dimensions]
 
-    # -- Cache --
-
     def _cache_key(self, text: str) -> str:
         return hashlib.sha256(text.encode() + self._key_suffix).hexdigest()
 
@@ -161,8 +148,6 @@ class LocalEmbeddingStore(BaseEmbeddingStore):
         if len(cache) >= self.max_cache_size:
             cache.popitem(last=False)
         cache[key] = embedding
-
-    # -- Persistence --
 
     async def load(self) -> None:
         self._cache.clear()

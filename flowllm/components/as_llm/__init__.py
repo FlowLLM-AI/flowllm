@@ -19,10 +19,7 @@ from ...enumeration import ComponentEnum
 
 
 class BaseAsLLM(BaseComponent):
-    """Base wrapper for AgentScope chat models.
-
-    Subclasses set ``credential_cls`` and inherit ``_start`` / ``_close``.
-    """
+    """Base wrapper for AgentScope chat models. Subclasses set credential_cls."""
 
     component_type = ComponentEnum.AS_LLM
     credential_cls: type[CredentialBase]

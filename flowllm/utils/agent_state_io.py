@@ -1,9 +1,4 @@
-"""AgentState JSONL dump / load.
-
-Format:
-  Line 1 — header Msg: AgentState.summary as content, state scalars in metadata.
-  Lines 2+ — AgentState.context, one Msg per line.
-"""
+"""AgentState JSONL dump / load."""
 
 import os
 from pathlib import Path
@@ -24,30 +19,30 @@ class AsStateHandler:
 
     @classmethod
     def for_session(cls, directory: str | Path, session_id: str) -> "AsStateHandler":
-        """Create a handler for ``<directory>/<session_id>.jsonl``."""
+        """Create a handler for a session file."""
         if not session_id or Path(session_id).name != session_id:
             raise ValueError(f"Invalid session_id: {session_id!r}")
         return cls(Path(directory) / f"{session_id}.jsonl")
 
     def exists(self) -> bool:
-        """Return whether the state file exists."""
+        """Check if state file exists."""
         return self.path.is_file()
 
     async def load_or_none(self) -> AgentState | None:
-        """Load state if the file exists, otherwise return ``None``."""
+        """Load state or return None."""
         if not self.exists():
             return None
         return await self.load()
 
     async def delete(self) -> bool:
-        """Delete the state file if present. Returns whether a file was removed."""
+        """Delete the state file if present."""
         if not self.exists():
             return False
         self.path.unlink()
         return True
 
     async def dump(self, state: AgentState) -> Path:
-        """Write *state* to ``self.path`` in JSONL format."""
+        """Write state as JSONL."""
         self.path.parent.mkdir(parents=True, exist_ok=True)
         header = UserMsg(
             name="__state__",
@@ -63,7 +58,7 @@ class AsStateHandler:
         return self.path
 
     async def load(self) -> AgentState:
-        """Read an AgentState back from ``self.path``."""
+        """Read state from JSONL."""
         async with aiofiles.open(self.path, encoding="utf-8") as f:
             lines = (await f.read()).splitlines()
         if not lines:

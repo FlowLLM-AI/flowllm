@@ -15,51 +15,34 @@ from ...schema import StreamChunk
 
 @R.register("http")
 class HttpClient(BaseClient):
-    """HTTP client that auto-adapts to JSON or SSE endpoints via Content-Type."""
+    """HTTP client that auto-adapts to JSON or SSE via Content-Type."""
 
-    def __init__(
-        self,
-        host: str | None = None,
-        port: int | None = None,
-        timeout: float = 30.0,
-        **kwargs,
-    ):
+    def __init__(self, host: str | None = None, port: int | None = None, timeout: float = 30.0, **kwargs):
         super().__init__(**kwargs)
-
-        # Resolve host/port: explicit args > env var > defaults
         if not (host and port):
             if service_info := os.environ.get(FLOWLLM_SERVICE_INFO):
                 try:
                     data = json.loads(service_info)
-                    host = data["host"]
-                    port = data["port"]
+                    host, port = data["host"], data["port"]
                 except Exception:
                     self.logger.warning(f"Invalid service info: {service_info}")
                     host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
             else:
                 host, port = FLOWLLM_DEFAULT_HOST, FLOWLLM_DEFAULT_PORT
-
         self.base_url = f"http://{host}:{port}"
         self.timeout = timeout
 
     async def _start(self) -> None:
-        """Initialize the HTTP client."""
         if self.client is None:
             self.client = httpx.AsyncClient(base_url=self.base_url, timeout=self.timeout)
 
     async def _iter_stream_chunks(self, action: str, payload: dict) -> AsyncGenerator[StreamChunk, None]:
-        """Send request and yield raw StreamChunks; auto-detects JSON vs SSE via Content-Type.
-
-        For JSON responses: yields a single CONTENT chunk with the raw response body.
-        For SSE responses: yields each streaming chunk as it arrives.
-        """
+        """Yield StreamChunks; auto-detects JSON vs SSE."""
         if self.client is None:
             raise RuntimeError("Client not initialized. Call _start() first.")
-
         async with self.client.stream("POST", f"/{action}", json=payload) as resp:
             resp.raise_for_status()
             ctype = resp.headers.get("content-type", "")
-
             if ctype.startswith("text/event-stream"):
                 async for line in resp.aiter_lines():
                     if not line.startswith("data:"):
@@ -73,23 +56,19 @@ class HttpClient(BaseClient):
                         continue
                     chunk = StreamChunk(**data)
                     if chunk.chunk_type == ChunkEnum.ERROR:
-                        # Surface server-side errors as exceptions so callers don't
-                        # mistake error chunks for valid content.
                         raise RuntimeError(str(chunk.chunk))
                     if chunk.done:
                         return
                     yield chunk
             else:
-                body = await resp.aread()
-                yield StreamChunk(chunk_type=ChunkEnum.CONTENT, chunk=body.decode())
+                yield StreamChunk(chunk_type=ChunkEnum.CONTENT, chunk=(await resp.aread()).decode())
 
     async def stream_chunks(self, action: str, **kwargs) -> AsyncGenerator[StreamChunk, None]:
-        """HTTP-specific richer access: yield raw StreamChunk objects (no display formatting)."""
+        """Yield StreamChunks from an action endpoint."""
         async for chunk in self._iter_stream_chunks(action, kwargs):
             yield chunk
 
     async def list_actions(self) -> list[dict]:
-        """Return raw OpenAPI operations; each dict gets an `action` key (path without leading '/')."""
         if self.client is None:
             raise RuntimeError("Client not initialized. Call _start() first.")
         resp = await self.client.get("/openapi.json")
@@ -103,7 +82,7 @@ class HttpClient(BaseClient):
 
     @staticmethod
     def _format_for_display(text: str) -> str:
-        """Render a JSON response as human-friendly CLI text; pass through unrecognized payloads."""
+        """Render JSON as CLI-friendly text; pass through unrecognized payloads."""
         try:
             data = json.loads(text)
         except (ValueError, json.JSONDecodeError):
@@ -111,9 +90,7 @@ class HttpClient(BaseClient):
         if not (isinstance(data, dict) and isinstance(data.get("answer"), str)):
             return json.dumps(data, indent=2, ensure_ascii=False) if isinstance(data, (dict, list)) else text
         d = dict(data)
-        answer = d.pop("answer")
-        success = d.pop("success", None)
-        metadata = d.pop("metadata", None)
+        answer, success, metadata = d.pop("answer"), d.pop("success", None), d.pop("metadata", None)
         parts = [answer]
         status_pieces = []
         if success is not None:
@@ -128,14 +105,12 @@ class HttpClient(BaseClient):
 
     # pylint: disable=invalid-overridden-method
     async def _execute(self, action: str, payload: dict) -> AsyncGenerator[str, None]:
-        """Yield text chunks for CLI display; JSON responses are pretty-formatted."""
         async for chunk in self._iter_stream_chunks(action, payload):
             chunk_payload = chunk.chunk
             text = chunk_payload if isinstance(chunk_payload, str) else json.dumps(chunk_payload, ensure_ascii=False)
             yield self._format_for_display(text)
 
     async def _close(self) -> None:
-        """Close the HTTP client."""
         if self.client is not None:
             await self.client.aclose()
             self.client = None

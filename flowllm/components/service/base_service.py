@@ -16,41 +16,28 @@ if TYPE_CHECKING:
 
 
 class BaseService(BaseComponent):
-    """Skeleton for services (HTTP, MCP, ...) that turn jobs into endpoints or tools."""
+    """Skeleton for services (HTTP, MCP, ...) that turn jobs into endpoints."""
 
     component_type = ComponentEnum.SERVICE
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Underlying framework instance (FastAPI, FastMCP, ...); populated by build_service().
         self.service = None
-
-    # ----- Subclass contract ---------------------------------------------
 
     @abstractmethod
     def build_service(self, app: "Application") -> None:
-        """Instantiate and configure the underlying server framework."""
+        """Build the underlying service instance."""
 
     @abstractmethod
     def add_job(self, job: BaseJob) -> bool:
-        """Register a single job as a callable endpoint or tool.
-
-        Returns True when the job is exposed, False when the service intentionally
-        skips it (for example, unsupported job types).
-        """
+        """Register a job; return True if exposed, False if skipped."""
 
     @abstractmethod
     def start_service(self, app: "Application") -> None:
-        """Block on serving requests until shutdown."""
-
-    # ----- Shared helpers ------------------------------------------------
+        """Start the service and begin serving."""
 
     def _lifespan(self, app: "Application", host: str, port: int):
-        """Build an async-context lifespan that brackets the server with app start/close.
-
-        Publishes the bound address via the FLOWLLM_SERVICE_INFO environment variable so
-        in-process clients can discover where this service is listening.
-        """
+        """Async lifespan bracketing server with app start/close."""
 
         @asynccontextmanager
         async def lifespan(_):
@@ -64,7 +51,7 @@ class BaseService(BaseComponent):
         return lifespan
 
     def add_jobs(self, app: "Application") -> None:
-        """Register every job whose enable_serve flag is True."""
+        """Register all servable jobs from the app."""
         for name, job in app.context.jobs.items():
             if not job.enable_serve:
                 continue
@@ -77,7 +64,7 @@ class BaseService(BaseComponent):
                 self.logger.error(f"Failed to add job {name}: {e}")
 
     def run_app(self, app: "Application") -> None:
-        """Build the service, register jobs, then start serving (blocking)."""
+        """Build, register jobs, and start the service."""
         self.build_service(app)
         self.add_jobs(app)
         self.start_service(app)

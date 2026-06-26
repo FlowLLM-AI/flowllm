@@ -25,7 +25,7 @@ class _BaseComponentType(BaseComponent):
     component_type = ComponentEnum.BASE
 
 
-# -- register & get -----------------------------------------------------------
+# register & get
 
 
 def test_register_direct_with_explicit_name():
@@ -75,7 +75,7 @@ def test_register_rejects_non_class_non_string():
         reg.register(42)
 
 
-# -- get_all ------------------------------------------------------------------
+# get_all
 
 
 def test_get_all_returns_copy():
@@ -99,7 +99,7 @@ def test_get_all_unknown_type_returns_empty():
     assert not reg.get_all(ComponentEnum.AS_LLM)
 
 
-# -- get (miss) ---------------------------------------------------------------
+# get (miss)
 
 
 def test_get_nonexistent_returns_none():
@@ -107,7 +107,7 @@ def test_get_nonexistent_returns_none():
     assert reg.get(ComponentEnum.FILE_CHUNKER, "nope") is None
 
 
-# -- unregister ---------------------------------------------------------------
+# unregister
 
 
 def test_unregister_existing():
@@ -122,7 +122,7 @@ def test_unregister_missing_returns_false():
     assert reg.unregister(ComponentEnum.FILE_CHUNKER, "nope") is False
 
 
-# -- clear --------------------------------------------------------------------
+# clear
 
 
 def test_clear():

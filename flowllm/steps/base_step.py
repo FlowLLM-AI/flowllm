@@ -23,19 +23,7 @@ _DispatchStep = str | dict[str, Any]
 
 
 class Ref:
-    """Descriptor that lazily resolves a component dependency for Steps.
-
-    Replaces the ``@property`` + ``_resolve()`` boilerplate with a single
-    class-level declaration::
-
-        as_llm = Ref(ChatModelBase, ComponentEnum.AS_LLM, "model")
-        file_store = Ref(BaseFileStore, ComponentEnum.FILE_STORE)
-
-    Resolution follows a 3-source fallback identical to the old ``_resolve``:
-    ``kwargs`` -> ``context`` -> ``app_context`` component registry.
-    The resolved value is cached on the instance for its lifetime
-    (steps are rebuilt per job call via ``_build_steps``).
-    """
+    """Lazy-resolving descriptor for component dependencies (kwargs → context → registry, cached per instance)."""
 
     __slots__ = ("base_cls", "comp_enum", "attr", "optional", "key", "_cache_attr")
 
@@ -118,11 +106,7 @@ class BaseStep(ComponentMixin, ABC):
         self.output_mapping = output_mapping
         self.dispatch_step_specs = list(dispatch_steps or [])
         self.context: RuntimeContext | None = None
-
-        # Load class-level prompts first, then overlay caller-provided overrides.
-        # Walk MRO in reverse so most-derived class wins; subclasses without their
-        # own YAML inherit prompts from their parent (e.g. AutoDreamStep inherits
-        # dream.yaml from DreamStep).
+        # MRO reverse walk so derived-class prompts win, then overlay caller overrides.
         self.prompt = PromptHandler(language=self.language)
         for cls in reversed(self.__class__.__mro__):
             self.prompt.load_prompt_by_class(cls)
@@ -185,7 +169,6 @@ class BaseStep(ComponentMixin, ABC):
             params = dict(raw)
         else:
             raise TypeError(f"Invalid dispatch step spec: {raw!r}")
-
         backend = params.get("backend", "")
         if not backend:
             raise ValueError("Dispatch step is missing the required 'backend' field")
@@ -196,14 +179,9 @@ class BaseStep(ComponentMixin, ABC):
         return step_cls, params
 
     async def dispatch_steps(self, dispatch_steps: list[_DispatchStep], **kwargs) -> list[Response]:
-        """Run dispatch steps against the current context.
-
-        Callers pass producer-specific values, usually ``changes=...``. Existing
-        context data is preserved for downstream handlers.
-        """
+        """Run dispatch steps against the current context, preserving existing context data."""
         if self.context is None:
             raise RuntimeError("Cannot dispatch steps without a runtime context")
-
         responses: list[Response] = []
         for raw in dispatch_steps:
             step_cls, params = self._resolve_dispatch_step(raw)

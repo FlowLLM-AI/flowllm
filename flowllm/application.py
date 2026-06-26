@@ -40,22 +40,22 @@ class Application(BaseComponent):
 
     @property
     def config(self):
-        """Typed view onto the application config held by the context."""
+        """Application config from context."""
         return self.context.app_config
 
-    # ----- Wiring (called once during __init__) --------------------------
+    # Wiring
 
     def _setup_workspace_directories(self) -> None:
-        """Ensure the workspace root and configured subdirectories exist on disk."""
+        """Create workspace directories if missing."""
         cfg = self.config
         workspace_path = Path(cfg.workspace_dir).absolute()
         workspace_path.mkdir(parents=True, exist_ok=True)
-        for subdir in [cfg.metadata_dir, cfg.session_dir, cfg.resource_dir, cfg.daily_dir, cfg.digest_dir]:
+        for subdir in [cfg.metadata_dir, cfg.session_dir]:
             if subdir:
                 (workspace_path / subdir).mkdir(parents=True, exist_ok=True)
 
     def _init_service(self) -> None:
-        """Instantiate the single service backend declared in config.service."""
+        """Instantiate the service backend."""
         self.context.service = self._instantiate(
             ComponentEnum.SERVICE,
             self.config.service,
@@ -64,7 +64,7 @@ class Application(BaseComponent):
         )
 
     def _init_components(self) -> None:
-        """Instantiate every component declared under config.components."""
+        """Instantiate all configured components."""
         for ctype, group in self.config.components.items():
             self.context.components[ctype] = {}
             for name, cfg in group.items():
@@ -77,7 +77,7 @@ class Application(BaseComponent):
                 )
 
     def _init_jobs(self) -> None:
-        """Instantiate every job declared under config.jobs."""
+        """Instantiate all configured jobs."""
         for name, cfg in self.config.jobs.items():
             self.context.jobs[name] = self._instantiate(
                 ComponentEnum.JOB,
@@ -96,14 +96,7 @@ class Application(BaseComponent):
         expected_type: type[T],
         name: str | None = None,
     ) -> T:
-        """Resolve cfg.backend through the registry and construct the instance.
-
-        `label` is the human-readable identifier used only in error messages.
-        `expected_type` narrows the return type and guards against a backend
-        registered under the wrong ComponentEnum.
-        `name` is forwarded to the constructor for named components/jobs;
-        leave it None for the service, which is keyed solely by type.
-        """
+        """Resolve backend from registry and construct an instance."""
         if not cfg.backend:
             raise ValueError(f"{label} is missing the required 'backend' field")
         backend_cls = R.get(ctype, cfg.backend)
@@ -120,10 +113,10 @@ class Application(BaseComponent):
             raise TypeError(f"{label} backend '{cfg.backend}' produced {got}, expected {want} subclass")
         return instance
 
-    # ----- Dependency ordering ------------------------------------------
+    # Dependency ordering
 
     def _topological_order(self) -> list[BaseComponent]:
-        """Return components in dependency order via Kahn's algorithm; raise on missing dep or cycle."""
+        """Return components in dependency order (Kahn's algorithm)."""
         nodes: dict[_NodeKey, BaseComponent] = {
             (ctype, name): comp for ctype, group in self.context.components.items() for name, comp in group.items()
         }
@@ -149,7 +142,7 @@ class Application(BaseComponent):
     def _build_dependency_graph(
         nodes: dict[_NodeKey, BaseComponent],
     ) -> tuple[dict[_NodeKey, int], dict[_NodeKey, list[_NodeKey]]]:
-        """Compute in-degree and adjacency lists; raise if a required dep is missing."""
+        """Build in-degree and adjacency lists."""
         in_degree: dict[_NodeKey, int] = dict.fromkeys(nodes, 0)
         dependents: dict[_NodeKey, list[_NodeKey]] = {k: [] for k in nodes}
         for key, comp in nodes.items():
@@ -164,7 +157,7 @@ class Application(BaseComponent):
                     )
         return in_degree, dependents
 
-    # ----- Lifecycle -----------------------------------------------------
+    # Lifecycle
 
     async def _start(self) -> None:
         """Start components, then jobs as base > stream > background > cron."""
@@ -182,7 +175,7 @@ class Application(BaseComponent):
             raise
 
     async def _start_one(self, c: BaseComponent) -> None:
-        """Start one component and record it for ordered shutdown."""
+        """Start one component and track it for shutdown."""
         try:
             if isinstance(c, BackgroundJob):
                 self.logger.info(f"Starting background job: {c.name}")
@@ -193,7 +186,7 @@ class Application(BaseComponent):
             raise
 
     async def _close(self) -> None:
-        """Close in reverse start order so every peer outlives its dependents."""
+        """Close in reverse start order."""
         for c in reversed(self._started_components):
             try:
                 await c.close()
@@ -202,7 +195,7 @@ class Application(BaseComponent):
         self._started_components.clear()
 
     async def update_component(self, component_enum: ComponentEnum | str, name: str, /, **kwargs) -> BaseComponent:
-        """Update an existing component by type/name; never creates missing components."""
+        """Update an existing component's attributes."""
         component_enum = ComponentEnum(component_enum)
         group = self.context.components.get(component_enum)
         if not group or name not in group:
@@ -215,16 +208,16 @@ class Application(BaseComponent):
             setattr(component, key, value)
         return component
 
-    # ----- Job execution -------------------------------------------------
+    # Job execution
 
     async def run_job(self, name: str, /, **kwargs) -> Response:
-        """Execute a registered job by name and return its final Response."""
+        """Execute a job by name and return its Response."""
         if name not in self.context.jobs:
             raise KeyError(f"Job '{name}' not found")
         return await self.context.jobs[name](**kwargs)
 
     async def run_stream_job(self, name: str, /, **kwargs) -> AsyncGenerator[StreamChunk, None]:
-        """Execute a streaming job, yielding chunks as they are produced."""
+        """Execute a streaming job, yielding chunks."""
         if name not in self.context.jobs:
             raise KeyError(f"Job '{name}' not found")
         stream_queue: asyncio.Queue = asyncio.Queue()
@@ -239,7 +232,7 @@ class Application(BaseComponent):
             yield chunk
 
     def run_app(self):
-        """Serve the application through the configured service backend."""
+        """Serve the application via the configured service."""
         assert isinstance(self.context.service, BaseService)
         self.context.service.run_app(app=self)
 
@@ -261,7 +254,7 @@ async def call_server(action: str, **kwargs):
 
 
 def main():
-    """Parse CLI arguments and launch the appropriate mode."""
+    """CLI entry point."""
     action, kwargs = parse_args(*sys.argv[1:])
     if action == "start":
         load_env()

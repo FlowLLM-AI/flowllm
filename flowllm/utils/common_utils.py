@@ -1,4 +1,4 @@
-"""Common utilities: async stream task execution."""
+"""Async stream task execution."""
 
 import asyncio
 from collections.abc import AsyncGenerator
@@ -13,7 +13,7 @@ def _format_chunk(
     chunk: StreamChunk,
     output_format: Literal["str", "bytes", "chunk"],
 ) -> str | bytes | StreamChunk:
-    """Render a StreamChunk in the requested transport format."""
+    """Render a StreamChunk for transport."""
     if output_format == "chunk":
         return chunk
     data = "data:[DONE]\n\n" if chunk.done else f"data:{chunk.model_dump_json()}\n\n"
@@ -26,10 +26,7 @@ async def execute_stream_task(
     task_name: str | None = None,
     output_format: Literal["str", "bytes", "chunk"] = "str",
 ) -> AsyncGenerator[str | bytes | StreamChunk, None]:
-    """Yield chunks from stream_queue while monitoring task; cancels task on exit.
-
-    output_format: "str"/"bytes" emit SSE frames, "chunk" emits raw StreamChunk.
-    """
+    """Yield chunks from stream_queue while monitoring task."""
     logger = get_logger()
     consumer: asyncio.Task[StreamChunk] | None = None
     try:
@@ -37,7 +34,7 @@ async def execute_stream_task(
             consumer = get_chunk = asyncio.create_task(stream_queue.get())
             done, _pending = await asyncio.wait({get_chunk, task}, return_when=asyncio.FIRST_COMPLETED)
 
-            # Producer still running — relay the next chunk and continue.
+            # Relay next chunk.
             if task not in done:
                 chunk = get_chunk.result()
                 yield _format_chunk(chunk, output_format)
@@ -45,8 +42,7 @@ async def execute_stream_task(
                     return
                 continue
 
-            # Producer finished. Capture any pending chunk, then stop the consumer wait
-            # so we can inspect task state safely.
+            # Producer finished — capture pending chunk.
             pending_chunk: StreamChunk | None = None
             if get_chunk in done:
                 pending_chunk = get_chunk.result()
@@ -57,7 +53,7 @@ async def execute_stream_task(
                 except asyncio.CancelledError:
                     pass
 
-            # Surface task failure first — an exception trumps trailing data.
+            # Surface task failure.
             if task.cancelled():
                 msg = f"Task cancelled: {task_name}" if task_name else "Task cancelled"
                 raise asyncio.CancelledError(msg)
@@ -67,8 +63,7 @@ async def execute_stream_task(
                 logger.error(log_msg, exc_info=exc)
                 raise exc
 
-            # Producer ended cleanly — flush pending + drain queue so no chunk is lost,
-            # then emit the terminal sentinel.
+            # Flush remaining chunks and emit done sentinel.
             if pending_chunk is not None:
                 yield _format_chunk(pending_chunk, output_format)
                 if pending_chunk.done:
@@ -83,14 +78,14 @@ async def execute_stream_task(
             return
 
     finally:
-        # Cancel consumer wait if still pending (e.g. on consumer aclose).
+        # Cancel pending consumer.
         if consumer is not None and not consumer.done():
             consumer.cancel()
             try:
                 await consumer
             except asyncio.CancelledError:
                 pass
-        # Cancel producer task if still running to avoid resource leaks.
+        # Cancel producer to avoid leaks.
         if not task.done():
             task.cancel()
             try:

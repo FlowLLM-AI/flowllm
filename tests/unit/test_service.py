@@ -1,4 +1,4 @@
-"""Tests for service job registration behavior."""
+"""Tests for service job registration."""
 
 from types import SimpleNamespace
 
@@ -7,7 +7,7 @@ from flowllm.components.service import MCPService
 
 
 def _dummy_app():
-    """Minimal object needed by MCPService.build_service."""
+    """Minimal MCPService.build_service stub."""
 
     async def start():
         return None
@@ -24,7 +24,7 @@ def _dummy_app():
 
 
 def test_mcp_service_registers_job_with_empty_parameters():
-    """Empty job parameters must remain a dict for FastMCP FunctionTool validation."""
+    """Empty parameters remain a dict for FastMCP validation."""
     service = MCPService()
     service.build_service(_dummy_app())
 
@@ -34,7 +34,7 @@ def test_mcp_service_registers_job_with_empty_parameters():
 
 
 def test_mcp_service_reports_stream_job_skipped():
-    """MCPService intentionally does not expose StreamJob tools."""
+    """StreamJob tools are not exposed by MCPService."""
     service = MCPService()
     service.build_service(_dummy_app())
 

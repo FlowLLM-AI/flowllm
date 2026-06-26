@@ -1,15 +1,4 @@
-"""Shared integration-test fixture: build a workspace test environment.
-
-from _workspace_fixture import workspace_env
-
-async def run():
-    with workspace_env() as env:
-        app = await env.make_app()
-        try:
-            ...
-        finally:
-            await env.close_all()
-"""
+"""Shared fixture: temporary workspace environment for integration tests."""
 
 from __future__ import annotations
 
@@ -22,7 +11,7 @@ from typing import Any, Iterator
 
 @contextlib.contextmanager
 def temp_chdir(path) -> Iterator[Path]:
-    """``chdir`` to ``path`` for the block; restore the original cwd on exit."""
+    """Temporarily chdir, restoring on exit."""
     old = os.getcwd()
     os.chdir(path)
     try:
@@ -32,14 +21,14 @@ def temp_chdir(path) -> Iterator[Path]:
 
 
 class WorkspaceEnv:
-    """A workspace test environment — temp workspace + helpers."""
+    """Temp workspace + Application lifecycle helpers."""
 
     def __init__(self, workspace_dir: Path):
         self.workspace_dir = workspace_dir
         self._apps: list[Any] = []
 
     async def make_app(self, *, config: str | None = None, **overrides) -> Any:
-        """Build and start an ``Application`` and track it for cleanup."""
+        """Build, start, and track an Application for cleanup."""
         from flowllm import Application
         from flowllm.config import resolve_app_config
 
@@ -59,17 +48,17 @@ class WorkspaceEnv:
         return app
 
     async def close_all(self) -> None:
-        """Close every app started via this env. Idempotent."""
+        """Close all tracked apps. Idempotent."""
         for app in self._apps:
             await app.close()
         self._apps.clear()
 
     def session_state_files(self, prefix: str = "session_state_") -> list[Path]:
-        """All session-state jsonl files under ``resource/``."""
-        resource_dir = self.workspace_dir / "resource"
-        if not resource_dir.exists():
+        """List session-state JSONL files under session/."""
+        session_dir = self.workspace_dir / "session"
+        if not session_dir.exists():
             return []
-        return sorted(resource_dir.rglob(f"{prefix}*.jsonl"))
+        return sorted(session_dir.rglob(f"{prefix}*.jsonl"))
 
 
 @contextlib.contextmanager
@@ -79,7 +68,7 @@ def workspace_env(
     workspace_name: str = ".flowllm",
     load_env_file: bool = True,
 ) -> Iterator[WorkspaceEnv]:
-    """Yield a fresh ``WorkspaceEnv`` rooted at a temp workspace."""
+    """Yield a fresh WorkspaceEnv in a temp directory."""
     if load_env_file:
         from flowllm.utils import load_env
 

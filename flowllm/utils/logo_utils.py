@@ -1,4 +1,4 @@
-"""Startup banner with ASCII logo and service metadata."""
+"""Startup banner."""
 
 import colorsys
 import importlib.metadata
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 def _get_version(package_name: str) -> str:
-    """Return installed package version, or empty string if not installed."""
+    """Return installed package version or empty string."""
     try:
         return importlib.metadata.version(package_name)
     except importlib.metadata.PackageNotFoundError:
@@ -23,19 +23,13 @@ def _get_version(package_name: str) -> str:
 
 
 def _hsv_rgb(h: float, s: float = 0.85, v: float = 0.98) -> tuple[int, int, int]:
-    """HSV → 0-255 RGB tuple. High saturation+value keeps colors vibrant."""
+    """HSV → 0-255 RGB tuple."""
     r, g, b = colorsys.hsv_to_rgb(h % 1.0, s, v)
     return int(r * 255), int(g * 255), int(b * 255)
 
 
 def print_logo(app_config: "ApplicationConfig"):
-    """Print rainbow ASCII logo and runtime config (backend, URL, versions).
-
-    Color: each startup picks a random hue rotation; both horizontal
-    (across each line) and vertical (line-to-line) sweep ~half the
-    hue wheel, so the banner shows a fresh multi-color rainbow gradient
-    every run.
-    """
+    """Print rainbow ASCII logo and runtime config."""
     ascii_art = [
         r" ███████╗ ██╗      ██████╗  ██╗    ██╗ ██╗      ██╗      ███╗   ███╗ ",
         r" ██╔════╝ ██║     ██╔═══██╗ ██║    ██║ ██║      ██║      ████╗ ████║ ",
@@ -64,7 +58,7 @@ def print_logo(app_config: "ApplicationConfig"):
     info_table.add_column(style="bold cyan", justify="left")
     info_table.add_column(style="white", justify="left")
 
-    # service is a ComponentConfig with extra="allow"; backend-specific fields live in model_extra.
+    # Backend-specific fields live in model_extra.
     service = app_config.service
     backend = service.backend
     extra = service.model_extra or {}

@@ -15,11 +15,8 @@ class StreamDemoStep1(BaseStep):
         assert self.context is not None
         query = self.context.get("query", "")
         repeat = int(self.context.get("repeat", 10))
-
         stream_text = (query * repeat) if query else ""
-
         self.logger.info(f"[{self.name}] query={query!r}, repeat={repeat}, len={len(stream_text)}")
-
         self.context["stream_text"] = stream_text
         return self.context.response
 
@@ -32,9 +29,7 @@ class StreamDemoStep2(BaseStep):
         assert self.context is not None
         stream_text: str = self.context.get("stream_text", "")
         interval = float(self.context.get("interval", 0.1))
-
         self.logger.info(f"[{self.name}] streaming {len(stream_text)} chars, interval={interval}s")
-
         for ch in stream_text:
             await self.context.add_stream_string(ch, ChunkEnum.CONTENT)
             await asyncio.sleep(interval)
