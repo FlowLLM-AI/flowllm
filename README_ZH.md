@@ -120,6 +120,13 @@ flowllm start config=/path/to/app.yaml
 对于不需要完整服务框架的脚本，`flowllm.lite` 可以把 `fl --action --field value` 映射到 Pydantic config 和顺序执行的
 `BaseFlow`。见 [FlowLLM Lite](flowllm/lite/README.md)。
 
+## 🗺️ Roadmap
+
+| 项目               | 说明                                                                       |
+|------------------|--------------------------------------------------------------------------|
+| Agent wrapper 集成 | 将 FlowLLM 集成到 Agent wrapper 中，让 Agent 可以根据你的想法自动开发 FlowLLM 的 Step 和 Job。 |
+| TypeScript 前端    | 增加 TypeScript 前端，支持通过前端界面开发 FlowLLM 应用。                                  |
+
 ## 📚 文档
 
 - [快速开始](docs/zh/quick_start.md)

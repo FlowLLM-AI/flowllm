@@ -124,6 +124,13 @@ architecture reference, see [Code Framework](docs/en/framework.md).
 For scripts that do not need the full service framework, `flowllm.lite` maps `fl --action --field value` to a Pydantic
 config and a small ordered `BaseFlow`. See [FlowLLM Lite](flowllm/lite/README.md).
 
+## 🗺️ Roadmap
+
+| Item                      | Description                                                                                         |
+|---------------------------|-----------------------------------------------------------------------------------------------------|
+| Agent wrapper integration | Integrate FlowLLM into Agent wrappers so agents can develop FlowLLM Steps and Jobs from your ideas. |
+| TypeScript frontend       | Add a TypeScript frontend for building and developing FlowLLM applications through the UI.          |
+
 ## 📚 Documentation
 
 - [Quick Start](docs/en/quick_start.md)
