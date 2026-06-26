@@ -18,17 +18,14 @@
   <strong>FlowLLM: Build LLM applications with ease.</strong><br>
 </p>
 
-FlowLLM is a configuration-driven LLM application framework. It uses **Service, Job, Step, and Component** as the core building blocks: declare a workflow as a Job, implement the workflow with ordered Steps, expose the Job through CLI, HTTP, or MCP, and manage long-lived infrastructure such as models, embedding stores, and agent wrappers as Components with unified lifecycle and dependency handling.
+FlowLLM is a configuration-driven LLM application framework that organizes workflows, service entrypoints, and long-lived components with **Service, Job, Step, and Component**.
 
 ## Core Features
 
-- **Configuration-driven**: Starts from `flowllm/config/default.yaml` by default, with support for `config=/path/to/app.yaml` and dot-notation overrides such as `service.port=8181`.
-- **Unified execution path**: `CLI / Client -> Service -> Application -> Job -> Step -> Component`. The service layer exposes capabilities, while business logic lives in Jobs and Steps.
-- **Multiple service forms**: HTTP Service exposes `POST /<job_name>` through FastAPI; MCP Service exposes non-streaming Jobs as tools through FastMCP.
-- **Sync, streaming, background, and scheduled tasks**: Built-in `base`, `stream`, `background`, and `cron` Job backends.
-- **Pluggable components**: Register Steps, Services, Clients, LLMs, Embeddings, Embedding Stores, and Agent Wrappers through the global registry `R`.
-- **AgentScope integration**: Built-in AgentScope LLM and Embedding wrappers support OpenAI, DashScope, Anthropic, DeepSeek, Gemini, Moonshot, Ollama, xAI, and other backends.
-- **Agent wrapper**: Provides an AgentScope wrapper by default, with an optional Claude Code wrapper for exposing Jobs as tools to agents.
+- **Configuration-driven**: Starts from `flowllm/config/default.yaml`, with config files and dot-notation overrides.
+- **Unified path**: `CLI / Client -> Service -> Application -> Job -> Step -> Component`.
+- **Flexible Jobs**: Supports sync, streaming, background, and scheduled tasks exposed through HTTP or MCP.
+- **Pluggable components**: Extend Steps, Services, Clients, LLMs, Embeddings, Embedding Stores, and Agent Wrappers through registry `R`.
 
 <p align="center">
   <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
@@ -239,21 +236,17 @@ MCP transport supports `stdio`, `sse`, and `streamable-http`.
 
 ## Open Source and Contributing
 
-FlowLLM is open source under the Apache License 2.0. Before submitting changes, read the [contribution guide](docs/en/contributing.md) and the [FlowLLM development skill](skills/flowllm_dev/SKILL.md), then try to run:
+FlowLLM is licensed under Apache 2.0. Before contributing, read the [contribution guide](docs/en/contributing.md) and [development skill](skills/flowllm_dev/SKILL.md), then run:
 
 ```bash
 pre-commit run --all-files
 pytest
 ```
 
-Conventional Commits are recommended, for example:
-
-```text
-feat(step): add reverse text demo
-fix(config): preserve leading zero strings
-docs(zh): update readme
-```
-
 ## License
 
 This project is open source under the Apache License 2.0. See [LICENSE](./LICENSE) for details.
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)

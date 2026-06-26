@@ -18,17 +18,14 @@
   <strong>FlowLLM: 轻松构建 LLM 应用。</strong><br>
 </p>
 
-FlowLLM 是一个配置驱动的 LLM 应用框架，以 **Service、Job、Step、Component** 作为核心构建块：把工作流声明为 Job，用有序 Step 实现流程，通过 CLI、HTTP 或 MCP 暴露 Job，并将模型、Embedding Store、Agent wrapper 等长期存在的基础设施作为 Component 统一管理生命周期和依赖。
+FlowLLM 是一个配置驱动的 LLM 应用框架，用 **Service、Job、Step、Component** 组织工作流、服务入口和长期组件。
 
 ## 核心特性
 
-- **配置驱动**：默认从 `flowllm/config/default.yaml` 启动，也支持 `config=/path/to/app.yaml` 和 `service.port=8181` 这类 dot notation 覆盖。
-- **统一运行链路**：`CLI / Client -> Service -> Application -> Job -> Step -> Component`，服务层只负责暴露能力，业务逻辑沉到 Job 和 Step。
-- **多种服务形态**：HTTP Service 基于 FastAPI 暴露 `POST /<job_name>`；MCP Service 基于 FastMCP 将非流式 Job 暴露为工具。
-- **同步、流式、后台与定时任务**：内置 `base`、`stream`、`background`、`cron` 四类 Job backend。
-- **可插拔组件**：通过全局注册表 `R` 注册 Step、Service、Client、LLM、Embedding、Embedding Store 和 Agent Wrapper。
-- **AgentScope 集成**：内置 AgentScope LLM/Embedding wrapper，支持 OpenAI、DashScope、Anthropic、DeepSeek、Gemini、Moonshot、Ollama、xAI 等后端。
-- **Agent wrapper**：默认提供 AgentScope wrapper，可选安装 Claude Code wrapper，把 Job 作为工具提供给 Agent。
+- **配置驱动**：默认从 `flowllm/config/default.yaml` 启动，支持配置文件和 dot notation 覆盖。
+- **统一链路**：`CLI / Client -> Service -> Application -> Job -> Step -> Component`。
+- **多种 Job 形态**：支持同步、流式、后台和定时任务，并可通过 HTTP 或 MCP 暴露。
+- **可插拔组件**：通过注册表 `R` 扩展 Step、Service、Client、LLM、Embedding、Embedding Store 和 Agent Wrapper。
 
 <p align="center">
   <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
@@ -239,21 +236,17 @@ MCP transport 支持 `stdio`、`sse` 和 `streamable-http`。
 
 ## 开源与贡献
 
-FlowLLM 使用 Apache License 2.0 开源。提交改动前建议阅读 [贡献指南](docs/zh/contributing.md) 和 [FlowLLM 开发 Skill](skills/flowllm_dev/SKILL.md)，并尽量运行：
+FlowLLM 使用 Apache 2.0 许可证。贡献前请阅读 [贡献指南](docs/zh/contributing.md) 和 [开发 Skill](skills/flowllm_dev/SKILL.md)，并尽量运行：
 
 ```bash
 pre-commit run --all-files
 pytest
 ```
 
-建议使用 Conventional Commits，例如：
-
-```text
-feat(step): add reverse text demo
-fix(config): preserve leading zero strings
-docs(zh): update readme
-```
-
 ## License
 
 This project is open source under the Apache License 2.0. See [LICENSE](./LICENSE) for details.
+
+## Star 历史
+
+[![Star History Chart](https://api.star-history.com/svg?repos=flowllm-ai/flowllm&type=Date)](https://www.star-history.com/#flowllm-ai/flowllm&Date)
