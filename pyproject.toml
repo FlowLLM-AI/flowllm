@@ -63,6 +63,9 @@ include-package-data = true
 [tool.setuptools.dynamic]
 version = { attr = "flowllm.__version__" }
 
+[tool.pylint.format]
+max-line-length = 120
+
 [build-system]
 requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
