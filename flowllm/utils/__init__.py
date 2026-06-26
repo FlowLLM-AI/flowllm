@@ -7,7 +7,6 @@ from .env_utils import load_env
 from .logger_utils import get_logger
 from .logo_utils import print_logo
 from .service_utils import precheck_start, cli_find_flowllm
-from .tushare_data_api import TushareDataApi
 
 __all__ = [
     "AsStateHandler",
@@ -18,5 +17,4 @@ __all__ = [
     "print_logo",
     "precheck_start",
     "cli_find_flowllm",
-    "TushareDataApi",
 ]

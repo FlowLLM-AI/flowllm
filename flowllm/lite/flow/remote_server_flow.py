@@ -197,7 +197,13 @@ async def _start(req: ExecRequest):
             ),
         )
     env["PYTHONPATH"] = str(PROJECT_DIR) if not env.get("PYTHONPATH") else f"{PROJECT_DIR}:{env['PYTHONPATH']}"
-    with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".py", prefix="flowllm_remote_", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(
+        "w",
+        encoding="utf-8",
+        suffix=".py",
+        prefix="flowllm_remote_",
+        delete=False,
+    ) as tmp:
         tmp.write(req.python_code)
     return (
         tmp.name,
