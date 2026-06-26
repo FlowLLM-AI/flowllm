@@ -11,6 +11,7 @@ class FakeResponse:
     text = '{"errcode":0}'
 
     def raise_for_status(self) -> None:
+        """Match the httpx response API used by the helper."""
         return None
 
 
@@ -49,7 +50,8 @@ def test_send_dingtalk_text_message(monkeypatch):
     seen = {}
     monkeypatch.setenv("DING_DAILY_API_TOKEN", "daily-token")
     monkeypatch.setattr(dingtalk_utils, "load_env", lambda: {})
-    def fake_post(url, json, timeout):
+
+    def fake_post(_url, json, _timeout):
         seen["json"] = json
         return FakeResponse()
 
