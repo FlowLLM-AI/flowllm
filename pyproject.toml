@@ -1,22 +1,26 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "flowllm"
 dynamic = ["version"]
 description = "FlowLLM: Build LLM applications with ease."
 readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
 authors = [
     { name = "jinli.yl", email = "jinli.yl@alibaba-inc.com" },
 ]
-license = "Apache-2.0"
-requires-python = ">=3.11"
 keywords = ["llm", "flow", "agent", "ai", "mcp", "flowllm"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Operating System :: OS Independent",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
@@ -45,17 +49,17 @@ dev = [
     "pytest-asyncio>=0.23",
 ]
 
+[project.scripts]
+fl = "flowllm.lite.cli:main"
+flowllm = "flowllm.application:main"
+
 [project.urls]
 Homepage = "https://github.com/flowllm-ai/flowllm"
 Repository = "https://github.com/flowllm-ai/flowllm"
 
-[project.scripts]
-flowllm = "flowllm.application:main"
-fl = "flowllm.lite.cli:main"
-
 [tool.setuptools]
-packages = { find = { where = ["."], include = ["flowllm*"] } }
 include-package-data = true
+packages = { find = { where = ["."], include = ["flowllm*"] } }
 
 [tool.setuptools.package-data]
 "*" = ["py.typed", "**/*.yaml", "**/*.json"]
@@ -65,7 +69,3 @@ version = { attr = "flowllm.__version__" }
 
 [tool.pylint.format]
 max-line-length = 120
-
-[build-system]
-requires = ["setuptools>=45", "wheel"]
-build-backend = "setuptools.build_meta"
