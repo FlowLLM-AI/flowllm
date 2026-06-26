@@ -130,6 +130,9 @@ def _print_help() -> None:
 
 def main(argv: list[str] | None = None) -> None:
     """Run the lightweight flow command-line interface."""
+    from ..utils.env_utils import load_env
+
+    load_env()
     args: list[str] = sys.argv[1:] if argv is None else argv
     if not args or args[0] in ("-h", "--help"):
         _print_help()

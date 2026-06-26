@@ -14,6 +14,11 @@ It keeps only four concepts:
 ```shell
 fl --list
 fl --demo --x 1 --y 2
+DEFAULT_PROXY_HOST_ENV=example.com fl --proxy
+fl --proxy --host example.com --port 12345
+fl --remote-server --host 0.0.0.0 --port 8765
+DEFAULT_REMOTE_HOST_ENV=example.com fl --remote-client --action ping
+fl --remote-client --action exec --command "pwd"
 ```
 
 Output:
@@ -35,6 +40,12 @@ Rules:
 - `-` in CLI argument names is converted to `_` in Python field names.
 - Values are read as strings first, then converted by Pydantic through `BaseConfig`.
 - The final result only includes fields declared in `output_keys`.
+
+The built-in `proxy` flow starts an SSH SOCKS5 proxy. Its `host` config defaults
+to the `DEFAULT_PROXY_HOST_ENV` environment variable, so no server IP is hard-coded.
+
+The built-in `remote_server` and `remote_client` flows provide the remote command
+executor. The client `host` config defaults to `DEFAULT_REMOTE_HOST_ENV`.
 
 ## Writing a Flow
 

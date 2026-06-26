@@ -1,7 +1,8 @@
 """Lite FlowLLM API."""
 
 from .cli import BaseConfig, BaseFlow, get_flow, list_flows, register
-from . import demo  # noqa: F401 - registers the built-in demo flow
+from . import demo
+from . import flow
 
 __all__ = [
     "BaseConfig",
@@ -9,4 +10,6 @@ __all__ = [
     "get_flow",
     "list_flows",
     "register",
+    "demo",
+    "flow",
 ]
