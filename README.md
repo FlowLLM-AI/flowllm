@@ -21,13 +21,6 @@
 FlowLLM is a configuration-driven LLM application framework that organizes workflows, service entrypoints, and
 long-lived components with **Service, Job, Step, and Component**.
 
-## 🧠 FlowLLM Development Skill
-
-FlowLLM ships with a development Skill for coding agents. It explains the framework conventions, repository map,
-extension points, testing workflow, and review checklist for building or extending FlowLLM applications.
-
-Start here when changing the codebase: [FlowLLM Development Skill](skills/flowllm_dev/SKILL.md).
-
 ## ✨ Core Features
 
 - **Configuration-driven**: Starts from `flowllm/config/default.yaml`, with config files and dot-notation overrides.
@@ -39,6 +32,20 @@ Start here when changing the codebase: [FlowLLM Development Skill](skills/flowll
 <p align="center">
   <img src="docs/figure/flowllm-architecture.svg" alt="FlowLLM Architecture" width="92%">
 </p>
+
+## 🧠 FlowLLM Development Skill
+
+FlowLLM ships with a development Skill for coding agents. It explains the framework conventions, repository map,
+extension points, testing workflow, and review checklist for building or extending FlowLLM applications.
+
+Start here when changing the codebase: [FlowLLM Development Skill](skills/flowllm_dev/SKILL.md).
+
+## 📝 Technical Notes
+
+| Note                                                                      | Description                                                                                           |
+|---------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| [Context Management Design](note/context_management_design.md)            | Short-term agent context management design, including history compaction and tool-result truncation.  |
+| [SELFCOMPACT and AgentScope PR #1938](note/self_compact_agentscope_pr.md) | Technical reading notes for the SELFCOMPACT paper, experiments, and the AgentScope implementation PR. |
 
 ## 🚀 Quick Start
 
